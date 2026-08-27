@@ -1,0 +1,184 @@
+keys,en,zh_CN
+TAB_INSTALLED,Installed,已安装
+TAB_INSTALL_NEW,Install New,安装新扩展
+COL_NAME,Name,名称
+COL_VERSION,Version,版本
+COL_COMMIT,Commit,Commit
+COL_UPDATE_TIME,Date,更新时间
+COL_STATUS,Status,状态
+COL_TYPE,Type,类型
+COL_BRANCH_TAG,Branch/Tag,分支/Tag
+COL_REPO_PATH,Path / Release Asset,路径 / Release 资源
+COL_AUTHOR,Author,作者
+COL_DESCRIPTION,Description,描述
+COL_ACTIONS,Actions,操作
+STATUS_INSTALLED,Installed,已装
+STATUS_NOT_INSTALLED,Not Installed,未安装
+STATUS_INSTALLING,Installing,安装中
+STATUS_DOWNLOADING,Downloading,下载中
+STATUS_FAILED,Failed,失败
+STATUS_CHECKING,Checking,检查中
+STATUS_UPDATING,Updating,更新中
+STATUS_LATEST,Up to Date,最新
+STATUS_UPDATE,Update,更新
+STATUS_LOCKED,Locked,已锁定
+ACTION_UNINSTALL,Uninstall,卸载
+ACTION_DETAIL,Detail,详情
+MULTI_ADDONS_COUNT,%s (%d addons),%s (%d 个插件)
+OVERLAY_CHECKING_VERSION,Checking versions...,正在检查版本...
+OVERLAY_UPDATING_ALL,Updating all addons...,正在更新所有插件...
+OVERLAY_UPDATING_ONE,Updating %s...,正在更新 %s...
+OVERLAY_SWITCHING,Switching %s to %s %s...,正在切换 %s 到 %s %s...
+BTN_INSTALL_SELECTED,Install Selected (%d),安装选中 (%d)
+BTN_MANUAL_INSTALL,Manual Install,手动安装
+BTN_INSTALLING,Installing...,安装中...
+BTN_CANCEL_INSTALL,Cancel Install,取消安装
+BTN_CANCELLING,Cancelling...,取消中...
+BTN_INSTALL_DONE,Install Complete,安装完成
+BTN_INSTALL_CANCELLED,Install Cancelled,安装已取消
+BTN_INSTALL_PARTIAL,Install Completed With Errors,部分安装失败
+BTN_INSTALL_FAILED,Install Failed,安装失败
+BTN_CHECK_UPDATE,Check Version,检查版本
+BTN_UPDATE_ALL,Update All,全部更新
+BTN_SEARCH,Search,搜索
+BTN_CANCEL,Cancel,取消
+BTN_CLOSE,Close,关闭
+BTN_CONFIRM,Confirm,确认
+BTN_APPLY,Apply,应用
+BTN_LOCK,Lock,锁定
+BTN_UNLOCK,Unlock,解锁
+BTN_VIEW_INSTALLED,View Installed,查看已安装
+BTN_SEARCH_ANYWAY,Search Anyway,继续搜索
+BTN_OPEN_REPO,Open Repository,打开仓库
+SEARCH_PLACEHOLDER,Search addons or enter repo URL (user/repo),搜索插件 或 输入仓库 URL (user/repo)
+CONFLICT_TITLE,Directory Conflict,目录冲突
+CONFLICT_OVERWRITE,Overwrite Install,覆盖安装
+CONFLICT_DIR_EXISTS,Directory conflict: %s already exists,目录冲突：%s 已存在
+CONFLICT_DIR_OWNED,"Directory conflict: %s is installed by repo '%s', overwrite will replace it.","目录冲突：%s 已被仓库 '%s' 安装，覆盖将替换来源仓库。"
+UNINSTALL_CONFIRM,"Uninstall repo '%s'?
+All installed addon directories will be removed.","卸载仓库 '%s'？
+将删除所有已安装的插件目录。"
+TOAST_REPO_EXISTS,Repo '%s' is already installed,仓库 '%s' 已安装
+TOAST_NO_ADDON_FOUND,No Godot plugin/extension found,未找到 Godot 插件/扩展
+CONFIRM_TRY_RELEASE,This repo may publish the addon via GitHub Releases. Search Releases too?,该仓库可能通过 Release 发布插件，是否勾选「搜索 Release」再试一次？
+BTN_RETRY_WITH_RELEASE,Search with Releases,搜索 Release 并重试
+TOAST_ERROR,Error,错误
+TOAST_INFO,Info,提示
+TOAST_INSTALL_FAILED_HEADER,The following repositories failed to install:,以下仓库安装失败：
+BRANCH_POPUP_TITLE,Select Branch / Tag,选择分支 / Tag
+BRANCH_POPUP_FILTER,Filter...,过滤...
+BRANCH_HEADER,── Branches (%d) ──,── 分支 (%d) ──
+TAG_HEADER,── Tags (%d) ──,── Tag (%d) ──
+BRANCH_CLICK_HINT,Click to select branch or tag,点击选择分支或 Tag
+RELEASE_ASSET_POPUP_TITLE,Select Release Asset,选择 Release 资源
+RELEASE_ASSET_HEADER,── Assets (%d) ──,── 资源 (%d) ──
+RELEASE_ASSET_CLICK_HINT,Click to select release asset,点击选择 Release 资源
+CONSOLE_COLLAPSED,▶ Console,▶ 控制台
+CONSOLE_EXPANDED,▼ Console,▼ 控制台
+CONSOLE_CLEAR,Clear,清除
+SEARCHING,Searching...,正在搜索...
+INSTALLED_FILTER_PLACEHOLDER,Filter installed addons...,过滤已安装插件...
+DETAIL_TITLE,Addon Detail,插件详情
+DETAIL_NAME,Name,名称
+DETAIL_DESC,Description,描述
+DETAIL_VERSION,Version,版本
+DETAIL_AUTHOR,Author,作者
+DETAIL_URL,Repository URL,仓库地址
+DETAIL_INSTALL_PATH,Install Path,安装路径
+DETAIL_TYPE,Type,类型
+SELECTOR_LOADING,Loading...,加载中...
+SUB_INSTALLED,Installed,已安装
+SUB_NOT_INSTALLED,Not Installed,未安装
+ERR_CLONE_FAILED,Clone failed (exit=%d),克隆失败 (exit=%d)
+ERR_TIMEOUT,Connection timed out{SEP} please check network,连接超时，请检查网络连接
+ERR_NOT_FOUND,Repo not found{SEP} please check the URL,仓库不存在，请检查 URL 是否正确
+ERR_DNS,Cannot resolve hostname{SEP} please check network,无法解析主机名，请检查网络连接
+ERR_AUTH,Authentication failed{SEP} possibly a private repo,认证失败，可能是私有仓库
+ERR_REMOTE_READ,Cannot read remote repo{SEP} check URL or network,无法读取远程仓库，请检查 URL 或网络
+ERR_REFUSED,Connection refused{SEP} check network or proxy,连接被拒绝，请检查网络或代理设置
+ERR_SSL,SSL error{SEP} check network or proxy,SSL 连接错误，请检查网络或代理设置
+WARN_NO_CFG_FOUND,No plugin.cfg or .gdextension found; this repo may not be a Godot addon,未找到 plugin.cfg 或 .gdextension 文件，该仓库可能不是 Godot 插件/扩展
+CONSISTENCY_MISSING_CLONE,Staging directory %s does not exist,暂存目录 %s 不存在
+CONSISTENCY_MISSING_INSTALLED,Marked as installed but directory does not exist: %s,已标记安装但目录不存在: %s
+CONSISTENCY_UNTRACKED,Not tracked by addons.json: %s,未被 addons.json 跟踪: %s
+TOAST_SELF_UPDATED,gd-plug-plus has been updated. Please reload the project to apply changes.,gd-plug-plus 已更新，请重新加载项目以应用更改。
+SEARCH_RELEASE_CHECKBOX,Release,Release
+RELEASE_TAG,Release: %s,Release: %s
+OVERLAY_DOWNLOADING,Downloading %s...,正在下载 %s...
+OVERLAY_EXTRACTING,Extracting...,正在解压...
+WARN_CSHARP_NO_DOTNET,This plugin requires Godot .NET version,此插件需要 Godot .NET 版本
+ERR_RELEASE_NOT_FOUND,No matching release asset found,未找到匹配的 Release 资源
+ERR_RELEASE_DOWNLOAD,Failed to download release,Release 下载失败
+ERR_RELEASE_ASSET_URL_EMPTY,Release asset URL is empty,Release 资源 URL 为空
+ERR_RELEASE_UNSUPPORTED_PLATFORM,Unsupported platform for release download,不支持的平台，无法下载 Release
+ERR_RELEASE_DOWNLOAD_FAILED,Release download failed,Release 下载失败
+ERR_RELEASE_ZIP_MISSING,Downloaded zip file is missing,下载的压缩包文件丢失
+ERR_RELEASE_ZIP_OPEN_FAILED,Cannot open zip archive,无法打开压缩包
+ERR_RELEASE_NO_GODOT_CONTENT,"Archive does not contain plugin.cfg or .gdextension — not a Godot addon","压缩包中未找到 plugin.cfg 或 .gdextension，不是 Godot 插件/扩展"
+LOG_RELEASE_CACHED,Using cached release: %s,使用缓存的 Release: %s
+TAB_SETTINGS,Settings,设置
+SETTINGS_HEADER_TOKENS,Release Platform Tokens,Release 平台令牌
+SETTINGS_DESC_TOKENS,"Configure tokens to enable Release search across release platforms. Tokens are encrypted and shared across all Godot projects on this machine.","配置令牌以启用各平台的 Release 搜索。令牌将加密保存，所有 Godot 项目共享。"
+SETTINGS_PATH_HINT,Storage:,存储位置：
+SETTINGS_CATEGORY_AUTH,Platform Tokens,平台令牌
+SETTINGS_CATEGORY_NETWORK,Network,网络
+SETTINGS_PROXY_ENABLE,Enable Proxy,启用代理
+SETTINGS_PROXY_HOST,Host,地址
+SETTINGS_PROXY_PORT,Port,端口
+TOAST_PROXY_SAVED,Proxy settings saved,代理设置已保存
+SETTINGS_CATEGORY_CACHE,Cache,缓存
+CACHE_SECTION_REPO,Repository Cache,仓库缓存
+CACHE_SECTION_RELEASE,Release Cache,Release 缓存
+CACHE_PATH,Path:,路径：
+BTN_CLEAR_CACHE,Clear Cache,清除缓存
+BTN_CLEARING_CACHE,Clearing...,清除中...
+TOAST_CACHE_CLEARED,Cache cleared,缓存已清除
+SETTINGS_CATEGORY_ABOUT,About,关于
+SETTINGS_LINK_VIEW,View,查看
+ABOUT_PLUGIN_NAME,Plugin,插件名称
+ABOUT_VERSION,Version,版本
+ABOUT_AUTHOR,Author,作者
+ABOUT_DESCRIPTION,Description,说明
+ABOUT_HOMEPAGE,Homepage,主页
+PLATFORM_LINK_TOOLTIP,Click to open the token application page,点击打开令牌申请页面
+TOKEN_PAT_PLACEHOLDER,Personal Access Token,个人访问令牌 (PAT)
+BTN_SAVE,Save,保存
+BTN_CLEAR,Clear,清除
+BTN_VALIDATE,Validate,检测
+BTN_COPY,Copy,复制
+BTN_COPIED,Copied!,已复制
+BTN_DEVICE_FLOW_LOGIN,Login with GitHub,使用 GitHub 登录
+BTN_DEVICE_FLOW_CANCEL,Cancel,取消
+BTN_OPEN_BROWSER,Open Browser,打开浏览器
+BTN_GO_SETTINGS,Go to Settings,前往设置
+STATUS_VALIDATE_NONE,—,—
+STATUS_VALIDATE_NONE_TOOLTIP,No token configured,未配置令牌
+STATUS_VALIDATE_UNKNOWN,?,?
+STATUS_VALIDATE_UNKNOWN_TOOLTIP,Click Validate to test this token,点击「检测」验证此令牌
+STATUS_VALIDATE_PENDING,…,…
+STATUS_VALIDATE_PENDING_TOOLTIP,Validating...,检测中...
+STATUS_VALIDATE_OK,✓,✓
+STATUS_VALIDATE_OK_TOOLTIP,Token is valid,令牌有效
+STATUS_VALIDATE_FAIL,✗,✗
+STATUS_VALIDATE_FAIL_TOOLTIP,Token validation failed,令牌检测失败
+DEVICE_FLOW_DLG_TITLE,GitHub Device Flow Login,GitHub 设备流程登录
+DEVICE_FLOW_DLG_INSTRUCT,Open the URL below in a browser and enter the verification code. Closing this dialog cancels the login.,在浏览器打开下方 URL 并输入验证码。关闭此对话框即视为取消登录。
+DEVICE_FLOW_STATUS_REQUESTING,Requesting device code...,正在请求设备码...
+DEVICE_FLOW_STATUS_WAITING_USER,Waiting for browser authorization...,等待浏览器中授权...
+DEVICE_FLOW_STATUS_FAILED,"Failed: {err}",失败：{err}
+TOAST_TOKEN_SAVED,Token saved,令牌已保存
+TOAST_TOKEN_CLEARED,Token cleared,令牌已清除
+TOAST_TOKEN_EMPTY,Token cannot be empty,Token 不能为空
+TOAST_TOKEN_VALIDATED,Token is valid,令牌有效
+TOAST_TOKEN_INVALID,"Token is invalid (HTTP {code})",令牌无效 (HTTP {code})
+TOAST_USER_CODE_COPIED,Verification code copied,验证码已复制
+TOAST_TOKEN_MISSING_TITLE,Token Required,需要配置 Token
+TOAST_TOKEN_MISSING_BODY,"%s requires an API token to query Releases. Go to Settings to configure it?","%s 需要 API Token 才能查询 Release，是否前往设置进行配置？"
+ERR_TOKEN_NO_CLIENT_ID,OAuth Client ID is empty,OAuth Client ID 为空
+ERR_TOKEN_NETWORK,Network error during authentication,认证过程中网络错误
+ERR_TOKEN_BAD_RESPONSE,Unexpected authentication response,认证响应格式异常
+ERR_TOKEN_DEVICE_CODE,Device code request failed,设备码请求失败
+ERR_TOKEN_EXPIRED,Device code expired{SEP} please try again,设备码已过期，请重试
+ERR_TOKEN_DENIED,Authorization denied by user,用户拒绝授权
+ERR_TOKEN_VALIDATE_NETWORK,Network error during token validation,令牌检测网络错误
+ERR_TOKEN_VALIDATE_HTTP,"API returned HTTP {code}",API 返回 HTTP {code}

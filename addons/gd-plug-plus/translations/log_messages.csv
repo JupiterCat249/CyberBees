@@ -1,0 +1,59 @@
+keys,en,zh_CN
+LOG_PLUGGED_DIR,Plugged dir: %s,仓库缓存目录: %s
+LOG_SEARCH_START,Searching repo: %s,开始搜索仓库: %s
+LOG_SEARCH_DONE,Search complete,搜索完成
+LOG_SOURCE_SCAN_DONE,Repo scan complete,仓库扫描完成
+LOG_RELEASE_SEARCH_START,Querying Release API...,正在查询 Release API...
+LOG_RELEASE_SEARCH_DONE,Release query complete (%d found),Release 查询完成 (%d 个)
+LOG_SEARCH_CANCELLED,Search cancelled,搜索已取消
+LOG_INSTALL_START,Installing %s ...,正在安装 %s ...
+LOG_INSTALL_DONE,Install complete,安装完成
+LOG_INSTALL_CANCELLED,Install cancelled,安装已取消
+LOG_INSTALL_PARTIAL,Install finished with %d failure(s),安装完成，%d 个仓库失败
+LOG_INSTALL_FAILED,Install failed (%d repo(s)),安装失败（%d 个仓库）
+LOG_UPDATE_CANCELLED,Update/switch cancelled,更新/切换已取消
+LOG_CHECK_CANCELLED,Version check cancelled,版本检查已取消
+LOG_REMOTE_QUERY,Querying remote repo %s ...,正在查询远程仓库 %s ...
+LOG_REMOTE_FAILED,Remote query failed: %s,远程查询失败: %s
+LOG_CLONE_START,Cloning %s ...,正在克隆 %s ...
+LOG_CLONE_SUCCESS,Clone succeeded,克隆成功
+LOG_CLONE_FAILED,Clone failed: %s,克隆失败: %s
+LOG_SCAN_START,Scanning repo directory ...,正在扫描仓库目录 ...
+LOG_SCAN_FOUND,Found %d addons,找到 %d 个插件/扩展
+LOG_SCAN_NOT_FOUND,No addon found,未找到插件/扩展
+LOG_CLI_INSTALLING,Installing ...,正在安装 ...
+LOG_CLI_UNINSTALLING,Uninstalling ...,正在卸载 ...
+LOG_CLI_CLEANING,Cleaning ...,正在清理 ...
+LOG_CLI_FINISHED,"Finished, elapsed %.3fs","完成, 耗时 %.3fs"
+LOG_CLI_INSTALLING_PLUGIN,Installing plugin %s ...,正在安装插件 %s ...
+LOG_CLI_DOWNLOAD_OK,Downloaded %s,已下载 %s
+LOG_CLI_DOWNLOAD_FAIL,Failed to download %s,下载失败: %s
+LOG_CLI_INSTALLED_FILES,Installed %d files for %s,已安装 %d 个文件 (%s)
+LOG_CLI_UNINSTALLING_PLUGIN,Uninstalling plugin %s ...,正在卸载插件 %s ...
+LOG_CLI_UNINSTALLED_FILES,Uninstalled %d files for %s,已卸载 %d 个文件 (%s)
+LOG_CLI_ALREADY_PLUGGED,Plugin already plugged: %s,插件已存在: %s
+LOG_CLI_PLUGGED_SUMMARY,Plugged %d plugins,新增 %d 个插件
+LOG_CLI_UNPLUGGED_SUMMARY,Unplugged %d plugins,移除 %d 个插件
+LOG_CLI_INSTALLED_SUMMARY,Installed %d plugins,已安装 %d 个插件
+LOG_CLI_ORPHAN_FOUND,"%d orphan directories found, run ""clean"" to remove","发现 %d 个孤立目录，执行 ""clean"" 可移除"
+LOG_CLI_INVALID_REPO,Invalid repo: %s,无效仓库: %s
+LOG_CLI_INSTALL_FAILED,Failed to install plugin %s (exit=%d),安装插件 %s 失败 (exit=%d)
+LOG_CLI_OVERWRITE_WARN,%s attempting to overwrite %s,%s 尝试覆盖文件 %s
+LOG_CLI_INSTALLING_FILES,Installing files for %s ...,正在安装 %s 的文件 ...
+LOG_CLI_UPGRADING,Upgrading gd-plug ...,正在升级 gd-plug ...
+LOG_CLI_INIT,Initializing gd-plug ...,正在初始化 gd-plug ...
+LOG_CLI_CREATED_FILE,Created %s,已创建 %s
+LOG_CLI_FILE_EXISTS,%s already exists!,%s 已存在!
+LOG_CLI_COMMIT_FROZEN,%s frozen at %s "%s",%s 锁定于 %s "%s"
+LOG_CLI_BEHIND,%s %d commits behind - update required,%s 落后 %d 个提交 - 需要更新
+LOG_CLI_UP_TO_DATE,%s up to date,%s 已是最新
+LOG_CLI_SETTING_CHANGED,%s repository setting changed - update required,%s 仓库设置已变更 - 需要更新
+LOG_CLI_CLONING_FROM,%s cloning from %s ...,%s 正在从 %s 克隆 ...
+LOG_CLI_PULLING,%s pulling updates from %s ...,%s 正在从 %s 拉取更新 ...
+LOG_CLI_REINSTALLING,%s reinstalling ...,%s 正在重新安装 ...
+LOG_CLI_OVERWRITE_ABORT,"Installation of %s terminated to avoid overwriting user files, you may disable safe mode with command ""force""","安装 %s 已终止以避免覆盖用户文件，可使用 ""force"" 命令禁用安全模式"
+LOG_CLI_PLUGIN_DOWNLOADED,Plugin already downloaded,插件已下载
+LOG_CLI_CHANGES,%s changed %s,%s 变更了 %s
+LOG_TOKEN_MIGRATED,Migrated tokens from user:// to global encrypted config,Token 已从 user:// 迁移到全局加密配置
+LOG_TOKEN_LOAD_FAILED,Failed to decrypt tokens (machine ID may have changed){SEP} please re-enter,令牌解密失败（机器 ID 可能变更），请重新填写
+LOG_TOKEN_SAVE_FAILED,Failed to write encrypted token file,写入加密令牌文件失败

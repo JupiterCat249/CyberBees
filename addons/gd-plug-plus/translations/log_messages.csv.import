@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://bor7lbc7ngtp8"
+
+[deps]
+
+files=["res://addons/gd-plug-plus/translations/log_messages.en.translation", "res://addons/gd-plug-plus/translations/log_messages.zh_CN.translation"]
+
+source_file="res://addons/gd-plug-plus/translations/log_messages.csv"
+dest_files=["res://addons/gd-plug-plus/translations/log_messages.en.translation", "res://addons/gd-plug-plus/translations/log_messages.zh_CN.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

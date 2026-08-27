@@ -1,0 +1,15 @@
+[
+	{
+		"url": "https://github.com/nathanhoad/godot_dialogue_manager",
+		"addons": [
+			{
+				"name": "Dialogue Manager",
+				"description": "A powerful nonlinear dialogue system",
+				"addon_dir": "addons/dialogue_manager",
+				"author": "Nathan Hoad",
+				"type": "plugin",
+				"branch": "main"
+			}
+		]
+	}
+]

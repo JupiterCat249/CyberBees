@@ -1,0 +1,11 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# dsh-godot plugin / Python service
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.dsh_godot/
