@@ -1,4 +1,4 @@
-extends CanvasLayer
+extends Control
 ## UI 层：监听 state_changed 更新状态标签。
 
 func update_status(selected_cell: Vector2i, current_player: String) -> void:
