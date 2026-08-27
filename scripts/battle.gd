@@ -12,10 +12,11 @@ func _ready() -> void:
 	board.cell_selected.connect(_on_cell_selected)
 	GameState.unit_deployed.connect(_on_unit_deployed)
 	GameState.unit_moved.connect(_on_unit_moved)
+	GameState.unit_damaged.connect(_on_unit_damaged)
 	GameState.state_changed.connect(ui.update_status)
 
 func _on_cell_selected(cell: Vector2i) -> void:
-	var id := GameState.unit_at(cell)
+	var id: int = GameState.unit_at(cell)
 	if id >= 0:
 		# 点在已有单位：若处于移动态且在范围则移动，否则选中
 		if GameState.selected_unit_id >= 0 and cell in GameState.move_range:
@@ -32,7 +33,7 @@ func _on_cell_selected(cell: Vector2i) -> void:
 		GameState.select(cell)
 
 func _on_unit_deployed(id: int, cell: Vector2i, faction: String) -> void:
-	var u := BeeUnit.new()
+	var u: BeeUnit = BeeUnit.new()
 	u.setup(id, faction, cell, GameState.DEF_ATK, GameState.DEF_HP)
 	_unit_nodes[id] = u
 	units_layer.add_child(u)
@@ -40,3 +41,8 @@ func _on_unit_deployed(id: int, cell: Vector2i, faction: String) -> void:
 func _on_unit_moved(id: int, cell: Vector2i) -> void:
 	if _unit_nodes.has(id):
 		_unit_nodes[id].move_to(cell)
+
+
+func _on_unit_damaged(id: int, hp: int) -> void:
+	if _unit_nodes.has(id):
+		_unit_nodes[id].set_hp(hp)

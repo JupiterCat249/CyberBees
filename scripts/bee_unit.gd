@@ -50,6 +50,12 @@ func move_to(c: Vector2i) -> void:
 		_apply()
 
 
+func set_hp(h: int) -> void:
+	hp = h
+	if is_inside_tree():
+		_apply()
+
+
 func _apply() -> void:
 	if _rect == null:
 		return
