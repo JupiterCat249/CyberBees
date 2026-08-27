@@ -1,8 +1,6 @@
 @tool
 extends GridContainer
-## 棋盘容器节点：由 16 个显式的 BoardCell（格子节点）子节点组成（"一切皆节点"）。
-## 本节点只负责：分配共享 ButtonGroup（单选）+ 汇总各格子的 cell_selected 信号。
-## 边界：T4 无物理、T5 鼠标（Button 自带）、D6 上红下绿、D7 自绘样式盒。
+## 棋盘容器节点：由 16 个显式 BoardCell(Button) 格子节点组成；仅做 ButtonGroup 单选 + 汇总信号 + 范围高亮。
 
 signal cell_selected(cell: Vector2i)
 
@@ -14,9 +12,31 @@ func _ready() -> void:
 	columns = COLS
 	for child in get_children():
 		if child is BoardCell:
-			var cell: BoardCell = child
-			cell.button_group = _group
-			cell.cell_selected.connect(_on_cell_selected)
+			child.button_group = _group
+			child.cell_selected.connect(_on_cell_selected)
 
 func _on_cell_selected(cell: Vector2i) -> void:
 	cell_selected.emit(cell)
+
+## 高亮 可移动/可攻击/选中 格子（由 Battle 在 ranges_changed 时调用）
+func set_ranges(move_cells: Array, attack_cells: Array, selected_cell: Vector2i) -> void:
+	for child in get_children():
+		if child is BoardCell:
+			child.set_range("")
+	for cell in move_cells:
+		var c := _cell_at(cell)
+		if c:
+			c.set_range("move")
+	for cell in attack_cells:
+		var c := _cell_at(cell)
+		if c:
+			c.set_range("attack")
+	var sc := _cell_at(selected_cell)
+	if sc:
+		sc.set_range("selected")
+
+func _cell_at(cell: Vector2i) -> BoardCell:
+	for child in get_children():
+		if child is BoardCell and child.cell == cell:
+			return child
+	return null
