@@ -92,4 +92,11 @@ offset_left = 14.0
 offset_top = 10.0
 offset_right = 460.0
 offset_bottom = 38.0
-text = "回合: 绿方   (绿方空格=部署兵蜂; 点单位=选中; 再点高亮格=移动)"
+text = ""
+
+[node name="Hand" type="HBoxContainer" parent="UILayer"]
+offset_left = 14.0
+offset_top = 460.0
+offset_right = 480.0
+offset_bottom = 510.0
+theme_override_constants/separation = 8

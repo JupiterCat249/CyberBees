@@ -101,6 +101,48 @@ func _random_card() -> Dictionary:
 		return {"type": "command_burn", "name": "指令·灼烧", "cost": 1}
 
 
+# ---------- 出牌（检查点3：手牌/扣费/指令） ----------
+
+func play_card(index: int, target_cell: Vector2i = Vector2i(-1, -1)) -> bool:
+	if index < 0 or index >= hand.size():
+		return false
+	if phase == Phase.REFUND:
+		return false
+	var card: Dictionary = hand[index]
+	if not spend(card["cost"]):
+		return false
+	if card["type"] == "unit_bee":
+		var cell := target_cell if target_cell.x >= 0 else _find_free_green()
+		if cell.x < 0 or not is_cell_free(cell):
+			return false
+		deploy_unit(cell, GREEN)
+	else:  # command_burn：直伤
+		var tcell := target_cell if target_cell.x >= 0 else _find_enemy()
+		var tid: int = unit_at(tcell)
+		if tid >= 0:
+			units[tid]["hp"] -= card["cost"] * 2   # 指令灼烧：伤害 = 费用×2
+			unit_damaged.emit(tid, units[tid]["hp"])
+	hand.remove_at(index)
+	state_changed.emit()
+	return true
+
+
+func _find_free_green() -> Vector2i:
+	for r in [2, 3]:
+		for c in BOARD_COLS:
+			var cell := Vector2i(r, c)
+			if is_cell_free(cell):
+				return cell
+	return Vector2i(-1, -1)
+
+
+func _find_enemy() -> Vector2i:
+	for id in units:
+		if units[id]["faction"] != current_player:
+			return units[id]["cell"]
+	return Vector2i(-1, -1)
+
+
 # ---------- 网格战斗（检查点2） ----------
 
 func deploy_unit(cell: Vector2i, faction: String) -> int:
