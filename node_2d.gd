@@ -1,3 +1,4 @@
+@tool
 extends Node2D
 
 # 电子蜂 战斗棋盘骨架（Godot 迭代001 · 检查点1）
