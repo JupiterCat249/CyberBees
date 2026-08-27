@@ -1,7 +1,7 @@
 extends Node2D
 ## 战斗场景根节点：通过信号接线（Board → GameState → UI），体现"一切皆节点 + 信号通信"。
 
-@onready var board: Node2D = $Board
+@onready var board: GridContainer = $Board
 @onready var game_state: Node = $GameState
 @onready var ui: CanvasLayer = $UI
 
