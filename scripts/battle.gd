@@ -14,6 +14,7 @@ func _ready() -> void:
 	GameState.unit_moved.connect(_on_unit_moved)
 	GameState.unit_damaged.connect(_on_unit_damaged)
 	GameState.state_changed.connect(ui.update_status)
+	ui.update_status()   # 初始化状态标签（Autoload 在场景_ready前已发 start_turn 的 state_changed）
 
 func _on_cell_selected(cell: Vector2i) -> void:
 	var id: int = GameState.unit_at(cell)
