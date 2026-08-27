@@ -1,7 +1,8 @@
 extends Node
 ## 全局游戏状态单例（Autoload）：战斗状态 + 事件总线。
-## 覆盖：网格部署/移动/攻击(检查点2) + 费用/回合/阶段/手牌(检查点3)。
-## 边界：T4 无物理(曼哈顿)、T6 2D、D6 4×4、D1 蜂主题、T8 费用上限10/第7回合回费+2。
+## 覆盖：节点化棋盘 / 网格部署移动攻击 / 费用回合阶段手牌 (检查点1-3)。
+## 交互状态机（IMode）：IDLE→(点卡)DEPLOY→confirm_place；IDLE→(点己方单位)UNIT_ACTION→confirm_move/confirm_attack。
+## 边界：T4 无物理(曼哈顿)、T5 鼠标、T8 费用上限10/第7回合+2、D6 4×4、D1 蜂。
 
 signal unit_deployed(unit_id: int, cell: Vector2i, faction: String)
 signal unit_moved(unit_id: int, cell: Vector2i)
@@ -12,6 +13,7 @@ signal cost_changed(cost: int)
 signal state_changed
 
 enum Phase { REFUND, DEPLOY, ACTION }
+enum IMode { IDLE, DEPLOY, UNIT_ACTION }
 
 const BOARD_ROWS := 4
 const BOARD_COLS := 4
@@ -21,23 +23,25 @@ const DEF_ATK := 2
 const DEF_HP := 4
 const DEF_MOVE := 2
 const DEF_ATK_RANGE := 1
-const MAX_COST := 10        # T8 费用上限
-const HAND_SIZE := 4        # 手牌补至4
-const BASE_REFUND := 2      # 每回合基础回费
-const EXTRA_REFUND_7 := 2   # T8 第7回合起回费阶段额外+2
+const MAX_COST := 10
+const HAND_SIZE := 4
+const BASE_REFUND := 2
+const EXTRA_REFUND_7 := 2
 
 var current_player := GREEN
 var next_id := 1
+var turn_number := 1
+var phase: Phase = Phase.REFUND
+var cost := 0
+var hand: Array = []
+
+var mode: IMode = IMode.IDLE
+var selected_card_index := -1
 var selected_unit_id := -1
 var selected_cell := Vector2i(-1, -1)
 var move_range: Array[Vector2i] = []
+var acted_unit_ids := {}   # 本回合已行动过的单位
 
-var turn_number := 1
-var phase: Phase = Phase.REFUND
-var cost := 0               # 当前回合可用费用
-var hand: Array = []        # 手牌（Dictionary: {type, name, cost}）
-
-# units[id] = {cell, faction, atk, hp, move_range, atk_range}
 var units := {}
 
 
@@ -48,9 +52,11 @@ func _ready() -> void:
 # ---------- 回合 / 费用 / 阶段 ----------
 
 func start_turn() -> void:
-	var refund: int = BASE_REFUND + (EXTRA_REFUND_7 if turn_number >= 7 else 0)  # T8
+	var refund: int = BASE_REFUND + (EXTRA_REFUND_7 if turn_number >= 7 else 0)
 	cost = maxi(0, mini(cost + refund, MAX_COST))
 	phase = Phase.REFUND
+	acted_unit_ids = {}
+	_clear_interaction()
 	draw_to_hand(HAND_SIZE)
 	phase_changed.emit(phase, turn_number)
 	cost_changed.emit(cost)
@@ -84,7 +90,6 @@ func spend(card_cost: int) -> bool:
 		return false
 	cost -= card_cost
 	cost_changed.emit(cost)
-	state_changed.emit()
 	return true
 
 
@@ -101,49 +106,98 @@ func _random_card() -> Dictionary:
 		return {"type": "command_burn", "name": "指令·灼烧", "cost": 1}
 
 
-# ---------- 出牌（检查点3：手牌/扣费/指令） ----------
+# ---------- 交互状态机（检查点：实机交互按设计） ----------
 
-func play_card(index: int, target_cell: Vector2i = Vector2i(-1, -1)) -> bool:
+func select_card(index: int) -> bool:
 	if index < 0 or index >= hand.size():
+		return false
+	var card: Dictionary = hand[index]
+	if card["type"] != "unit_bee":
 		return false
 	if phase == Phase.REFUND:
 		return false
-	var card: Dictionary = hand[index]
-	if not spend(card["cost"]):
-		return false
-	if card["type"] == "unit_bee":
-		var cell := target_cell if target_cell.x >= 0 else _find_free_green()
-		if cell.x < 0 or not is_cell_free(cell):
-			return false
-		deploy_unit(cell, GREEN)
-	else:  # command_burn：直伤
-		var tcell := target_cell if target_cell.x >= 0 else _find_enemy()
-		var tid: int = unit_at(tcell)
-		if tid >= 0:
-			units[tid]["hp"] -= card["cost"] * 2   # 指令灼烧：伤害 = 费用×2
-			unit_damaged.emit(tid, units[tid]["hp"])
-	hand.remove_at(index)
+	selected_card_index = index
+	mode = IMode.DEPLOY
 	state_changed.emit()
 	return true
 
 
-func _find_free_green() -> Vector2i:
-	for r in [2, 3]:
-		for c in BOARD_COLS:
-			var cell := Vector2i(r, c)
-			if is_cell_free(cell):
-				return cell
-	return Vector2i(-1, -1)
+func select_unit(cell: Vector2i) -> bool:
+	var id: int = unit_at(cell)
+	if id < 0:
+		return false
+	if units[id]["faction"] != current_player:
+		return false
+	if acted_unit_ids.has(id):
+		return false
+	selected_unit_id = id
+	selected_cell = cell
+	move_range = _compute_move_range(cell, units[id]["move_range"])
+	mode = IMode.UNIT_ACTION
+	state_changed.emit()
+	return true
 
 
-func _find_enemy() -> Vector2i:
-	for id in units:
-		if units[id]["faction"] != current_player:
-			return units[id]["cell"]
-	return Vector2i(-1, -1)
+func confirm_place(cell: Vector2i) -> bool:
+	if mode != IMode.DEPLOY or selected_card_index < 0:
+		return false
+	var card: Dictionary = hand[selected_card_index]
+	if not is_cell_free(cell) or cell.y < 2:            # 兵蜂必须部署在绿方领地(下半)
+		_clear_interaction()
+		return false
+	if not spend(card["cost"]):
+		return false
+	var id := deploy_unit(cell, GREEN)
+	hand.remove_at(selected_card_index)
+	_clear_interaction()
+	unit_deployed.emit(id, cell, GREEN)
+	state_changed.emit()
+	return true
 
 
-# ---------- 网格战斗（检查点2） ----------
+func confirm_move(cell: Vector2i) -> bool:
+	if mode != IMode.UNIT_ACTION or selected_unit_id < 0:
+		return false
+	if cell not in move_range or not is_cell_free(cell):
+		return false
+	units[selected_unit_id]["cell"] = cell
+	acted_unit_ids[selected_unit_id] = true
+	unit_moved.emit(selected_unit_id, cell)
+	_clear_interaction()
+	state_changed.emit()
+	return true
+
+
+func confirm_attack(cell: Vector2i) -> bool:
+	if mode != IMode.UNIT_ACTION or selected_unit_id < 0:
+		return false
+	var tid: int = unit_at(cell)
+	if tid < 0 or units[tid]["faction"] == current_player:
+		return false
+	var dist: int = abs(cell.x - selected_cell.x) + abs(cell.y - selected_cell.y)
+	if dist > units[selected_unit_id]["atk_range"]:
+		return false
+	_combat(selected_unit_id, tid)
+	acted_unit_ids[selected_unit_id] = true
+	_clear_interaction()
+	state_changed.emit()
+	return true
+
+
+func cancel() -> void:
+	_clear_interaction()
+	state_changed.emit()
+
+
+func _clear_interaction() -> void:
+	mode = IMode.IDLE
+	selected_card_index = -1
+	selected_unit_id = -1
+	selected_cell = Vector2i(-1, -1)
+	move_range = []
+
+
+# ---------- 网格战斗 ----------
 
 func deploy_unit(cell: Vector2i, faction: String) -> int:
 	if not _in_board(cell) or not is_cell_free(cell):
@@ -154,8 +208,6 @@ func deploy_unit(cell: Vector2i, faction: String) -> int:
 		"cell": cell, "faction": faction, "atk": DEF_ATK, "hp": DEF_HP,
 		"move_range": DEF_MOVE, "atk_range": DEF_ATK_RANGE,
 	}
-	unit_deployed.emit(id, cell, faction)
-	state_changed.emit()
 	return id
 
 
@@ -170,50 +222,13 @@ func is_cell_free(cell: Vector2i) -> bool:
 	return _in_board(cell) and unit_at(cell) < 0
 
 
-func select(cell: Vector2i) -> void:
-	var id: int = unit_at(cell)
-	if id >= 0:
-		selected_unit_id = id
-		selected_cell = cell
-		move_range = _compute_move_range(cell, units[id]["move_range"])
-	else:
-		selected_unit_id = -1
-		selected_cell = cell
-		move_range = []
-	selection_changed.emit(cell)
-	state_changed.emit()
-
-
-func try_move(from_cell: Vector2i, to_cell: Vector2i) -> bool:
-	var id: int = unit_at(from_cell)
-	if id < 0:
-		return false
-	if to_cell not in move_range or not is_cell_free(to_cell):
-		return false
-	units[id]["cell"] = to_cell
-	unit_moved.emit(id, to_cell)
-	selected_unit_id = -1
-	selected_cell = Vector2i(-1, -1)
-	move_range = []
-	state_changed.emit()
-	return true
-
-
-func attack(attacker_cell: Vector2i, target_cell: Vector2i) -> bool:
-	var aid: int = unit_at(attacker_cell)
-	var tid: int = unit_at(target_cell)
-	if aid < 0 or tid < 0 or aid == tid:
-		return false
-	if abs(target_cell.x - attacker_cell.x) + abs(target_cell.y - attacker_cell.y) > units[aid]["atk_range"]:
-		return false
-	var dmg: int = units[aid]["atk"]
-	units[tid]["hp"] -= dmg
-	unit_damaged.emit(tid, units[tid]["hp"])
-	var counter: int = units[tid]["atk"]
-	units[aid]["hp"] -= counter
-	unit_damaged.emit(aid, units[aid]["hp"])
-	state_changed.emit()
-	return true
+func _combat(attacker_id: int, defender_id: int) -> void:
+	var dmg: int = units[attacker_id]["atk"]
+	units[defender_id]["hp"] -= dmg
+	unit_damaged.emit(defender_id, units[defender_id]["hp"])
+	var counter: int = units[defender_id]["atk"]
+	units[attacker_id]["hp"] -= counter
+	unit_damaged.emit(attacker_id, units[attacker_id]["hp"])
 
 
 func _in_board(cell: Vector2i) -> bool:

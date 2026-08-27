@@ -1,16 +1,19 @@
 extends Control
-## UI 层：监听全局 GameState(Autoload) 的 state_changed 信号，更新 回合/阶段/费用/手牌 状态，并渲染手牌区。
+## UI 层：监听全局 GameState(Autoload) 的 state_changed 信号，更新 回合/阶段/费用/手牌 状态 + 交互提示，并渲染手牌区。
 
 @onready var hand_box: HBoxContainer = $Hand
 
 func update_status() -> void:
 	var label: Label = $StatusLabel
 	var phase_name: String = ["回费", "部署", "行动"][GameState.phase]
-	var sel_info := ""
-	if GameState.selected_unit_id >= 0:
-		var u: Dictionary = GameState.units[GameState.selected_unit_id]
-		sel_info = "  选中#%d(%d,%d)HP=%d" % [GameState.selected_unit_id, GameState.selected_cell.x, GameState.selected_cell.y, u["hp"]]
-	label.text = "回合%d [%s] 费用%d/%d 手牌%d%s" % [GameState.turn_number, phase_name, GameState.cost, GameState.MAX_COST, GameState.hand.size(), sel_info]
+	var hint := ""
+	if GameState.mode == GameState.IMode.DEPLOY:
+		hint = "  [选卡: 点绿格放置兵蜂]"
+	elif GameState.mode == GameState.IMode.UNIT_ACTION:
+		hint = "  [选中单位: 点高亮格移动/点敌人攻击]"
+	else:
+		hint = "  [点兵蜂卡部署; 点己方单位行动]"
+	label.text = "回合%d [%s] 费用%d/%d 手牌%d%s" % [GameState.turn_number, phase_name, GameState.cost, GameState.MAX_COST, GameState.hand.size(), hint]
 	_refresh_hand()
 
 
@@ -27,4 +30,4 @@ func _refresh_hand() -> void:
 
 
 func _on_card_pressed(index: int) -> void:
-	GameState.play_card(index)
+	GameState.select_card(index)
