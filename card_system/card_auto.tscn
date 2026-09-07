@@ -1,0 +1,63 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://card_system/card_auto.gd" id="1_scr"]
+[ext_resource type="Shader" path="res://card_system/card_auto.gdshader" id="2_sh"]
+[ext_resource type="Texture2D" path="res://card_system/card_atlas.png" id="3_atlas"]
+[ext_resource type="Texture2D" path="res://card_system/art/卡牌d1-巡航导弹.png" id="4_art"]
+
+[sub_resource type="ShaderMaterial" id="sm_card"]
+resource_local_to_scene = true
+render_priority = 0
+shader = ExtResource("2_sh")
+shader_parameter/atlas_tex = ExtResource("3_atlas")
+shader_parameter/art_tex = ExtResource("4_art")
+shader_parameter/tag_tex = null
+shader_parameter/art_size = Vector2(500, 500)
+shader_parameter/tag_size = Vector2(1, 1)
+shader_parameter/has_art = 1
+shader_parameter/tag_mode = 0
+shader_parameter/art_fit = 1
+shader_parameter/art_zoom = 1.0
+shader_parameter/cost_num = 6
+shader_parameter/num_l1 = 5
+shader_parameter/num_l2 = -1
+shader_parameter/num_r1 = -1
+shader_parameter/num_r2 = 3
+shader_parameter/icon_l1 = 0
+shader_parameter/icon_l2 = 1
+shader_parameter/icon_r1 = 2
+shader_parameter/icon_r2 = 3
+shader_parameter/icon_tag = 6
+shader_parameter/col_base = Color(1, 1, 1, 1)
+shader_parameter/col_cell = Color(0.8, 0.8, 0.8, 1)
+shader_parameter/col_band = Color(0.56, 0.56, 0.56, 1)
+shader_parameter/col_cost_bg = Color(0.16, 0.16, 0.16, 1)
+shader_parameter/col_cost_num = Color(0.96, 0.62, 0.04, 1)
+shader_parameter/col_num = Color(0.3, 0.3, 0.3, 1)
+shader_parameter/col_icon = Color(0.42, 0.42, 0.42, 1)
+shader_parameter/col_tag_bg = Color(0.55, 0.55, 0.55, 1)
+shader_parameter/col_tag_icon = Color(0.78, 0.78, 0.78, 1)
+shader_parameter/col_center = Color(0.93, 0.93, 0.93, 1)
+shader_parameter/col_stripe = Color(0.87, 0.87, 0.87, 1)
+shader_parameter/icon_scale = 0.74
+shader_parameter/tag_icon_scale = 0.78
+
+[node name="Card" type="Node2D"]
+script = ExtResource("1_scr")
+cost = 6
+stat_l1 = 5
+stat_l2 = -1
+stat_r1 = -1
+stat_r2 = 3
+icon_l1 = 0
+icon_l2 = 1
+icon_r1 = 2
+icon_r2 = 3
+icon_tag = 6
+art = ExtResource("4_art")
+
+[node name="Rect" type="ColorRect" parent="."]
+material = SubResource("sm_card")
+offset_right = 250.0
+offset_bottom = 250.0
+mouse_filter = 2
