@@ -16,6 +16,9 @@ const ATLAS_CELL := 96.0
 const DIGIT_Y := 4.0
 const DIGIT_H := 88.0
 const DIGW := [0.7021, 0.4239, 0.6522, 0.617, 0.7667, 0.6196, 0.6809, 0.7111, 0.6915, 0.6809]
+## 背景资源（card-system 未提供，属"补充"）——必须位于框架 Holder 内、骨架棋盘之上、单位之下
+const MAP_TERRAIN := preload("res://assets/background/map_terrain.png")
+const MAP_GRID := preload("res://assets/background/map_grid.png")
 
 # ---------------- 设计坐标（与 battle_ui.gdshader 常量一致） ----------------
 const MAP_ORIGIN := Vector2(460.0, 40.0)
@@ -102,6 +105,9 @@ var help_on := false
 # ---------------- 节点 ----------------
 var _holder: Node2D
 var _overlay: Node2D
+var _bg_layer: Node2D
+var _fx_layer: Node2D
+var _bg_map: Node2D
 var _cards_node: Node2D
 var _units_node: Node2D
 var _hl_node: Node2D
@@ -122,6 +128,10 @@ func _ready() -> void:
 	# 文字层 Overlay 已在编辑器中建好（根下直系，随场景保存）；
 	# 运行时把它的缩放/位置同步为框架 Holder 的同一系数，保证等比不漂移。
 	_overlay = get_node_or_null("Overlay") as Node2D
+	_bg_layer = get_node_or_null("BgLayer") as Node2D
+	_fx_layer = get_node_or_null("FxLayer") as Node2D
+	# 背景：棋盘底图 + 格子（补在骨架棋盘之上、卡牌/单位之下）
+	_build_map_bg()
 	_cards_node = _mk("HandCards")
 	_units_node = _mk("Units")
 	_hl_node = _mk("Highlights")
@@ -141,12 +151,40 @@ func _mk(n: String) -> Node2D:
 	return x
 
 
-## Overlay（编辑器中创建的文字层容器）跟随框架 Holder 的等比缩放/居中
+## 文字层 / 背景层 / 特效层：跟随框架 Holder 的等比缩放与居中（任何窗口都不变形）
 func _sync_overlay() -> void:
-	if _overlay == null or _holder == null:
+	if _holder == null:
 		return
-	_overlay.scale = _holder.scale
-	_overlay.position = _holder.position
+	for n in [_overlay, _bg_layer, _fx_layer]:
+		var nd := n as Node2D
+		if nd != null:
+			nd.scale = _holder.scale
+			nd.position = _holder.position
+
+
+## 棋盘底图 + 格子：属 card-system 未提供的「背景」，补在骨架棋盘之上、卡牌/单位之下
+func _build_map_bg() -> void:
+	if _holder == null:
+		return
+	var bg := Node2D.new()
+	bg.name = "MapBg"
+	_holder.add_child(bg)
+	# 骨架 Rect 在 index 0；移到 1 = 盖住骨架棋盘，同时被其后的卡牌/单位盖住
+	if _holder.get_child_count() > 1:
+		_holder.move_child(bg, 1)
+	var terrain := Sprite2D.new()
+	terrain.name = "Terrain"
+	terrain.texture = MAP_TERRAIN
+	terrain.centered = false
+	terrain.position = MAP_ORIGIN
+	bg.add_child(terrain)
+	var grid := Sprite2D.new()
+	grid.name = "Grid"
+	grid.texture = MAP_GRID
+	grid.centered = false
+	grid.position = MAP_ORIGIN
+	bg.add_child(grid)
+	_bg_map = bg
 
 
 # ============================================================

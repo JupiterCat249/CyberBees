@@ -2,9 +2,18 @@
 
 [ext_resource type="Script" uid="uid://4spctfmf1s7r" path="res://scenes/battle_flow.gd" id="1_u25sk"]
 [ext_resource type="PackedScene" path="res://card-system/card_system/battle_ui.tscn" id="1_ui"]
+[ext_resource type="Texture2D" uid="uid://dyffhibh3y4pl" path="res://assets/background/bg_blurred.png" id="2_b5gog"]
+[ext_resource type="Texture2D" uid="uid://bdcjm7o7232sw" path="res://assets/background/bg_filter_tile.png" id="4_nay0s"]
 
 [node name="Battle" type="Node2D" unique_id=1837945616]
 script = ExtResource("1_u25sk")
+
+[node name="BgLayer" type="Node2D" parent="." unique_id=355388199]
+
+[node name="BgBlur" type="TextureRect" parent="BgLayer" unique_id=1579240981]
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("2_b5gog")
 
 [node name="BattleUI" parent="." unique_id=1818800244 instance=ExtResource("1_ui")]
 
@@ -25,3 +34,14 @@ script = ExtResource("1_u25sk")
 [node name="StatRange" type="Label" parent="Overlay" unique_id=1824496848]
 
 [node name="HelpText" type="Label" parent="Overlay" unique_id=1656724361]
+
+[node name="FxLayer" type="Node2D" parent="." unique_id=6863796]
+
+[node name="BgFilter" type="TextureRect" parent="FxLayer" unique_id=1563674030]
+modulate = Color(1, 1, 1, 0.1)
+texture_repeat = 1
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("4_nay0s")
+expand_mode = 1
+stretch_mode = 1
