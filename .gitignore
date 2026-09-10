@@ -12,3 +12,6 @@ __pycache__/
 
 # Godot temp backups
 *~*
+
+# card-system 分支(独立 worktree)
+/card-system/
