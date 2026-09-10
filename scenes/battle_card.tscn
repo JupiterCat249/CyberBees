@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://dmc4h2xendjpo"]
 
+[ext_resource type="Script" uid="uid://4spctfmf1s7r" path="res://scenes/battle_flow.gd" id="1_u25sk"]
 [ext_resource type="PackedScene" path="res://card-system/card_system/battle_ui.tscn" id="1_ui"]
-[ext_resource type="Script" path="res://scenes/battle_card.gd" id="2_scr"]
 
-[node name="BattleCard" type="Node2D"]
-script = ExtResource("2_scr")
+[node name="BattleCard" type="Node2D" unique_id=1437656409]
+script = ExtResource("1_u25sk")
 
-[node name="BattleUI" parent="." instance=ExtResource("1_ui")]
+[node name="BattleUI" parent="." unique_id=1337618576 instance=ExtResource("1_ui")]
