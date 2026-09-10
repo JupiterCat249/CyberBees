@@ -3,7 +3,33 @@
 [ext_resource type="Script" uid="uid://4spctfmf1s7r" path="res://scenes/battle_flow.gd" id="1_u25sk"]
 [ext_resource type="PackedScene" path="res://card-system/card_system/battle_ui.tscn" id="1_ui"]
 
-[node name="BattleCard" type="Node2D" unique_id=1437656409]
+[node name="Battle" type="Node2D" unique_id=1837945616]
 script = ExtResource("1_u25sk")
 
-[node name="BattleUI" parent="." unique_id=1337618576 instance=ExtResource("1_ui")]
+[node name="BattleUI" parent="." unique_id=1818800244 instance=ExtResource("1_ui")]
+
+[node name="Overlay" type="Node2D" parent="." unique_id=1901149892]
+
+[node name="CostGreen" type="Label" parent="Overlay" unique_id=80328861]
+
+[node name="CostRed" type="Label" parent="Overlay" unique_id=548373394]
+
+[node name="InfoBar" type="Label" parent="Overlay" unique_id=1556655212]
+
+[node name="BtnText" type="Label" parent="Overlay" unique_id=1693760460]
+
+[node name="LogText" type="Label" parent="Overlay" unique_id=1317436002]
+
+[node name="GreenSide" type="Label" parent="Overlay" unique_id=1362088620]
+
+[node name="RedSide" type="Label" parent="Overlay" unique_id=534584878]
+
+[node name="StatAtk" type="Label" parent="Overlay" unique_id=890945234]
+
+[node name="StatDef" type="Label" parent="Overlay" unique_id=1123878607]
+
+[node name="StatSpd" type="Label" parent="Overlay" unique_id=2142849373]
+
+[node name="StatRange" type="Label" parent="Overlay" unique_id=1824496848]
+
+[node name="HelpText" type="Label" parent="Overlay" unique_id=1656724361]

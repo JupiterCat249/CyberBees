@@ -93,15 +93,25 @@ var _units_node: Node2D
 var _text_node: Node2D
 var _hl_node: Node2D
 var _detail_node: Node2D
+var _overlay: Node2D
 var _hand_nodes := {"green": [], "red": []}
 var _unit_nodes := {}
 var _labels := {}
 
 
 func _ready() -> void:
-	var ui: Node = UI_SCENE.instantiate()
-	add_child(ui)
+	# 框架场景(battle_ui)由编辑器实例化在本场景下（编辑器内可观察）；
+	# 代码只取用它的 Holder 容器，不再重复实例化。
+	var ui: Node = get_node_or_null("BattleUI")
+	if ui == null:
+		ui = UI_SCENE.instantiate()
+		add_child(ui)
 	_holder = ui.get_node("Holder")
+	# 文字层 Overlay 已在编辑器中建好（根下直系，随场景保存）；
+	# 运行时把它的缩放/位置同步为框架 Holder 的同一系数，保证等比不漂移。
+	_overlay = get_node_or_null("Overlay") as Node2D
+	get_window().size_changed.connect(_sync_overlay)
+	_sync_overlay()
 	_cards_node = _mk("HandCards")
 	_units_node = _mk("Units")
 	_text_node = _mk("Texts")
@@ -117,6 +127,14 @@ func _mk(n: String) -> Node2D:
 	x.name = n
 	_holder.add_child(x)
 	return x
+
+
+## Overlay（编辑器中创建的文字层容器）跟随框架 Holder 的等比缩放/居中
+func _sync_overlay() -> void:
+	if _overlay == null or _holder == null:
+		return
+	_overlay.scale = _holder.scale
+	_overlay.position = _holder.position
 
 
 # ============================================================
@@ -719,20 +737,42 @@ func _render_detail() -> void:
 # 文字层
 # ============================================================
 func _build_texts() -> void:
-	_labels["gcost"] = _mk_label(HEX_L, 40, Color(0.14, 0.14, 0.14), 1)
-	_labels["rcost"] = _mk_label(HEX_R, 40, Color(0.14, 0.14, 0.14), 1)
-	_labels["info"] = _mk_label(Vector2(452.0, 4.0), 26, Color(1, 1, 1), 0)
-	_labels["btn"] = _mk_label(BTN_MAIN + Vector2(250.0, 26.0), 34, Color(0.14, 0.14, 0.14), 1)
-	_labels["gs"] = _mk_label(Vector2(120.0, 146.0), 22, Color(0.78, 1.0, 0.80), 0)
-	_labels["rs"] = _mk_label(Vector2(1576.0, 146.0), 22, Color(1.0, 0.80, 0.80), 0)
+	# 文字节点已由编辑器创建在 BattleUI/Holder 下（场景内可观察）；
+	# 代码只负责"查找 + 设置样式/文本"，不再重复新建。
+	_bind("gcost", "CostGreen", HEX_L, 40, Color(0.14, 0.14, 0.14), 1)
+	_bind("rcost", "CostRed", HEX_R, 40, Color(0.14, 0.14, 0.14), 1)
+	_bind("info", "InfoBar", Vector2(452.0, 4.0), 26, Color(1, 1, 1), 0)
+	_bind("btn", "BtnText", BTN_MAIN + Vector2(250.0, 26.0), 34, Color(0.14, 0.14, 0.14), 1)
+	_bind("gs", "GreenSide", Vector2(120.0, 146.0), 22, Color(0.78, 1.0, 0.80), 0)
+	_bind("rs", "RedSide", Vector2(1576.0, 146.0), 22, Color(1.0, 0.80, 0.80), 0)
+	_bind("st0", "StatAtk", Vector2(STAT_X + 26.0, STAT_Y0 - 16.0), 30, Color(1, 1, 1), 0)
+	_bind("st1", "StatDef", Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY - 16.0), 30, Color(1, 1, 1), 0)
+	_bind("st2", "StatSpd", Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY * 2 - 16.0), 30, Color(1, 1, 1), 0)
+	_bind("st3", "StatRange", Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY * 3 - 16.0), 30, Color(1, 1, 1), 0)
+	_bind("log", "LogText", Vector2(1494.0, 674.0), 17, Color(0.86, 0.86, 0.86), 0)
 	_labels["gname"] = _mk_label(Vector2(60.0, 58.0), 20, Color(0.10, 0.10, 0.10), 1)
 	_labels["rname"] = _mk_label(Vector2(1516.0, 58.0), 20, Color(0.10, 0.10, 0.10), 1)
-	_labels["st0"] = _mk_label(Vector2(STAT_X + 26.0, STAT_Y0 - 16.0), 30, Color(1, 1, 1), 0)
-	_labels["st1"] = _mk_label(Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY - 16.0), 30, Color(1, 1, 1), 0)
-	_labels["st2"] = _mk_label(Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY * 2 - 16.0), 30, Color(1, 1, 1), 0)
-	_labels["st3"] = _mk_label(Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY * 3 - 16.0), 30, Color(1, 1, 1), 0)
-	_labels["log"] = _mk_label(Vector2(1494.0, 674.0), 17, Color(0.86, 0.86, 0.86), 0)
-	_labels["help"] = _mk_label(Vector2(452.0, 120.0), 20, Color(1.0, 0.95, 0.75), 0)
+	_bind("help", "HelpText", Vector2(452.0, 120.0), 20, Color(1.0, 0.95, 0.75), 0)
+
+
+## 绑定编辑器中已存在的文字节点（缺失时回退为代码创建，保证健壮）
+func _bind(key: String, node_name: String, pos: Vector2, size: int, col: Color, center: int) -> void:
+	# 优先使用编辑器中已建好的文字节点（场景内可观察）；缺失才回退代码创建
+	var l: Label = null
+	if _overlay != null:
+		l = _overlay.get_node_or_null(NodePath(node_name)) as Label
+	if l == null:
+		l = _mk_label(pos, size, col, center)
+	else:
+		if center == 1:
+			l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			l.custom_minimum_size = Vector2(96.0, 0.0)
+			l.position = pos - Vector2(48.0, 0.0)
+		else:
+			l.position = pos
+		l.add_theme_font_size_override("font_size", size)
+		l.add_theme_color_override("font_color", col)
+	_labels[key] = l
 
 
 func _mk_label(pos: Vector2, size: int, col: Color, center: int) -> Label:
