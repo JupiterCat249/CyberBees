@@ -49,8 +49,6 @@ func _ready() -> void:
 	var board := _ci("BoardView")
 	if bgfx != null:
 		bgfx.setup(_holder, get_node_or_null("BgLayer"), get_node_or_null("FxLayer"), _overlay)
-		# 扫描线相位：BgFx 统一计算 → 信号广播给背景贴图（地图底图），保持同相位
-		bgfx.scan_offset_changed.connect(board.set_scan_offset)
 	board.setup(_holder, state)
 	_ci("HandView").setup(_holder, _overlay, state)
 	_ci("DetailView").setup(_holder, _overlay, state)

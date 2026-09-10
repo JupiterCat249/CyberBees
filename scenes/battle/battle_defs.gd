@@ -238,27 +238,3 @@ static func atlas_icon(idx: int, size: float, center: Vector2, col: Color) -> Sp
 	sp.scale = Vector2(size / ATLAS_CELL, size / ATLAS_CELL)
 	sp.modulate = col
 	return sp
-
-
-## 生成「背景纹理叠加扫描线」材质：给背景贴图类节点（如地图底图）使用。
-## 用内联 Shader（不在磁盘新建任何 shader 文件）；扫描线按设计像素平铺，
-## 与整屏背景保持同一相位（origin = 该贴图在设计坐标中的位置）。
-static func make_scan_material(origin: Vector2, bg_size: float) -> ShaderMaterial:
-	var code := "shader_type canvas_item;\n"
-	code += "uniform sampler2D scan_tex : source_color, filter_linear;\n"
-	code += "uniform float scan_mix = " + str(SCAN_MIX) + ";\n"
-	code += "uniform float scan_offset = 0.0;\n"
-	code += "void fragment() {\n"
-	code += "\tvec4 base = texture(TEXTURE, UV);\n"
-	code += "\tvec2 px = UV * vec2(" + str(bg_size) + ") + vec2(" + str(origin.x) + ", " + str(origin.y) + ");\n"
-	code += "\tvec2 suv = fract(vec2(px.x / " + str(SCAN_TILE_PX) + ", (px.y + scan_offset) / " + str(SCAN_TILE_PX) + "));\n"
-	code += "\tvec4 s = texture(scan_tex, suv);\n"
-	code += "\tCOLOR = vec4(mix(base.rgb, s.rgb, s.a * scan_mix), base.a);\n"
-	code += "}"
-	var sh := Shader.new()
-	sh.code = code
-	var mat := ShaderMaterial.new()
-	mat.shader = sh
-	mat.set_shader_parameter("scan_tex", load(SCAN_TILE_PATH))
-	mat.set_shader_parameter("scan_mix", SCAN_MIX)
-	return mat

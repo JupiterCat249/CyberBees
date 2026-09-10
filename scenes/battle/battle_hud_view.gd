@@ -62,7 +62,7 @@ func _on_state_changed() -> void:
 	_labels["log"].text = "\n".join(state.log_lines.slice(maxi(0, n - 6), n))
 	_labels["help"].text = ("a500 规则速览：蜂王被击败即负 | 第12回合比蜂王血量 | 第4回合起可投降\n"
 		+ "兵蜂→蜂王相邻格 · 建筑→己方领地 · 指令→任意目标(蜂王免疫)\n"
-		+ "每单位每回合1次行动(移动/攻击/支援) · 反击射程外无效") if state.help_on else ""
+		+ "每单位每回合：1 次移动 + 1 次攻击或支援 · 反击射程外无效 · 移动会被单位阻挡") if state.help_on else ""
 
 
 func _hint() -> String:

@@ -96,8 +96,9 @@ func draw_one(side: String) -> void:
 func spawn(cell: Vector2i, side: String, card: Dictionary) -> int:
 	var id := next_id
 	next_id += 1
+	# acted=true：部署当回合没有行动机会（a500 行动机会 3）；moved 一并用尽
 	units[id] = {"cell": cell, "side": side, "card": card, "hp": int(card["hp"]),
-		"acted": true, "effects": {}}
+		"acted": true, "moved": true, "effects": {}}
 	return id
 
 
@@ -148,6 +149,7 @@ func begin_turn(side: String) -> void:
 	phase_changed.emit(phase)
 	for id in units:
 		units[id]["acted"] = false
+		units[id]["moved"] = false
 	clear_sel()
 	refresh()
 
@@ -333,7 +335,11 @@ func select_unit_at(cell: Vector2i) -> void:
 	armed_card = -1
 	mode = D.Mode.IDLE
 	var c: Vector2i = units[id]["cell"]
-	move_range = range_cells(c, final_spd(id), true)
+	# a500 行动机会 4：行动 = 1 次移动 + 1 次（主动攻击或支援技能）；本回合已移动则移动范围为 0
+	move_range = []
+	if not units[id]["moved"]:
+		move_range = move_cells(c, final_spd(id))
+	# a500 范围 3：攻击范围不会被单位阻挡（按曼哈顿距离）
 	atk_range = range_cells(c, final_range(id), false)
 	selection_changed.emit()
 	refresh()
@@ -347,11 +353,13 @@ func act_at(cell: Vector2i) -> void:
 		refresh()
 		return
 	if cell in move_range and unit_at(cell) < 0:
-		units[selected_unit]["cell"] = cell
-		units[selected_unit]["acted"] = true
-		push_log("%s 移动到 (%d,%d)" % [unit_name(selected_unit), cell.x, cell.y])
-		clear_sel()
-		refresh()
+		# a500 行动机会 4：移动不结束行动 —— 移动后仍可攻击/支援；仅消耗"本回合移动"
+		var uid := selected_unit
+		units[uid]["cell"] = cell
+		units[uid]["moved"] = true
+		push_log("%s 移动到 (%d,%d)" % [unit_name(uid), cell.x, cell.y])
+		# 就地重新选中：刷新为「不可再移动 + 仍可攻击/支援」的范围
+		select_unit_at(cell)
 		return
 	if cell in atk_range:
 		var tid := unit_at(cell)
@@ -413,6 +421,34 @@ func remove_dead() -> void:
 		units.erase(id)
 
 
+## 移动范围：走格子寻路（BFS 最短路；等权网格上与 A* 结果等价）
+## a500 范围 1/3：通过走格子计算可移动范围；移动范围【会被单位阻挡】（不可穿过、不可停在有单位格）
+func move_cells(from: Vector2i, steps: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if steps <= 0:
+		return out
+	var dist := {}
+	dist[from] = 0
+	var queue: Array[Vector2i] = [from]
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+	while not queue.is_empty():
+		var cur: Vector2i = queue.pop_front()
+		var d: int = int(dist[cur])
+		if d >= steps:
+			continue
+		for dir in dirs:
+			var nxt: Vector2i = cur + dir
+			if not D.in_map(nxt) or dist.has(nxt):
+				continue
+			if unit_at(nxt) >= 0:
+				continue
+			dist[nxt] = d + 1
+			out.append(nxt)
+			queue.append(nxt)
+	return out
+
+
+## 攻击范围：按曼哈顿距离（a500 范围 3：攻击范围不会被单位阻挡）
 func range_cells(from: Vector2i, rng: int, need_free: bool) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	if rng <= 0:
