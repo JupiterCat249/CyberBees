@@ -51,6 +51,8 @@ const I_SOLDIER := 4
 const I_BUILDING := 5
 const I_COMMAND := 6
 const I_QUEEN := 7
+## 特殊地形标记借用的图集图标格（5 = 建筑/蜂巢）
+const I_TERRAIN := 5
 
 const HAND_MAX := 4
 const COST_MAX := 10
@@ -125,8 +127,9 @@ func _ready() -> void:
 	_hl_node = _mk("Highlights")
 	_detail_node = _mk("Detail")
 	get_window().size_changed.connect(_sync_overlay)
-	_prepare()
+	# 先建文字层绑定，再跑对战准备（_prepare 会自动开启首回合并刷新界面）
 	_build_texts()
+	_prepare()
 	_sync_overlay()
 	_refresh()
 
@@ -157,15 +160,19 @@ func _prepare() -> void:
 		deckl[side] = cards
 		for i in HAND_MAX:
 			_draw_one(side)
-	cost["green"] = 2
-	cost["red"] = 4
+	# A5 对战准备 6：后手初始费用 +2（先手 0，靠首回合回费得到 2）
+	cost["green"] = 0
+	cost["red"] = 2
+	# A5 对战准备 4：抽取对战地图 —— 随机 2 格特殊地形
 	var spots := [Vector2i(1, 1), Vector2i(2, 2), Vector2i(1, 2), Vector2i(2, 1)]
 	spots.shuffle()
 	for i in 2:
 		terrain[spots[i]] = {"id": "hive_ground", "name": "蜂巢地面", "atk_add": 1, "spd_add": 0}
 	_spawn(Vector2i(3, 1), "green", _find_card("金刚蜂王"))
 	_spawn(Vector2i(0, 2), "red", _find_card("金刚蜂王"))
-	_push("对战开始：绿方先手（费用2）· 红方后手（费用4）")
+	_push("对战开始：绿方先手 · 红方后手（初始费用 +2）")
+	_push("地图特殊地形 %d 格「蜂巢地面」：该格单位 攻击 +1" % terrain.size())
+	_begin_turn("green")
 
 
 func _find_card(nm: String) -> Dictionary:
@@ -210,22 +217,18 @@ func unit_at(cell: Vector2i) -> int:
 # ============================================================
 # 回合流程（A5 回合流程 1-8）
 # ============================================================
+## 主按钮只服务「需要玩家确认」的两个阶段：部署 → 行动 → 结束回合
+## （回费 / 场地 由 _begin_turn 自动结算，不占用按钮）
 func advance_phase() -> void:
 	if winner != "":
 		return
 	match phase:
-		Phase.REFUND:
-			phase = Phase.FIELD
-			_apply_terrain()
-		Phase.FIELD:
-			phase = Phase.DEPLOY
 		Phase.DEPLOY:
 			phase = Phase.ACTION
+			_clear_sel()
+			_refresh()
 		Phase.ACTION:
 			_end_turn()
-			return
-	_clear_sel()
-	_refresh()
 
 
 func _apply_terrain() -> void:
@@ -245,24 +248,38 @@ func _end_turn() -> void:
 	if winner != "":
 		_refresh()
 		return
-	if current == "green":
-		current = "red"
-	else:
-		current = "green"
+	var next := "red" if current == "green" else "green"
+	if next == "green":
 		round_no += 1
-	var gain := 2 + (2 if round_no >= 7 else 0)
-	cost[current] = mini(cost[current] + gain, COST_MAX)
 	for side in ["green", "red"]:
 		while hand[side].size() < HAND_MAX:
 			_draw_one(side)
-	for id in units:
-		units[id]["acted"] = false
-	phase = Phase.REFUND
-	_clear_sel()
 	_check_victory()
 	if round_no > ROUND_MAX:
 		_round12_result()
-	_push("—— 第 %d 回合 · %s方 ——" % [round_no, _cn(current)])
+	if winner != "":
+		_refresh()
+		return
+	_begin_turn(next)
+
+
+## 回合开始：回费 + 场地 自动结算（无需玩家确认），停在「部署」阶段等玩家操作
+func _begin_turn(side: String) -> void:
+	current = side
+	_push("—— 第 %d 回合 · %s方 ——" % [round_no, _cn(side)])
+	# 回费阶段（自动）
+	phase = Phase.REFUND
+	var gain := 2 + (2 if round_no >= 7 else 0)
+	cost[side] = mini(cost[side] + gain, COST_MAX)
+	_push("【回费】%s方 +%d → 费用 %d（上限 %d）" % [_cn(side), gain, cost[side], COST_MAX])
+	# 场地阶段（自动）
+	phase = Phase.FIELD
+	_apply_terrain()
+	# 部署阶段：等玩家出牌 / 点主按钮进入行动
+	phase = Phase.DEPLOY
+	for id in units:
+		units[id]["acted"] = false
+	_clear_sel()
 	_refresh()
 
 
@@ -674,8 +691,26 @@ func _render_highlights() -> void:
 				var cell := Vector2i(r, c)
 				if _legal_place(cell):
 					_hl_node.add_child(_hl(cell, Color(1.0, 0.80, 0.30, 0.35)))
+	# 特殊地形标记：淡色底 + 复用 card_atlas 图标格（不新建任何渲染文件）
 	for c in terrain:
-		_hl_node.add_child(_hl(c, Color(0.95, 0.80, 0.10, 0.18)))
+		_hl_node.add_child(_hl(c, Color(0.95, 0.80, 0.10, 0.14)))
+		_hl_node.add_child(_atlas_icon(I_TERRAIN, 76.0,
+			MAP_ORIGIN + Vector2(c.y * CELL + CELL * 0.5, c.x * CELL + CELL * 0.5),
+			Color(0.38, 0.28, 0.04, 0.80)))
+
+
+## 用图集里的图标格（第 10+idx 格）生成精灵：复用 card-system 提供的 card_atlas.png
+func _atlas_icon(idx: int, size: float, center: Vector2, col: Color) -> Sprite2D:
+	var at := AtlasTexture.new()
+	at.atlas = ATLAS
+	at.region = Rect2((10.0 + float(idx)) * ATLAS_CELL, 0.0, ATLAS_CELL, ATLAS_CELL)
+	var sp := Sprite2D.new()
+	sp.texture = at
+	sp.centered = true
+	sp.position = center
+	sp.scale = Vector2(size / ATLAS_CELL, size / ATLAS_CELL)
+	sp.modulate = col
+	return sp
 
 
 func _hl(cell: Vector2i, col: Color) -> ColorRect:
@@ -856,7 +891,7 @@ func _update_texts() -> void:
 		_:
 			hint = "点牌选中 / 点己方单位行动"
 	_labels["info"].text = "第%d回合 · 阶段:%s · %s方 · %s" % [round_no, PHASE_NAME[phase], _cn(current), hint]
-	_labels["btn"].text = "游戏结束" if winner != "" else ("结束阶段" if phase != Phase.ACTION else "结束回合")
+	_labels["btn"].text = "游戏结束" if winner != "" else ("进入行动" if phase == Phase.DEPLOY else ("结束回合" if phase == Phase.ACTION else "——"))
 	var sid := selected_unit if selected_unit >= 0 else _queen_id_of(current)
 	_labels["st0"].text = str(_final_atk(sid)) if sid >= 0 else "-"
 	_labels["st1"].text = str(_final_reduce(sid)) if sid >= 0 else "-"
