@@ -69,16 +69,38 @@ enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET }
 
 # ---------------- 卡池 ----------------
 const POOL := [
-	{"art": "卡牌a-金刚蜂王", "name": "金刚蜂王", "kind": "queen", "cost": 8, "atk": 7, "spd": 1, "hp": 8, "range": 2},
-	{"art": "卡牌c1-叶蜂", "name": "叶蜂", "kind": "soldier", "cost": 2, "atk": 2, "spd": 1, "hp": 3, "range": 1, "support": {"id": "rally", "name": "鼓舞", "rng": 2, "buff": {"id": "atk_up", "name": "攻击提升", "atk_add": 1}}},
-	{"art": "卡牌c1-泥蜂", "name": "泥蜂", "kind": "soldier", "cost": 2, "atk": 3, "spd": 1, "hp": 4, "range": 2},
-	{"art": "卡牌c2-熊蜂", "name": "熊蜂", "kind": "soldier", "cost": 5, "atk": 5, "spd": 1, "hp": 8, "range": 1, "support": {"id": "guard", "name": "护卫", "rng": 1, "buff": {"id": "def_up", "name": "护甲", "reduce": 1}}},
-	{"art": "卡牌b1-蜂巢", "name": "蜂巢", "kind": "building", "cost": 4, "atk": 0, "spd": 0, "hp": 5, "range": 0, "refund": 1},
-	{"art": "卡牌b1-蜂巢III", "name": "蜂巢III", "kind": "building", "cost": 9, "atk": 0, "spd": 0, "hp": 12, "range": 0, "refund": 2},
-	{"art": "卡牌d1-电击", "name": "电击", "kind": "command", "cost": 3, "dmg": 4, "range": 2},
-	{"art": "卡牌d2-治疗", "name": "治疗", "kind": "command", "cost": 3, "heal": 4, "range": 2},
-	{"art": "卡牌d1-巡航导弹", "name": "巡航导弹", "kind": "command", "cost": 6, "dmg": 5, "range": 3, "debuff": {"id": "burn", "name": "灼烧", "dot": 1}},
-	{"art": "卡牌d1-电击III", "name": "X费·毁灭", "kind": "command_x", "cost": -1, "dmg": 0, "range": 3},
+	{"art": "卡牌a-金刚蜂王", "name": "金刚蜂王", "kind": "queen", "cost": 8, "atk": 7, "spd": 1, "hp": 8, "range": 2,
+		"sk": "【机场】蜂王巢口", "sdesc": "部署阶段可在自身相邻格部署兵蜂；蜂王免疫指令卡伤害与减益。",
+		"stags": "被动 · 部署 · 蜂王"},
+	{"art": "卡牌c1-叶蜂", "name": "叶蜂", "kind": "soldier", "cost": 2, "atk": 2, "spd": 1, "hp": 3, "range": 1,
+		"support": {"id": "rally", "name": "鼓舞", "rng": 2, "buff": {"id": "atk_up", "name": "攻击提升", "atk_add": 1}},
+		"sk": "【支援】鼓舞", "sdesc": "选择 2 格内的 1 个己方单位，赋予「攻击提升」：攻击力 +1。使用后结束该单位行动。",
+		"stags": "支援 · 单位效果 · 增益"},
+	{"art": "卡牌c1-泥蜂", "name": "泥蜂", "kind": "soldier", "cost": 2, "atk": 3, "spd": 1, "hp": 4, "range": 2,
+		"sk": "（无技能）", "sdesc": "纯战斗兵蜂：攻击 3 / 速度 1 / 生命 4 / 射程 2。",
+		"stags": "兵蜂"},
+	{"art": "卡牌c2-熊蜂", "name": "熊蜂", "kind": "soldier", "cost": 5, "atk": 5, "spd": 1, "hp": 8, "range": 1,
+		"support": {"id": "guard", "name": "护卫", "rng": 1, "buff": {"id": "def_up", "name": "护甲", "reduce": 1}},
+		"sk": "【支援】护卫", "sdesc": "选择 1 格内的 1 个己方单位，赋予「护甲」：受到的每次伤害 -1。使用后结束该单位行动。",
+		"stags": "支援 · 单位效果 · 增益"},
+	{"art": "卡牌b1-蜂巢", "name": "蜂巢", "kind": "building", "cost": 4, "atk": 0, "spd": 0, "hp": 5, "range": 0, "refund": 1,
+		"sk": "【回费】采集", "sdesc": "每个己方回费阶段，额外回复 1 点费用。部署在己方领地任意格。",
+		"stags": "回费 · 资源建筑"},
+	{"art": "卡牌b1-蜂巢III", "name": "蜂巢III", "kind": "building", "cost": 9, "atk": 0, "spd": 0, "hp": 12, "range": 0, "refund": 2,
+		"sk": "【回费】集群采集", "sdesc": "每个己方回费阶段，额外回复 2 点费用。生命值 12，可作前场肉盾。",
+		"stags": "回费 · 资源建筑"},
+	{"art": "卡牌d1-电击", "name": "电击", "kind": "command", "cost": 3, "dmg": 4, "range": 2,
+		"sk": "【指令】电击", "sdesc": "对射程 2 内的 1 个单位造成 4 点指令伤害。蜂王免疫。使用后返回墓地。",
+		"stags": "指令 · 攻击指令"},
+	{"art": "卡牌d2-治疗", "name": "治疗", "kind": "command", "cost": 3, "heal": 4, "range": 2,
+		"sk": "【指令】治疗", "sdesc": "为射程 2 内的 1 个己方单位回复 4 点生命值（不超过上限）。使用后返回墓地。",
+		"stags": "指令 · 辅助指令"},
+	{"art": "卡牌d1-巡航导弹", "name": "巡航导弹", "kind": "command", "cost": 6, "dmg": 5, "range": 3, "debuff": {"id": "burn", "name": "灼烧", "dot": 1},
+		"sk": "【指令】巡航导弹", "sdesc": "对射程 3 内的 1 个单位造成 5 点指令伤害，并赋予「灼烧」：其回合结束时 -1 生命。蜂王免疫。",
+		"stags": "指令 · 攻击指令 · 减益"},
+	{"art": "卡牌d1-电击III", "name": "X费·毁灭", "kind": "command_x", "cost": -1, "dmg": 0, "range": 3,
+		"sk": "【指令】毁灭（X费）", "sdesc": "费用 = 目标单位的部署费用；对其造成「部署费用 ×2」的指令伤害。不可指定蜂王。",
+		"stags": "指令 · 攻击指令 · X费"},
 ]
 
 const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "电击", "治疗"]
@@ -308,6 +330,16 @@ func advance_phase() -> void:
 			_end_turn()
 
 
+## 资源建筑回费合计（a500 基础术语·资源建筑：每个己方回费阶段回费）
+func _refund_of(side: String) -> int:
+	var sum := 0
+	for id in units:
+		var u: Dictionary = units[id]
+		if u["side"] == side:
+			sum += int(u["card"].get("refund", 0))
+	return sum
+
+
 func _apply_terrain() -> void:
 	for id in units:
 		var c: Vector2i = units[id]["cell"]
@@ -344,11 +376,15 @@ func _end_turn() -> void:
 func _begin_turn(side: String) -> void:
 	current = side
 	_push("—— 第 %d 回合 · %s方 ——" % [round_no, _cn(side)])
-	# 回费阶段（自动）
+	# 回费阶段（自动）：基础回费 + 资源建筑回费（a500：资源建筑每己方回费阶段回费）
 	phase = Phase.REFUND
 	var gain := 2 + (2 if round_no >= 7 else 0)
-	cost[side] = mini(cost[side] + gain, COST_MAX)
-	_push("【回费】%s方 +%d → 费用 %d（上限 %d）" % [_cn(side), gain, cost[side], COST_MAX])
+	var rf := _refund_of(side)
+	cost[side] = mini(cost[side] + gain + rf, COST_MAX)
+	if rf > 0:
+		_push("【回费】%s方 +%d（基础%d + 资源建筑%d）→ 费用 %d（上限 %d）" % [_cn(side), gain + rf, gain, rf, cost[side], COST_MAX])
+	else:
+		_push("【回费】%s方 +%d → 费用 %d（上限 %d）" % [_cn(side), gain, cost[side], COST_MAX])
 	# 场地阶段（自动）
 	phase = Phase.FIELD
 	_apply_terrain()
@@ -849,15 +885,7 @@ func _make_card(d: Dictionary, sc: float) -> Node2D:
 func _render_detail() -> void:
 	for n in _detail_node.get_children():
 		n.queue_free()
-	var d: Dictionary = {}
-	if armed_card >= 0 and armed_card < hand[current].size():
-		d = hand[current][armed_card]
-	elif selected_unit >= 0 and units.has(selected_unit):
-		d = units[selected_unit]["card"]
-	elif current == "red" and not hand["red"].is_empty():
-		d = hand["red"][0]
-	elif not hand["green"].is_empty():
-		d = hand["green"][0]
+	var d := _current_detail_card()
 	if d.is_empty():
 		return
 	var node := _make_card(d, DETAIL_SCALE)
@@ -927,6 +955,13 @@ func _build_texts() -> void:
 	_bind("st3", "StatRange", Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY * 3 - 16.0), 30, Color(1, 1, 1), 0)
 	_bind("log", "LogText", Vector2(1494.0, 674.0), 17, Color(0.86, 0.86, 0.86), 0)
 	_bind("help", "HelpText", Vector2(452.0, 120.0), 20, Color(1.0, 0.95, 0.75), 0)
+	# 技能详情显示区：节点与样式都在编辑器里（Overlay/SkillBox/*），代码只取用、不改样式
+	for k in ["Title", "Desc", "Tags"]:
+		var sn: String = "sk_" + str(k).to_lower()
+		var sl: Label = null
+		if _overlay != null:
+			sl = _overlay.get_node_or_null(NodePath("SkillBox/Skill" + str(k))) as Label
+		_labels[sn] = sl
 
 
 ## 绑定编辑器中已存在的文字节点（缺失时回退代码创建，保证健壮）
@@ -988,6 +1023,35 @@ func _update_texts() -> void:
 	_labels["help"].text = ("A5 规则速览：蜂王被击败即负 | 第12回合比蜂王血量 | 第4回合起可投降\n"
 		+ "兵蜂→蜂王相邻格 · 建筑→己方领地 · 指令→任意目标(蜂王免疫)\n"
 		+ "每单位每回合1次行动(移动/攻击/支援) · 反击射程外无效") if help_on else ""
+	_update_skill_box()
+
+
+## 当前"被查看"的卡（详情块与技能显示区共用同一套选择逻辑）
+func _current_detail_card() -> Dictionary:
+	if armed_card >= 0 and armed_card < hand[current].size():
+		return hand[current][armed_card]
+	if selected_unit >= 0 and units.has(selected_unit):
+		return units[selected_unit]["card"]
+	if not hand[current].is_empty():
+		return hand[current][0]
+	return {}
+
+
+## 技能详情显示区：随"当前查看对象"刷新（节点与样式由编辑器提供，代码只写文本）
+func _update_skill_box() -> void:
+	var d := _current_detail_card()
+	for key in ["sk_title", "sk_desc", "sk_tags"]:
+		var l := _labels.get(key, null) as Label
+		if l == null:
+			continue
+		if d.is_empty():
+			l.text = ""
+		elif key == "sk_title":
+			l.text = str(d.get("sk", "（无技能）"))
+		elif key == "sk_desc":
+			l.text = str(d.get("sdesc", ""))
+		else:
+			l.text = "关键词：" + str(d.get("stags", "—"))
 
 
 func _queen_id_of(side: String) -> int:

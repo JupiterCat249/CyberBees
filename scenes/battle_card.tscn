@@ -5,6 +5,27 @@
 [ext_resource type="Texture2D" uid="uid://dyffhibh3y4pl" path="res://assets/background/bg_blurred.png" id="2_b5gog"]
 [ext_resource type="Texture2D" uid="uid://bdcjm7o7232sw" path="res://assets/background/bg_filter_tile.png" id="4_nay0s"]
 
+[sub_resource type="Animation" id="Animation_b5gog"]
+length = 2.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("BgFilter:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, -100), Vector2(0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_nay0s"]
+_data = {
+&"scan_scroll": SubResource("Animation_b5gog")
+}
+
 [node name="Battle" type="Node2D" unique_id=1837945616]
 script = ExtResource("1_u25sk")
 
@@ -36,13 +57,54 @@ texture = ExtResource("2_b5gog")
 
 [node name="HelpText" type="Label" parent="Overlay" unique_id=1656724361]
 
+[node name="SkillBox" type="Node2D" parent="Overlay" unique_id=1371367749]
+position = Vector2(32, 556)
+
+[node name="SkillBg" type="ColorRect" parent="Overlay/SkillBox" unique_id=235026793]
+offset_right = 400.0
+offset_bottom = 196.0
+mouse_filter = 2
+color = Color(0.27, 0.27, 0.27, 0.92)
+
+[node name="SkillTitle" type="Label" parent="Overlay/SkillBox" unique_id=591794774]
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 13.0
+offset_bottom = 39.0
+theme_override_colors/font_color = Color(1, 0.82, 0.35, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="SkillDesc" type="Label" parent="Overlay/SkillBox" unique_id=1546565014]
+custom_minimum_size = Vector2(376, 0)
+offset_left = 12.0
+offset_top = 42.0
+offset_right = 388.0
+offset_bottom = 66.0
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 17
+autowrap_mode = 2
+
+[node name="SkillTags" type="Label" parent="Overlay/SkillBox" unique_id=422916683]
+offset_left = 12.0
+offset_top = 164.0
+offset_right = 13.0
+offset_bottom = 187.0
+theme_override_colors/font_color = Color(0.72, 0.85, 0.72, 1)
+theme_override_font_sizes/font_size = 15
+
 [node name="FxLayer" type="Node2D" parent="." unique_id=6863796]
 
 [node name="BgFilter" type="TextureRect" parent="FxLayer" unique_id=1563674030]
 modulate = Color(1, 1, 1, 0.32)
 texture_repeat = 1
-offset_bottom = 1080.0
+offset_top = -100.0
+offset_right = 1920.0
+offset_bottom = 1180.0
 mouse_filter = 2
 texture = ExtResource("4_nay0s")
 expand_mode = 1
 stretch_mode = 1
+
+[node name="ScanAnim" type="AnimationPlayer" parent="FxLayer" unique_id=1670953468]
+libraries/ = SubResource("AnimationLibrary_nay0s")
+autoplay = &"scan_scroll"
