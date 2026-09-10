@@ -211,12 +211,12 @@ func _build_map_bg() -> void:
 	# 骨架 Rect 在 index 0；移到 1 = 盖住骨架棋盘，同时被其后的卡牌/单位盖住
 	if _holder.get_child_count() > 1:
 		_holder.move_child(bg, 1)
-	var terrain := Sprite2D.new()
-	terrain.name = "Terrain"
-	terrain.texture = MAP_TERRAIN
-	terrain.centered = false
-	terrain.position = MAP_ORIGIN
-	bg.add_child(terrain)
+	var terrain_spr := Sprite2D.new()
+	terrain_spr.name = "Terrain"
+	terrain_spr.texture = MAP_TERRAIN
+	terrain_spr.centered = false
+	terrain_spr.position = MAP_ORIGIN
+	bg.add_child(terrain_spr)
 	var grid := Sprite2D.new()
 	grid.name = "Grid"
 	grid.texture = MAP_GRID
@@ -503,6 +503,10 @@ func select_unit_at(cell: Vector2i) -> void:
 func act_at(cell: Vector2i) -> void:
 	if selected_unit < 0:
 		return
+	if not units.has(selected_unit):
+		_clear_sel()
+		_refresh()
+		return
 	if cell in move_range and unit_at(cell) < 0:
 		units[selected_unit]["cell"] = cell
 		units[selected_unit]["acted"] = true
@@ -513,8 +517,11 @@ func act_at(cell: Vector2i) -> void:
 	if cell in atk_range:
 		var tid := unit_at(cell)
 		if tid >= 0 and units[tid]["side"] != current:
-			_attack(selected_unit, tid)
-			units[selected_unit]["acted"] = true
+			# 先消耗行动机会，再结算战斗：攻击方可能被反击打死，
+			# _attack 末尾的 _cleanup_dead 会把它从 units 移除，之后不能再索引它。
+			var aid := selected_unit
+			units[aid]["acted"] = true
+			_attack(aid, tid)
 			_clear_sel()
 			_check_victory()
 			_refresh()
@@ -545,6 +552,8 @@ func support_at(cell: Vector2i) -> void:
 # 战斗（A5 战斗系统）
 # ============================================================
 func _attack(aid: int, tid: int) -> void:
+	if not units.has(aid) or not units.has(tid):
+		return
 	var raw := _final_atk(aid)
 	var reduce := _final_reduce(tid)
 	var dmg := maxi(0, raw - reduce)
