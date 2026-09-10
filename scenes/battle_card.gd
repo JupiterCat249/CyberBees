@@ -120,7 +120,7 @@ func _setup_pool() -> void:
 			_draw_one(side)
 
 
-func _draw_one(side: String) -> void:  ## 抽一张手牌（避开父类 _draw 回调名）
+func _draw_one(side: String) -> void:
 	if deck[side].is_empty():
 		return
 	if hand[side].size() >= HAND_MAX:
