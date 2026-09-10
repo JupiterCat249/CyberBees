@@ -1,4 +1,4 @@
-@tool
+##@tool
 class_name BoardCell
 extends Button
 ## 棋盘格子节点：extends Button（引擎自带输入组件）；pressed→cell_selected 信号。

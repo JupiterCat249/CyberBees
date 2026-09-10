@@ -1,4 +1,4 @@
-@tool
+#@tool
 extends GridContainer
 ## 棋盘容器节点：由 16 个显式 BoardCell(Button) 格子节点组成；仅做 ButtonGroup 单选 + 汇总信号 + 范围高亮。
 
