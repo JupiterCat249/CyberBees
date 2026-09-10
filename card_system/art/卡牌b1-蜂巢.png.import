@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bcvimvg3lqetv"
-path="res://.godot/imported/卡牌b1-蜂巢.png-fd9783248d0e2db40b28180befd0bf7a.ctex"
+path="res://.godot/imported/卡牌b1-蜂巢.png-f671d4819810639ff907b1b9c634303b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/art/卡牌b1-蜂巢.png"
-dest_files=["res://.godot/imported/卡牌b1-蜂巢.png-fd9783248d0e2db40b28180befd0bf7a.ctex"]
+source_file="res://card-system/card_system/art/卡牌b1-蜂巢.png"
+dest_files=["res://.godot/imported/卡牌b1-蜂巢.png-f671d4819810639ff907b1b9c634303b.ctex"]
 
 [params]
 

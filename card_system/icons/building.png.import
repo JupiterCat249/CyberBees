@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b7aqkfssvmccv"
-path="res://.godot/imported/building.png-c7845166658677ca77288fcb8a35543b.ctex"
+path="res://.godot/imported/building.png-aec17ed69dcb07852588dc88745039c9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/icons/building.png"
-dest_files=["res://.godot/imported/building.png-c7845166658677ca77288fcb8a35543b.ctex"]
+source_file="res://card-system/card_system/icons/building.png"
+dest_files=["res://.godot/imported/building.png-aec17ed69dcb07852588dc88745039c9.ctex"]
 
 [params]
 

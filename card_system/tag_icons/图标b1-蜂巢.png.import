@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dopy8dtp7qth3"
-path="res://.godot/imported/图标b1-蜂巢.png-be4a289b975f195ed8ba79ef81bcb752.ctex"
+path="res://.godot/imported/图标b1-蜂巢.png-8f0ab334908c3f7e7a2ddc78e30a01be.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/tag_icons/图标b1-蜂巢.png"
-dest_files=["res://.godot/imported/图标b1-蜂巢.png-be4a289b975f195ed8ba79ef81bcb752.ctex"]
+source_file="res://card-system/card_system/tag_icons/图标b1-蜂巢.png"
+dest_files=["res://.godot/imported/图标b1-蜂巢.png-8f0ab334908c3f7e7a2ddc78e30a01be.ctex"]
 
 [params]
 

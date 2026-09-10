@@ -1,9 +1,9 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://card_system/card_auto.gd" id="1_scr"]
-[ext_resource type="Shader" path="res://card_system/card_auto.gdshader" id="2_sh"]
-[ext_resource type="Texture2D" path="res://card_system/card_atlas.png" id="3_atlas"]
-[ext_resource type="Texture2D" path="res://card_system/art/卡牌d1-巡航导弹.png" id="4_art"]
+[ext_resource type="Script" path="res://card-system/card_system/card_auto.gd" id="1_scr"]
+[ext_resource type="Shader" path="res://card-system/card_system/card_auto.gdshader" id="2_sh"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/card_atlas.png" id="3_atlas"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d1-巡航导弹.png" id="4_art"]
 
 [sub_resource type="ShaderMaterial" id="sm_card"]
 resource_local_to_scene = true

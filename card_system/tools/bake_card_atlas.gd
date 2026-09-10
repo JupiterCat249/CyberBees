@@ -18,8 +18,8 @@ extends EditorScript
 ##   4兵蜂(soldier) 5建筑(building) 6指令(command) 7蜂王(queen)
 ## ============================================================
 
-const ATLAS_RES := "res://card_system/card_atlas.png"
-const ICON_DIR_RES := "res://card_system/icons/"
+const ATLAS_RES := "res://card-system/card_system/card_atlas.png"
+const ICON_DIR_RES := "res://card-system/card_system/icons/"
 const ICON_FILES := [
 	"attack.png", "speed.png", "hp.png", "range.png",
 	"soldier.png", "building.png", "command.png", "queen.png",

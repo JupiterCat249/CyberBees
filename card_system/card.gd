@@ -2,7 +2,7 @@
 extends Node2D
 ## ============================================================
 ## 卡牌整体（一个场景 = 一张完整的卡）
-## 图标全部使用 PNG 素材（res://card_system/icons/），零 shader 依赖
+## 图标全部使用 PNG 素材（res://card-system/card_system/icons/），零 shader 依赖
 ##
 ## 使用规则：
 ##   1. 只改根节点 Card 的检查器参数，不要手动拖动内部节点
@@ -45,14 +45,14 @@ const LABEL_H_STAT := 52.0
 
 # 图标素材（白色剪影，用 self_modulate 染色）
 const ICON_TEX := {
-	0: preload("res://card_system/icons/attack.png"),    # 攻击·剑
-	1: preload("res://card_system/icons/speed.png"),     # 速度·三重箭
-	2: preload("res://card_system/icons/hp.png"),        # 血量·U 形杯
-	3: preload("res://card_system/icons/range.png"),     # 射程·准星
-	5: preload("res://card_system/icons/soldier.png"),   # 兵蜂
-	6: preload("res://card_system/icons/building.png"),  # 建筑
-	7: preload("res://card_system/icons/command.png"),   # 指令·六边形
-	8: preload("res://card_system/icons/queen.png"),     # 蜂王·皇冠
+	0: preload("res://card-system/card_system/icons/attack.png"),    # 攻击·剑
+	1: preload("res://card-system/card_system/icons/speed.png"),     # 速度·三重箭
+	2: preload("res://card-system/card_system/icons/hp.png"),        # 血量·U 形杯
+	3: preload("res://card-system/card_system/icons/range.png"),     # 射程·准星
+	5: preload("res://card-system/card_system/icons/soldier.png"),   # 兵蜂
+	6: preload("res://card-system/card_system/icons/building.png"),  # 建筑
+	7: preload("res://card-system/card_system/icons/command.png"),   # 指令·六边形
+	8: preload("res://card-system/card_system/icons/queen.png"),     # 蜂王·皇冠
 }
 
 # ---------------- 可调参数（检查器，改完立即生效） ----------------

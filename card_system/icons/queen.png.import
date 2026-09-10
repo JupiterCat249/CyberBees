@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bodhmpf1ww35b"
-path="res://.godot/imported/queen.png-b04833a1d99cbf8c2cc415508a3ac864.ctex"
+path="res://.godot/imported/queen.png-7b353cbec67e3e0b3c4ed0e069675a6f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/icons/queen.png"
-dest_files=["res://.godot/imported/queen.png-b04833a1d99cbf8c2cc415508a3ac864.ctex"]
+source_file="res://card-system/card_system/icons/queen.png"
+dest_files=["res://.godot/imported/queen.png-7b353cbec67e3e0b3c4ed0e069675a6f.ctex"]
 
 [params]
 

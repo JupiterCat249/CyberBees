@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ldkhnvmqq13m"
-path="res://.godot/imported/range.png-a49407e024df8e6ac9064906d73d4d2b.ctex"
+path="res://.godot/imported/range.png-0d4474d2d71f15b2fcfe6c229ba13aba.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/icons/range.png"
-dest_files=["res://.godot/imported/range.png-a49407e024df8e6ac9064906d73d4d2b.ctex"]
+source_file="res://card-system/card_system/icons/range.png"
+dest_files=["res://.godot/imported/range.png-0d4474d2d71f15b2fcfe6c229ba13aba.ctex"]
 
 [params]
 

@@ -7,8 +7,8 @@ extends Node2D
 ## 图标：0攻击 1速度 2血量 3射程 4兵蜂 5建筑 6指令 7蜂王（-1 不显示）
 ## ============================================================
 
-const CARD := preload("res://card_system/card_auto.tscn")
-const ART_DIR := "res://card_system/art/"
+const CARD := preload("res://card-system/card_system/card_auto.tscn")
+const ART_DIR := "res://card-system/card_system/art/"
 
 ## 立绘填文件名（不含扩展名），数字 -1 = 不显示
 ## cost=费用 l1/l2=左栏上下数值 r1/r2=右栏上下数值 i*=对应图标

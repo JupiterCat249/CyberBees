@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dvon2jx1287cr"
-path="res://.godot/imported/卡牌d1-电击III.png-e60eceff5075621a8b1337a4e3dea37e.ctex"
+path="res://.godot/imported/卡牌d1-电击III.png-a0f8539a739d7eee72572f76dbd2f1f4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/art/卡牌d1-电击III.png"
-dest_files=["res://.godot/imported/卡牌d1-电击III.png-e60eceff5075621a8b1337a4e3dea37e.ctex"]
+source_file="res://card-system/card_system/art/卡牌d1-电击III.png"
+dest_files=["res://.godot/imported/卡牌d1-电击III.png-a0f8539a739d7eee72572f76dbd2f1f4.ctex"]
 
 [params]
 

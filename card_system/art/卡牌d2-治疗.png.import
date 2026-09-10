@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://df712bqu2hi0k"
-path="res://.godot/imported/卡牌d2-治疗.png-d90145d24feca76d67d0739332831cfc.ctex"
+path="res://.godot/imported/卡牌d2-治疗.png-4f15b43f29821d1eafaca0bf67890ac4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/art/卡牌d2-治疗.png"
-dest_files=["res://.godot/imported/卡牌d2-治疗.png-d90145d24feca76d67d0739332831cfc.ctex"]
+source_file="res://card-system/card_system/art/卡牌d2-治疗.png"
+dest_files=["res://.godot/imported/卡牌d2-治疗.png-4f15b43f29821d1eafaca0bf67890ac4.ctex"]
 
 [params]
 

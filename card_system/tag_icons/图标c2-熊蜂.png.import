@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d35o8r0x536fk"
-path="res://.godot/imported/图标c2-熊蜂.png-e4a2490af72974ae5e25b2f17db0ba90.ctex"
+path="res://.godot/imported/图标c2-熊蜂.png-7b5205ec14ce82953427d1bdae9fad04.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/tag_icons/图标c2-熊蜂.png"
-dest_files=["res://.godot/imported/图标c2-熊蜂.png-e4a2490af72974ae5e25b2f17db0ba90.ctex"]
+source_file="res://card-system/card_system/tag_icons/图标c2-熊蜂.png"
+dest_files=["res://.godot/imported/图标c2-熊蜂.png-7b5205ec14ce82953427d1bdae9fad04.ctex"]
 
 [params]
 

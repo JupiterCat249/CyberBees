@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://154yyd4nls7s"
-path="res://.godot/imported/图标d1-巡航导弹.png-9fd69acd26252b93da4a9f01d9eebe66.ctex"
+path="res://.godot/imported/图标d1-巡航导弹.png-040b7097c80f8bdbdd7d8dc08b5d2ea3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/tag_icons/图标d1-巡航导弹.png"
-dest_files=["res://.godot/imported/图标d1-巡航导弹.png-9fd69acd26252b93da4a9f01d9eebe66.ctex"]
+source_file="res://card-system/card_system/tag_icons/图标d1-巡航导弹.png"
+dest_files=["res://.godot/imported/图标d1-巡航导弹.png-040b7097c80f8bdbdd7d8dc08b5d2ea3.ctex"]
 
 [params]
 

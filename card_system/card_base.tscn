@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://blypfr83g0oaw"]
 
-[ext_resource type="Script" uid="uid://crw14bgxg6oap" path="res://card_system/card.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://c7iediq1d5dxf" path="res://card_system/icons/attack.png" id="2_ucdhw"]
-[ext_resource type="Texture2D" uid="uid://db5iisi22g3eh" path="res://card_system/icons/speed.png" id="3_qv8kh"]
-[ext_resource type="Texture2D" uid="uid://ldkhnvmqq13m" path="res://card_system/icons/range.png" id="4_hb615"]
+[ext_resource type="Script" uid="uid://crw14bgxg6oap" path="res://card-system/card_system/card.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://c7iediq1d5dxf" path="res://card-system/card_system/icons/attack.png" id="2_ucdhw"]
+[ext_resource type="Texture2D" uid="uid://db5iisi22g3eh" path="res://card-system/card_system/icons/speed.png" id="3_qv8kh"]
+[ext_resource type="Texture2D" uid="uid://ldkhnvmqq13m" path="res://card-system/card_system/icons/range.png" id="4_hb615"]
 
 [sub_resource type="StyleBoxFlat" id="sb_center"]
 bg_color = Color(1, 1, 1, 1)

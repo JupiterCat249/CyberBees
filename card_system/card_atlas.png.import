@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dmcfr2dk0xpg6"
-path="res://.godot/imported/card_atlas.png-8c71bf2be184f601cd54bc5203767c7d.ctex"
+path="res://.godot/imported/card_atlas.png-7afd7bd75d8c6bbdedf7c26c210fe0c9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://card_system/card_atlas.png"
-dest_files=["res://.godot/imported/card_atlas.png-8c71bf2be184f601cd54bc5203767c7d.ctex"]
+source_file="res://card-system/card_system/card_atlas.png"
+dest_files=["res://.godot/imported/card_atlas.png-7afd7bd75d8c6bbdedf7c26c210fe0c9.ctex"]
 
 [params]
 
