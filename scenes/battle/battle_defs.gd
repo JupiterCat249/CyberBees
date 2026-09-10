@@ -117,6 +117,23 @@ const POOL := [
 ## 卡组：1 蜂王 + 8 常规卡（a500：同名不得超过 4 张）
 const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "电击", "治疗"]
 
+## 对战地图池（a500 对战准备 5：抽取对战地图）
+## 注：a500 未规定特殊地形细则，此处以「特殊地形格 + 该格增益」表达；细则补充后按细则扩充。
+const MAP_POOL := [
+	{"name": "原野", "terrain_name": "蜂巢地面", "terrain_id": "hive_ground",
+		"terrain_desc": "位于该格的单位 攻击 +1", "terrain_atk_add": 1, "terrain_spd_add": 0,
+		"terrain_cells": [Vector2i(1, 1), Vector2i(2, 2)]},
+	{"name": "蜜源", "terrain_name": "蜜浆地", "terrain_id": "nectar",
+		"terrain_desc": "位于该格的单位 移动 +1", "terrain_atk_add": 0, "terrain_spd_add": 1,
+		"terrain_cells": [Vector2i(1, 0), Vector2i(2, 3)]},
+	{"name": "锈地", "terrain_name": "锈蚀地", "terrain_id": "rust",
+		"terrain_desc": "位于该格的单位 攻击 +1、移动 -1", "terrain_atk_add": 1, "terrain_spd_add": -1,
+		"terrain_cells": [Vector2i(0, 0), Vector2i(3, 3), Vector2i(1, 2)]},
+	{"name": "空地", "terrain_name": "无", "terrain_id": "",
+		"terrain_desc": "无特殊地形", "terrain_atk_add": 0, "terrain_spd_add": 0,
+		"terrain_cells": []},
+]
+
 
 ## 按名字取卡（找不到回退第一张兵蜂）
 static func card(nm: String) -> Dictionary:

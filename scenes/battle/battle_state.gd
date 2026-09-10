@@ -37,6 +37,10 @@ var selected_unit := -1
 var move_range: Array[Vector2i] = []
 var atk_range: Array[Vector2i] = []
 
+## a500 对战准备：本局先手方 / 抽取到的地图名（回合数以「先手方再次开始回合」为界）
+var first_side := "green"
+var map_name := ""
+
 ## 由协调器注入
 var combat: Node = null
 var started := false
@@ -53,26 +57,44 @@ func start() -> void:
 
 
 func _prepare() -> void:
+	# a500 构筑 2：前 4 张常规卡为初始手牌、后 4 张为备卡
 	for side in ["green", "red"]:
 		var cards: Array = []
 		for nm in D.DECK_LIST:
 			cards.append(D.card(nm))
-		deckl[side] = cards
-		for i in D.HAND_MAX:
-			draw_one(side)
-	# A5/a500：后手初始费用 +2（先手 0，靠首回合回费得到 2）
+		hand[side] = []
+		deckl[side] = []
+		for i in cards.size():
+			if i < D.HAND_MAX:
+				hand[side].append(cards[i])
+			else:
+				deckl[side].append(cards[i])
+	# a500 对战准备 6：随机决定先后手（后手初始费用 +2）
+	var order := ["green", "red"]
+	order.shuffle()
+	first_side = order[0]
 	cost["green"] = 0
-	cost["red"] = D.SECOND_PLAYER_BONUS
-	# 抽取对战地图：随机 2 格特殊地形
-	var spots := [Vector2i(1, 1), Vector2i(2, 2), Vector2i(1, 2), Vector2i(2, 1)]
-	spots.shuffle()
-	for i in 2:
-		terrain[spots[i]] = {"id": "hive_ground", "name": "蜂巢地面", "atk_add": 1, "spd_add": 0}
+	cost["red"] = 0
+	cost[order[1]] = D.SECOND_PLAYER_BONUS
+	# a500 对战准备 5：抽取对战地图；提前部署蜂王并载入手牌
+	draw_map()
 	spawn(Vector2i(3, 1), "green", D.card("金刚蜂王"))
 	spawn(Vector2i(0, 2), "red", D.card("金刚蜂王"))
-	push_log("对战开始：绿方先手 · 红方后手（初始费用 +2）")
-	push_log("地图特殊地形 %d 格「蜂巢地面」：该格单位 攻击 +1" % terrain.size())
-	begin_turn("green")
+	push_log("对战开始：%s方先手 · %s方后手（初始费用 +2）" % [cn(order[0]), cn(order[1])])
+	push_log("牌组：初始手牌 %d 张 + 备卡 %d 张（a500 构筑 2）" % [hand[first_side].size(), deckl[first_side].size()])
+	begin_turn(first_side)
+
+
+## a500 对战准备 5：抽取对战地图（从地图池随机，播报地图名与特殊地形）
+func draw_map() -> void:
+	var maps: Array = D.MAP_POOL
+	var m: Dictionary = maps[randi() % maps.size()]
+	map_name = str(m["name"])
+	terrain.clear()
+	for c in m["terrain_cells"]:
+		terrain[c] = {"id": m["terrain_id"], "name": m["terrain_name"],
+			"atk_add": int(m["terrain_atk_add"]), "spd_add": int(m["terrain_spd_add"])}
+	push_log("地图「%s」：特殊地形 %d 格「%s」（%s）" % [map_name, terrain.size(), m["terrain_name"], m["terrain_desc"]])
 
 
 func draw_one(side: String) -> void:
@@ -112,9 +134,13 @@ func unit_at(cell: Vector2i) -> int:
 # ============================================================
 # 回合流程（a500：回费/场地自动 → 部署 → 行动）
 # ============================================================
-## 主按钮：只服务"需要玩家确认"的 部署 / 行动 两个阶段
+## 主按钮：只服务"需要玩家确认"的 部署 / 行动 两个阶段；选中手牌时执行「弃卡过牌」
 func advance_phase() -> void:
 	if winner != "":
+		return
+	# a500 UI：选中手牌时主按钮执行「弃卡过牌」
+	if armed_card >= 0:
+		discard_armed()
 		return
 	match phase:
 		D.Phase.DEPLOY:
@@ -124,6 +150,33 @@ func advance_phase() -> void:
 			refresh()
 		D.Phase.ACTION:
 			end_turn()
+
+
+## a500 抽卡 6：丢弃手牌消耗 = 该卡部署费用；X 费卡丢弃消耗 10 点
+## 弃卡后该卡入墓地，并补充 1 张手牌（保持 a500 抽卡 4「补至 4 张」的节奏）
+func discard_armed() -> void:
+	if armed_card < 0 or armed_card >= hand[current].size():
+		return
+	var c: Dictionary = hand[current][armed_card]
+	var pc: int = int(c["cost"])
+	if pc < 0:
+		pc = D.COST_MAX
+	if cost[current] < pc:
+		push_log("费用不足（弃卡需 %d，现有 %d）" % [pc, cost[current]])
+		refresh()
+		return
+	cost[current] -= pc
+	grave[current].append(c)
+	hand[current].remove_at(armed_card)
+	draw_one(current)
+	push_log("%s方 弃置「%s」（-%d 费）→ 补充 1 张手牌" % [cn(current), c["name"], pc])
+	clear_sel()
+	refresh()
+
+
+## 当前是否可以弃卡（供 HUD 决定主按钮文案）
+func can_discard() -> bool:
+	return winner == "" and armed_card >= 0 and armed_card < hand[current].size()
 
 
 func begin_turn(side: String) -> void:
@@ -166,7 +219,8 @@ func end_turn() -> void:
 		refresh()
 		return
 	var next := "red" if current == "green" else "green"
-	if next == "green":
+	# 回合数以「先手方再次开始回合」为界（先手方随机，不能写死绿方）
+	if next == first_side:
 		round_no += 1
 	for side in ["green", "red"]:
 		while hand[side].size() < D.HAND_MAX:

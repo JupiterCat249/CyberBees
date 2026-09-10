@@ -52,6 +52,8 @@ func _on_state_changed() -> void:
 		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
+	elif state.can_discard():
+		_labels["btn"].text = "弃卡过牌"
 	elif state.phase == D.Phase.DEPLOY:
 		_labels["btn"].text = "进入行动"
 	elif state.phase == D.Phase.ACTION:
@@ -66,6 +68,8 @@ func _on_state_changed() -> void:
 
 
 func _hint() -> String:
+	if state.can_discard():
+		return "主按钮=弃卡过牌 / 点高亮格放置或使用指令"
 	match state.mode:
 		D.Mode.DEPLOY_TARGET:
 			return "点高亮格放置"
