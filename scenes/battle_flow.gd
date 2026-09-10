@@ -1,15 +1,21 @@
 extends Node2D
 ## ============================================================
-## 电子蜂 · 战斗场景（完整 A5 规则 + card-system 全套渲染）
+## 电子蜂 · 战斗场景逻辑（完整 A5 规则 + card-system 全套渲染复用）
 ##   规则依据: 电子蜂A5策划案/电子蜂a500规则.md
-##   渲染复用: card-system/card_system/（battle_ui shader 背景 + card_auto 卡牌 + 图集/类别图标）
-##   本文件只做「规则逻辑 + 节点组装」——不含任何像素渲染代码
-## 注意: 文件名为 battle_flow（不用 battle_card），规避编辑器脚本缓冲回写旧版
+##   渲染复用: card-system/card_system/（battle_ui shader 背景 + card_auto 卡牌 + card_atlas 图集字形/图标）
+##   场景结构由编辑器构建: Battle(Node2D) -> BattleUI(框架实例) + Overlay(文字层)
+##   本文件只做「规则逻辑 + 非框架内容生成」，不含任何像素渲染代码
 ## ============================================================
 
 const UI_SCENE := preload("res://card-system/card_system/battle_ui.tscn")
 const CARD := preload("res://card-system/card_system/card_auto.tscn")
 const ART_DIR := "res://card-system/card_system/art/"
+## 图集（数字 0-9 在 0..9 格；与 card_auto.gdshader 同一套常量）
+const ATLAS := preload("res://card-system/card_system/card_atlas.png")
+const ATLAS_CELL := 96.0
+const DIGIT_Y := 4.0
+const DIGIT_H := 88.0
+const DIGW := [0.7021, 0.4239, 0.6522, 0.617, 0.7667, 0.6196, 0.6809, 0.7111, 0.6915, 0.6809]
 
 # ---------------- 设计坐标（与 battle_ui.gdshader 常量一致） ----------------
 const MAP_ORIGIN := Vector2(460.0, 40.0)
@@ -19,11 +25,17 @@ const COLS := 4
 const PANEL_L := Vector2(32.0, 150.0)
 const PANEL_R := Vector2(1488.0, 150.0)
 const PANEL_SZ := 400.0
+## 手牌卡：面板 400x400 内 2x2，卡 250 设计尺寸 -> 0.76 缩放 = 190px，间距 195（两侧留 5px）
+const HAND_CARD_SCALE := 0.76
+const HAND_CARD_STEP := 195.0
+const HAND_CARD_PAD := 5.0
 const HEX_L := Vector2(82.0, 90.0)
 const HEX_R := Vector2(1538.0, 90.0)
+const HEX_DIGIT_H := 44.0
 const BTN_MAIN := Vector2(1488.0, 560.0)
 const BTN_MAIN_SZ := Vector2(400.0, 100.0)
 const DETAIL_POS := Vector2(32.0, 758.0)
+const DETAIL_SCALE := 1.2
 const STAT_X := 381.0
 const STAT_Y0 := 800.0
 const STAT_DY := 76.0
@@ -62,7 +74,6 @@ const POOL := [
 	{"art": "卡牌d1-电击III", "name": "X费·毁灭", "kind": "command_x", "cost": -1, "dmg": 0, "range": 3},
 ]
 
-## 卡组：1 蜂王 + 8 常规卡（同名 ≤4）
 const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "电击", "治疗"]
 
 # ---------------- 状态 ----------------
@@ -88,20 +99,19 @@ var help_on := false
 
 # ---------------- 节点 ----------------
 var _holder: Node2D
+var _overlay: Node2D
 var _cards_node: Node2D
 var _units_node: Node2D
-var _text_node: Node2D
 var _hl_node: Node2D
 var _detail_node: Node2D
-var _overlay: Node2D
 var _hand_nodes := {"green": [], "red": []}
 var _unit_nodes := {}
 var _labels := {}
+var _badge_digits: Array = []
 
 
 func _ready() -> void:
-	# 框架场景(battle_ui)由编辑器实例化在本场景下（编辑器内可观察）；
-	# 代码只取用它的 Holder 容器，不再重复实例化。
+	# 框架场景(battle_ui)由编辑器实例化在本场景下（编辑器内可观察）；代码只取用它的 Holder。
 	var ui: Node = get_node_or_null("BattleUI")
 	if ui == null:
 		ui = UI_SCENE.instantiate()
@@ -110,15 +120,14 @@ func _ready() -> void:
 	# 文字层 Overlay 已在编辑器中建好（根下直系，随场景保存）；
 	# 运行时把它的缩放/位置同步为框架 Holder 的同一系数，保证等比不漂移。
 	_overlay = get_node_or_null("Overlay") as Node2D
-	get_window().size_changed.connect(_sync_overlay)
-	_sync_overlay()
 	_cards_node = _mk("HandCards")
 	_units_node = _mk("Units")
-	_text_node = _mk("Texts")
 	_hl_node = _mk("Highlights")
 	_detail_node = _mk("Detail")
+	get_window().size_changed.connect(_sync_overlay)
 	_prepare()
 	_build_texts()
+	_sync_overlay()
 	_refresh()
 
 
@@ -610,6 +619,7 @@ func _refresh() -> void:
 	_render_units()
 	_render_highlights()
 	_render_detail()
+	_render_cost_badges()
 	_update_texts()
 
 
@@ -620,11 +630,11 @@ func _render_hand(side: String) -> void:
 	var base: Vector2 = PANEL_L if side == "green" else PANEL_R
 	var cards: Array = hand[side]
 	for i in cards.size():
-		var node := _make_card(cards[i], 0.5)
+		var node := _make_card(cards[i], HAND_CARD_SCALE)
 		var col := i % 2
 		@warning_ignore("integer_division")
 		var rowi := i / 2
-		node.position = base + Vector2(18.0 + col * 195.0, 18.0 + rowi * 195.0)
+		node.position = base + Vector2(HAND_CARD_PAD + col * HAND_CARD_STEP, HAND_CARD_PAD + rowi * HAND_CARD_STEP)
 		_cards_node.add_child(node)
 		_hand_nodes[side].append(node)
 
@@ -714,6 +724,7 @@ func _make_card(d: Dictionary, sc: float) -> Node2D:
 	return node
 
 
+## 左下 300x300 卡牌详情块：显示当前选中卡/单位的大卡（复用 card_auto 放大）
 func _render_detail() -> void:
 	for n in _detail_node.get_children():
 		n.queue_free()
@@ -728,36 +739,77 @@ func _render_detail() -> void:
 		d = hand["green"][0]
 	if d.is_empty():
 		return
-	var node := _make_card(d, 1.2)
+	var node := _make_card(d, DETAIL_SCALE)
 	node.position = DETAIL_POS
 	_detail_node.add_child(node)
 
 
+## 六边形徽章内的费用数字：用 card-system 提供的 card_atlas.png 字形（非自制字体）
+func _render_cost_badges() -> void:
+	for n in _badge_digits:
+		if is_instance_valid(n):
+			n.queue_free()
+	_badge_digits = []
+	if _overlay == null:
+		return
+	var ink := Color(0.11, 0.09, 0.02)
+	var g := _digit_node(int(cost["green"]), HEX_DIGIT_H, ink, HEX_L)
+	_overlay.add_child(g)
+	_badge_digits.append(g)
+	var r := _digit_node(int(cost["red"]), HEX_DIGIT_H, ink, HEX_R)
+	_overlay.add_child(r)
+	_badge_digits.append(r)
+
+
+## 用图集字形拼出数字（区域取自 card_atlas.png 0..9 格；与 card_auto.gdshader 的映射一致）
+func _digit_node(v: int, height: float, col: Color, center: Vector2) -> Node2D:
+	var root := Node2D.new()
+	root.position = center
+	if v < 0:
+		return root
+	var ds: Array = []
+	for ch in str(v):
+		ds.append(int(ch))
+	var sc := height / DIGIT_H
+	var gap := 1.5 * sc
+	var total := 0.0
+	for d in ds:
+		total += DIGW[d] * DIGIT_H * sc
+	if ds.size() > 1:
+		total += gap * float(ds.size() - 1)
+	var x := -total * 0.5
+	for d in ds:
+		var pad := (1.0 - float(DIGW[d])) * 0.5
+		var at := AtlasTexture.new()
+		at.atlas = ATLAS
+		at.region = Rect2((float(d) + pad) * ATLAS_CELL, DIGIT_Y, float(DIGW[d]) * ATLAS_CELL, DIGIT_H)
+		var sp := Sprite2D.new()
+		sp.texture = at
+		sp.centered = false
+		sp.scale = Vector2(sc, sc)
+		sp.position = Vector2(x, -height * 0.5)
+		sp.modulate = col
+		root.add_child(sp)
+		x += float(DIGW[d]) * DIGIT_H * sc + gap
+	return root
+
+
 # ============================================================
-# 文字层
+# 文字层（节点由编辑器创建；代码只设置样式与文本）
 # ============================================================
 func _build_texts() -> void:
-	# 文字节点已由编辑器创建在 BattleUI/Holder 下（场景内可观察）；
-	# 代码只负责"查找 + 设置样式/文本"，不再重复新建。
-	_bind("gcost", "CostGreen", HEX_L, 40, Color(0.14, 0.14, 0.14), 1)
-	_bind("rcost", "CostRed", HEX_R, 40, Color(0.14, 0.14, 0.14), 1)
 	_bind("info", "InfoBar", Vector2(452.0, 4.0), 26, Color(1, 1, 1), 0)
 	_bind("btn", "BtnText", BTN_MAIN + Vector2(250.0, 26.0), 34, Color(0.14, 0.14, 0.14), 1)
-	_bind("gs", "GreenSide", Vector2(120.0, 146.0), 22, Color(0.78, 1.0, 0.80), 0)
-	_bind("rs", "RedSide", Vector2(1576.0, 146.0), 22, Color(1.0, 0.80, 0.80), 0)
 	_bind("st0", "StatAtk", Vector2(STAT_X + 26.0, STAT_Y0 - 16.0), 30, Color(1, 1, 1), 0)
 	_bind("st1", "StatDef", Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY - 16.0), 30, Color(1, 1, 1), 0)
 	_bind("st2", "StatSpd", Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY * 2 - 16.0), 30, Color(1, 1, 1), 0)
 	_bind("st3", "StatRange", Vector2(STAT_X + 26.0, STAT_Y0 + STAT_DY * 3 - 16.0), 30, Color(1, 1, 1), 0)
 	_bind("log", "LogText", Vector2(1494.0, 674.0), 17, Color(0.86, 0.86, 0.86), 0)
-	_labels["gname"] = _mk_label(Vector2(60.0, 58.0), 20, Color(0.10, 0.10, 0.10), 1)
-	_labels["rname"] = _mk_label(Vector2(1516.0, 58.0), 20, Color(0.10, 0.10, 0.10), 1)
 	_bind("help", "HelpText", Vector2(452.0, 120.0), 20, Color(1.0, 0.95, 0.75), 0)
 
 
-## 绑定编辑器中已存在的文字节点（缺失时回退为代码创建，保证健壮）
+## 绑定编辑器中已存在的文字节点（缺失时回退代码创建，保证健壮）
 func _bind(key: String, node_name: String, pos: Vector2, size: int, col: Color, center: int) -> void:
-	# 优先使用编辑器中已建好的文字节点（场景内可观察）；缺失才回退代码创建
 	var l: Label = null
 	if _overlay != null:
 		l = _overlay.get_node_or_null(NodePath(node_name)) as Label
@@ -784,17 +836,17 @@ func _mk_label(pos: Vector2, size: int, col: Color, center: int) -> Label:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.custom_minimum_size = Vector2(96.0, 0.0)
 		l.position = pos - Vector2(48.0, 0.0)
-	_text_node.add_child(l)
+	_text_node().add_child(l)
 	return l
 
 
+func _text_node() -> Node2D:
+	if _overlay != null:
+		return _overlay
+	return _holder
+
+
 func _update_texts() -> void:
-	_labels["gcost"].text = str(cost["green"])
-	_labels["rcost"].text = str(cost["red"])
-	_labels["gname"].text = "绿方"
-	_labels["rname"].text = "红方"
-	_labels["gs"].text = "绿方领地"
-	_labels["rs"].text = "红方领地"
 	var hint := ""
 	match mode:
 		Mode.DEPLOY_TARGET:
@@ -804,8 +856,6 @@ func _update_texts() -> void:
 		_:
 			hint = "点牌选中 / 点己方单位行动"
 	_labels["info"].text = "第%d回合 · 阶段:%s · %s方 · %s" % [round_no, PHASE_NAME[phase], _cn(current), hint]
-	_labels["gcost"].position = HEX_L - Vector2(48.0, 22.0)
-	_labels["rcost"].position = HEX_R - Vector2(48.0, 22.0)
 	_labels["btn"].text = "游戏结束" if winner != "" else ("结束阶段" if phase != Phase.ACTION else "结束回合")
 	var sid := selected_unit if selected_unit >= 0 else _queen_id_of(current)
 	_labels["st0"].text = str(_final_atk(sid)) if sid >= 0 else "-"
@@ -860,9 +910,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		var lp := p - base
 		@warning_ignore("integer_division")
-		var col := int(lp.x / 195.0)
+		var col := int(lp.x / HAND_CARD_STEP)
 		@warning_ignore("integer_division")
-		var rowi := int(lp.y / 195.0)
+		var rowi := int(lp.y / HAND_CARD_STEP)
 		select_hand(rowi * 2 + col)
 		return
 	var b := p - MAP_ORIGIN

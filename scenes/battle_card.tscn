@@ -10,19 +10,11 @@ script = ExtResource("1_u25sk")
 
 [node name="Overlay" type="Node2D" parent="." unique_id=1901149892]
 
-[node name="CostGreen" type="Label" parent="Overlay" unique_id=80328861]
-
-[node name="CostRed" type="Label" parent="Overlay" unique_id=548373394]
-
 [node name="InfoBar" type="Label" parent="Overlay" unique_id=1556655212]
 
 [node name="BtnText" type="Label" parent="Overlay" unique_id=1693760460]
 
 [node name="LogText" type="Label" parent="Overlay" unique_id=1317436002]
-
-[node name="GreenSide" type="Label" parent="Overlay" unique_id=1362088620]
-
-[node name="RedSide" type="Label" parent="Overlay" unique_id=534584878]
 
 [node name="StatAtk" type="Label" parent="Overlay" unique_id=890945234]
 
