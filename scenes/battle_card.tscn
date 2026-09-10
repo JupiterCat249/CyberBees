@@ -9,6 +9,7 @@
 script = ExtResource("1_u25sk")
 
 [node name="BgLayer" type="Node2D" parent="." unique_id=355388199]
+visible = false
 
 [node name="BgBlur" type="TextureRect" parent="BgLayer" unique_id=1579240981]
 offset_bottom = 1080.0
@@ -38,7 +39,7 @@ texture = ExtResource("2_b5gog")
 [node name="FxLayer" type="Node2D" parent="." unique_id=6863796]
 
 [node name="BgFilter" type="TextureRect" parent="FxLayer" unique_id=1563674030]
-modulate = Color(1, 1, 1, 0.1)
+modulate = Color(1, 1, 1, 0.32)
 texture_repeat = 1
 offset_bottom = 1080.0
 mouse_filter = 2

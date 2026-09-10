@@ -19,6 +19,8 @@ const DIGW := [0.7021, 0.4239, 0.6522, 0.617, 0.7667, 0.6196, 0.6809, 0.7111, 0.
 ## 背景资源（card-system 未提供，属"补充"）——必须位于框架 Holder 内、骨架棋盘之上、单位之下
 const MAP_TERRAIN := preload("res://assets/background/map_terrain.png")
 const MAP_GRID := preload("res://assets/background/map_grid.png")
+## 全屏模糊背景：经「运行时注入」替换骨架的灰底（不改 card-system 任何文件）
+const BG_BLURRED := preload("res://assets/background/bg_blurred.png")
 
 # ---------------- 设计坐标（与 battle_ui.gdshader 常量一致） ----------------
 const MAP_ORIGIN := Vector2(460.0, 40.0)
@@ -130,7 +132,9 @@ func _ready() -> void:
 	_overlay = get_node_or_null("Overlay") as Node2D
 	_bg_layer = get_node_or_null("BgLayer") as Node2D
 	_fx_layer = get_node_or_null("FxLayer") as Node2D
-	# 背景：棋盘底图 + 格子（补在骨架棋盘之上、卡牌/单位之下）
+	# 背景①：运行时注入——把骨架的灰底换成模糊地图背景（不改 card-system）
+	_inject_background()
+	# 背景②：棋盘底图 + 格子（补在骨架棋盘之上、卡牌/单位之下）
 	_build_map_bg()
 	_cards_node = _mk("HandCards")
 	_units_node = _mk("Units")
@@ -160,6 +164,41 @@ func _sync_overlay() -> void:
 		if nd != null:
 			nd.scale = _holder.scale
 			nd.position = _holder.position
+
+
+## 非硬编码的「背景替换」：运行时读取 card-system 骨架的 shader 源码 →
+## ① 注入一个背景采样函数 ② 把硬编码灰底换成对该函数的调用 ③ 赋给本场景的材质副本。
+## 全程不改 card-system 的文件（材质 resource_local_to_scene=true，改的是本场景的副本）。
+func _inject_background() -> void:
+	var rect := _holder.get_node_or_null(NodePath("Rect")) as ColorRect
+	if rect == null:
+		return
+	var mat := rect.material as ShaderMaterial
+	if mat == null or mat.shader == null:
+		return
+	var src: String = mat.shader.code
+	if src.contains("bg_sample"):
+		mat.set_shader_parameter("bg_tex", BG_BLURRED)
+		return
+	var anchor := "const vec3 COL_BG = vec3(0.35);"
+	var call_anchor := "vec3 col = COL_BG;"
+	if not src.contains(anchor) or not src.contains(call_anchor):
+		push_warning("背景注入跳过：骨架 shader 结构已变（未找到注入锚点）")
+		return
+	var inject := anchor + "\n"
+	inject += "uniform sampler2D bg_tex : source_color, filter_linear;\n"
+	inject += "uniform float bg_mix = 1.0;\n"
+	inject += "vec3 bg_sample(vec2 px) {\n"
+	inject += "\tvec2 tuv = clamp(px / RES, vec2(0.0), vec2(1.0));\n"
+	inject += "\treturn mix(COL_BG, texture(bg_tex, tuv).rgb, bg_mix);\n"
+	inject += "}"
+	src = src.replace(anchor, inject)
+	src = src.replace(call_anchor, "vec3 col = bg_sample(px);")
+	var sh := Shader.new()
+	sh.code = src
+	mat.shader = sh
+	mat.set_shader_parameter("bg_tex", BG_BLURRED)
+	mat.set_shader_parameter("bg_mix", 1.0)
 
 
 ## 棋盘底图 + 格子：属 card-system 未提供的「背景」，补在骨架棋盘之上、卡牌/单位之下
