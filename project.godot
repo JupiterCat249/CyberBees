@@ -13,6 +13,7 @@ config_version=5
 config/name="电子蜂"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+run/main_scene="res://scenes/battle_card.tscn"
 
 [autoload]
 
