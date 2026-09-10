@@ -17,6 +17,7 @@ var _map_bg: Node2D = null
 var _units_node: Node2D = null
 var _hl_node: Node2D = null
 var _unit_nodes := {}
+var _scan_mat: ShaderMaterial = null
 
 
 ## 由协调器注入依赖并接线
@@ -51,6 +52,9 @@ func _build_map_bg() -> void:
 	terrain_spr.texture = load(D.MAP_TERRAIN_PATH)
 	terrain_spr.centered = false
 	terrain_spr.position = D.MAP_ORIGIN
+	# 扫描线作为「背景纹理」叠加进地图底图（与整屏背景同相位；不覆盖 UI 节点）
+	_scan_mat = D.make_scan_material(D.MAP_ORIGIN, D.CELL * float(D.COLS))
+	terrain_spr.material = _scan_mat
 	_map_bg.add_child(terrain_spr)
 	var grid_spr := Sprite2D.new()
 	grid_spr.name = "Grid"
@@ -63,6 +67,12 @@ func _build_map_bg() -> void:
 func _on_state_changed() -> void:
 	render_units()
 	render_highlights()
+
+
+## 由 BattleBgFx 的 scan_offset_changed 信号驱动（与整屏背景保持同一相位）
+func set_scan_offset(v: float) -> void:
+	if _scan_mat != null:
+		_scan_mat.set_shader_parameter("scan_offset", v)
 
 
 # ---------------- 场上单位 ----------------

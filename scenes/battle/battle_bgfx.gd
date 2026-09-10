@@ -10,10 +10,15 @@ extends Node2D
 
 const D := preload("res://scenes/battle/battle_defs.gd")
 
+signal scan_offset_changed(offset: float)   ## 扫描线相位（供其他背景贴图同步，避免各自计算）
+
 var holder: Node2D = null
 var overlay: Node2D = null
 var bg_layer: Node2D = null
 var fx_layer: Node2D = null
+
+var _bg_mat: ShaderMaterial = null
+var _scan_offset := 0.0
 
 
 func _ready() -> void:
@@ -51,10 +56,16 @@ func inject_background() -> void:
 		return
 	var inject := anchor + "\n"
 	inject += "uniform sampler2D bg_tex : source_color, filter_linear;\n"
+	inject += "uniform sampler2D scan_tex : source_color, filter_linear;\n"
 	inject += "uniform float bg_mix = 1.0;\n"
+	inject += "uniform float scan_mix = " + str(D.SCAN_MIX) + ";\n"
+	inject += "uniform float scan_offset = 0.0;\n"
 	inject += "vec3 bg_sample(vec2 px) {\n"
 	inject += "\tvec2 tuv = clamp(px / RES, vec2(0.0), vec2(1.0));\n"
-	inject += "\treturn mix(COL_BG, texture(bg_tex, tuv).rgb, bg_mix);\n"
+	inject += "\tvec3 c = mix(COL_BG, texture(bg_tex, tuv).rgb, bg_mix);\n"
+	inject += "\tvec2 suv = fract(vec2(px.x / " + str(D.SCAN_TILE_PX) + ", (px.y + scan_offset) / " + str(D.SCAN_TILE_PX) + "));\n"
+	inject += "\tvec4 s = texture(scan_tex, suv);\n"
+	inject += "\treturn mix(c, s.rgb, s.a * scan_mix);\n"
 	inject += "}"
 	src = src.replace(anchor, inject)
 	src = src.replace(call_anchor, "vec3 col = bg_sample(px);")
@@ -63,6 +74,18 @@ func inject_background() -> void:
 	mat.shader = sh
 	mat.set_shader_parameter("bg_tex", load(D.BG_BLURRED_PATH))
 	mat.set_shader_parameter("bg_mix", 1.0)
+	mat.set_shader_parameter("scan_tex", load(D.SCAN_TILE_PATH))
+	mat.set_shader_parameter("scan_mix", D.SCAN_MIX)
+	_bg_mat = mat
+
+
+## 扫描线相位推进：按帧数计时（a500/项目约束：不使用 delta），并广播给其他背景贴图
+func _process(_delta: float) -> void:
+	if _bg_mat == null:
+		return
+	_scan_offset = fmod(_scan_offset + D.SCAN_SPEED, D.SCAN_TILE_PX)
+	_bg_mat.set_shader_parameter("scan_offset", _scan_offset)
+	scan_offset_changed.emit(_scan_offset)
 
 
 ## 各层跟随框架 Holder 的等比缩放与居中（任何窗口都不变形）

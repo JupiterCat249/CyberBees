@@ -49,6 +49,12 @@ const MAP_TERRAIN_PATH := "res://assets/background/map_terrain.png"
 const MAP_GRID_PATH := "res://assets/background/map_grid.png"
 const BG_BLURRED_PATH := "res://assets/background/bg_blurred.png"
 
+# ---------------- 背景特效：扫描线（叠加进"背景纹理"，不覆盖 UI） ----------------
+const SCAN_TILE_PATH := "res://assets/background/bg_filter_tile.png"
+const SCAN_TILE_PX := 100.0     ## 扫描线 tile 尺寸（设计像素）
+const SCAN_MIX := 0.32          ## 叠加强度（0=无，1=全白线）
+const SCAN_SPEED := 0.45        ## 每帧下移的设计像素（帧数计时，不用 delta）
+
 # ---------------- 图标索引（card_auto / 图集） ----------------
 const I_ATK := 0
 const I_SPD := 1
@@ -232,3 +238,27 @@ static func atlas_icon(idx: int, size: float, center: Vector2, col: Color) -> Sp
 	sp.scale = Vector2(size / ATLAS_CELL, size / ATLAS_CELL)
 	sp.modulate = col
 	return sp
+
+
+## 生成「背景纹理叠加扫描线」材质：给背景贴图类节点（如地图底图）使用。
+## 用内联 Shader（不在磁盘新建任何 shader 文件）；扫描线按设计像素平铺，
+## 与整屏背景保持同一相位（origin = 该贴图在设计坐标中的位置）。
+static func make_scan_material(origin: Vector2, bg_size: float) -> ShaderMaterial:
+	var code := "shader_type canvas_item;\n"
+	code += "uniform sampler2D scan_tex : source_color, filter_linear;\n"
+	code += "uniform float scan_mix = " + str(SCAN_MIX) + ";\n"
+	code += "uniform float scan_offset = 0.0;\n"
+	code += "void fragment() {\n"
+	code += "\tvec4 base = texture(TEXTURE, UV);\n"
+	code += "\tvec2 px = UV * vec2(" + str(bg_size) + ") + vec2(" + str(origin.x) + ", " + str(origin.y) + ");\n"
+	code += "\tvec2 suv = fract(vec2(px.x / " + str(SCAN_TILE_PX) + ", (px.y + scan_offset) / " + str(SCAN_TILE_PX) + "));\n"
+	code += "\tvec4 s = texture(scan_tex, suv);\n"
+	code += "\tCOLOR = vec4(mix(base.rgb, s.rgb, s.a * scan_mix), base.a);\n"
+	code += "}"
+	var sh := Shader.new()
+	sh.code = code
+	var mat := ShaderMaterial.new()
+	mat.shader = sh
+	mat.set_shader_parameter("scan_tex", load(SCAN_TILE_PATH))
+	mat.set_shader_parameter("scan_mix", SCAN_MIX)
+	return mat
