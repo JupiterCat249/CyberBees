@@ -4,6 +4,14 @@
 [ext_resource type="PackedScene" path="res://card-system/card_system/battle_ui.tscn" id="1_ui"]
 [ext_resource type="Texture2D" uid="uid://dyffhibh3y4pl" path="res://assets/background/bg_blurred.png" id="2_b5gog"]
 [ext_resource type="Texture2D" uid="uid://bdcjm7o7232sw" path="res://assets/background/bg_filter_tile.png" id="4_nay0s"]
+[ext_resource type="Script" uid="uid://cg4vl2bvsfd22" path="res://scenes/battle/battle_state.gd" id="5_30h02"]
+[ext_resource type="Script" uid="uid://i0x8qqy12ayy" path="res://scenes/battle/battle_combat.gd" id="6_im7xq"]
+[ext_resource type="Script" uid="uid://dr2iugskrlico" path="res://scenes/battle/battle_input.gd" id="7_5aynm"]
+[ext_resource type="Script" uid="uid://c4o5nutjjcbj6" path="res://scenes/battle/battle_bgfx.gd" id="8_gywsw"]
+[ext_resource type="Script" uid="uid://cqujnv01hql7u" path="res://scenes/battle/battle_board_view.gd" id="9_t8jia"]
+[ext_resource type="Script" uid="uid://mm644tp3k40t" path="res://scenes/battle/battle_hand_view.gd" id="10_v5ipb"]
+[ext_resource type="Script" uid="uid://cg44wa77uuuks" path="res://scenes/battle/battle_detail_view.gd" id="11_5bde7"]
+[ext_resource type="Script" uid="uid://coy0ycbi351es" path="res://scenes/battle/battle_hud_view.gd" id="12_res52"]
 
 [sub_resource type="Animation" id="Animation_b5gog"]
 length = 2.0
@@ -93,6 +101,7 @@ theme_override_colors/font_color = Color(0.72, 0.85, 0.72, 1)
 theme_override_font_sizes/font_size = 15
 
 [node name="FxLayer" type="Node2D" parent="." unique_id=6863796]
+visible = false
 
 [node name="BgFilter" type="TextureRect" parent="FxLayer" unique_id=1563674030]
 modulate = Color(1, 1, 1, 0.32)
@@ -108,3 +117,27 @@ stretch_mode = 1
 [node name="ScanAnim" type="AnimationPlayer" parent="FxLayer" unique_id=1670953468]
 libraries/ = SubResource("AnimationLibrary_nay0s")
 autoplay = &"scan_scroll"
+
+[node name="State" type="Node" parent="." unique_id=1330497789]
+script = ExtResource("5_30h02")
+
+[node name="Combat" type="Node" parent="." unique_id=12742334]
+script = ExtResource("6_im7xq")
+
+[node name="InputRouter" type="Node" parent="." unique_id=472003611]
+script = ExtResource("7_5aynm")
+
+[node name="BgFx" type="Node2D" parent="." unique_id=492905699]
+script = ExtResource("8_gywsw")
+
+[node name="BoardView" type="Node2D" parent="." unique_id=1920209255]
+script = ExtResource("9_t8jia")
+
+[node name="HandView" type="Node2D" parent="." unique_id=738741888]
+script = ExtResource("10_v5ipb")
+
+[node name="DetailView" type="Node2D" parent="." unique_id=59177591]
+script = ExtResource("11_5bde7")
+
+[node name="HudView" type="Node2D" parent="." unique_id=1375420282]
+script = ExtResource("12_res52")
