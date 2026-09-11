@@ -261,6 +261,14 @@ func can_exchange() -> bool:
 func start_battle() -> void:
 	if phase != D.Phase.PREPARE:
 		return
+	# 被动技能结算（迭代003.1）：【机场】设定双方部署范围（deploy_radius）
+	for side in ["green", "red"]:
+		var q := queen_id_of(side)
+		if q >= 0 and skills != null:
+			var prev := current
+			current = side
+			run_passive("机场", q)
+			current = prev
 	push_log("对战准备结束，开始第一回合")
 	clear_sel()
 	begin_turn(first_side)
@@ -408,8 +416,19 @@ func legal_place(cell: Vector2i) -> bool:
 		"building":
 			return (cell.x >= 2) if current == "green" else (cell.x < 2)
 		"soldier":
-			return adjacent_own_queen(cell)
+			# 迭代003.1：部署范围由**被动技能**驱动（机场 → deploy_radius），不再硬编码"蜂王相邻"
+			return within_deploy_radius(cell)
 	return false
+
+
+## 是否在己方部署范围内（半径 = deploy_radius[side]，由【机场】被动设定；
+## a500 卡牌类型：兵蜂默认只能部署在蜂王相邻格 -> 默认半径 1）
+func within_deploy_radius(cell: Vector2i) -> bool:
+	var q := queen_id_of(current)
+	if q < 0 or not units.has(q):
+		return false
+	var qc: Vector2i = units[q]["cell"]
+	return abs(cell.x - qc.x) + abs(cell.y - qc.y) <= int(deploy_radius.get(current, 1))
 
 
 func adjacent_own_queen(cell: Vector2i) -> bool:
