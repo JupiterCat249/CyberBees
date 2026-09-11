@@ -226,6 +226,25 @@ const SKILLS := {
 		"targets": {"mode": "single", "kind": "any", "side": "any"},
 		"effects": [{"type": "damage", "value": 0, "by_target_cost": true}],
 	},
+
+	# ---------------- 检查点3/4 样例：覆盖「位移类」与「链式传播」 ----------------
+	"蜂群转移": {
+		"id": "swarm_move", "name": "蜂群转移", "source": "support",
+		"sk": "【支援】蜂群转移", "stags": "支援 · 位移类 · 单位效果",
+		"sdesc": "支援射程 2 内的 1 个己方单位，使其获得「疾行」（移动力 +1）。使用后结束该单位行动。",
+		"conditions": {},
+		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 2},
+		"effects": [{"type": "modify", "id": "haste", "value": 1,
+			"effect": {"id": "haste", "name": "疾行", "spd_add": 1}}],
+	},
+	"扩散毒雾": {
+		"id": "toxic_chain", "name": "扩散毒雾", "source": "command",
+		"sk": "【指令】扩散毒雾", "stags": "指令 · 攻击指令 · 链式传播",
+		"sdesc": "对目标格单位造成 2 点指令伤害，并链式传播给其上下左右相邻单位各 2 点（蜂王免疫）。",
+		"conditions": {},
+		"targets": {"mode": "single", "kind": "any", "side": "any", "chain": true},
+		"effects": [{"type": "damage", "value": 2, "chainable": true}],
+	},
 }
 
 
