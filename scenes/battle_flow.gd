@@ -61,6 +61,7 @@ func _ready() -> void:
 		inp.hand_clicked.connect(state.on_hand_clicked)
 		inp.cell_clicked.connect(state.on_cell_clicked)
 		inp.support_clicked.connect(state.on_support_clicked)
+		inp.click_empty.connect(state.on_click_empty)
 		inp.main_pressed.connect(state.advance_phase)
 		inp.small_pressed.connect(state.on_small_pressed)
 

@@ -742,6 +742,13 @@ func on_support_clicked(cell: Vector2i) -> void:
 	support_at(cell)
 
 
+## A5 程序需求：点击非交互区域取消当前选中（三种选中态通吃：待放置卡 / 选中单位 / 指令目标）
+func on_click_empty() -> void:
+	if armed_card >= 0 or selected_unit >= 0:
+		clear_sel()
+		refresh()
+
+
 func on_small_pressed(index: int) -> void:
 	match index:
 		0:

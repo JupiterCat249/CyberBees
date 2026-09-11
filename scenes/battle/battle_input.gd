@@ -13,6 +13,7 @@ signal cell_clicked(cell: Vector2i)             ## 点了地图格
 signal support_clicked(cell: Vector2i)          ## Shift+点格（支援技能）
 signal main_pressed()                           ## 点了主按钮
 signal small_pressed(index: int)                ## 点了右下小按钮
+signal click_empty()                            ## 点了非交互区域（A5：取消当前选中）
 
 ## 由协调器注入
 var holder: Node2D = null
@@ -51,6 +52,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	# ④ 地图格
 	var cell := D.pos_cell(p)
 	if not D.in_map(cell):
+		# A5 程序需求：点击非交互区域取消当前选中（主按钮/小按钮/手牌面板已在上面处理）
+		click_empty.emit()
 		return
 	if Input.is_key_pressed(KEY_SHIFT):
 		support_clicked.emit(cell)
