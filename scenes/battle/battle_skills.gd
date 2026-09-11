@@ -194,7 +194,7 @@ func _pluck(dim: String, key: String, ctx: Dictionary) -> Variant:
 				"hp":
 					return int(unit.get("hp", 0))
 				"hp_max":
-					return int(unit.get("card", {}).get("hp", 0))
+					return int(state.combat.final_hp_max(sid)) if state.combat != null else int(unit.get("card", {}).get("hp", 0))
 				"atk":
 					return int(unit.get("card", {}).get("atk", 0))
 				"effects":
@@ -298,7 +298,7 @@ func apply_effect(eff: Dictionary, cell: Vector2i, id: int, mult: float, ctx: Di
 			var e: Dictionary = eff.get("effect", {}).duplicate()
 			# 即时回复类（治疗）：不进效果槽，直接结算（含上限）
 			if bool(e.get("instant_heal", false)):
-				var maxhp := int(state.units[id]["card"]["hp"])
+				var maxhp: int = state.combat.final_hp_max(id)   # 上限统一走 final_hp_max（含 hp_add 效果）
 				state.units[id]["hp"] = mini(int(state.units[id]["hp"]) + final_v, maxhp)
 				state.push_log("%s 治疗 +%d" % [state.unit_name(id), final_v])
 				return true

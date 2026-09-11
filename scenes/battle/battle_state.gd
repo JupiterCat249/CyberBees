@@ -462,12 +462,14 @@ func cmd_at(cell: Vector2i) -> void:
 		return
 	var c: Dictionary = hand[current][armed_card]
 	var tid := unit_at(cell)
+	# 自身目标的指令（补给 / 轮换等）不要求单位目标
+	var is_self_target: bool = str(D.skill(str(c["name"])).get("targets", {}).get("mode", "")) == "self"
 	# a500 抽卡 1：使用卡牌需以「合法目标」为前提 —— 无目标时不得扣费、不得弃卡（审计 B1 修复）
-	if tid < 0:
+	if tid < 0 and not is_self_target:
 		push_log("指令「%s」需指定一个单位目标（该格无单位）" % c["name"])
 		refresh()
 		return
-	var target: Dictionary = units[tid]["card"]
+	var target: Dictionary = units[tid]["card"] if tid >= 0 else {}
 	# 辅助指令（治疗）只能对己方单位使用
 	if c.has("heal") and units[tid]["side"] != current:
 		push_log("「%s」只能对己方单位使用" % c["name"])
@@ -480,8 +482,8 @@ func cmd_at(cell: Vector2i) -> void:
 		push_log("费用不足（需 %d）" % pc)
 		refresh()
 		return
-	# 蜂王免疫指令卡伤害与减益（a500 卡牌类型）
-	if target["kind"] == "queen":
+	# 蜂王免疫指令卡伤害与减益（a500 卡牌类型）—— 仅当存在单位目标时判定
+	if tid >= 0 and str(target.get("kind", "")) == "queen":
 		push_log("蜂王免疫指令卡效果")
 		refresh()
 		return

@@ -52,15 +52,31 @@ func final_spd(id: int) -> int:
 	return maxi(0, int(round(float(s + add) * mult)))
 
 
-## 射程（来自卡牌属性；效果可覆盖）
+## 射程（来自卡牌属性；效果可覆盖：range_add 加法 + range_mult 乘法）
 func final_range(id: int) -> int:
 	if state == null or not state.units.has(id):
 		return 0
 	var u: Dictionary = state.units[id]
 	var r := int(u["card"].get("range", 0))
+	var add := 0
+	var mult := 1.0
 	for k in u["effects"]:
-		r += int(u["effects"][k].get("range_add", 0))
-	return maxi(0, r)
+		add += int(u["effects"][k].get("range_add", 0))
+		mult *= float(u["effects"][k].get("range_mult", 1.0))
+	return maxi(0, int(round(float(r + add) * mult)))
+
+
+## 最大生命值（基础 hp + 效果 hp_add）—— 治疗封顶 / 显示 / 胜负比较统一走这里
+## 此前这几处直接取卡牌基础 hp，导致「提升最大生命」类效果无法生效
+func final_hp_max(id: int) -> int:
+	if state == null or not state.units.has(id):
+		return 0
+	var u: Dictionary = state.units[id]
+	var base := int(u["card"].get("hp", 0))
+	var add := 0
+	for k in u["effects"]:
+		add += int(u["effects"][k].get("hp_add", 0))
+	return maxi(1, base + add)
 
 
 ## 伤害减免合计（护甲/力场/拦截等）
