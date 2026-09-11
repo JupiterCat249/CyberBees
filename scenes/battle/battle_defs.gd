@@ -259,12 +259,42 @@ const SKILLS := {
 	"精确打击": {
 		"id": "precision", "name": "精确打击", "source": "command",
 		"sk": "【指令】精确打击", "stags": "指令 · 攻击指令 · 过滤",
-		"sdesc": "仅对**敌方兵蜂**造成 5 点指令伤害；**不会误伤己方**（对照：巡航导弹不过滤、含友伤）。",
+		"sdesc": "（描述由数据自动生成）",
 		"conditions": {},
 		# 过滤能力启用：side=enemy + kind=soldier；filter 里还可加血量阈值 / 已有效果 / 排除自身等
 		"targets": {"mode": "cell", "splash": 1,
 			"filter": {"side": "enemy", "kind": "soldier", "exclude_source": true}},
 		"effects": [{"type": "damage", "value": 5}],
+	},
+
+	# ---------------- 检查点8 样例：**纯数据新增**（不改任何逻辑代码即可生效） ----------------
+	"蜂群突袭": {
+		"id": "assault", "name": "蜂群突袭", "source": "command",
+		"sk": "【指令】蜂群突袭", "stags": "指令 · 攻击指令 · 条件 · 倍率",
+		"sdesc": "（描述由数据自动生成）",
+		"conditions": {"all": [
+			{"dim": "round", "key": "now", "op": ">=", "value": 3},
+			{"dim": "hand", "key": "count", "op": ">=", "value": 2},
+		], "multiplier": 1.5},
+		"targets": {"mode": "single", "kind": "any", "side": "enemy", "range": 3},
+		"effects": [{"type": "damage", "value": 4}],
+	},
+	"工蜂修筑": {
+		"id": "fortify", "name": "工蜂修筑", "source": "support",
+		"sk": "【支援】工蜂修筑", "stags": "支援 · 单位效果 · 上限提升",
+		"sdesc": "（描述由数据自动生成）",
+		"conditions": {},
+		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 1},
+		"effects": [{"type": "modify", "id": "tough", "value": 1,
+			"effect": {"id": "tough", "name": "坚固", "hp_add": 2}}],
+	},
+	"蜂粮储备": {
+		"id": "granary", "name": "蜂粮储备", "source": "command",
+		"sk": "【指令】蜂粮储备", "stags": "指令 · 辅助指令 · 资源",
+		"sdesc": "（描述由数据自动生成）",
+		"conditions": {"all": [{"dim": "cost", "key": "now", "op": "<=", "value": 5}]},
+		"targets": {"mode": "self"},
+		"effects": [{"type": "resource", "value": 2, "gain": true}],
 	},
 }
 

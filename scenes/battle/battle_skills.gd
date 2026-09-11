@@ -103,6 +103,110 @@ func run_skill(def: Dictionary, ctx: Dictionary) -> Dictionary:
 # ============================================================
 # 条件求值（AND / OR / NOT + 7 维度断言）
 # ============================================================
+## 由结构化数据**自动生成**技能描述（检查点7）—— 描述与数据不可能脱节
+## 取代手写 sdesc：源 / 条件 / 对象 / 效果 / 倍率 全部从定义里读出来
+func describe(def: Dictionary) -> String:
+	if def.is_empty():
+		return ""
+	var parts: Array[String] = []
+	match str(def.get("source", "")):
+		SRC_COMMAND:
+			parts.append("使用指令卡")
+		SRC_SUPPORT:
+			parts.append("支援技能")
+		SRC_PASSIVE:
+			parts.append("被动技能")
+	var t: Dictionary = def.get("targets", {})
+	var f: Dictionary = t.get("filter", {})
+	match str(t.get("mode", "self")):
+		"self":
+			parts.append("作用于自身")
+		"single":
+			parts.append("对单体")
+		"cell":
+			parts.append("对地格（溅射 %d）" % int(t.get("splash", 0)))
+	var sd := str(t.get("side", f.get("side", "any")))
+	if sd == "enemy":
+		parts.append("仅敌方")
+	elif sd == "ally":
+		parts.append("仅己方")
+	var kd := str(t.get("kind", f.get("kind", "any")))
+	if kd != "any":
+		parts.append("限%s" % _kind_cn(kd))
+	if int(t.get("range", -1)) >= 0:
+		parts.append("距离 %d" % int(t.get("range", -1)))
+	if bool(t.get("chain", false)):
+		parts.append("链式传播")
+	var cond: Dictionary = def.get("conditions", {})
+	if not cond.is_empty():
+		var n := _count_leaves(cond)
+		if n > 0:
+			parts.append("条件 %d 条" % n)
+		if cond.has("multiplier"):
+			parts.append("倍率 ×%s" % str(cond["multiplier"]))
+	var eff: Array = def.get("effects", [])
+	if not eff.is_empty():
+		var names: Array[String] = []
+		for e in eff:
+			names.append(_effect_cn(e))
+		parts.append("效果：" + " + ".join(names))
+	return "，".join(parts) + "。"
+
+
+func _count_leaves(c: Dictionary) -> int:
+	if c.has("dim"):
+		return 1
+	var n := 0
+	for k in ["all", "any"]:
+		if c.has(k):
+			for sub in c[k]:
+				n += _count_leaves(sub)
+	if c.has("not"):
+		n += _count_leaves(c["not"])
+	return n
+
+
+func _kind_cn(k: String) -> String:
+	match k:
+		"soldier":
+			return "兵蜂"
+		"building":
+			return "建筑"
+		"queen":
+			return "蜂王"
+	return k
+
+
+func _effect_cn(e: Dictionary) -> String:
+	var v := int(e.get("value", 0))
+	match str(e.get("type", "")):
+		EFF_DAMAGE:
+			if bool(e.get("by_target_cost", false)):
+				return "伤害=目标部署费×2"
+			return "%d 点伤害" % v
+		EFF_MODIFY:
+			var sub: Dictionary = e.get("effect", {})
+			if bool(sub.get("instant_heal", false)):
+				return "回复 %d" % v
+			var fields: Array[String] = []
+			for k in sub:
+				if str(k) == "id" or str(k) == "name":
+					continue
+				fields.append("%s%+d" % [str(k), int(sub[k])])
+			return "赋予「%s」(%s)" % [str(sub.get("name", "效果")), ", ".join(fields)]
+		EFF_RESOURCE:
+			return "费用 %+d" % (v if bool(e.get("gain", true)) else -v)
+		EFF_RECYCLE:
+			return "使其退场"
+		EFF_DEPLOY:
+			return "部署范围 %d" % v
+		EFF_MOVE:
+			return "位移 %d" % v
+		EFF_HAND:
+			return "抽 1 张"
+	return str(e.get("type", "?"))
+
+
 ## 条件结构：{"all":[...], "any":[...], "not":{...}, "multiplier":1.5}
 ## 叶子：{"dim": COND_*, "key": ..., "op": ">=|<=|==|>|<|has|in", "value": ...}
 func eval_conditions(cond: Dictionary, ctx: Dictionary) -> bool:
