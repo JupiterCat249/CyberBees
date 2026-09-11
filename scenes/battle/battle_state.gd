@@ -1053,6 +1053,12 @@ func current_detail_card() -> Dictionary:
 	return {}
 
 
+## 长按查看详情是否允许：**仅空闲态**（无待确认 / 未持牌 / 未选中 / 未选支援对象 / 对局进行中）
+## 否则长按会在"操作进行中"弹出浮窗，把玩家后续的确认点击全部吃掉（本轮实测的支援卡死根因）
+func can_long_press() -> bool:
+	return winner == "" and pending_kind == "" and armed_card < 0 and selected_unit < 0 and mode == D.Mode.IDLE
+
+
 ## 当前查看对象的单位 id（无则退回当前方蜂王）
 func focus_unit_id() -> int:
 	if selected_unit >= 0 and units.has(selected_unit):

@@ -74,6 +74,7 @@ func _ready() -> void:
 		inp.popup_dismiss.connect(detail.close_popup)
 		inp.popup_dismiss.connect(state.cancel_surrender)
 		inp._popup_open = Callable(detail, "is_popup_open")
+		inp._long_press_allowed = Callable(state, "can_long_press")
 		# a500 胜利条件 4：投降需二次确认（复用同一浮窗节点显示纯文本）
 		state.popup_requested.connect(detail.show_text_popup)
 		inp.main_pressed.connect(state.advance_phase)

@@ -20,6 +20,7 @@ signal popup_dismiss()                          ## 点击任意处关闭浮窗
 ## 由协调器注入
 var holder: Node2D = null
 var _popup_open := Callable()                   ## 返回"浮窗是否打开"的可调用对象（注入）
+var _long_press_allowed := Callable()           ## 返回"当前是否允许长按详情"（注入；空闲态才允许）
 
 var _pressing := false
 var _press_frames := 0
@@ -28,6 +29,11 @@ var _press_pos := Vector2.ZERO
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# 指针移动 -> 取消长按（避免"点击时轻微移动"被误判为长按）
+	if event is InputEventMouseMotion:
+		if _pressing and event.relative.length() > 2.0:
+			_pressing = false
+		return
 	if not (event is InputEventMouseButton):
 		return
 	var mb := event as InputEventMouseButton
@@ -35,6 +41,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if not mb.pressed:
 		_pressing = false
+		_press_frames = 0
 		return
 	# A5 UI：浮窗打开时 —— 主按钮仍可用（=确认，如投降确认），其余点击一律关闭浮窗并消费
 	if _popup_open.is_valid() and bool(_popup_open.call()):
@@ -85,12 +92,17 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 ## 长按检测：按住达到 LONG_PRESS_FRAMES 帧即触发（T2：帧数计时，不使用 delta）
+## 仅在**空闲态**允许（避免"待确认/已选中/已持牌"时弹出详情浮窗，把后续点击吃掉）
 func _process(_delta: float) -> void:
 	if not _pressing or _long_fired:
+		return
+	if _long_press_allowed.is_valid() and not bool(_long_press_allowed.call()):
+		_pressing = false
 		return
 	_press_frames += 1
 	if _press_frames >= D.LONG_PRESS_FRAMES:
 		_long_fired = true
+		_pressing = false
 		long_pressed.emit(_press_pos)
 
 
