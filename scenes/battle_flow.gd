@@ -50,6 +50,15 @@ func _ready() -> void:
 		sk.state = state
 		state.skills = sk
 
+	# 棋盘几何与范围计算（重构第1块）：RefCounted，无需场景节点
+	var grid_script := load("res://scenes/battle/battle_grid.gd")
+	if grid_script != null:
+		var gd = grid_script.new()
+		gd.state = state
+		state.grid = gd
+	else:
+		push_warning("BattleGrid 载入失败，范围计算不可用")
+
 	# ---- 依赖注入（View 侧）----
 	var bgfx := get_node_or_null("BgFx")
 	var board := _ci("BoardView")
@@ -84,6 +93,8 @@ func _ready() -> void:
 		# 编辑器脚本缓冲曾把本文件旧版本写回磁盘、抹掉上述接线，导致功能**静默失效**。
 		# 此处逐一核验关键接线是否存在；缺失即大声报错，避免再次静默。
 		var missing: Array[String] = []
+		if state.grid == null:
+			missing.append("棋盘几何注入 state.grid")
 		if state.skills == null:
 			missing.append("技能系统注入 state.skills")
 		if state.combat == null:
@@ -99,7 +110,7 @@ func _ready() -> void:
 		if not state.popup_requested.is_connected(detail.show_text_popup):
 			missing.append("浮窗文本接线")
 		if missing.is_empty():
-			print("[BattleFlow] 接线自检通过（7 项）")
+			print("[BattleFlow] 接线自检通过（8 项）")
 		else:
 			push_error("[BattleFlow] 接线缺失 %d 项（疑似编辑器回退 G-01）：%s" % [missing.size(), str(missing)])
 
