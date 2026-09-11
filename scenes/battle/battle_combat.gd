@@ -34,16 +34,22 @@ func final_atk(id: int) -> int:
 	return int(round(float(base + add) * mult))
 
 
-## 最终移动速度（含地形修正）
+## 最终移动速度（含效果与地形修正）
 func final_spd(id: int) -> int:
 	if state == null or not state.units.has(id):
 		return 0
 	var u: Dictionary = state.units[id]
 	var s := int(u["card"].get("spd", 0))
+	var add := 0
+	var mult := 1.0
+	# 此前遗漏了效果遍历 ->【疾行】等 spd_add 效果在计算上不生效（与 atk 同构，本处补齐）
+	for k in u["effects"]:
+		add += int(u["effects"][k].get("spd_add", 0))
+		mult *= float(u["effects"][k].get("spd_mult", 1.0))
 	var c: Vector2i = u["cell"]
 	if state.terrain.has(c):
-		s += int(state.terrain[c]["spd_add"])
-	return maxi(0, s)
+		add += int(state.terrain[c]["spd_add"])
+	return maxi(0, int(round(float(s + add) * mult)))
 
 
 ## 射程（来自卡牌属性；效果可覆盖）

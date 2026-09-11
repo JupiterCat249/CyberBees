@@ -83,16 +83,19 @@ func run_skill(def: Dictionary, ctx: Dictionary) -> Dictionary:
 		res["hits"].append({"cell": cell, "id": hid, "effects": applied})
 		# 链式传播：同效果传递给相邻单位（技能结构.md 二·3）
 		if bool(def.get("targets", {}).get("chain", false)):
-			var chain_cells: Array[Vector2i] = []
-			for dir in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				var nb: Vector2i = cell + dir
-				if D.in_map(nb) and state.unit_at(nb) >= 0:
-					chain_cells.append(nb)
-			for cc in chain_cells:
-				var cid: int = state.unit_at(cc)
+			for dir_v in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nb: Vector2i = cell + dir_v
+				if not D.in_map(nb):
+					continue
+				var cid: int = state.unit_at(nb)
+				if cid < 0:
+					continue
 				for eff in def.get("effects", []):
-					if bool(eff.get("chainable", true)):
-						apply_effect(eff, cc, cid, mult, ctx)
+					if not bool(eff.get("chainable", true)):
+						continue
+					if apply_effect(eff, nb, cid, mult, ctx):
+						res["hits"].append({"cell": nb, "id": cid, "chain": true})
+						state.push_log("链式传播 → %s" % state.unit_name(cid))
 	res["ok"] = true
 	return res
 
