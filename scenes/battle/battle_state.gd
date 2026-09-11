@@ -1053,10 +1053,12 @@ func current_detail_card() -> Dictionary:
 	return {}
 
 
-## 长按查看详情是否允许：**仅空闲态**（无待确认 / 未持牌 / 未选中 / 未选支援对象 / 对局进行中）
-## 否则长按会在"操作进行中"弹出浮窗，把玩家后续的确认点击全部吃掉（本轮实测的支援卡死根因）
+## 长按查看详情是否允许
+## 仅当「有待确认目标 / 已持牌 / 处于部署·指令·支援目标选择模式」时禁止 ——
+## 目的：避免长按浮窗抢走确认点击（本轮支援卡死根因）；
+## **选中单位本身不禁止**（长按查看详情正是要点单位；之前误加 selected_unit<0 导致浮窗永不弹出）
 func can_long_press() -> bool:
-	return winner == "" and pending_kind == "" and armed_card < 0 and selected_unit < 0 and mode == D.Mode.IDLE
+	return winner == "" and pending_kind == "" and armed_card < 0 and mode == D.Mode.IDLE
 
 
 ## 当前查看对象的单位 id（无则退回当前方蜂王）
