@@ -1110,6 +1110,18 @@ func focus_unit_id() -> int:
 	return queen_id_of(current)
 
 
+## 指定单位的**实时**卡面数据（含 buff 与地形加成）—— 显示层统一入口
+func unit_card_live(id: int) -> Dictionary:
+	if not units.has(id):
+		return {}
+	var out: Dictionary = units[id]["card"].duplicate()
+	out["hp"] = int(units[id]["hp"])
+	out["atk"] = final_atk(id)
+	out["spd"] = final_spd(id)
+	out["range"] = final_range(id)
+	return out
+
+
 ## 当前查看对象的卡面数据：若焦点是场上单位，用**实时数值**覆盖基础值（保证卡面与状态一致）
 func detail_card_live() -> Dictionary:
 	var d: Dictionary = current_detail_card()

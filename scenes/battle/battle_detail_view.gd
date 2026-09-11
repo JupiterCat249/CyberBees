@@ -180,7 +180,8 @@ func card_at(screen_pos: Vector2) -> Dictionary:
 	var cell := D.pos_cell(p)
 	var id: int = state.unit_at(cell)
 	if id >= 0:
-		return state.units[id]["card"]
+		# 场上单位一律用**实时值**（含 buff 与地形加成），否则弹窗会显示卡牌基础数值
+		return state.unit_card_live(id)
 	return {}
 
 
