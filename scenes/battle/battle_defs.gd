@@ -123,7 +123,107 @@ const POOL := [
 		"stags": "指令 · 攻击指令 · X费"},
 ]
 
-## 卡组：1 蜂王 + 8 常规卡（a500：同名不得超过 4 张）
+## ============================================================
+## 结构化技能表（依据《技能结构.md》；术语以 a500 为准）
+## 结构：{id, name, source, conditions{all/any/not/multiplier}, targets{}, effects[], sk, sdesc, stags}
+##   source    : command 指令 / support 支援 / passive 被动
+##   targets   : {mode: self|single|cell, kind, side, range, splash, chain}
+##   effects[] : {type: damage|modify|resource|deploy|recycle|move|hand, value, ...}
+##   conditions: 7 维度叶子 {dim, key, op, value}；含 multiplier 时按「基础值 × 倍率」结算
+## ============================================================
+const SKILLS := {
+	"鼓舞": {
+		"id": "rally", "name": "鼓舞", "source": "support",
+		"sk": "【支援】鼓舞", "stags": "支援 · 单位效果 · 增益",
+		"sdesc": "选择 2 格内的 1 个己方单位，赋予「攻击提升」：攻击力 +1。使用后结束该单位行动。",
+		"conditions": {"all": [{"dim": "unit_pos", "key": "in_map", "op": "==", "value": true}]},
+		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 2},
+		"effects": [{"type": "modify", "id": "atk_up", "value": 1,
+			"effect": {"id": "atk_up", "name": "攻击提升", "atk_add": 1}}],
+	},
+	"护卫": {
+		"id": "guard", "name": "护卫", "source": "support",
+		"sk": "【支援】护卫", "stags": "支援 · 单位效果 · 增益",
+		"sdesc": "选择 1 格内的 1 个己方单位，赋予「护甲」：受到的每次伤害 -1。使用后结束该单位行动。",
+		"conditions": {"all": [{"dim": "unit_pos", "key": "in_map", "op": "==", "value": true}]},
+		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 1},
+		"effects": [{"type": "modify", "id": "armor", "value": 1,
+			"effect": {"id": "armor", "name": "护甲", "reduce": 1}}],
+	},
+	"机场": {
+		"id": "airfield", "name": "机场", "source": "passive",
+		"sk": "【机场】蜂王巢口", "stags": "被动 · 部署 · 蜂王",
+		"sdesc": "部署阶段可在自身相邻格部署兵蜂；蜂王免疫指令卡伤害与减益。",
+		"conditions": {},
+		"targets": {"mode": "self"},
+		"effects": [{"type": "deploy", "value": 1}],
+	},
+	"电击": {
+		"id": "shock", "name": "电击", "source": "command",
+		"sk": "【指令】电击", "stags": "指令 · 攻击指令 · 单体",
+		"sdesc": "对射程 2 内的 1 个单位造成 4 点指令伤害，蜂王免疫。",
+		"conditions": {"all": [{"dim": "unit_value", "key": "hp", "op": ">", "value": 0}]},
+		"targets": {"mode": "single", "kind": "any", "side": "any", "range": 2},
+		"effects": [{"type": "damage", "value": 4}],
+	},
+	"治疗": {
+		"id": "heal", "name": "治疗", "source": "command",
+		"sk": "【指令】治疗", "stags": "指令 · 辅助指令 · 单体",
+		"sdesc": "为射程 2 内的 1 个己方单位恢复 4 点生命值。",
+		"conditions": {"all": [{"dim": "unit_pos", "key": "in_map", "op": "==", "value": true}]},
+		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 2},
+		"effects": [{"type": "modify", "id": "heal_up", "value": 4,
+			"effect": {"id": "regen", "name": "治疗", "heal": 4, "instant_heal": true}}],
+	},
+	"巡航导弹": {
+		"id": "cruise", "name": "巡航导弹", "source": "command",
+		"sk": "【指令】巡航导弹", "stags": "指令 · 攻击指令 · 溅射",
+		"sdesc": "对目标格及其 1 格溅射范围内的所有单位造成 4 点指令伤害。",
+		"conditions": {},
+		"targets": {"mode": "cell", "splash": 1},
+		"effects": [{"type": "damage", "value": 4}],
+	},
+	"蜂群共鸣": {
+		"id": "swarm", "name": "蜂群共鸣", "source": "passive",
+		"sk": "【蜂群共鸣】被动", "stags": "被动 · 单位效果 · 增益 · 倍率",
+		"sdesc": "若己方单位数 ≥3，则为 2 格内的己方单位赋予「蜂群」：攻击力 +1（倍率随己方单位数提升）。",
+		"conditions": {"all": [{"dim": "unit_pos", "key": "in_map", "op": "==", "value": true}],
+			"multiplier": 1.0},
+		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 2, "chain": false},
+		"effects": [{"type": "modify", "id": "swarm", "value": 1,
+			"effect": {"id": "swarm", "name": "蜂群", "atk_add": 1}}],
+	},
+	"回收": {
+		"id": "salvage", "name": "回收", "source": "command",
+		"sk": "【指令】回收", "stags": "指令 · 辅助指令 · 回收",
+		"sdesc": "使射程 1 内的 1 个己方非蜂王单位退场，并按 2 倍其部署费用返还费用。",
+		"conditions": {"all": [{"dim": "unit_op", "key": "kind", "op": "!=", "value": "queen"}]},
+		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 1},
+		"effects": [{"type": "recycle", "value": 1},
+			{"type": "resource", "value": 2, "gain": true}],
+	},
+	"补给": {
+		"id": "supply", "name": "补给", "source": "command",
+		"sk": "【指令】补给", "stags": "指令 · 辅助指令 · 资源",
+		"sdesc": "若当前回合 ≥3，则本回合费用 +3（无法超过上限 10）。",
+		"conditions": {"all": [{"dim": "round", "key": "now", "op": ">=", "value": 3}], "multiplier": 1.0},
+		"targets": {"mode": "self"},
+		"effects": [{"type": "resource", "value": 3, "gain": true}],
+	},
+	"轮换": {
+		"id": "rotate", "name": "轮换", "source": "command",
+		"sk": "【指令】轮换", "stags": "指令 · 辅助指令 · 手牌",
+		"sdesc": "抽取 1 张手牌（手牌上限 4 张）。",
+		"conditions": {"all": [{"dim": "hand", "key": "count", "op": "<", "value": 4}]},
+		"targets": {"mode": "self"},
+		"effects": [{"type": "hand", "value": 1}],
+	},
+}
+
+
+## 取技能定义（无该技能返回 {}）
+static func skill(nm: String) -> Dictionary:
+	return SKILLS.get(nm, {})
 const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "电击", "治疗"]
 
 ## 对战地图池（a500 对战准备 5：抽取对战地图）

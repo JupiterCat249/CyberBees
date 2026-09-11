@@ -56,7 +56,10 @@ var armed_side := ""
 
 ## 由协调器注入
 var combat: Node = null
+var skills = null             ## 结构化技能系统（迭代003，RefCounted）
 var started := false
+## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
+var deploy_radius := {"green": 1, "red": 1}
 
 
 # ============================================================
@@ -972,6 +975,41 @@ func push_log(s: String) -> void:
 
 func cn(side: String) -> String:
 	return "绿" if side == "green" else ("红" if side == "red" else "—")
+
+
+# ============================================================
+# 结构化技能系统入口（迭代003 · 依据技能结构.md 四段管线）
+# ============================================================
+## 以结构化技能定义施放：管线由 BattleSkills.run_skill 执行
+func use_skill(skill_name: String, target: Vector2i) -> Dictionary:
+	if skills == null:
+		return {"ok": false, "reason": "技能系统未接入"}
+	var def: Dictionary = D.skill(skill_name)
+	if def.is_empty():
+		push_log("未找到技能定义：%s" % skill_name)
+		return {"ok": false, "reason": "无技能定义"}
+	var sid: int = selected_unit if selected_unit >= 0 else -1
+	var ctx := {"source_id": sid, "side": current, "target": target}
+	var res: Dictionary = skills.run_skill(def, ctx)
+	if bool(res.get("ok", false)):
+		push_log("技能「%s」生效（命中 %d 处）" % [str(def.get("name", skill_name)), res["hits"].size()])
+		remove_dead()
+		check_victory()
+	else:
+		push_log("技能「%s」未生效：%s" % [str(def.get("name", skill_name)), str(res.get("reason", ""))])
+	refresh()
+	return res
+
+
+## 被动技能：进入场地时结算（部署 / 回合开始）
+func run_passive(skill_name: String, owner_id: int) -> Dictionary:
+	if skills == null:
+		return {"ok": false, "reason": "技能系统未接入"}
+	var def: Dictionary = D.skill(skill_name)
+	if def.is_empty() or str(def.get("source", "")) != "passive":
+		return {"ok": false, "reason": "非被动技能"}
+	return skills.run_skill(def, {"source_id": owner_id, "side": current,
+		"target": units[owner_id]["cell"] if units.has(owner_id) else Vector2i(-1, -1)})
 
 
 func unit_name(id: int) -> String:

@@ -43,6 +43,12 @@ func _ready() -> void:
 	# ---- 依赖注入（Model 侧）----
 	state.combat = combat
 	combat.state = state
+	# 结构化技能系统（迭代003）：RefCounted，无需场景节点
+	var skills_script := load("res://scenes/battle/battle_skills.gd")
+	if skills_script != null:
+		var sk = skills_script.new()
+		sk.state = state
+		state.skills = sk
 
 	# ---- 依赖注入（View 侧）----
 	var bgfx := get_node_or_null("BgFx")
