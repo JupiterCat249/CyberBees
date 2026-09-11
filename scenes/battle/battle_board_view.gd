@@ -78,6 +78,11 @@ func render_units() -> void:
 		var node := D.make_card(u["card"], 1.0)
 		node.position = D.cell_pos(u["cell"])
 		node.set("stat_r1", int(u["hp"]))
+		# 攻击/速度/射程也必须用**实时值**（含 buff 与地形加成）——
+		# 此前只覆盖了血量，导致支援「攻击+1」等效果在卡面上看不出来
+		node.set("stat_l1", int(state.final_atk(id)))
+		node.set("stat_l2", int(state.final_spd(id)))
+		node.set("stat_r2", int(state.final_range(id)))
 		if u["side"] == "red":
 			node.set("col_base", Color(0.88, 0.74, 0.74))
 			node.set("col_center", Color(0.94, 0.86, 0.86))

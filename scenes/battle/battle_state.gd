@@ -781,6 +781,14 @@ func on_cell_clicked(cell: Vector2i) -> void:
 	if pending_kind != "" and pending_cell == cell:
 		confirm_pending_at(cell)
 		return
+	# ①b 支援待确认：点在蓝色候选范围之外 -> 退出该状态（人要求）
+	if pending_kind == "支援" and not (cell in support_range):
+		clear_pending()
+		_leave_support_mode()
+		clear_sel()
+		push_log("已退出支援对象选择")
+		refresh()
+		return
 	if armed_card >= 0 and mode == D.Mode.DEPLOY_TARGET:
 		if legal_place(cell) and confirm("部署", cell):
 			place_at(cell)
@@ -790,13 +798,16 @@ func on_cell_clicked(cell: Vector2i) -> void:
 			cmd_at(cell)
 		return
 	if mode == D.Mode.SUPPORT_TARGET:
-		# A5 UI：支援对象选择中 —— 点候选格=执行支援（同样走二次确认）；点别处=退出后按常规处理
+		# A5 UI：支援对象选择中 —— 点候选格走二次确认；**点蓝色高亮范围之外即退出该状态**（人要求）
 		if cell in support_range:
 			if confirm("支援", cell):
 				support_at(cell)
 		else:
+			clear_pending()
 			_leave_support_mode()
-			on_cell_clicked(cell)
+			clear_sel()
+			push_log("已退出支援对象选择")
+			refresh()
 		return
 	if selected_unit >= 0 and units.has(selected_unit):
 		# A5 UI：再次点击当前选中单位 = 进入支援对象选择
