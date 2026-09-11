@@ -49,6 +49,10 @@ const MAP_TERRAIN_PATH := "res://assets/background/map_terrain.png"
 const MAP_GRID_PATH := "res://assets/background/map_grid.png"
 const BG_BLURRED_PATH := "res://assets/background/bg_blurred.png"
 
+# ---------------- 框架 UI 素材（A5 策划案 zip原图，用于待确认/选中指示；非新建像素文件） ----------------
+const CELL_PENDING_PATH := "res://assets/ui/cell_pending.png"   ## 战斗UI-地图格选中250x250（白色六边形选中框）
+const CARD_SELECTED_PATH := "res://assets/ui/card_selected.png" ## 卡牌x-选中266x266（白色卡牌选中边框）
+
 # ---------------- 背景特效：扫描线（叠加进"背景纹理"，不覆盖 UI） ----------------
 const SCAN_TILE_PATH := "res://assets/background/bg_filter_tile.png"
 const SCAN_TILE_PX := 100.0     ## 扫描线 tile 尺寸（设计像素）

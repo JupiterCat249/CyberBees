@@ -115,6 +115,20 @@ func render_highlights() -> void:
 		_hl_node.add_child(D.atlas_icon(D.I_TERRAIN, 76.0,
 			D.cell_pos(c) + Vector2(D.CELL * 0.5, D.CELL * 0.5),
 			Color(0.38, 0.28, 0.04, 0.80)))
+	# A5 程序需求：待确认目标 —— 叠加框架「地图格选中」素材 + 预计剩余血量（扩展 card-system 素材，不重做）
+	if state.pending_kind != "" and D.in_map(state.pending_cell):
+		var pcell: Vector2i = state.pending_cell
+		var tex := load(D.CELL_PENDING_PATH) as Texture2D
+		if tex != null:
+			var spr := Sprite2D.new()
+			spr.texture = tex
+			spr.centered = false
+			spr.position = D.cell_pos(pcell)
+			spr.scale = Vector2(float(D.CELL) / float(tex.get_width()), float(D.CELL) / float(tex.get_width()))
+			_hl_node.add_child(spr)
+		if state.preview.has("hp_after"):
+			_hl_node.add_child(D.digit_node(int(state.preview["hp_after"]), 46.0, Color(1.0, 0.32, 0.22),
+				D.cell_pos(pcell) + Vector2(D.CELL * 0.5, D.CELL * 0.80)))
 
 
 func _hl(cell: Vector2i, col: Color) -> ColorRect:

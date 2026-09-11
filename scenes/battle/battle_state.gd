@@ -38,6 +38,11 @@ var move_range: Array[Vector2i] = []
 var atk_range: Array[Vector2i] = []
 ## A5 UI：支援对象候选格（再次点击当前选中单位后进入支援对象选择）
 var support_range: Array[Vector2i] = []
+## A5 程序需求「点击确认攻击/部署/移动」：待确认目标（首次点=预览，再点同一目标=执行）
+var pending_kind := ""
+var pending_cell := Vector2i(-1, -1)
+## 待确认预览数据（供视图显示：预计剩余血量 / 伤害等）
+var preview := {}
 
 ## a500 对战准备：本局先手方 / 抽取到的地图名（回合数以「先手方再次开始回合」为界）
 var first_side := "green"
@@ -160,6 +165,10 @@ func advance_phase() -> void:
 	# a500 UI：选中手牌时主按钮执行「弃卡过牌」
 	if armed_card >= 0:
 		discard_armed()
+		return
+	# A5 程序需求：存在待确认目标时，主按钮 = 确认执行
+	if pending_kind != "":
+		confirm_pending()
 		return
 	match phase:
 		D.Phase.DEPLOY:
@@ -732,24 +741,105 @@ func on_cell_clicked(cell: Vector2i) -> void:
 	if winner != "":
 		return
 	if armed_card >= 0 and mode == D.Mode.DEPLOY_TARGET:
-		place_at(cell)
-	elif armed_card >= 0 and mode == D.Mode.CMD_TARGET:
-		cmd_at(cell)
-	elif mode == D.Mode.SUPPORT_TARGET:
-		# A5 UI：支援对象选择中 —— 点候选格=执行支援；点别处=退出支援模式后按常规处理
+		if legal_place(cell) and confirm("部署", cell):
+			place_at(cell)
+		return
+	if armed_card >= 0 and mode == D.Mode.CMD_TARGET:
+		if confirm("指令", cell):
+			cmd_at(cell)
+		return
+	if mode == D.Mode.SUPPORT_TARGET:
+		# A5 UI：支援对象选择中 —— 点候选格=执行支援（同样走二次确认）；点别处=退出后按常规处理
 		if cell in support_range:
-			support_at(cell)
+			if confirm("支援", cell):
+				support_at(cell)
 		else:
 			_leave_support_mode()
 			on_cell_clicked(cell)
-	elif selected_unit >= 0:
-		# A5 UI：再次点击当前选中单位 = 进入支援对象选择（取代原先仅 Shift+点击的隐藏入口）
-		if units.has(selected_unit) and cell == units[selected_unit]["cell"]:
+		return
+	if selected_unit >= 0 and units.has(selected_unit):
+		# A5 UI：再次点击当前选中单位 = 进入支援对象选择
+		if cell == units[selected_unit]["cell"]:
 			enter_support_mode()
-		else:
-			act_at(cell)
-	else:
+			return
+		if cell in move_range and unit_at(cell) < 0:
+			if confirm("移动", cell):
+				act_at(cell)
+			return
+		if cell in atk_range and unit_at(cell) >= 0 and units[unit_at(cell)]["side"] != current:
+			if confirm("攻击", cell):
+				act_at(cell)
+			return
+		# 点其他己方单位 = 改选
+		clear_pending()
 		select_unit_at(cell)
+		return
+	clear_pending()
+	select_unit_at(cell)
+
+
+# ============================================================
+# A5 程序需求：点击确认（首次点目标=预览，再次点同一目标=执行）
+# ============================================================
+## 返回 true 表示"这是对同一目标的第二次点击，可以执行"
+func confirm(kind: String, cell: Vector2i) -> bool:
+	if pending_kind == kind and pending_cell == cell:
+		clear_pending()
+		return true
+	pending_kind = kind
+	pending_cell = cell
+	preview = _build_preview(kind, cell)
+	push_log("待确认：%s @(%d,%d) —— 再次点击同一目标或按主按钮确认" % [kind, cell.x, cell.y])
+	selection_changed.emit()
+	refresh()
+	return false
+
+
+func clear_pending() -> void:
+	pending_kind = ""
+	pending_cell = Vector2i(-1, -1)
+	preview = {}
+
+
+## 预览数据：攻击给出预计伤害与预计剩余血量；移动/部署/支援给出目标格
+func _build_preview(kind: String, cell: Vector2i) -> Dictionary:
+	var p := {"kind": kind, "cell": cell}
+	if kind == "攻击":
+		var aid := selected_unit
+		var tid := unit_at(cell)
+		if aid >= 0 and tid >= 0 and combat != null:
+			var dmg := maxi(0, int(combat.final_atk(aid)) - int(combat.final_reduce(tid)))
+			p["target_id"] = tid
+			p["dmg"] = dmg
+			p["hp_now"] = int(units[tid]["hp"])
+			p["hp_after"] = maxi(0, int(units[tid]["hp"]) - dmg)
+			# 反击预估（对方存活且射程覆盖）
+			var back := 0
+			if p["hp_after"] > 0:
+				var ac: Vector2i = units[aid]["cell"]
+				if abs(cell.x - ac.x) + abs(cell.y - ac.y) <= int(combat.final_range(tid)):
+					back = maxi(0, int(combat.final_atk(tid)) - int(combat.final_reduce(aid)))
+			p["counter"] = back
+	return p
+
+
+## 主按钮在待确认态 = 确认执行（与「再次点击同一目标」等价）
+func confirm_pending() -> bool:
+	if pending_kind == "":
+		return false
+	var kind := pending_kind
+	var cell := pending_cell
+	clear_pending()
+	match kind:
+		"部署":
+			place_at(cell)
+		"指令":
+			cmd_at(cell)
+		"支援":
+			support_at(cell)
+		_:
+			act_at(cell)
+	return true
 
 
 ## A5 UI：再次点击当前选中单位 → 进入「支援对象选择」
@@ -825,6 +915,7 @@ func clear_sel() -> void:
 	move_range = []
 	atk_range = []
 	support_range = []
+	clear_pending()
 	selection_changed.emit()
 
 

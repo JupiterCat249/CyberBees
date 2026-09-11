@@ -52,6 +52,19 @@ func render_hand(side: String) -> void:
 			D.HAND_CARD_PAD + col * D.HAND_CARD_STEP,
 			D.HAND_CARD_PAD + rowi * D.HAND_CARD_STEP)
 		_cards_node.add_child(node)
+		# A5：待放置/待使用的手牌显示框架「卡牌x-选中」边框（扩展既有素材）
+		var armed_here: bool = state.armed_card == i and (state.armed_side == side or (state.armed_side == "" and side == state.current))
+		if armed_here:
+			var tex := load(D.CARD_SELECTED_PATH) as Texture2D
+			if tex != null:
+				var fr := Sprite2D.new()
+				fr.texture = tex
+				fr.centered = false
+				fr.position = node.position
+				var sc := (D.CELL * D.HAND_CARD_SCALE) / float(tex.get_width())
+				fr.scale = Vector2(sc, sc)
+				_cards_node.add_child(fr)
+				_hand_nodes[side].append(fr)
 		_hand_nodes[side].append(node)
 
 

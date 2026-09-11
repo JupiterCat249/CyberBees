@@ -52,6 +52,9 @@ func _on_state_changed() -> void:
 		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
+	elif state.pending_kind != "":
+		# A5：待确认态主按钮 = 确认
+		_labels["btn"].text = "确认"
 	elif state.phase == D.Phase.PREPARE:
 		# a500 对战准备 5/9：选中手牌时=换牌，否则=开始对局
 		_labels["btn"].text = "换牌" if state.can_exchange() else "开始对局"
@@ -71,6 +74,8 @@ func _on_state_changed() -> void:
 
 
 func _hint() -> String:
+	if state.pending_kind != "":
+		return "待确认：%s @(%d,%d) —— 再次点击同一目标，或按主按钮「确认」" % [state.pending_kind, state.pending_cell.x, state.pending_cell.y]
 	if state.phase == D.Phase.PREPARE:
 		return "对战准备：点手牌选中 → 主按钮换牌（每方 %d 次）/ 或直接点「开始对局」" % D.EXCHANGE_MAX
 	if state.can_discard():
