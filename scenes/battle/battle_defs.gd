@@ -254,6 +254,18 @@ const SKILLS := {
 		"targets": {"mode": "single", "kind": "any", "side": "any", "chain": true},
 		"effects": [{"type": "damage", "value": 2, "chainable": true}],
 	},
+
+	# ---------------- 检查点6 样例：**启用单位过滤**（与「不过滤」的巡航导弹形成对照） ----------------
+	"精确打击": {
+		"id": "precision", "name": "精确打击", "source": "command",
+		"sk": "【指令】精确打击", "stags": "指令 · 攻击指令 · 过滤",
+		"sdesc": "仅对**敌方兵蜂**造成 5 点指令伤害；**不会误伤己方**（对照：巡航导弹不过滤、含友伤）。",
+		"conditions": {},
+		# 过滤能力启用：side=enemy + kind=soldier；filter 里还可加血量阈值 / 已有效果 / 排除自身等
+		"targets": {"mode": "cell", "splash": 1,
+			"filter": {"side": "enemy", "kind": "soldier", "exclude_source": true}},
+		"effects": [{"type": "damage", "value": 5}],
+	},
 }
 
 

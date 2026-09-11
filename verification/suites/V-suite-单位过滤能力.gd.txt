@@ -1,0 +1,28 @@
+> 状态：已封存（验证用，非生产文件）
+> 对应迭代·检查点：迭代003.1 · **检查点6 单位过滤能力**
+> 最近验证：2026-08-27 通过
+>   ①过滤开 精确打击 hits=2：中心敌 20->15、相邻己 20->20（未受伤）、相邻敌 20->15
+>   ②不过滤 巡航导弹 hits=3：中心敌 16、相邻己 16（**含友伤**）、相邻敌 16
+> 用法：读取本文件正文，作为 mcp__godot-ai__editor_manage(op="game_eval") 的 code 执行
+
+var D := preload(String("res://scenes/battle/battle_defs.gd"))
+var s = get_tree().current_scene.get_node(String("State"))
+s.start_battle()
+var side: String = s.current
+var foe: String = "red" if side == "green" else "green"
+while s.phase < 2 and s.winner == "":
+	s.advance_phase()
+var m := Vector2i(2, 2)
+var idm = s.spawn(m, foe, D.card("泥蜂"))
+var ida = s.spawn(Vector2i(2, 1), side, D.card("泥蜂"))
+var idf = s.spawn(Vector2i(2, 3), foe, D.card("泥蜂"))
+for uid in [idm, ida, idf]:
+	s.units[uid]["hp"] = 20
+var out := ""
+var r1: Dictionary = s.skills.run_skill(D.skill("精确打击"), {"source_id": -1, "side": side, "target": m})
+out += "①过滤开 精确打击: hits=%d | 中心敌%d 相邻己%d 相邻敌%d（应 15/20/15）\n" % [r1.get("hits", []).size(), s.units[idm]["hp"], s.units[ida]["hp"], s.units[idf]["hp"]]
+for uid in [idm, ida, idf]:
+	s.units[uid]["hp"] = 20
+var r2: Dictionary = s.skills.run_skill(D.skill("巡航导弹"), {"source_id": -1, "side": side, "target": m})
+out += "②不过滤 巡航导弹: hits=%d | 中心敌%d 相邻己%d 相邻敌%d（应 16/16/16，含友伤）" % [r2.get("hits", []).size(), s.units[idm]["hp"], s.units[ida]["hp"], s.units[idf]["hp"]]
+return out

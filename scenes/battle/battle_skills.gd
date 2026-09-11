@@ -256,18 +256,36 @@ func resolve_targets(t: Dictionary, ctx: Dictionary) -> Array[Vector2i]:
 	return out
 
 
+## 单位过滤（迭代003.1 检查点6）—— 过滤能力**可选**：
+##   不写 side / kind / filter 即"不过滤"（如指令卡溅射含友伤，按人决策保留）；
+##   写了则逐条生效。`filter` 为可扩展谓词字典，便于后续加"血量阈值/已有效果/排除自身"等条件。
 func _match_unit(id: int, t: Dictionary, side: String) -> bool:
 	var u: Dictionary = state.units[id]
-	var want_kind := str(t.get("kind", "any"))
-	if want_kind != "any" and str(u["card"]["kind"]) != want_kind:
-		return false
-	var want_side := str(t.get("side", "any"))
+	var f: Dictionary = t.get("filter", {})
+	var want_side := str(t.get("side", f.get("side", "any")))
 	if want_side == "ally" and u["side"] != side:
 		return false
 	if want_side == "enemy" and u["side"] == side:
 		return false
+	var want_kind := str(t.get("kind", f.get("kind", "any")))
+	if want_kind != "any" and str(u["card"]["kind"]) != want_kind:
+		return false
+	if f.has("kind_in") and not (str(u["card"]["kind"]) in (f["kind_in"] as Array)):
+		return false
+	if f.has("hp_at_least") and int(u["hp"]) < int(f["hp_at_least"]):
+		return false
+	if f.has("hp_at_most") and int(u["hp"]) > int(f["hp_at_most"]):
+		return false
+	if f.has("not_id") and id == int(f["not_id"]):
+		return false
+	if bool(f.get("exclude_source", false)):
+		var sid0 := int(t.get("_source_id", -1))
+		if sid0 >= 0 and id == sid0:
+			return false
+	if f.has("has_effect") and not u.get("effects", {}).has(str(f["has_effect"])):
+		return false
 	var rng := int(t.get("range", -1))
-	if rng >= 0 and side != "":
+	if rng >= 0:
 		var sid := int(t.get("_source_id", -1))
 		if sid >= 0 and state.units.has(sid):
 			var a: Vector2i = state.units[sid]["cell"]
