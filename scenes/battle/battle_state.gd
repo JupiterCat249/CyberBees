@@ -40,6 +40,9 @@ var atk_range: Array[Vector2i] = []
 ## a500 对战准备：本局先手方 / 抽取到的地图名（回合数以「先手方再次开始回合」为界）
 var first_side := "green"
 var map_name := ""
+## a500 对战准备 5：准备阶段「调整初始手牌」——逐方剩余次数 + 当前操作的是哪一方的手牌
+var exchange_left := {"green": 0, "red": 0}
+var armed_side := ""
 
 ## 由协调器注入
 var combat: Node = null
@@ -82,7 +85,14 @@ func _prepare() -> void:
 	spawn(Vector2i(0, 2), "red", D.card("金刚蜂王"))
 	push_log("对战开始：%s方先手 · %s方后手（初始费用 +2）" % [cn(order[0]), cn(order[1])])
 	push_log("牌组：初始手牌 %d 张 + 备卡 %d 张（a500 构筑 2）" % [hand[first_side].size(), deckl[first_side].size()])
-	begin_turn(first_side)
+	# a500 对战准备 5 + 9：进入「准备」阶段调整初始手牌（一次性），由主按钮开始第一回合
+	current = first_side
+	armed_side = ""
+	exchange_left = {"green": D.EXCHANGE_MAX, "red": D.EXCHANGE_MAX}
+	phase = D.Phase.PREPARE
+	phase_changed.emit(phase)
+	push_log("对战准备：可调整初始手牌（每方 %d 次），点主按钮「开始对局」进入第一回合" % D.EXCHANGE_MAX)
+	refresh()
 
 
 ## a500 对战准备 5：抽取对战地图（从地图池随机，播报地图名与特殊地形）
@@ -138,6 +148,13 @@ func unit_at(cell: Vector2i) -> int:
 func advance_phase() -> void:
 	if winner != "":
 		return
+	# a500 对战准备 5/9：准备阶段主按钮 = 换牌（可换牌时）/ 开始对局（含次数用尽的情况）
+	if phase == D.Phase.PREPARE:
+		if can_exchange():
+			exchange_hand()
+		else:
+			start_battle()
+		return
 	# a500 UI：选中手牌时主按钮执行「弃卡过牌」
 	if armed_card >= 0:
 		discard_armed()
@@ -177,6 +194,65 @@ func discard_armed() -> void:
 ## 当前是否可以弃卡（供 HUD 决定主按钮文案）
 func can_discard() -> bool:
 	return winner == "" and armed_card >= 0 and armed_card < hand[current].size()
+
+
+# ============================================================
+# 对战准备：调整初始手牌（a500 对战准备 5；决策一：一次性，不引入每回合换牌机会）
+# ============================================================
+## 换牌：指定手牌回墓地 → 从备卡补 1 张（手牌仍为 4 张）；每方上限 EXCHANGE_MAX
+func exchange_hand() -> void:
+	if phase != D.Phase.PREPARE or armed_card < 0:
+		return
+	var side := side_of_armed()
+	if side == "" or exchange_left[side] <= 0:
+		push_log("%s方 已无换牌次数（对战准备阶段每方 %d 次）" % [cn(side), D.EXCHANGE_MAX])
+		clear_sel()
+		refresh()
+		return
+	if armed_card >= hand[side].size():
+		clear_sel()
+		refresh()
+		return
+	var c: Dictionary = hand[side][armed_card]
+	if deckl[side].is_empty():
+		push_log("%s方 备卡已空，无法换牌" % cn(side))
+		clear_sel()
+		refresh()
+		return
+	exchange_left[side] -= 1
+	grave[side].append(c)
+	hand[side].remove_at(armed_card)
+	draw_one(side)
+	push_log("%s方 调整初始手牌：%s 回墓地 → 备卡补入（剩余 %d 次）" % [cn(side), c["name"], exchange_left[side]])
+	clear_sel()
+	refresh()
+
+
+## 当前是否可以换牌（供 HUD 决定主按钮文案）
+func can_exchange() -> bool:
+	if phase != D.Phase.PREPARE:
+		return false
+	var side := side_of_armed()
+	return side != "" and armed_card >= 0 and exchange_left[side] > 0
+
+
+## 准备阶段结束，进入第一回合（a500 对战准备 9）
+func start_battle() -> void:
+	if phase != D.Phase.PREPARE:
+		return
+	push_log("对战准备结束，开始第一回合")
+	clear_sel()
+	begin_turn(first_side)
+
+
+## 已选中的手牌属于哪一方（未选中/越界返回 ""）
+func side_of_armed() -> String:
+	if armed_card < 0:
+		return ""
+	var s := armed_side if armed_side != "" else current
+	if s == "" or not hand.has(s) or armed_card >= hand[s].size():
+		return ""
+	return s
 
 
 func begin_turn(side: String) -> void:
@@ -269,6 +345,14 @@ func select_hand(index: int) -> void:
 	if winner != "":
 		return
 	if index < 0 or index >= hand[current].size():
+		return
+	# 准备阶段（a500 对战准备 5）：只做选中，供「换牌」使用，不进入部署/指令模式
+	if phase == D.Phase.PREPARE:
+		armed_side = current
+		armed_card = index
+		mode = D.Mode.IDLE
+		selection_changed.emit()
+		refresh()
 		return
 	var c: Dictionary = hand[current][index]
 	if c["kind"] == "command" or c["kind"] == "command_x":
@@ -623,6 +707,19 @@ func round12_result() -> void:
 # 输入语义槽（由 BattleInput 的信号连接）
 # ============================================================
 func on_hand_clicked(side: String, index: int) -> void:
+	# a500 对战准备 5：准备阶段双方手牌均可点击（本地对战无 AI），用于「调整初始手牌」
+	if phase == D.Phase.PREPARE:
+		if index < 0 or index >= hand[side].size():
+			return
+		if armed_side == side and armed_card == index:
+			armed_side = ""
+			armed_card = -1          # 再次点击同一张 = 取消选中
+		else:
+			armed_side = side
+			armed_card = index
+		selection_changed.emit()
+		refresh()
+		return
 	if side != current:
 		return
 	select_hand(index)

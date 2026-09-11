@@ -74,8 +74,10 @@ const BASE_REFUND := 2
 const ROUND7_EXTRA := 2
 const SECOND_PLAYER_BONUS := 2
 
-enum Phase { REFUND, FIELD, DEPLOY, ACTION }
-const PHASE_NAME := ["回费", "场地", "部署", "行动"]
+enum Phase { REFUND, FIELD, DEPLOY, ACTION, PREPARE }
+const PHASE_NAME := ["回费", "场地", "部署", "行动", "准备"]
+## a500 对战准备 5：调整卡组的初始手牌 —— 对战准备阶段一次性换牌
+const EXCHANGE_MAX := 1
 enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET }
 
 # ---------------- 卡池（含技能数据，供技能显示区使用） ----------------
