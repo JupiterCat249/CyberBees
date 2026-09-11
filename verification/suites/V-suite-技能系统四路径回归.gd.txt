@@ -1,0 +1,45 @@
+> 状态：已封存（验证用，非生产文件）
+> 对应迭代·检查点：迭代003.1 · 检查点6 之前的引擎路径清障（缺陷D 修复复验 + 组合路径回归）
+> 最近验证：2026-08-27 全部通过
+>   ①自身目标 补给 费用 5->7（+3 效果 −1 卡费）「技能「补给」生效（命中 1 处）」
+>   ②多效果 回收 费用 5->5（−2 卡费 +2 效果）「泥蜂 退场」
+>   ③溅射 巡航导弹 主16 邻16
+>   ④链式 扩散毒雾 hits=2 主18 邻18
+> 用法：读取本文件正文，作为 mcp__godot-ai__editor_manage(op="game_eval") 的 code 执行
+
+var D := preload(String("res://scenes/battle/battle_defs.gd"))
+var s = get_tree().current_scene.get_node(String("State"))
+s.start_battle()
+var side: String = s.current
+var foe: String = "red" if side == "green" else "green"
+while s.phase < 2 and s.winner == "":
+	s.advance_phase()
+var out := ""
+s.cost[side] = 5
+s.round_no = 5
+s.hand[side] = [D.card("补给")]
+s.select_hand(0)
+s.cmd_at(Vector2i(0, 3))
+out += "①自身目标 补给: 费用 5->%d | %s\n" % [s.cost[side], str(s.log_lines[-1])]
+var c := Vector2i(1, 1)
+var ida = s.spawn(c, side, D.card("泥蜂"))
+s.cost[side] = 5
+s.hand[side] = [D.card("回收")]
+s.select_hand(0)
+s.cmd_at(c)
+out += "②多效果 回收: 费用 5->%d（应=5） 目标存活=%s | %s\n" % [s.cost[side], str(s.units.has(ida)), str(s.log_lines[-1])]
+var m := Vector2i(2, 2)
+var idm = s.spawn(m, foe, D.card("泥蜂"))
+var idn = s.spawn(Vector2i(2, 1), foe, D.card("熊蜂"))
+s.units[idm]["hp"] = 20
+s.units[idn]["hp"] = 20
+s.cost[side] = 6
+s.hand[side] = [D.card("巡航导弹")]
+s.select_hand(0)
+s.cmd_at(m)
+out += "③溅射 巡航导弹: 主%d 邻%d（应 16/16）\n" % [s.units[idm]["hp"], s.units[idn]["hp"]]
+s.units[idm]["hp"] = 20
+s.units[idn]["hp"] = 20
+var r: Dictionary = s.skills.run_skill(D.skill("扩散毒雾"), {"source_id": -1, "side": side, "target": m})
+out += "④链式 扩散毒雾: ok=%s hits=%d 主%d 邻%d（应 18/18）" % [str(r.get("ok", false)), r.get("hits", []).size(), s.units[idm]["hp"], s.units[idn]["hp"]]
+return out
