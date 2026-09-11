@@ -58,6 +58,7 @@ var armed_side := ""
 var combat: Node = null
 var skills = null             ## 结构化技能系统（迭代003，RefCounted）
 var grid = null               ## 棋盘几何与范围计算（重构第1块，RefCounted）
+var pending = null            ## 待确认（二次点击确认）（重构第2块，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -818,87 +819,30 @@ func on_cell_clicked(cell: Vector2i) -> void:
 # A5 程序需求：点击确认（首次点目标=预览，再次点同一目标=执行）
 # ============================================================
 ## 返回 true 表示"这是对同一目标的第二次点击，可以执行"
+## ============================================================
+## 待确认（二次点击确认）—— 重构第2块：实现已搬至 BattlePending（battle_pending.gd）
+## 以下保留同签名转发，调用点零改动（行为不变）
+## ============================================================
 func confirm(kind: String, cell: Vector2i) -> bool:
-	if pending_kind == kind and pending_cell == cell:
-		clear_pending()
-		return true
-	pending_kind = kind
-	pending_cell = cell
-	preview = _build_preview(kind, cell)
-	preview["source_id"] = selected_unit   # 记录施放者，供"待确认优先执行"在选中被清掉时补回
-	push_log("待确认：%s @(%d,%d) —— 再次点击同一目标或按主按钮确认" % [kind, cell.x, cell.y])
-	selection_changed.emit()
-	refresh()
-	return false
+	if pending == null:
+		return false
+	return pending.confirm(kind, cell)
 
 
-## 待确认优先执行：按记录的 kind 直接结算（供 on_cell_clicked 的最高优先分支调用）
 func confirm_pending_at(cell: Vector2i) -> void:
-	var kind := pending_kind
-	var src := int(preview.get("source_id", -1))
-	clear_pending()
-	match kind:
-		"部署":
-			place_at(cell)
-		"指令":
-			cmd_at(cell)
-		"支援":
-			# 支援需要施放者：若选中已被清掉，用待确认时记录的来源单位补回
-			if selected_unit < 0 and src >= 0 and units.has(src):
-				selected_unit = src
-			support_at(cell)
-		_:
-			act_at(cell)
+	if pending != null:
+		pending.confirm_pending_at(cell)
 
 
 func clear_pending() -> void:
-	pending_kind = ""
-	pending_cell = Vector2i(-1, -1)
-	preview = {}
+	if pending != null:
+		pending.clear_pending()
 
 
-## 预览数据：攻击给出预计伤害与预计剩余血量；移动/部署/支援给出目标格
-func _build_preview(kind: String, cell: Vector2i) -> Dictionary:
-	var p := {"kind": kind, "cell": cell}
-	if kind == "攻击":
-		var aid := selected_unit
-		var tid := unit_at(cell)
-		if aid >= 0 and tid >= 0 and combat != null:
-			var dmg := maxi(0, int(combat.final_atk(aid)) - int(combat.final_reduce(tid)))
-			p["attacker_id"] = aid
-			p["attacker_hp_now"] = int(units[aid]["hp"])
-			p["target_id"] = tid
-			p["dmg"] = dmg
-			p["hp_now"] = int(units[tid]["hp"])
-			p["hp_after"] = maxi(0, int(units[tid]["hp"]) - dmg)
-			# 反击预估（对方存活且射程覆盖）：同时给出「攻方」预计剩余血量
-			var back := 0
-			if p["hp_after"] > 0:
-				var ac: Vector2i = units[aid]["cell"]
-				if abs(cell.x - ac.x) + abs(cell.y - ac.y) <= int(combat.final_range(tid)):
-					back = maxi(0, int(combat.final_atk(tid)) - int(combat.final_reduce(aid)))
-			p["counter"] = back
-			p["attacker_hp_after"] = maxi(0, int(units[aid]["hp"]) - back)
-	return p
-
-
-## 主按钮在待确认态 = 确认执行（与「再次点击同一目标」等价）
 func confirm_pending() -> bool:
-	if pending_kind == "":
+	if pending == null:
 		return false
-	var kind := pending_kind
-	var cell := pending_cell
-	clear_pending()
-	match kind:
-		"部署":
-			place_at(cell)
-		"指令":
-			cmd_at(cell)
-		"支援":
-			support_at(cell)
-		_:
-			act_at(cell)
-	return true
+	return pending.confirm_pending()
 
 
 ## A5 UI：再次点击当前选中单位 → 进入「支援对象选择」

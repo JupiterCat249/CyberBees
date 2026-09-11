@@ -59,6 +59,15 @@ func _ready() -> void:
 	else:
 		push_warning("BattleGrid 载入失败，范围计算不可用")
 
+	# 待确认（二次点击确认）（重构第2块）：RefCounted，无需场景节点
+	var pending_script := load("res://scenes/battle/battle_pending.gd")
+	if pending_script != null:
+		var pd = pending_script.new()
+		pd.state = state
+		state.pending = pd
+	else:
+		push_warning("BattlePending 载入失败，二次确认不可用")
+
 	# ---- 依赖注入（View 侧）----
 	var bgfx := get_node_or_null("BgFx")
 	var board := _ci("BoardView")
@@ -95,6 +104,8 @@ func _ready() -> void:
 		var missing: Array[String] = []
 		if state.grid == null:
 			missing.append("棋盘几何注入 state.grid")
+		if state.pending == null:
+			missing.append("待确认注入 state.pending")
 		if state.skills == null:
 			missing.append("技能系统注入 state.skills")
 		if state.combat == null:
@@ -110,7 +121,7 @@ func _ready() -> void:
 		if not state.popup_requested.is_connected(detail.show_text_popup):
 			missing.append("浮窗文本接线")
 		if missing.is_empty():
-			print("[BattleFlow] 接线自检通过（8 项）")
+			print("[BattleFlow] 接线自检通过（9 项）")
 		else:
 			push_error("[BattleFlow] 接线缺失 %d 项（疑似编辑器回退 G-01）：%s" % [missing.size(), str(missing)])
 
