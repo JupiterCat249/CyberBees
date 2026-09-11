@@ -338,10 +338,20 @@ func cmd_at(cell: Vector2i) -> void:
 		return
 	var c: Dictionary = hand[current][armed_card]
 	var tid := unit_at(cell)
-	var target: Dictionary = units[tid]["card"] if tid >= 0 else {}
+	# a500 抽卡 1：使用卡牌需以「合法目标」为前提 —— 无目标时不得扣费、不得弃卡（审计 B1 修复）
+	if tid < 0:
+		push_log("指令「%s」需指定一个单位目标（该格无单位）" % c["name"])
+		refresh()
+		return
+	var target: Dictionary = units[tid]["card"]
+	# 辅助指令（治疗）只能对己方单位使用
+	if c.has("heal") and units[tid]["side"] != current:
+		push_log("「%s」只能对己方单位使用" % c["name"])
+		refresh()
+		return
 	var pc: int = int(c["cost"])
 	if c["kind"] == "command_x":
-		if tid < 0 or target["kind"] == "queen":
+		if target["kind"] == "queen":
 			push_log("X费卡：需指定一个非蜂王单位（费用=其部署费用）")
 			refresh()
 			return
@@ -351,7 +361,7 @@ func cmd_at(cell: Vector2i) -> void:
 		refresh()
 		return
 	# 蜂王免疫指令卡伤害与减益（a500 卡牌类型）
-	if tid >= 0 and target["kind"] == "queen":
+	if target["kind"] == "queen":
 		push_log("蜂王免疫指令卡效果")
 		refresh()
 		return
