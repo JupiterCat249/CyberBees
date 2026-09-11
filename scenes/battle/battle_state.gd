@@ -984,6 +984,10 @@ func cn(side: String) -> String:
 ## 以结构化技能定义施放：管线由 BattleSkills.run_skill 执行
 func use_skill(skill_name: String, target: Vector2i) -> Dictionary:
 	if skills == null:
+		# 绝不静默：接线丢失时大声报错（G-01 教训）
+		push_error("[BattleState] 技能系统未接入（skills == null）—— 技能调用被忽略")
+		push_log("技能系统未接入，无法使用「%s」" % skill_name)
+		refresh()
 		return {"ok": false, "reason": "技能系统未接入"}
 	var def: Dictionary = D.skill(skill_name)
 	if def.is_empty():

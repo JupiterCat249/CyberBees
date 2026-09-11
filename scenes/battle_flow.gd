@@ -79,6 +79,29 @@ func _ready() -> void:
 		inp.main_pressed.connect(state.advance_phase)
 		inp.small_pressed.connect(state.on_small_pressed)
 
+		# ---- 启动自检（G-01 防护）----
+		# 编辑器脚本缓冲曾把本文件旧版本写回磁盘、抹掉上述接线，导致功能**静默失效**。
+		# 此处逐一核验关键接线是否存在；缺失即大声报错，避免再次静默。
+		var missing: Array[String] = []
+		if state.skills == null:
+			missing.append("技能系统注入 state.skills")
+		if state.combat == null:
+			missing.append("战斗结算注入 state.combat")
+		if not inp.click_empty.is_connected(state.on_click_empty):
+			missing.append("取消选中接线")
+		if not inp.long_pressed.is_connected(detail.open_popup_at):
+			missing.append("长按详情浮窗接线")
+		if not inp.popup_dismiss.is_connected(detail.close_popup):
+			missing.append("浮窗关闭接线")
+		if not inp.popup_dismiss.is_connected(state.cancel_surrender):
+			missing.append("投降取消接线")
+		if not state.popup_requested.is_connected(detail.show_text_popup):
+			missing.append("浮窗文本接线")
+		if missing.is_empty():
+			print("[BattleFlow] 接线自检通过（7 项）")
+		else:
+			push_error("[BattleFlow] 接线缺失 %d 项（疑似编辑器回退 G-01）：%s" % [missing.size(), str(missing)])
+
 	# ---- 启动对局（_prepare 会自动开启首回合并 emit state_changed）----
 	state.start()
 	state.refresh()
