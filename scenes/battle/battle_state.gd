@@ -568,19 +568,20 @@ func support_at(cell: Vector2i) -> void:
 		push_log("只能由己方未行动单位提供支援")
 		refresh()
 		return
-	if not u["card"].has("support"):
-		push_log("%s 无支援技能" % u["card"]["name"])
+	# 迭代003.1：支援技能走**结构化技能系统**（技能结构.md 四段管线），不再硬编码技能分支
+	var skill_name := str(u["card"].get("support", {}).get("name", ""))
+	if skill_name == "" or D.skill(skill_name).is_empty():
+		push_log("%s 无支援技能（未在技能表中定义）" % u["card"]["name"])
 		refresh()
 		return
-	var tid := unit_at(cell)
-	if tid < 0 or units[tid]["side"] != current:
+	if str(D.skill(skill_name).get("source", "")) != "support":
+		push_log("%s 的技能非支援类" % u["card"]["name"])
+		refresh()
 		return
-	var dist: int = abs(cell.x - u["cell"].x) + abs(cell.y - u["cell"].y)
-	if dist > int(u["card"]["support"]["rng"]):
-		return
-	add_effect(tid, u["card"]["support"]["buff"])
-	u["acted"] = true
-	push_log("%s 支援 %s" % [u["card"]["name"], unit_name(tid)])
+	var res: Dictionary = use_skill(skill_name, cell)
+	if bool(res.get("ok", false)):
+		units[selected_unit]["acted"] = true   # a500 行动机会 4：使用支援技能后结束行动
+		push_log("%s 支援 %s" % [u["card"]["name"], unit_name(unit_at(cell))])
 	clear_sel()
 	refresh()
 
