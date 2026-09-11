@@ -59,6 +59,7 @@ var combat: Node = null
 var skills = null             ## 结构化技能系统（迭代003，RefCounted）
 var grid = null               ## 棋盘几何与范围计算（重构第1块，RefCounted）
 var pending = null            ## 待确认（二次点击确认）（重构第2块，RefCounted）
+var deck = null               ## 手牌/牌库/起手与换牌（重构第3块，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -122,22 +123,10 @@ func draw_map() -> void:
 	push_log("地图「%s」：特殊地形 %d 格「%s」（%s）" % [map_name, terrain.size(), m["terrain_name"], m["terrain_desc"]])
 
 
+## 抽 1 张 —— 重构第3块：实现已搬至 BattleDeck（battle_deck.gd）
 func draw_one(side: String) -> void:
-	if hand[side].size() >= D.HAND_MAX:
-		return
-	if deckl[side].is_empty():
-		# a500：牌库抽完 -> 立刻把墓地前 4 张按随机顺序放回牌库
-		if grave[side].is_empty():
-			return
-		var back: Array = []
-		for i in mini(4, grave[side].size()):
-			back.append(grave[side].pop_front())
-		back.shuffle()
-		deckl[side].append_array(back)
-		push_log("%s方 牌库抽完 → 墓地 4 张洗回" % cn(side))
-	if deckl[side].is_empty():
-		return
-	hand[side].append(deckl[side].pop_front())
+	if deck != null:
+		deck.draw_one(side)
 
 
 func spawn(cell: Vector2i, side: String, card: Dictionary) -> int:
@@ -194,86 +183,37 @@ func advance_phase() -> void:
 
 ## a500 抽卡 6：丢弃手牌消耗 = 该卡部署费用；X 费卡丢弃消耗 10 点
 ## 弃卡后该卡入墓地，并补充 1 张手牌（保持 a500 抽卡 4「补至 4 张」的节奏）
+## 弃卡过牌 / 可否弃卡 —— 重构第3块：实现已搬至 BattleDeck（battle_deck.gd）
 func discard_armed() -> void:
-	if armed_card < 0 or armed_card >= hand[current].size():
-		return
-	var c: Dictionary = hand[current][armed_card]
-	var pc: int = int(c["cost"])
-	if pc < 0:
-		pc = D.COST_MAX
-	if cost[current] < pc:
-		push_log("费用不足（弃卡需 %d，现有 %d）" % [pc, cost[current]])
-		refresh()
-		return
-	cost[current] -= pc
-	grave[current].append(c)
-	hand[current].remove_at(armed_card)
-	draw_one(current)
-	push_log("%s方 弃置「%s」（-%d 费）→ 补充 1 张手牌" % [cn(current), c["name"], pc])
-	clear_sel()
-	refresh()
+	if deck != null:
+		deck.discard_armed()
 
 
 ## 当前是否可以弃卡（供 HUD 决定主按钮文案）
 func can_discard() -> bool:
-	return winner == "" and armed_card >= 0 and armed_card < hand[current].size()
+	return deck != null and deck.can_discard()
 
 
 # ============================================================
 # 对战准备：调整初始手牌（a500 对战准备 5；决策一：一次性，不引入每回合换牌机会）
 # ============================================================
 ## 换牌：指定手牌回墓地 → 从备卡补 1 张（手牌仍为 4 张）；每方上限 EXCHANGE_MAX
+## 换牌 / 起手调度 与 可否换牌 —— 重构第3块：实现已搬至 BattleDeck（battle_deck.gd）
 func exchange_hand() -> void:
-	if phase != D.Phase.PREPARE or armed_card < 0:
-		return
-	var side := side_of_armed()
-	if side == "" or exchange_left[side] <= 0:
-		push_log("%s方 已无换牌次数（对战准备阶段每方 %d 次）" % [cn(side), D.EXCHANGE_MAX])
-		clear_sel()
-		refresh()
-		return
-	if armed_card >= hand[side].size():
-		clear_sel()
-		refresh()
-		return
-	var c: Dictionary = hand[side][armed_card]
-	if deckl[side].is_empty():
-		push_log("%s方 备卡已空，无法换牌" % cn(side))
-		clear_sel()
-		refresh()
-		return
-	exchange_left[side] -= 1
-	grave[side].append(c)
-	hand[side].remove_at(armed_card)
-	draw_one(side)
-	push_log("%s方 调整初始手牌：%s 回墓地 → 备卡补入（剩余 %d 次）" % [cn(side), c["name"], exchange_left[side]])
-	clear_sel()
-	refresh()
+	if deck != null:
+		deck.exchange_hand()
 
 
 ## 当前是否可以换牌（供 HUD 决定主按钮文案）
 func can_exchange() -> bool:
-	if phase != D.Phase.PREPARE:
-		return false
-	var side := side_of_armed()
-	return side != "" and armed_card >= 0 and exchange_left[side] > 0
+	return deck != null and deck.can_exchange()
 
 
 ## 准备阶段结束，进入第一回合（a500 对战准备 9）
+## 开始对局（a500 对战准备 9）—— 重构第3块：实现已搬至 BattleDeck（battle_deck.gd）
 func start_battle() -> void:
-	if phase != D.Phase.PREPARE:
-		return
-	# 被动技能结算（迭代003.1）：【机场】设定双方部署范围（deploy_radius）
-	for side in ["green", "red"]:
-		var q := queen_id_of(side)
-		if q >= 0 and skills != null:
-			var prev := current
-			current = side
-			run_passive("机场", q)
-			current = prev
-	push_log("对战准备结束，开始第一回合")
-	clear_sel()
-	begin_turn(first_side)
+	if deck != null:
+		deck.start_battle()
 
 
 ## 已选中的手牌属于哪一方（未选中/越界返回 ""）
@@ -372,38 +312,10 @@ func refund_of(side: String) -> int:
 # ============================================================
 # 出牌
 # ============================================================
+## 点击手牌 —— 重构第3块：实现已搬至 BattleDeck（battle_deck.gd）
 func select_hand(index: int) -> void:
-	if winner != "":
-		return
-	if index < 0 or index >= hand[current].size():
-		return
-	# 准备阶段（a500 对战准备 5）：只做选中，供「换牌」使用，不进入部署/指令模式
-	if phase == D.Phase.PREPARE:
-		armed_side = current
-		armed_card = index
-		mode = D.Mode.IDLE
-		selection_changed.emit()
-		refresh()
-		return
-	var c: Dictionary = hand[current][index]
-	if c["kind"] == "command" or c["kind"] == "command_x":
-		if phase == D.Phase.REFUND or phase == D.Phase.FIELD:
-			return
-		armed_card = index
-		mode = D.Mode.CMD_TARGET
-		selected_unit = -1
-		move_range = []
-		atk_range = all_cells()
-	else:
-		if phase != D.Phase.DEPLOY:
-			return
-		armed_card = index
-		mode = D.Mode.DEPLOY_TARGET
-		selected_unit = -1
-		move_range = []
-		atk_range = []
-	selection_changed.emit()
-	refresh()
+	if deck != null:
+		deck.select_hand(index)
 
 
 func legal_place(cell: Vector2i) -> bool:
