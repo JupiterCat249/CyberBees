@@ -404,7 +404,10 @@ func select_unit_at(cell: Vector2i) -> void:
 	if not units[id]["moved"]:
 		move_range = move_cells(c, final_spd(id))
 	# a500 范围 3：攻击范围不会被单位阻挡（按曼哈顿距离）
-	atk_range = range_cells(c, final_range(id), false)
+	# a500 行动机会 5：没有攻击力无法主动攻击 —— 攻击力为 0 时不给出攻击范围
+	atk_range = []
+	if final_atk(id) > 0:
+		atk_range = range_cells(c, final_range(id), false)
 	selection_changed.emit()
 	refresh()
 
@@ -428,6 +431,11 @@ func act_at(cell: Vector2i) -> void:
 	if cell in atk_range:
 		var tid := unit_at(cell)
 		if tid >= 0 and units[tid]["side"] != current:
+			# a500 行动机会 5：没有攻击力无法主动攻击（兜底校验，正常路径下攻击范围已为空）
+			if final_atk(selected_unit) <= 0:
+				push_log("%s 攻击力为 0，无法主动攻击" % unit_name(selected_unit))
+				refresh()
+				return
 			# 先消耗行动机会再结算战斗：攻击方可能被反击打死，结算后会从 units 移除
 			var aid := selected_unit
 			units[aid]["acted"] = true
@@ -464,9 +472,16 @@ func support_at(cell: Vector2i) -> void:
 	refresh()
 
 
-## a500 效果机制：相同效果最多一个；类型不匹配不赋予（当前仅做"同名不叠加"）
+## a500 效果机制：①相同效果最多一个 ②效果 2：单位类型不匹配则无法赋予
+## 效果字典可选带 `allow`（允许的单位类型列表，如 ["soldier"]）；不带则对任意单位类型生效。
 func add_effect(id: int, eff: Dictionary) -> void:
+	if not units.has(id):
+		return
 	var eid: String = eff["id"]
+	var kind: String = str(units[id]["card"]["kind"])
+	if eff.has("allow") and not (kind in eff["allow"]):
+		push_log("%s 为 %s 类型，无法赋予效果「%s」（类型不匹配）" % [unit_name(id), kind, eff.get("name", eid)])
+		return
 	var existing: Dictionary = units[id]["effects"]
 	if existing.has(eid):
 		push_log("%s 已有相同效果「%s」，不再叠加" % [unit_name(id), eff.get("name", eid)])
