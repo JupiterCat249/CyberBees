@@ -51,7 +51,8 @@ func _ready() -> void:
 		bgfx.setup(_holder, get_node_or_null("BgLayer"), get_node_or_null("FxLayer"), _overlay)
 	board.setup(_holder, state)
 	_ci("HandView").setup(_holder, _overlay, state)
-	_ci("DetailView").setup(_holder, _overlay, state)
+	var detail := _ci("DetailView")
+	detail.setup(_holder, _overlay, state)
 	_ci("HudView").setup(_overlay, state)
 
 	# ---- 接线：输入路由 → 状态机（语义信号）----
@@ -62,6 +63,10 @@ func _ready() -> void:
 		inp.cell_clicked.connect(state.on_cell_clicked)
 		inp.support_clicked.connect(state.on_support_clicked)
 		inp.click_empty.connect(state.on_click_empty)
+		# A5 UI：长按查看卡牌详情浮窗（点击任意处关闭）
+		inp.long_pressed.connect(detail.open_popup_at)
+		inp.popup_dismiss.connect(detail.close_popup)
+		inp._popup_open = Callable(detail, "is_popup_open")
 		inp.main_pressed.connect(state.advance_phase)
 		inp.small_pressed.connect(state.on_small_pressed)
 

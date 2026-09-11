@@ -14,17 +14,38 @@ signal support_clicked(cell: Vector2i)          ## Shift+点格（支援技能�
 signal main_pressed()                           ## 点了主按钮
 signal small_pressed(index: int)                ## 点了右下小按钮
 signal click_empty()                            ## 点了非交互区域（A5：取消当前选中）
+signal long_pressed(screen_pos: Vector2)        ## 长按（A5：查看卡牌详情浮窗）
+signal popup_dismiss()                          ## 点击任意处关闭浮窗
 
 ## 由协调器注入
 var holder: Node2D = null
+var _popup_open := Callable()                   ## 返回"浮窗是否打开"的可调用对象（注入）
+
+var _pressing := false
+var _press_frames := 0
+var _long_fired := false
+var _press_pos := Vector2.ZERO
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton):
 		return
 	var mb := event as InputEventMouseButton
-	if not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+	if mb.button_index != MOUSE_BUTTON_LEFT:
 		return
+	if not mb.pressed:
+		_pressing = false
+		return
+	# A5 UI：浮窗打开时，点击任意处先关闭浮窗（该次点击不再触发其他操作）
+	if _popup_open.is_valid() and bool(_popup_open.call()):
+		popup_dismiss.emit()
+		_pressing = false
+		return
+	# 记录长按起点（T2：由 _process 按帧数计时）
+	_pressing = true
+	_press_frames = 0
+	_long_fired = false
+	_press_pos = mb.position
 	var p := to_design(mb.position)
 
 	# ① 主按钮
@@ -59,6 +80,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		support_clicked.emit(cell)
 	else:
 		cell_clicked.emit(cell)
+
+
+## 长按检测：按住达到 LONG_PRESS_FRAMES 帧即触发（T2：帧数计时，不使用 delta）
+func _process(_delta: float) -> void:
+	if not _pressing or _long_fired:
+		return
+	_press_frames += 1
+	if _press_frames >= D.LONG_PRESS_FRAMES:
+		_long_fired = true
+		long_pressed.emit(_press_pos)
 
 
 ## 屏幕坐标 -> 设计坐标（逆用框架 Holder 的等比缩放/居中）

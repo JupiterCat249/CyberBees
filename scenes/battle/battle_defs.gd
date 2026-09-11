@@ -66,6 +66,9 @@ const I_COMMAND := 6
 const I_QUEEN := 7
 const I_TERRAIN := 5
 
+## 长按阈值（帧数，T2：不使用 delta）；60fps 下 30 帧 ≈ 0.5 秒
+const LONG_PRESS_FRAMES := 30
+
 # ---------------- 规则常量（a500） ----------------
 const HAND_MAX := 4
 const COST_MAX := 10

@@ -16,6 +16,13 @@ var state: Node = null
 var _detail_node: Node2D = null
 var _labels := {}
 
+## A5 UI：长按卡牌详情浮窗（节点由编辑器创建于 Overlay/PopupBox）
+var _popup: Node2D = null
+var _popup_card_holder: Node2D = null
+var _popup_name: Label = null
+var _popup_desc: Label = null
+var _popup_shown := false
+
 
 func setup(h: Node2D, ov: Node2D, st: Node) -> void:
 	holder = h
@@ -24,6 +31,12 @@ func setup(h: Node2D, ov: Node2D, st: Node) -> void:
 	_detail_node = Node2D.new()
 	_detail_node.name = "Detail"
 	holder.add_child(_detail_node)
+	_popup = overlay.get_node_or_null(NodePath("PopupBox")) as Node2D
+	_popup_card_holder = overlay.get_node_or_null(NodePath("PopupBox/PopupCard")) as Node2D
+	_popup_name = overlay.get_node_or_null(NodePath("PopupBox/PopupName")) as Label
+	_popup_desc = overlay.get_node_or_null(NodePath("PopupBox/PopupDesc")) as Label
+	if _popup != null:
+		_popup.visible = false
 	_bind_labels()
 	state.state_changed.connect(_on_state_changed)
 
@@ -98,3 +111,81 @@ func update_stats() -> void:
 		var l := _labels.get("st" + str(i), null) as Label
 		if l != null:
 			l.text = vals[i]
+
+
+# ============================================================
+# A5 UI：长按卡牌详情浮窗（节点在编辑器创建于 Overlay/PopupBox；卡面复用框架 card_auto）
+# ============================================================
+## 长按打开：找到该位置下的卡（手牌 / 场上单位），有则弹窗
+func open_popup_at(screen_pos: Vector2) -> void:
+	if _popup == null or _popup_card_holder == null:
+		return
+	var d: Dictionary = card_at(screen_pos)
+	if d.is_empty():
+		return
+	for n in _popup_card_holder.get_children():
+		n.queue_free()
+	var node := D.make_card(d, 1.6)
+	if _popup_name != null:
+		_popup_name.text = "「%s」 %s · 部署费 %d" % [str(d.get("name", "")), _kind_cn(str(d.get("kind", ""))), int(d.get("cost", 0))]
+	if _popup_desc != null:
+		_popup_desc.text = "%s\n\n技能：%s\n%s\n\n关键词：%s\n\n（点击任意处关闭）" % [
+			_stats_text(d), str(d.get("sk", "—")), str(d.get("sdesc", "")), str(d.get("stags", "—"))]
+	_popup_card_holder.add_child(node)
+	_popup.visible = true
+	_popup_shown = true
+
+
+## 点击任意处关闭（A5 UI）
+func close_popup() -> void:
+	if _popup != null:
+		_popup.visible = false
+	_popup_shown = false
+
+
+func is_popup_open() -> bool:
+	return _popup_shown
+
+
+## 屏幕坐标 -> 该位置下方的卡（先手牌面板，再场上单位）
+func card_at(screen_pos: Vector2) -> Dictionary:
+	var p := screen_pos
+	if holder != null:
+		p = (holder.get_global_transform() as Transform2D).affine_inverse() * screen_pos
+	for side in ["green", "red"]:
+		var base: Vector2 = D.PANEL_L if side == "green" else D.PANEL_R
+		if not Rect2(base, Vector2(D.PANEL_SZ, D.PANEL_SZ)).has_point(p):
+			continue
+		var lp := p - base
+		@warning_ignore("integer_division")
+		var col := int(lp.x / D.HAND_CARD_STEP)
+		@warning_ignore("integer_division")
+		var rowi := int(lp.y / D.HAND_CARD_STEP)
+		var idx := rowi * 2 + col
+		if idx >= 0 and idx < state.hand[side].size():
+			return state.hand[side][idx]
+		return {}
+	var cell := D.pos_cell(p)
+	var id: int = state.unit_at(cell)
+	if id >= 0:
+		return state.units[id]["card"]
+	return {}
+
+
+func _kind_cn(kind: String) -> String:
+	match kind:
+		"queen":
+			return "蜂王"
+		"soldier":
+			return "兵蜂"
+		"building":
+			return "建筑"
+		_:
+			return "指令"
+
+
+func _stats_text(d: Dictionary) -> String:
+	if d["kind"] == "command" or d["kind"] == "command_x":
+		return "治疗/伤害：%d　范围：%d" % [int(d.get("heal", d.get("dmg", 0))), int(d.get("range", 0))]
+	return "攻击 %d　生命 %d　移动 %d　射程 %d" % [
+		int(d.get("atk", 0)), int(d.get("hp", 0)), int(d.get("spd", 0)), int(d.get("range", 0))]

@@ -100,6 +100,38 @@ offset_bottom = 187.0
 theme_override_colors/font_color = Color(0.72, 0.85, 0.72, 1)
 theme_override_font_sizes/font_size = 15
 
+[node name="PopupBox" type="Node2D" parent="Overlay" unique_id=636858965]
+visible = false
+
+[node name="PopupMask" type="ColorRect" parent="Overlay/PopupBox" unique_id=1748518028]
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.62)
+
+[node name="PopupCard" type="Node2D" parent="Overlay/PopupBox" unique_id=916840200]
+position = Vector2(760, 190)
+
+[node name="PopupName" type="Label" parent="Overlay/PopupBox" unique_id=384893493]
+custom_minimum_size = Vector2(500, 0)
+offset_left = 710.0
+offset_top = 616.0
+offset_right = 711.0
+offset_bottom = 639.0
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+
+[node name="PopupDesc" type="Label" parent="Overlay/PopupBox" unique_id=182663055]
+custom_minimum_size = Vector2(920, 0)
+offset_left = 500.0
+offset_top = 672.0
+offset_right = 501.0
+offset_bottom = 695.0
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 2
+
 [node name="FxLayer" type="Node2D" parent="." unique_id=6863796]
 visible = false
 
