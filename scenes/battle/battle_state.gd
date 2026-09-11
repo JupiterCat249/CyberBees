@@ -502,6 +502,8 @@ func select_unit_at(cell: Vector2i) -> void:
 	# 任何单位都可选中用于**查看**（详情面板/技能区/属性栏跟随）；
 	# 仅「己方 + 行动阶段 + 未行动」的单位才给出可行动范围
 	var can_act: bool = u["side"] == current and phase == D.Phase.ACTION and not u["acted"]
+	# 改选单位 -> 使旧的待确认失效（待确认只在明确改选/取消/执行时清除，不随 clear_sel 连带清除）
+	clear_pending()
 	selected_unit = id
 	armed_card = -1
 	mode = D.Mode.IDLE
@@ -774,6 +776,11 @@ func on_hand_clicked(side: String, index: int) -> void:
 func on_cell_clicked(cell: Vector2i) -> void:
 	if winner != "":
 		return
+	# ①【待确认优先】点击与待确认相同的目标 = 执行 —— 不依赖 mode/选中是否仍在，
+	#    从根本上避免"多个状态互相冲突"导致待确认永远匹配不上（人实测：日志反复输出待确认）
+	if pending_kind != "" and pending_cell == cell:
+		confirm_pending_at(cell)
+		return
 	if armed_card >= 0 and mode == D.Mode.DEPLOY_TARGET:
 		if legal_place(cell) and confirm("部署", cell):
 			place_at(cell)
@@ -828,10 +835,30 @@ func confirm(kind: String, cell: Vector2i) -> bool:
 	pending_kind = kind
 	pending_cell = cell
 	preview = _build_preview(kind, cell)
+	preview["source_id"] = selected_unit   # 记录施放者，供"待确认优先执行"在选中被清掉时补回
 	push_log("待确认：%s @(%d,%d) —— 再次点击同一目标或按主按钮确认" % [kind, cell.x, cell.y])
 	selection_changed.emit()
 	refresh()
 	return false
+
+
+## 待确认优先执行：按记录的 kind 直接结算（供 on_cell_clicked 的最高优先分支调用）
+func confirm_pending_at(cell: Vector2i) -> void:
+	var kind := pending_kind
+	var src := int(preview.get("source_id", -1))
+	clear_pending()
+	match kind:
+		"部署":
+			place_at(cell)
+		"指令":
+			cmd_at(cell)
+		"支援":
+			# 支援需要施放者：若选中已被清掉，用待确认时记录的来源单位补回
+			if selected_unit < 0 and src >= 0 and units.has(src):
+				selected_unit = src
+			support_at(cell)
+		_:
+			act_at(cell)
 
 
 func clear_pending() -> void:
@@ -930,8 +957,10 @@ func on_support_clicked(cell: Vector2i) -> void:
 
 
 ## A5 程序需求：点击非交互区域取消当前选中（三种选中态通吃：待放置卡 / 选中单位 / 指令目标）
+## 同时清除待确认（明确取消语义）
 func on_click_empty() -> void:
-	if armed_card >= 0 or selected_unit >= 0:
+	if armed_card >= 0 or selected_unit >= 0 or pending_kind != "":
+		clear_pending()
 		clear_sel()
 		refresh()
 
@@ -984,7 +1013,9 @@ func clear_sel() -> void:
 	move_range = []
 	atk_range = []
 	support_range = []
-	clear_pending()
+	# 注意：**不清除待确认**（pending 是独立状态）——
+	# 此前此处连带 clear_pending()，而 clear_sel() 有 16 处调用，
+	# 任何一次顺手的清选中都会杀掉待确认，导致"反复点击只输出待确认、永远匹配不上"（人实测现象）
 	selection_changed.emit()
 
 
