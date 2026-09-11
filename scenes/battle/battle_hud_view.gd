@@ -80,5 +80,7 @@ func _hint() -> String:
 			return "点高亮格放置"
 		D.Mode.CMD_TARGET:
 			return "点目标格使用指令"
+		D.Mode.SUPPORT_TARGET:
+			return "选择支援对象（蓝色高亮）/ 点别处退出"
 		_:
-			return "点牌选中 / 点己方单位行动"
+			return "点牌选中 / 点己方单位行动（再点自身=支援）"

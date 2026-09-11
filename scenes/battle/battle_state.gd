@@ -36,6 +36,8 @@ var armed_card := -1
 var selected_unit := -1
 var move_range: Array[Vector2i] = []
 var atk_range: Array[Vector2i] = []
+## A5 UI：支援对象候选格（再次点击当前选中单位后进入支援对象选择）
+var support_range: Array[Vector2i] = []
 
 ## a500 对战准备：本局先手方 / 抽取到的地图名（回合数以「先手方再次开始回合」为界）
 var first_side := "green"
@@ -482,6 +484,7 @@ func select_unit_at(cell: Vector2i) -> void:
 	selected_unit = id
 	armed_card = -1
 	mode = D.Mode.IDLE
+	support_range = []
 	var c: Vector2i = units[id]["cell"]
 	# a500 行动机会 4：行动 = 1 次移动 + 1 次（主动攻击或支援技能）；本回合已移动则移动范围为 0
 	move_range = []
@@ -732,10 +735,62 @@ func on_cell_clicked(cell: Vector2i) -> void:
 		place_at(cell)
 	elif armed_card >= 0 and mode == D.Mode.CMD_TARGET:
 		cmd_at(cell)
+	elif mode == D.Mode.SUPPORT_TARGET:
+		# A5 UI：支援对象选择中 —— 点候选格=执行支援；点别处=退出支援模式后按常规处理
+		if cell in support_range:
+			support_at(cell)
+		else:
+			_leave_support_mode()
+			on_cell_clicked(cell)
 	elif selected_unit >= 0:
-		act_at(cell)
+		# A5 UI：再次点击当前选中单位 = 进入支援对象选择（取代原先仅 Shift+点击的隐藏入口）
+		if units.has(selected_unit) and cell == units[selected_unit]["cell"]:
+			enter_support_mode()
+		else:
+			act_at(cell)
 	else:
 		select_unit_at(cell)
+
+
+## A5 UI：再次点击当前选中单位 → 进入「支援对象选择」
+func enter_support_mode() -> void:
+	if selected_unit < 0 or not units.has(selected_unit):
+		return
+	var u: Dictionary = units[selected_unit]
+	if not u["card"].has("support"):
+		push_log("%s 没有支援技能" % u["card"]["name"])
+		refresh()
+		return
+	mode = D.Mode.SUPPORT_TARGET
+	move_range = []
+	atk_range = []
+	support_range = support_targets()
+	push_log("选择支援对象：「%s」射程 %d（点其他单位可改选）" % [u["card"]["support"]["name"], int(u["card"]["support"]["rng"])])
+	selection_changed.emit()
+	refresh()
+
+
+func _leave_support_mode() -> void:
+	mode = D.Mode.IDLE
+	support_range = []
+
+
+## 支援候选格：射程内的己方单位（不含自身）
+func support_targets() -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if selected_unit < 0 or not units.has(selected_unit):
+		return out
+	var u: Dictionary = units[selected_unit]
+	if not u["card"].has("support"):
+		return out
+	var rng := int(u["card"]["support"]["rng"])
+	for id in units:
+		if id == selected_unit or units[id]["side"] != current:
+			continue
+		var c: Vector2i = units[id]["cell"]
+		if abs(c.x - u["cell"].x) + abs(c.y - u["cell"].y) <= rng:
+			out.append(c)
+	return out
 
 
 func on_support_clicked(cell: Vector2i) -> void:
@@ -769,6 +824,7 @@ func clear_sel() -> void:
 	mode = D.Mode.IDLE
 	move_range = []
 	atk_range = []
+	support_range = []
 	selection_changed.emit()
 
 

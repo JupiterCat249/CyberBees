@@ -100,6 +100,9 @@ func render_highlights() -> void:
 		_hl_node.add_child(_hl(cell, Color(0.25, 0.85, 0.45, 0.35)))
 	for cell in state.atk_range:
 		_hl_node.add_child(_hl(cell, Color(0.90, 0.25, 0.20, 0.32)))
+	# 支援对象候选：蓝色高亮（A5 UI：再次点击当前选中单位后进入）
+	for cell in state.support_range:
+		_hl_node.add_child(_hl(cell, Color(0.30, 0.60, 1.00, 0.38)))
 	if state.armed_card >= 0 and state.mode == D.Mode.DEPLOY_TARGET:
 		for r in D.ROWS:
 			for c in D.COLS:
