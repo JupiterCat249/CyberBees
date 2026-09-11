@@ -555,6 +555,22 @@ func act_at(cell: Vector2i) -> void:
 			refresh()
 
 
+## 是否可直接把该格作为支援目标（无需先进支援模式）—— a500 行动机会 5：技能没有支援条件无法使用支援技能
+func can_support_at(cell: Vector2i) -> bool:
+	if selected_unit < 0 or not units.has(selected_unit) or phase != D.Phase.ACTION:
+		return false
+	var u: Dictionary = units[selected_unit]
+	if u["side"] != current or u["acted"]:
+		return false
+	var nm := str(u["card"].get("support", {}).get("name", ""))
+	if nm == "" or D.skill(nm).is_empty() or str(D.skill(nm).get("source", "")) != "support":
+		return false
+	var tid := unit_at(cell)
+	if tid < 0 or tid == selected_unit or units[tid]["side"] != current:
+		return false
+	return cell in support_targets()
+
+
 func support_at(cell: Vector2i) -> void:
 	if selected_unit < 0 or phase != D.Phase.ACTION:
 		return
@@ -787,6 +803,11 @@ func on_cell_clicked(cell: Vector2i) -> void:
 		if cell in atk_range and unit_at(cell) >= 0 and units[unit_at(cell)]["side"] != current:
 			if confirm("攻击", cell):
 				act_at(cell)
+			return
+		# 支援目标：所选单位有支援技能且未行动、目标为己方且在射程内 —— 直接点友方即可进入确认
+		if can_support_at(cell):
+			if confirm("支援", cell):
+				support_at(cell)
 			return
 		# 点其他己方单位 = 改选
 		clear_pending()
