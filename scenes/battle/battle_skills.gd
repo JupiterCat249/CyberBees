@@ -234,6 +234,10 @@ func resolve_targets(t: Dictionary, ctx: Dictionary) -> Array[Vector2i]:
 		"self":
 			if sid >= 0 and state.units.has(sid):
 				out.append(state.units[sid]["cell"])
+			else:
+				# 指令卡**没有施放者单位**，但"作用于玩家自身"的效果（资源/手牌/部署）仍需结算
+				# → 返回虚拟目标格（不指向任何单位），依赖单位的伤害/增益类效果会自行拒绝
+				out.append(Vector2i(-1, -1))
 		"single":
 			var id: int = state.unit_at(cell)
 			if id >= 0 and _match_unit(id, t, side):
