@@ -456,11 +456,7 @@ func cmd_at(cell: Vector2i) -> void:
 		return
 	var pc: int = int(c["cost"])
 	if c["kind"] == "command_x":
-		if target["kind"] == "queen":
-			push_log("X费卡：需指定一个非蜂王单位（费用=其部署费用）")
-			refresh()
-			return
-		pc = int(target["cost"])
+		pc = int(target["cost"])          # a500 费用 4：X 费卡费用 = 目标部署费（不可指定蜂王）
 	if cost[current] < pc:
 		push_log("费用不足（需 %d）" % pc)
 		refresh()
@@ -470,19 +466,12 @@ func cmd_at(cell: Vector2i) -> void:
 		push_log("蜂王免疫指令卡效果")
 		refresh()
 		return
+	# ---- 迭代003.1：指令效果改走**结构化技能管线**（技能结构.md），删除原硬编码 伤害/治疗/减益 分支 ----
+	var res: Dictionary = use_skill(str(c["name"]), cell)
+	if not bool(res.get("ok", false)):
+		refresh()
+		return
 	cost[current] -= pc
-	if tid >= 0:
-		if c.has("heal"):
-			units[tid]["hp"] = mini(int(units[tid]["hp"]) + int(c["heal"]), int(target["hp"]))
-			push_log("%s 治疗 +%d" % [unit_name(tid), int(c["heal"])])
-		else:
-			var dmg := int(c.get("dmg", 0))
-			if c["kind"] == "command_x":
-				dmg = int(target["cost"]) * 2
-			units[tid]["hp"] = int(units[tid]["hp"]) - dmg
-			push_log("%s 受指令伤害 -%d" % [unit_name(tid), dmg])
-			if c.has("debuff"):
-				add_effect(tid, c["debuff"])
 	grave[current].append(c)
 	hand[current].remove_at(armed_card)
 	remove_dead()

@@ -283,13 +283,22 @@ func apply_effect(eff: Dictionary, cell: Vector2i, id: int, mult: float, ctx: Di
 				return false
 			if str(state.units[id]["card"]["kind"]) == "queen":
 				return false          # a500：蜂王免疫指令卡伤害与减益
-			state.units[id]["hp"] = int(state.units[id]["hp"]) - final_v
-			state.push_log("%s 受到 %d 点技能伤害" % [state.unit_name(id), final_v])
+			var dmg_v := final_v
+			if bool(eff.get("by_target_cost", false)):
+				dmg_v = int(state.units[id]["card"]["cost"]) * 2   # X 费卡：伤害 = 目标部署费 × 2（a500 费用 4）
+			state.units[id]["hp"] = int(state.units[id]["hp"]) - dmg_v
+			state.push_log("%s 受指令伤害 -%d" % [state.unit_name(id), dmg_v])
 			return true
 		EFF_MODIFY:
 			if id < 0:
 				return false
 			var e: Dictionary = eff.get("effect", {}).duplicate()
+			# 即时回复类（治疗）：不进效果槽，直接结算（含上限）
+			if bool(e.get("instant_heal", false)):
+				var maxhp := int(state.units[id]["card"]["hp"])
+				state.units[id]["hp"] = mini(int(state.units[id]["hp"]) + final_v, maxhp)
+				state.push_log("%s 治疗 +%d" % [state.unit_name(id), final_v])
+				return true
 			e["id"] = str(eff.get("id", "skill_buff"))
 			state.add_effect(id, e)   # 内部已含「相同效果最多一个」「类型不匹配不赋予」
 			return true
