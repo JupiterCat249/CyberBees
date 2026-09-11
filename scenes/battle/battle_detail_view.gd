@@ -51,7 +51,7 @@ func _on_state_changed() -> void:
 func render_detail() -> void:
 	for n in _detail_node.get_children():
 		n.queue_free()
-	var d: Dictionary = state.current_detail_card()
+	var d: Dictionary = state.detail_card_live()
 	if d.is_empty():
 		return
 	var node := D.make_card(d, D.DETAIL_SCALE)
@@ -102,11 +102,8 @@ func update_skill_box() -> void:
 
 # ---------------- ③ 状态数值（当前查看对象；无则当前方蜂王） ----------------
 func update_stats() -> void:
-	var sid: int = state.focus_unit_id()
-	var vals := ["-", "-", "-", "-"]
-	if sid >= 0:
-		vals = [str(state.final_atk(sid)), str(state.final_reduce(sid)),
-			str(state.final_spd(sid)), str(state.final_range(sid))]
+	# 与当前查看对象一致（场上单位=实时值；手牌=基础值）——不再恒显示蜂王数值
+	var vals: Array = state.focus_values()
 	for i in 4:
 		var l := _labels.get("st" + str(i), null) as Label
 		if l != null:

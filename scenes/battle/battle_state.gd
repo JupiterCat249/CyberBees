@@ -816,17 +816,20 @@ func _build_preview(kind: String, cell: Vector2i) -> Dictionary:
 		var tid := unit_at(cell)
 		if aid >= 0 and tid >= 0 and combat != null:
 			var dmg := maxi(0, int(combat.final_atk(aid)) - int(combat.final_reduce(tid)))
+			p["attacker_id"] = aid
+			p["attacker_hp_now"] = int(units[aid]["hp"])
 			p["target_id"] = tid
 			p["dmg"] = dmg
 			p["hp_now"] = int(units[tid]["hp"])
 			p["hp_after"] = maxi(0, int(units[tid]["hp"]) - dmg)
-			# 反击预估（对方存活且射程覆盖）
+			# 反击预估（对方存活且射程覆盖）：同时给出「攻方」预计剩余血量
 			var back := 0
 			if p["hp_after"] > 0:
 				var ac: Vector2i = units[aid]["cell"]
 				if abs(cell.x - ac.x) + abs(cell.y - ac.y) <= int(combat.final_range(tid)):
 					back = maxi(0, int(combat.final_atk(tid)) - int(combat.final_reduce(aid)))
 			p["counter"] = back
+			p["attacker_hp_after"] = maxi(0, int(units[aid]["hp"]) - back)
 	return p
 
 
@@ -984,6 +987,37 @@ func focus_unit_id() -> int:
 	if selected_unit >= 0 and units.has(selected_unit):
 		return selected_unit
 	return queen_id_of(current)
+
+
+## 当前查看对象的卡面数据：若焦点是场上单位，用**实时数值**覆盖基础值（保证卡面与状态一致）
+func detail_card_live() -> Dictionary:
+	var d: Dictionary = current_detail_card()
+	if d.is_empty():
+		return d
+	var id := focus_unit_id()
+	if id < 0 or not units.has(id):
+		return d
+	if str(units[id]["card"]["name"]) != str(d.get("name", "")):
+		return d
+	var out := d.duplicate()
+	out["hp"] = int(units[id]["hp"])
+	out["atk"] = final_atk(id)
+	out["spd"] = final_spd(id)
+	out["range"] = final_range(id)
+	return out
+
+
+## 详情栏「属性值」：与当前查看对象一致（场上单位=实时值；手牌=卡牌基础值）
+func focus_values() -> Array:
+	var d: Dictionary = current_detail_card()
+	if d.is_empty():
+		return ["-", "-", "-", "-"]
+	var id := focus_unit_id()
+	if id >= 0 and units.has(id) and str(units[id]["card"]["name"]) == str(d.get("name", "")):
+		return [str(final_atk(id)), str(final_reduce(id)), str(final_spd(id)), str(final_range(id))]
+	if d["kind"] == "command" or d["kind"] == "command_x":
+		return ["—", "—", "—", str(int(d.get("range", 0)))]
+	return [str(int(d.get("atk", 0))), "0", str(int(d.get("spd", 0))), str(int(d.get("range", 0)))]
 
 
 func queen_id_of(side: String) -> int:

@@ -126,9 +126,19 @@ func render_highlights() -> void:
 			spr.position = D.cell_pos(pcell)
 			spr.scale = Vector2(float(D.CELL) / float(tex.get_width()), float(D.CELL) / float(tex.get_width()))
 			_hl_node.add_child(spr)
+		if state.preview.has("dmg"):
+			_hl_node.add_child(D.digit_node(int(state.preview["dmg"]), 40.0, Color(1.0, 0.62, 0.05),
+				D.cell_pos(pcell) + Vector2(D.CELL * 0.5, D.CELL * 0.18)))
 		if state.preview.has("hp_after"):
 			_hl_node.add_child(D.digit_node(int(state.preview["hp_after"]), 46.0, Color(1.0, 0.32, 0.22),
 				D.cell_pos(pcell) + Vector2(D.CELL * 0.5, D.CELL * 0.80)))
+		# 行动方（攻方）预计剩余血量（蓝，反击后）—— 之前只画了被攻击方，攻方无数字
+		if state.preview.has("attacker_hp_after"):
+			var aid := int(state.preview.get("attacker_id", -1))
+			if aid >= 0 and state.units.has(aid):
+				var acell: Vector2i = state.units[aid]["cell"]
+				_hl_node.add_child(D.digit_node(int(state.preview["attacker_hp_after"]), 46.0, Color(0.35, 0.75, 1.0),
+					D.cell_pos(acell) + Vector2(D.CELL * 0.5, D.CELL * 0.80)))
 
 
 func _hl(cell: Vector2i, col: Color) -> ColorRect:
