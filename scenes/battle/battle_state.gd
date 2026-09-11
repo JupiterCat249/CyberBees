@@ -60,6 +60,7 @@ var skills = null             ## 结构化技能系统（迭代003，RefCounted�
 var grid = null               ## 棋盘几何与范围计算（重构第1块，RefCounted）
 var pending = null            ## 待确认（二次点击确认）（重构第2块，RefCounted）
 var deck = null               ## 手牌/牌库/起手与换牌（重构第3块，RefCounted）
+var deploy = null             ## 部署与指令（重构第4块，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -318,31 +319,14 @@ func select_hand(index: int) -> void:
 		deck.select_hand(index)
 
 
+## 部署合法性 / 部署范围 —— 重构第4块：实现已搬至 BattleDeploy（battle_deploy.gd）
 func legal_place(cell: Vector2i) -> bool:
-	if not D.in_map(cell):
-		return false
-	if unit_at(cell) >= 0:
-		return false
-	if armed_card < 0 or armed_card >= hand[current].size():
-		return false
-	var c: Dictionary = hand[current][armed_card]
-	match c["kind"]:
-		"building":
-			return (cell.x >= 2) if current == "green" else (cell.x < 2)
-		"soldier":
-			# 迭代003.1：部署范围由**被动技能**驱动（机场 → deploy_radius），不再硬编码"蜂王相邻"
-			return within_deploy_radius(cell)
-	return false
+	return deploy != null and deploy.legal_place(cell)
 
 
-## 是否在己方部署范围内（半径 = deploy_radius[side]，由【机场】被动设定；
-## a500 卡牌类型：兵蜂默认只能部署在蜂王相邻格 -> 默认半径 1）
+## 是否在己方部署范围内 —— 重构第4块：实现已搬至 BattleDeploy
 func within_deploy_radius(cell: Vector2i) -> bool:
-	var q := queen_id_of(current)
-	if q < 0 or not units.has(q):
-		return false
-	var qc: Vector2i = units[q]["cell"]
-	return abs(cell.x - qc.x) + abs(cell.y - qc.y) <= int(deploy_radius.get(current, 1))
+	return deploy != null and deploy.within_deploy_radius(cell)
 
 
 func adjacent_own_queen(cell: Vector2i) -> bool:
@@ -355,64 +339,17 @@ func adjacent_own_queen(cell: Vector2i) -> bool:
 	return false
 
 
+## 落子 / 指令结算 —— 重构第4块：实现已搬至 BattleDeploy（battle_deploy.gd）
 func place_at(cell: Vector2i) -> void:
-	if winner != "" or armed_card < 0 or not legal_place(cell):
-		return
-	var c: Dictionary = hand[current][armed_card]
-	if cost[current] < int(c["cost"]):
-		push_log("费用不足")
-		return
-	cost[current] -= int(c["cost"])
-	spawn(cell, current, c)
-	grave[current].append(c)
-	hand[current].remove_at(armed_card)
-	push_log("%s方 部署 %s @(%d,%d)" % [cn(current), c["name"], cell.x, cell.y])
-	clear_sel()
-	refresh()
+	if deploy != null:
+		deploy.place_at(cell)
 
 
 func cmd_at(cell: Vector2i) -> void:
-	if winner != "" or armed_card < 0:
-		return
-	var c: Dictionary = hand[current][armed_card]
-	var tid := unit_at(cell)
-	# 自身目标的指令（补给 / 轮换等）不要求单位目标
-	var is_self_target: bool = str(D.skill(str(c["name"])).get("targets", {}).get("mode", "")) == "self"
-	# a500 抽卡 1：使用卡牌需以「合法目标」为前提 —— 无目标时不得扣费、不得弃卡（审计 B1 修复）
-	if tid < 0 and not is_self_target:
-		push_log("指令「%s」需指定一个单位目标（该格无单位）" % c["name"])
-		refresh()
-		return
-	var target: Dictionary = units[tid]["card"] if tid >= 0 else {}
-	# 辅助指令（治疗）只能对己方单位使用
-	if c.has("heal") and units[tid]["side"] != current:
-		push_log("「%s」只能对己方单位使用" % c["name"])
-		refresh()
-		return
-	var pc: int = int(c["cost"])
-	if c["kind"] == "command_x":
-		pc = int(target["cost"])          # a500 费用 4：X 费卡费用 = 目标部署费（不可指定蜂王）
-	if cost[current] < pc:
-		push_log("费用不足（需 %d）" % pc)
-		refresh()
-		return
-	# 蜂王免疫指令卡伤害与减益（a500 卡牌类型）—— 仅当存在单位目标时判定
-	if tid >= 0 and str(target.get("kind", "")) == "queen":
-		push_log("蜂王免疫指令卡效果")
-		refresh()
-		return
-	# ---- 迭代003.1：指令效果改走**结构化技能管线**（技能结构.md），删除原硬编码 伤害/治疗/减益 分支 ----
-	var res: Dictionary = use_skill(str(c["name"]), cell)
-	if not bool(res.get("ok", false)):
-		refresh()
-		return
-	cost[current] -= pc
-	grave[current].append(c)
-	hand[current].remove_at(armed_card)
-	remove_dead()
-	clear_sel()
-	check_victory()
-	refresh()
+	if deploy != null:
+		deploy.cmd_at(cell)
+
+
 
 
 # ============================================================

@@ -77,6 +77,15 @@ func _ready() -> void:
 	else:
 		push_warning("BattleDeck 载入失败，手牌/牌库不可用")
 
+	# 部署与指令（重构第4块）：RefCounted，无需场景节点
+	var deploy_script := load("res://scenes/battle/battle_deploy.gd")
+	if deploy_script != null:
+		var dp = deploy_script.new()
+		dp.state = state
+		state.deploy = dp
+	else:
+		push_warning("BattleDeploy 载入失败，部署与指令不可用")
+
 	# ---- 依赖注入（View 侧）----
 	var bgfx := get_node_or_null("BgFx")
 	var board := _ci("BoardView")
@@ -113,6 +122,8 @@ func _ready() -> void:
 		var missing: Array[String] = []
 		if state.grid == null:
 			missing.append("棋盘几何注入 state.grid")
+		if state.deploy == null:
+			missing.append("部署指令注入 state.deploy")
 		if state.deck == null:
 			missing.append("手牌牌库注入 state.deck")
 		if state.pending == null:
@@ -132,7 +143,7 @@ func _ready() -> void:
 		if not state.popup_requested.is_connected(detail.show_text_popup):
 			missing.append("浮窗文本接线")
 		if missing.is_empty():
-			print("[BattleFlow] 接线自检通过（10 项）")
+			print("[BattleFlow] 接线自检通过（11 项）")
 		else:
 			push_error("[BattleFlow] 接线缺失 %d 项（疑似编辑器回退 G-01）：%s" % [missing.size(), str(missing)])
 
