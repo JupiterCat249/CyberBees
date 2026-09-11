@@ -61,6 +61,7 @@ var grid = null               ## 棋盘几何与范围计算（重构第1块，R
 var pending = null            ## 待确认（二次点击确认）（重构第2块，RefCounted）
 var deck = null               ## 手牌/牌库/起手与换牌（重构第3块，RefCounted）
 var deploy = null             ## 部署与指令（重构第4块，RefCounted）
+var action = null             ## 行动：选中/移动/攻击/支援（重构第5块，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -355,114 +356,43 @@ func cmd_at(cell: Vector2i) -> void:
 # ============================================================
 # 行动（移动 / 攻击 / 支援）—— a500：1 次移动 + 1 次攻击或支援
 # ============================================================
+## 选中单位 —— 重构第5块：实现已搬至 BattleAction（battle_action.gd）
 func select_unit_at(cell: Vector2i) -> void:
-	var id := unit_at(cell)
-	if id < 0:
-		return
-	var u: Dictionary = units[id]
-	# 任何单位都可选中用于**查看**（详情面板/技能区/属性栏跟随）；
-	# 仅「己方 + 行动阶段 + 未行动」的单位才给出可行动范围
-	var can_act: bool = u["side"] == current and phase == D.Phase.ACTION and not u["acted"]
-	# 改选单位 -> 使旧的待确认失效（待确认只在明确改选/取消/执行时清除，不随 clear_sel 连带清除）
-	clear_pending()
-	selected_unit = id
-	armed_card = -1
-	mode = D.Mode.IDLE
-	support_range = []
-	move_range = []
-	atk_range = []
-	if can_act:
-		var c: Vector2i = u["cell"]
-		# a500 行动机会 4：本回合已移动则移动范围为 0
-		if not u["moved"]:
-			move_range = move_cells(c, final_spd(id))
-		# a500 范围 3：攻击范围按曼哈顿距离；行动机会 5：无攻击力不给攻击范围
-		if final_atk(id) > 0:
-			atk_range = range_cells(c, final_range(id), false)
-	selection_changed.emit()
-	refresh()
+	if action != null:
+		action.select_unit_at(cell)
 
 
+## 执行行动（移动/攻击）—— 重构第5块：实现已搬至 BattleAction（battle_action.gd）
 func act_at(cell: Vector2i) -> void:
-	if selected_unit < 0:
-		return
-	if not units.has(selected_unit):
-		clear_sel()
-		refresh()
-		return
-	if cell in move_range and unit_at(cell) < 0:
-		# a500 行动机会 4：移动不结束行动 —— 移动后仍可攻击/支援；仅消耗"本回合移动"
-		var uid := selected_unit
-		units[uid]["cell"] = cell
-		units[uid]["moved"] = true
-		push_log("%s 移动到 (%d,%d)" % [unit_name(uid), cell.x, cell.y])
-		# 就地重新选中：刷新为「不可再移动 + 仍可攻击/支援」的范围
-		select_unit_at(cell)
-		return
-	if cell in atk_range:
-		var tid := unit_at(cell)
-		if tid >= 0 and units[tid]["side"] != current:
-			# a500 行动机会 5：没有攻击力无法主动攻击（兜底校验，正常路径下攻击范围已为空）
-			if final_atk(selected_unit) <= 0:
-				push_log("%s 攻击力为 0，无法主动攻击" % unit_name(selected_unit))
-				refresh()
-				return
-			# 先消耗行动机会再结算战斗：攻击方可能被反击打死，结算后会从 units 移除
-			var aid := selected_unit
-			units[aid]["acted"] = true
-			if combat != null:
-				combat.attack(aid, tid)
-			remove_dead()
-			clear_sel()
-			check_victory()
-			refresh()
+	if action != null:
+		action.act_at(cell)
 
 
-## 是否可直接把该格作为支援目标（无需先进支援模式）—— a500 行动机会 5：技能没有支援条件无法使用支援技能
+## 可否直接以该格为支援目标 —— 重构第5块：实现已搬至 BattleAction
 func can_support_at(cell: Vector2i) -> bool:
-	if selected_unit < 0 or not units.has(selected_unit) or phase != D.Phase.ACTION:
-		return false
-	var u: Dictionary = units[selected_unit]
-	if u["side"] != current or u["acted"]:
-		return false
-	var nm := str(u["card"].get("support", {}).get("name", ""))
-	if nm == "" or D.skill(nm).is_empty() or str(D.skill(nm).get("source", "")) != "support":
-		return false
-	var tid := unit_at(cell)
-	if tid < 0 or tid == selected_unit or units[tid]["side"] != current:
-		return false
-	return cell in support_targets()
+	return action != null and action.can_support_at(cell)
 
 
+## 支援结算 —— 重构第5块：实现已搬至 BattleAction（battle_action.gd）
 func support_at(cell: Vector2i) -> void:
-	if selected_unit < 0 or phase != D.Phase.ACTION:
-		return
-	if not units.has(selected_unit):
-		clear_sel()
-		refresh()
-		return
-	var u: Dictionary = units[selected_unit]
-	# 只能由「己方 + 未行动」的单位提供支援（a500 行动机会 3/5）
-	if u["side"] != current or u["acted"]:
-		push_log("只能由己方未行动单位提供支援")
-		refresh()
-		return
-	# 迭代003.1：支援技能走**结构化技能系统**（技能结构.md 四段管线），不再硬编码技能分支
-	var skill_name := str(u["card"].get("support", {}).get("name", ""))
-	if skill_name == "" or D.skill(skill_name).is_empty():
-		push_log("%s 无支援技能（未在技能表中定义）" % u["card"]["name"])
-		refresh()
-		return
-	if str(D.skill(skill_name).get("source", "")) != "support":
-		push_log("%s 的技能非支援类" % u["card"]["name"])
-		refresh()
-		return
-	var res: Dictionary = use_skill(skill_name, cell)
-	if bool(res.get("ok", false)):
-		units[selected_unit]["acted"] = true   # a500 行动机会 4：使用支援技能后结束行动
-		push_log("%s 支援 %s" % [u["card"]["name"], unit_name(unit_at(cell))])
-	clear_sel()
-	refresh()
+	if action != null:
+		action.support_at(cell)
+
+
+func enter_support_mode() -> void:
+	if action != null:
+		action.enter_support_mode()
+
+
+func _leave_support_mode() -> void:
+	if action != null:
+		action._leave_support_mode()
+
+
+func support_targets() -> Array[Vector2i]:
+	if action != null:
+		return action.support_targets()
+	return [] as Array[Vector2i]
 
 
 ## a500 效果机制：①相同效果最多一个 ②效果 2：单位类型不匹配则无法赋予
@@ -694,45 +624,6 @@ func confirm_pending() -> bool:
 	return pending.confirm_pending()
 
 
-## A5 UI：再次点击当前选中单位 → 进入「支援对象选择」
-func enter_support_mode() -> void:
-	if selected_unit < 0 or not units.has(selected_unit):
-		return
-	var u: Dictionary = units[selected_unit]
-	if not u["card"].has("support"):
-		push_log("%s 没有支援技能" % u["card"]["name"])
-		refresh()
-		return
-	mode = D.Mode.SUPPORT_TARGET
-	move_range = []
-	atk_range = []
-	support_range = support_targets()
-	push_log("选择支援对象：「%s」射程 %d（点其他单位可改选）" % [u["card"]["support"]["name"], int(u["card"]["support"]["rng"])])
-	selection_changed.emit()
-	refresh()
-
-
-func _leave_support_mode() -> void:
-	mode = D.Mode.IDLE
-	support_range = []
-
-
-## 支援候选格：射程内的己方单位（不含自身）
-func support_targets() -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	if selected_unit < 0 or not units.has(selected_unit):
-		return out
-	var u: Dictionary = units[selected_unit]
-	if not u["card"].has("support"):
-		return out
-	var rng := int(u["card"]["support"]["rng"])
-	for id in units:
-		if id == selected_unit or units[id]["side"] != current:
-			continue
-		var c: Vector2i = units[id]["cell"]
-		if abs(c.x - u["cell"].x) + abs(c.y - u["cell"].y) <= rng:
-			out.append(c)
-	return out
 
 
 func on_support_clicked(cell: Vector2i) -> void:
