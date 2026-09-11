@@ -15,6 +15,7 @@ signal phase_changed(phase: int)                     ## 阶段变化
 signal log_added(text: String)                       ## 追加一条日志
 signal battle_ended(winner: String)                  ## 胜负已定
 signal selection_changed()                           ## 选中/待放置状态变化
+signal popup_requested(title: String, desc: String)  ## 请求弹出纯文本浮窗（投降确认等，复用 M3 浮窗）
 
 # ---------------- 状态 ----------------
 var round_no := 1
@@ -43,6 +44,8 @@ var pending_kind := ""
 var pending_cell := Vector2i(-1, -1)
 ## 待确认预览数据（供视图显示：预计剩余血量 / 伤害等）
 var preview := {}
+## A5 UI：投降二次确认（确认 → 投降结算；取消 → 返回）
+var surrender_pending := false
 
 ## a500 对战准备：本局先手方 / 抽取到的地图名（回合数以「先手方再次开始回合」为界）
 var first_side := "green"
@@ -155,14 +158,18 @@ func unit_at(cell: Vector2i) -> int:
 func advance_phase() -> void:
 	if winner != "":
 		return
+	# A5 UI：投降二次确认中，主按钮 = 确认投降
+	if surrender_pending:
+		surrender_pending = false
+		surrender()
+		return
 	# a500 对战准备 5/9：准备阶段主按钮 = 换牌（可换牌时）/ 开始对局（含次数用尽的情况）
 	if phase == D.Phase.PREPARE:
 		if can_exchange():
 			exchange_hand()
 		else:
 			start_battle()
-		return
-	# a500 UI：选中手牌时主按钮执行「弃卡过牌」
+		return	# a500 UI：选中手牌时主按钮执行「弃卡过牌」
 	if armed_card >= 0:
 		discard_armed()
 		return
@@ -901,8 +908,35 @@ func on_small_pressed(index: int) -> void:
 		2:
 			push_log("回合%d/%d · %s方 · 费%d" % [round_no, D.ROUND_MAX, cn(current), cost[current]])
 		3:
-			surrender()
+			request_surrender()
 	refresh()
+
+
+## A5 UI：投降需二次确认（确认 → 投降结算；取消 → 返回）
+func request_surrender() -> void:
+	if winner != "":
+		return
+	if round_no < 4:
+		push_log("第 4 回合起才可投降（当前第 %d 回合）" % round_no)
+		refresh()
+		return
+	if surrender_pending:
+		surrender_pending = false
+		surrender()
+		return
+	surrender_pending = true
+	push_log("投降确认：再次点击投降按钮，或按主按钮「确认投降」")
+	popup_requested.emit("确认投降",
+		"点击任意处取消；点主按钮「确认投降」执行投降。\n\n（a500 胜利条件 4：从第 4 回合开始，允许主动投降）")
+	refresh()
+
+
+## 取消投降（点击任意处关闭浮窗时）
+func cancel_surrender() -> void:
+	if surrender_pending:
+		surrender_pending = false
+		push_log("已取消投降")
+		refresh()
 
 
 # ============================================================

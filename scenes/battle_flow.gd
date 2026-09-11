@@ -66,7 +66,10 @@ func _ready() -> void:
 		# A5 UI：长按查看卡牌详情浮窗（点击任意处关闭）
 		inp.long_pressed.connect(detail.open_popup_at)
 		inp.popup_dismiss.connect(detail.close_popup)
+		inp.popup_dismiss.connect(state.cancel_surrender)
 		inp._popup_open = Callable(detail, "is_popup_open")
+		# a500 胜利条件 4：投降需二次确认（复用同一浮窗节点显示纯文本）
+		state.popup_requested.connect(detail.show_text_popup)
 		inp.main_pressed.connect(state.advance_phase)
 		inp.small_pressed.connect(state.on_small_pressed)
 

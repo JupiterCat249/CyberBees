@@ -52,6 +52,8 @@ func _on_state_changed() -> void:
 		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
+	elif state.surrender_pending:
+		_labels["btn"].text = "确认投降"
 	elif state.pending_kind != "":
 		# A5：待确认态主按钮 = 确认
 		_labels["btn"].text = "确认"
@@ -74,6 +76,8 @@ func _on_state_changed() -> void:
 
 
 func _hint() -> String:
+	if state.surrender_pending:
+		return "投降确认中：点主按钮「确认投降」执行，或点任意处取消"
 	if state.pending_kind != "":
 		return "待确认：%s @(%d,%d) —— 再次点击同一目标，或按主按钮「确认」" % [state.pending_kind, state.pending_cell.x, state.pending_cell.y]
 	if state.phase == D.Phase.PREPARE:

@@ -36,8 +36,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not mb.pressed:
 		_pressing = false
 		return
-	# A5 UI：浮窗打开时，点击任意处先关闭浮窗（该次点击不再触发其他操作）
+	# A5 UI：浮窗打开时 —— 主按钮仍可用（=确认，如投降确认），其余点击一律关闭浮窗并消费
 	if _popup_open.is_valid() and bool(_popup_open.call()):
+		if Rect2(D.BTN_MAIN, D.BTN_MAIN_SZ).has_point(to_design(mb.position)):
+			main_pressed.emit()
 		popup_dismiss.emit()
 		_pressing = false
 		return

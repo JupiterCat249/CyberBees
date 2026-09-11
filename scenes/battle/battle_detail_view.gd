@@ -136,6 +136,21 @@ func open_popup_at(screen_pos: Vector2) -> void:
 	_popup_shown = true
 
 
+## 纯文本浮窗（复用同一浮窗节点；投降确认等）
+func show_text_popup(title: String, desc: String) -> void:
+	if _popup == null:
+		return
+	if _popup_card_holder != null:
+		for n in _popup_card_holder.get_children():
+			n.queue_free()
+	if _popup_name != null:
+		_popup_name.text = title
+	if _popup_desc != null:
+		_popup_desc.text = desc
+	_popup.visible = true
+	_popup_shown = true
+
+
 ## 点击任意处关闭（A5 UI）
 func close_popup() -> void:
 	if _popup != null:
