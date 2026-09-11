@@ -493,24 +493,26 @@ func cmd_at(cell: Vector2i) -> void:
 # ============================================================
 func select_unit_at(cell: Vector2i) -> void:
 	var id := unit_at(cell)
-	if id < 0 or units[id]["side"] != current:
+	if id < 0:
 		return
-	if phase != D.Phase.ACTION or units[id]["acted"]:
-		return
+	var u: Dictionary = units[id]
+	# 任何单位都可选中用于**查看**（详情面板/技能区/属性栏跟随）；
+	# 仅「己方 + 行动阶段 + 未行动」的单位才给出可行动范围
+	var can_act: bool = u["side"] == current and phase == D.Phase.ACTION and not u["acted"]
 	selected_unit = id
 	armed_card = -1
 	mode = D.Mode.IDLE
 	support_range = []
-	var c: Vector2i = units[id]["cell"]
-	# a500 行动机会 4：行动 = 1 次移动 + 1 次（主动攻击或支援技能）；本回合已移动则移动范围为 0
 	move_range = []
-	if not units[id]["moved"]:
-		move_range = move_cells(c, final_spd(id))
-	# a500 范围 3：攻击范围不会被单位阻挡（按曼哈顿距离）
-	# a500 行动机会 5：没有攻击力无法主动攻击 —— 攻击力为 0 时不给出攻击范围
 	atk_range = []
-	if final_atk(id) > 0:
-		atk_range = range_cells(c, final_range(id), false)
+	if can_act:
+		var c: Vector2i = u["cell"]
+		# a500 行动机会 4：本回合已移动则移动范围为 0
+		if not u["moved"]:
+			move_range = move_cells(c, final_spd(id))
+		# a500 范围 3：攻击范围按曼哈顿距离；行动机会 5：无攻击力不给攻击范围
+		if final_atk(id) > 0:
+			atk_range = range_cells(c, final_range(id), false)
 	selection_changed.emit()
 	refresh()
 
@@ -558,6 +560,11 @@ func support_at(cell: Vector2i) -> void:
 		refresh()
 		return
 	var u: Dictionary = units[selected_unit]
+	# 只能由「己方 + 未行动」的单位提供支援（a500 行动机会 3/5）
+	if u["side"] != current or u["acted"]:
+		push_log("只能由己方未行动单位提供支援")
+		refresh()
+		return
 	if not u["card"].has("support"):
 		push_log("%s 无支援技能" % u["card"]["name"])
 		refresh()
