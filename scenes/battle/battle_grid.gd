@@ -28,22 +28,22 @@ func move_cells(from: Vector2i, steps: int) -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	if steps <= 0:
 		return out
-	var dist := {}
-	dist[from] = 0
+	var dmap := {}          # 命名改为 dmap：避免与同类的 dist() 函数重名（曾是 SHADOWED_VARIABLE 警告）
+	dmap[from] = 0
 	var queue: Array[Vector2i] = [from]
 	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 	while not queue.is_empty():
 		var cur: Vector2i = queue.pop_front()
-		var d: int = int(dist[cur])
+		var d: int = int(dmap[cur])
 		if d >= steps:
 			continue
 		for dir in dirs:
 			var nxt: Vector2i = cur + dir
-			if not D.in_map(nxt) or dist.has(nxt):
+			if not D.in_map(nxt) or dmap.has(nxt):
 				continue
 			if unit_at(nxt) >= 0:
 				continue
-			dist[nxt] = d + 1
+			dmap[nxt] = d + 1
 			out.append(nxt)
 			queue.append(nxt)
 	return out

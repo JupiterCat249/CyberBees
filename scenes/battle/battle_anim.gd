@@ -129,6 +129,13 @@ func _process(_delta: float) -> void:
 func _step(name: String) -> void:
 	var st: Dictionary = _running[name]
 	var p: Dictionary = _patterns[name]
+	# ⚠️ 目标已被释放 / 已被 queue_free（View 重建单位节点时会发生）→ 丢弃该动画，
+	#    否则会给"已释放实例"写属性，触发 "Trying to assign invalid previously freed instance"
+	#    并让游戏停在调试器断点（表现为卡死）—— V-004-16 实测缺陷
+	var tg: Node = st.get("target", null)
+	if tg != null and (not is_instance_valid(tg) or tg.is_queued_for_deletion()):
+		_running.erase(name)
+		return
 	var units: Array = p.get("units", [])
 	var i: int = int(st["i"])
 	if i >= units.size():
@@ -156,7 +163,7 @@ func _step(name: String) -> void:
 
 func _apply_clip(clip: Dictionary, st: Dictionary, unit: Dictionary) -> void:
 	var tgt: Node = st.get("target", null)
-	if tgt == null or not is_instance_valid(tgt):
+	if tgt == null or not is_instance_valid(tgt) or tgt.is_queued_for_deletion():
 		return
 	match int(unit.get("type", U.MOVE_BY)):
 		U.MOVE_BY:
