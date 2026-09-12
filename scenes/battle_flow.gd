@@ -113,6 +113,15 @@ func _ready() -> void:
 	else:
 		push_warning("BattleVictory 载入失败，胜负判定不可用")
 
+	# 回合流程/地形/投降（重构第6块·下之二）：RefCounted，无需场景节点
+	var turn_script := load("res://scenes/battle/battle_turn.gd")
+	if turn_script != null:
+		var tn = turn_script.new()
+		tn.state = state
+		state.turn = tn
+	else:
+		push_warning("BattleTurn 载入失败，回合流程不可用")
+
 	# ---- 依赖注入（View 侧）----
 	var bgfx := get_node_or_null("BgFx")
 	var board := _ci("BoardView")
@@ -149,6 +158,8 @@ func _ready() -> void:
 		var missing: Array[String] = []
 		if state.grid == null:
 			missing.append("棋盘几何注入 state.grid")
+		if state.turn == null:
+			missing.append("回合流程注入 state.turn")
 		if state.victory == null:
 			missing.append("胜负判定注入 state.victory")
 		if state.setup == null:
@@ -176,7 +187,7 @@ func _ready() -> void:
 		if not state.popup_requested.is_connected(detail.show_text_popup):
 			missing.append("浮窗文本接线")
 		if missing.is_empty():
-			print("[BattleFlow] 接线自检通过（14 项）")
+			print("[BattleFlow] 接线自检通过（15 项）")
 		else:
 			push_error("[BattleFlow] 接线缺失 %d 项（疑似编辑器回退 G-01）：%s" % [missing.size(), str(missing)])
 

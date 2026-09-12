@@ -64,6 +64,7 @@ var deploy = null             ## 部署与指令（重构第4块，RefCounted）
 var action = null             ## 行动：选中/移动/攻击/支援（重构第5块，RefCounted）
 var setup = null              ## 开局准备/地图/生成（重构第6块·上，RefCounted）
 var victory = null            ## 胜负判定（重构第6块·下，RefCounted）
+var turn = null               ## 回合流程/地形/投降（重构第6块·下之二，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -115,37 +116,10 @@ func unit_at(cell: Vector2i) -> int:
 # 回合流程（a500：回费/场地自动 → 部署 → 行动）
 # ============================================================
 ## 主按钮：只服务"需要玩家确认"的 部署 / 行动 两个阶段；选中手牌时执行「弃卡过牌」
+## 主按钮（阶段推进/确认/弃卡/换牌）—— 重构第6块·下之二：实现已搬至 BattleTurn
 func advance_phase() -> void:
-	if winner != "":
-		return
-	# A5 UI：投降二次确认中，主按钮 = 确认投降
-	if surrender_pending:
-		surrender_pending = false
-		surrender()
-		return
-	# a500 对战准备 5/9：准备阶段主按钮 = 换牌（可换牌时）/ 开始对局（含次数用尽的情况）
-	if phase == D.Phase.PREPARE:
-		if can_exchange():
-			exchange_hand()
-		else:
-			start_battle()
-		return	# a500 UI：选中手牌时主按钮执行「弃卡过牌」
-	if armed_card >= 0:
-		discard_armed()
-		return
-	# A5 程序需求：存在待确认目标时，主按钮 = 确认执行
-	if pending_kind != "":
-		confirm_pending()
-		return
-	match phase:
-		D.Phase.DEPLOY:
-			phase = D.Phase.ACTION
-			phase_changed.emit(phase)
-			clear_sel()
-			refresh()
-		D.Phase.ACTION:
-			end_turn()
-
+	if turn != null:
+		turn.advance_phase()
 
 ## a500 抽卡 6：丢弃手牌消耗 = 该卡部署费用；X 费卡丢弃消耗 10 点
 ## 弃卡后该卡入墓地，并补充 1 张手牌（保持 a500 抽卡 4「补至 4 张」的节奏）
