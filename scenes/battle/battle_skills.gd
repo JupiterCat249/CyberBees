@@ -415,8 +415,14 @@ func apply_effect(eff: Dictionary, cell: Vector2i, id: int, mult: float, ctx: Di
 		var is_loss: bool = eff.has("reduce") or eff.has("atk_mult")
 		if is_gain:
 			state.anim.play_on_unit(id, "增益脉冲")
+			var gv: int = int(eff.get("atk_add", eff.get("hp_add", eff.get("instant_heal", 0))))
+			if gv != 0:
+				state.anim.float_text(gv, "heal", D.cell_pos(cell) + Vector2(D.CELL * 0.5, D.CELL * 0.25))
 		elif is_loss:
 			state.anim.play_on_unit(id, "减益脉冲")
+			var lv: int = int(eff.get("reduce", 0))
+			if lv != 0:
+				state.anim.float_text(lv, "damage", D.cell_pos(cell) + Vector2(D.CELL * 0.5, D.CELL * 0.25))
 	var kind := str(eff.get("type", ""))
 	var base := int(eff.get("value", 0))
 	var final_v := int(round(float(base) * mult))

@@ -64,6 +64,10 @@ func begin_turn(side: String) -> void:
 		s.push_log("【回费】%s方 +%d（基础%d + 资源建筑%d）→ 费用 %d（上限 %d）" % [s.cn(side), gain + rf, gain, rf, s.cost[side], D.COST_MAX])
 	else:
 		s.push_log("【回费】%s方 +%d → 费用 %d（上限 %d）" % [s.cn(side), gain, s.cost[side], D.COST_MAX])
+	# 迭代004 检查点7/8：回费**数值文本**（#FFA300 + 字号随数值）浮在己方费用六边形上方
+	if s.anim != null:
+		var hex_at: Vector2 = D.HEX_L if side == "green" else D.HEX_R
+		s.anim.float_text(gain + rf, "refund", hex_at + Vector2(0.0, -34.0))
 	s.phase = D.Phase.FIELD
 	s.phase_changed.emit(s.phase)
 	apply_terrain()

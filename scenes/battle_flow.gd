@@ -144,6 +144,8 @@ func _ready() -> void:
 						return un
 				return null
 		an.bind(state)
+		# 浮字/一次性特效的挂载点（数值文本浮在 Overlay 之上）
+		an.fx_parent = _ci("Overlay")
 		state.anim = an
 	else:
 		push_warning("BattleAnim 载入失败，动画系统不可用")

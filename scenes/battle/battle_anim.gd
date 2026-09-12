@@ -4,6 +4,8 @@ extends Node
 ##    引擎内所有 `name` 语义**明确指 Pattern 名**，从不指节点名；逐个改名会牵连所有调用点且无实际收益。
 ##    （若日后需要区分，再把参数统一改名为 `pat`。）
 @warning_ignore_start("shadowed_variable_base_class")
+## 数值文本用到的工具（digit_node 等）
+const D := preload("res://scenes/battle/battle_defs.gd")
 ## ============================================================
 ## BattleAnim —— **自写 Action Unit 动画引擎**（迭代004）
 ##
@@ -95,6 +97,9 @@ func stop(name: String) -> void:
 		var wr0 = st0["tref"]
 		tgt = wr0.get_ref() if wr0 != null else null
 	_running.erase(name)
+	# 一次性特效（浮字等）：播完自释放
+	if tgt != null and is_instance_valid(tgt) and tgt.has_meta("fx_once"):
+		tgt.queue_free()
 	var p: Dictionary = _patterns.get(name, {})
 	if bool(p.get("block_ui", false)) and not _any_running_blocking():
 		ui_locked = false
@@ -368,6 +373,45 @@ func play_shake_on_unit(unit_id: int, value: int) -> void:
 	var n: Node = _node_of(unit_id)
 	if n != null:
 		shake_unit(n, value)
+
+
+## ============================================================
+## 浮动数值文本（迭代004 检查点7/8）—— 回费 #FFA300 / 受伤 #FF2000 / 回血 #00DD00，字号随数值
+## 用引擎自身的 Pattern 驱动「上浮 + 淡出」（无前摇：第 1 帧即到位），播完自释放
+## ============================================================
+func float_text(value: int, kind: String, at: Vector2, parent: Node = null) -> Node:
+	if value == 0:
+		return null
+	var host: Node = parent if parent != null else fx_parent
+	if host == null:
+		return null
+	var show_v: int = absi(value)
+	var lbl: Node = D.digit_node(show_v, float(text_size_for(show_v)), text_color(kind), at)
+	if lbl == null:
+		return null
+	lbl.set_meta("fx_once", true)          # 播完自释放（在 stop 时处理）
+	host.add_child(lbl)
+	_ensure_float_pattern()
+	action("浮字上浮", lbl)
+	return lbl
+
+
+func _ensure_float_pattern() -> void:
+	if _patterns.has("浮字上浮"):
+		return
+	register("浮字上浮", {
+		"units": [
+			{"type": U.MOVE_BY, "clips": [
+				{"frames": 2, "step": Vector2(0, -7)},
+				{"frames": 2, "step": Vector2(0, -6)},
+				{"frames": 2, "step": Vector2(0, -4)},
+			]},
+			{"type": U.TINT, "clips": [
+				{"frames": 3, "color": Color(1, 1, 1, 1)},
+				{"frames": 3, "color": Color(1, 1, 1, 0)},
+			]},
+		],
+	})
 
 
 ## 按表现规范：数值文本字号随数值增长（返回字号）
