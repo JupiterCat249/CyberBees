@@ -50,6 +50,10 @@ func _mk_label(node_name: String, pos: Vector2, size: int, col: Color, centered:
 func _on_state_changed() -> void:
 	_labels["info"].text = "第%d回合 · 阶段:%s · %s方 · %s" % [
 		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
+	# 迭代004：UI 回合色 —— 我方 #499169 / 敌方 #A84331 / 结束态 半透明白（#FFFFFF-50%）
+	if state.anim != null:
+		var _tcol: Color = Color(1, 1, 1, 0.5) if state.winner != "" else state.anim.turn_color(state.current == "green")
+		_labels["info"].add_theme_color_override("font_color", _tcol)
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
 	elif state.surrender_pending:

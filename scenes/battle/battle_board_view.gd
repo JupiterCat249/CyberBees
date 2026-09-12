@@ -132,10 +132,17 @@ func render_highlights() -> void:
 			spr.scale = Vector2(float(D.CELL) / float(tex.get_width()), float(D.CELL) / float(tex.get_width()))
 			_hl_node.add_child(spr)
 		if state.preview.has("dmg"):
-			_hl_node.add_child(D.digit_node(int(state.preview["dmg"]), 40.0, Color(1.0, 0.62, 0.05),
+			# 迭代004：数值文本按表现规范取色/字号（受伤 #FF2000；字号随数值）
+			var _dmg: int = int(state.preview["dmg"])
+			var _dcol: Color = state.anim.text_color("damage") if state.anim != null else Color(1.0, 0.62, 0.05)
+			var _dsz: float = float(state.anim.text_size_for(_dmg)) if state.anim != null else 40.0
+			_hl_node.add_child(D.digit_node(_dmg, _dsz, _dcol,
 				D.cell_pos(pcell) + Vector2(D.CELL * 0.5, D.CELL * 0.18)))
 		if state.preview.has("hp_after"):
-			_hl_node.add_child(D.digit_node(int(state.preview["hp_after"]), 46.0, Color(1.0, 0.32, 0.22),
+			# 迭代004：预计剩余血量 —— 字号随数值
+			var _hp: int = int(state.preview["hp_after"])
+			var _hsz: float = float(state.anim.text_size_for(_hp)) if state.anim != null else 46.0
+			_hl_node.add_child(D.digit_node(_hp, _hsz, Color(1.0, 0.32, 0.22),
 				D.cell_pos(pcell) + Vector2(D.CELL * 0.5, D.CELL * 0.80)))
 		# 行动方（攻方）预计剩余血量（蓝，反击后）—— 之前只画了被攻击方，攻方无数字
 		if state.preview.has("attacker_hp_after"):
