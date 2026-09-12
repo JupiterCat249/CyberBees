@@ -304,3 +304,81 @@ func text_color(kind: String) -> Color:
 		"heal":
 			return HEAL_COLOR
 	return Color.WHITE
+
+
+# ============================================================
+# 表现时机接入（迭代004 第4b步）—— **引擎自连接**
+# 设计：不改协调器顶层作用域；引擎持有共享 Model，自己监听信号驱动 Pattern
+# ============================================================
+
+## 共享 Model（bind 时记录）
+var _state: Node = null
+## 单位 id → 表现节点 的解析回调（由协调器注入；避免依赖 View 内部字段）
+var node_provider: Callable = Callable()
+## 已播过登场的单位 id
+var _seen := {}
+
+
+## 绑定共享 Model：连接游戏信号 → 驱动本引擎
+func bind(st: Node) -> void:
+	_state = st
+	if st == null:
+		return
+	# ① 受击：战斗结算信号（此前全项目无人接收）→ 受击方抖动 + 受伤闪红；反击方也抖动
+	if st.combat != null and not st.combat.attack_resolved.is_connected(_on_attack_resolved):
+		st.combat.attack_resolved.connect(_on_attack_resolved)
+	# ② 卡牌登场：状态重绘后为新出现的单位卡播登场（瞬间动作，无前摇）
+	if not st.state_changed.is_connected(_on_state_changed):
+		st.state_changed.connect(_on_state_changed)
+	# ③ 胜负：终止全部动画（stop_all 不复位，符合规则 3）
+	if not st.battle_ended.is_connected(_on_battle_ended):
+		st.battle_ended.connect(_on_battle_ended)
+
+
+func _node_of(id: int) -> Node:
+	if not node_provider.is_valid():
+		return null
+	var n = node_provider.call(id)
+	return n if (n != null and is_instance_valid(n)) else null
+
+
+func _on_attack_resolved(aid: int, tid: int, dmg: int, counter: int, countered: bool) -> void:
+	if dmg > 0:
+		var tn: Node = _node_of(tid)
+		if tn != null:
+			action("受击抖动", tn)
+			action("受伤闪红", tn)
+	if countered and counter > 0 and aid != tid:
+		var an: Node = _node_of(aid)
+		if an != null:
+			action("受击抖动", an)
+
+
+func _on_state_changed() -> void:
+	if _state == null:
+		return
+	for id in _state.units.keys():
+		if _seen.has(id):
+			continue
+		var n: Node = _node_of(id)
+		if n != null:
+			_seen[id] = true
+			action("卡牌登场", n)
+
+
+func _on_battle_ended(_winner: String) -> void:
+	stop_all()
+
+
+## AOE 地图抖动：技能命中多个目标（溅射/链式）时由技能层调用
+func shake_map(map_node: Node = null) -> void:
+	var tgt: Node = map_node
+	if tgt == null and _state != null:
+		tgt = _state.get_parent()
+	if tgt != null:
+		action("地图抖动", tgt)
+
+
+## 清除已见记录（对局重开时调用）
+func clear_seen() -> void:
+	_seen.clear()
