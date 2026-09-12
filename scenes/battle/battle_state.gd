@@ -62,6 +62,7 @@ var pending = null            ## 待确认（二次点击确认）（重构第2�
 var deck = null               ## 手牌/牌库/起手与换牌（重构第3块，RefCounted）
 var deploy = null             ## 部署与指令（重构第4块，RefCounted）
 var action = null             ## 行动：选中/移动/攻击/支援（重构第5块，RefCounted）
+var setup = null              ## 开局准备/地图/生成（重构第6块·上，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -70,59 +71,23 @@ var deploy_radius := {"green": 1, "red": 1}
 # ============================================================
 # 生命周期 / 对战准备（a500 对战准备）
 # ============================================================
+## 启动 —— 重构第6块·上：实现已搬至 BattleSetup（battle_setup.gd）
 func start() -> void:
-	if started:
-		return
-	started = true
-	_prepare()
+	if setup != null:
+		setup.start()
 
 
+## 开局准备 —— 重构第6块·上：实现已搬至 BattleSetup
 func _prepare() -> void:
-	# a500 构筑 2：前 4 张常规卡为初始手牌、后 4 张为备卡
-	for side in ["green", "red"]:
-		var cards: Array = []
-		for nm in D.DECK_LIST:
-			cards.append(D.card(nm))
-		hand[side] = []
-		deckl[side] = []
-		for i in cards.size():
-			if i < D.HAND_MAX:
-				hand[side].append(cards[i])
-			else:
-				deckl[side].append(cards[i])
-	# a500 对战准备 6：随机决定先后手（后手初始费用 +2）
-	var order := ["green", "red"]
-	order.shuffle()
-	first_side = order[0]
-	cost["green"] = 0
-	cost["red"] = 0
-	cost[order[1]] = D.SECOND_PLAYER_BONUS
-	# a500 对战准备 5：抽取对战地图；提前部署蜂王并载入手牌
-	draw_map()
-	spawn(Vector2i(3, 1), "green", D.card("金刚蜂王"))
-	spawn(Vector2i(0, 2), "red", D.card("金刚蜂王"))
-	push_log("对战开始：%s方先手 · %s方后手（初始费用 +2）" % [cn(order[0]), cn(order[1])])
-	push_log("牌组：初始手牌 %d 张 + 备卡 %d 张（a500 构筑 2）" % [hand[first_side].size(), deckl[first_side].size()])
-	# a500 对战准备 5 + 9：进入「准备」阶段调整初始手牌（一次性），由主按钮开始第一回合
-	current = first_side
-	armed_side = ""
-	exchange_left = {"green": D.EXCHANGE_MAX, "red": D.EXCHANGE_MAX}
-	phase = D.Phase.PREPARE
-	phase_changed.emit(phase)
-	push_log("对战准备：可调整初始手牌（每方 %d 次），点主按钮「开始对局」进入第一回合" % D.EXCHANGE_MAX)
-	refresh()
+	if setup != null:
+		setup.prepare()
 
 
 ## a500 对战准备 5：抽取对战地图（从地图池随机，播报地图名与特殊地形）
+## 抽取地图 —— 重构第6块·上：实现已搬至 BattleSetup
 func draw_map() -> void:
-	var maps: Array = D.MAP_POOL
-	var m: Dictionary = maps[randi() % maps.size()]
-	map_name = str(m["name"])
-	terrain.clear()
-	for c in m["terrain_cells"]:
-		terrain[c] = {"id": m["terrain_id"], "name": m["terrain_name"],
-			"atk_add": int(m["terrain_atk_add"]), "spd_add": int(m["terrain_spd_add"])}
-	push_log("地图「%s」：特殊地形 %d 格「%s」（%s）" % [map_name, terrain.size(), m["terrain_name"], m["terrain_desc"]])
+	if setup != null:
+		setup.draw_map()
 
 
 ## 抽 1 张 —— 重构第3块：实现已搬至 BattleDeck（battle_deck.gd）
@@ -131,19 +96,17 @@ func draw_one(side: String) -> void:
 		deck.draw_one(side)
 
 
+## 生成单位 —— 重构第6块·上：实现已搬至 BattleSetup
 func spawn(cell: Vector2i, side: String, card: Dictionary) -> int:
-	var id := next_id
-	next_id += 1
-	# acted=true：部署当回合没有行动机会（a500 行动机会 3）；moved 一并用尽
-	units[id] = {"cell": cell, "side": side, "card": card, "hp": int(card["hp"]),
-		"acted": true, "moved": true, "effects": {}}
-	return id
+	if setup != null:
+		return setup.spawn(cell, side, card)
+	return -1
 
 
+## 单位占位查询 —— 重构第6块·上：实现已搬至 BattleSetup
 func unit_at(cell: Vector2i) -> int:
-	for id in units:
-		if units[id]["cell"] == cell:
-			return id
+	if setup != null:
+		return setup.unit_at(cell)
 	return -1
 
 
