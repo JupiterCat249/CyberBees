@@ -26,52 +26,10 @@ func setup(ov: Node2D, st: Node) -> void:
 
 
 func _bind() -> void:
-	# 顶部信息栏 / 日志改用 RichTextLabel（行内染色：**只给阵营相关文字**上阵营色）
-	# —— 人的要求：不做"整条文字染成阵营色"，也不加阵营底色
-	_labels["info"] = _mk_rich("InfoRich", Vector2(452.0, 4.0), 26, Color(1, 1, 1), false, Vector2(1000.0, 40.0))
-	_labels["log"] = _mk_rich("LogRich", Vector2(1494.0, 674.0), 17, Color(0.86, 0.86, 0.86), false, Vector2(760.0, 132.0))
-	_hide_legacy("InfoBar")     # 隐藏场景里原有的纯文本 Label（保留不删，便于回退）
-	_hide_legacy("LogText")
+	_labels["info"] = _mk_label("InfoBar", Vector2(452.0, 4.0), 26, Color(1, 1, 1), false)
 	_labels["btn"] = _mk_label("BtnText", D.BTN_MAIN + Vector2(250.0, 26.0), 34, Color(0.14, 0.14, 0.14), true)
+	_labels["log"] = _mk_label("LogText", Vector2(1494.0, 674.0), 17, Color(0.86, 0.86, 0.86), false)
 	_labels["help"] = _mk_label("HelpText", Vector2(452.0, 120.0), 20, Color(1.0, 0.95, 0.75), false)
-
-
-## 隐藏旧纯文本节点（改用 RichTextLabel 后避免两套文字重叠）
-func _hide_legacy(node_name: String) -> void:
-	var n := overlay.get_node_or_null(NodePath(node_name))
-	if n != null and n is CanvasItem:
-		(n as CanvasItem).visible = false
-
-
-## 创建/复用 RichTextLabel（支持 BBCode 行内染色）
-func _mk_rich(node_name: String, pos: Vector2, size: int, col: Color, centered: bool, box: Vector2 = Vector2(980.0, 40.0)) -> RichTextLabel:
-	var r := overlay.get_node_or_null(NodePath(node_name)) as RichTextLabel
-	if r == null:
-		r = RichTextLabel.new()
-		r.name = node_name
-		r.bbcode_enabled = true
-		r.scroll_active = false
-		r.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 绝不拦截点击
-		overlay.add_child(r)
-	# ⚠️ 必须给**显式尺寸**：RichTextLabel 在 Node2D 父节点下不会自动撑开（否则宽度=1px，文字无处排布 ✗）
-	r.fit_content = false
-	r.autowrap_mode = TextServer.AUTOWRAP_OFF
-	r.position = pos
-	r.size = box
-	r.add_theme_font_size_override("normal_font_size", size)
-	r.add_theme_color_override("default_color", col)
-	return r
-
-
-## 只把"阵营相关文字"渲染成阵营代表色（绿方 #499169 / 红方 #A84331），其余保持默认色
-func _faction_bb(text: String) -> String:
-	if state == null or state.anim == null:
-		return text
-	var out := text
-	for pair in [["绿方", state.anim.turn_color(true)], ["红方", state.anim.turn_color(false)]]:
-		var hex: String = (pair[1] as Color).to_html(false)
-		out = out.replace(str(pair[0]), "[color=#%s]%s[/color]" % [hex, str(pair[0])])
-	return out
 
 
 func _mk_label(node_name: String, pos: Vector2, size: int, col: Color, centered: bool) -> Label:
@@ -92,17 +50,18 @@ func _mk_label(node_name: String, pos: Vector2, size: int, col: Color, centered:
 
 
 func _on_state_changed() -> void:
-	# 人的要求：顶部信息栏**不整条染色、不加阵营底色** —— 只把"阵营相关文字"（`N方`）染成阵营色
-	_labels["info"].text = _faction_bb("第%d回合 · 阶段:%s · %s方 · %s" % [
-		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()])
-	# 结束态：整条降为半透明白（#FFFFFF-50%），提示"对局已结束、不可操作"
-	if state.anim != null and state.winner != "":
-		_labels["info"].add_theme_color_override("default_color", Color(1, 1, 1, 0.5))
-	elif state.anim != null:
-		_labels["info"].add_theme_color_override("default_color", Color(1, 1, 1))
-	# 回合背景条：按人的要求**不再使用阵营底色**（保留节点但置全透明，便于日后需要时启用）
-	if _turn_bg != null and is_instance_valid(_turn_bg):
-		_turn_bg.color = Color(1, 1, 1, 0.0)
+	_labels["info"].text = "第%d回合 · 阶段:%s · %s方 · %s" % [
+		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
+	# 迭代004 · 检查点10：UI 回合色 —— 文本态 + **背景态**
+	#   我方 #499169 / 敌方 #A84331 / 结束态 #FFFFFF-50%
+	if state.anim != null:
+		var _over: bool = state.winner != ""
+		var _tcol: Color = Color(1, 1, 1, 0.5) if _over else state.anim.turn_color(state.current == "green")
+		_labels["info"].add_theme_color_override("font_color", _tcol)
+		_ensure_turn_bg()
+		if _turn_bg != null and is_instance_valid(_turn_bg):
+			# 背景条取同色、半透明，作为"回合背景"而不压过文字
+			_turn_bg.color = Color(_tcol.r, _tcol.g, _tcol.b, 0.2 if _over else 0.5)
 
 
 ## 确保回合背景条存在（置于 Overlay 最底层，作为 info 信息条背景）
@@ -138,7 +97,7 @@ func _ensure_turn_bg() -> void:
 	else:
 		_labels["btn"].text = "——"
 	var n: int = state.log_lines.size()
-	_labels["log"].text = _faction_bb("\n".join(state.log_lines.slice(maxi(0, n - 6), n)))
+	_labels["log"].text = "\n".join(state.log_lines.slice(maxi(0, n - 6), n))
 	_labels["help"].text = ("a500 规则速览：蜂王被击败即负 | 第12回合比蜂王血量 | 第4回合起可投降\n"
 		+ "兵蜂→蜂王相邻格 · 建筑→己方领地 · 指令→任意目标(蜂王免疫)\n"
 		+ "每单位每回合：1 次移动 + 1 次攻击或支援 · 反击射程外无效 · 移动会被单位阻挡") if state.help_on else ""
