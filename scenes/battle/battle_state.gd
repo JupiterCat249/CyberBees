@@ -166,87 +166,36 @@ func side_of_armed() -> String:
 	return s
 
 
+## ============================================================
+## 回合流程 / 地形 —— 重构第6块·下之二：实现已搬至 BattleTurn（battle_turn.gd）
+## 以下保留同签名转发，调用点零改动（行为不变）
+## ============================================================
 func begin_turn(side: String) -> void:
-	current = side
-	turn_started.emit(side, round_no)
-	push_log("—— 第 %d 回合 · %s方 ——" % [round_no, cn(side)])
-	# 回费阶段（自动）：基础回费 + 资源建筑回费
-	phase = D.Phase.REFUND
-	phase_changed.emit(phase)
-	var gain := D.BASE_REFUND + (D.ROUND7_EXTRA if round_no >= 7 else 0)
-	var rf := refund_of(side)
-	cost[side] = mini(cost[side] + gain + rf, D.COST_MAX)
-	if rf > 0:
-		push_log("【回费】%s方 +%d（基础%d + 资源建筑%d）→ 费用 %d（上限 %d）" % [cn(side), gain + rf, gain, rf, cost[side], D.COST_MAX])
-	else:
-		push_log("【回费】%s方 +%d → 费用 %d（上限 %d）" % [cn(side), gain, cost[side], D.COST_MAX])
-	# 场地阶段（自动）
-	phase = D.Phase.FIELD
-	phase_changed.emit(phase)
-	_apply_terrain()
-	# 停在部署阶段等玩家操作
-	phase = D.Phase.DEPLOY
-	phase_changed.emit(phase)
-	for id in units:
-		units[id]["acted"] = false
-		units[id]["moved"] = false
-	clear_sel()
-	refresh()
+	if turn != null:
+		turn.begin_turn(side)
 
 
 func end_turn() -> void:
-	# 结算持续效果（灼烧等）
-	for id in units.keys():
-		var eff: Dictionary = units[id]["effects"]
-		if eff.has("burn"):
-			units[id]["hp"] = int(units[id]["hp"]) - int(eff["burn"]["dot"])
-			push_log("%s 受灼烧 -%d" % [unit_name(id), int(eff["burn"]["dot"])])
-	remove_dead()
-	if winner != "":
-		refresh()
-		return
-	var next := "red" if current == "green" else "green"
-	# 回合数以「先手方再次开始回合」为界（先手方随机，不能写死绿方）
-	if next == first_side:
-		round_no += 1
-	for side in ["green", "red"]:
-		while hand[side].size() < D.HAND_MAX:
-			draw_one(side)
-	check_victory()
-	if round_no > D.ROUND_MAX:
-		round12_result()
-	if winner != "":
-		refresh()
-		return
-	begin_turn(next)
+	if turn != null:
+		turn.end_turn()
 
 
 func _apply_terrain() -> void:
-	for id in units:
-		var c: Vector2i = units[id]["cell"]
-		if terrain.has(c):
-			push_log("%s 受地形 %s 影响（攻+%d）" % [unit_name(id), terrain[c]["name"], int(terrain[c]["atk_add"])])
+	if turn != null:
+		turn.apply_terrain()
 
 
+## 主动投降 —— 重构第6块·下之二：实现已搬至 BattleTurn（battle_turn.gd）
 func surrender() -> void:
-	if round_no < 4:
-		push_log("第 4 回合起才可投降")
-		refresh()
-		return
-	winner = "red" if current == "green" else "green"
-	push_log("%s方 投降，%s方 获胜" % [cn(current), cn(winner)])
-	battle_ended.emit(winner)
-	refresh()
+	if turn != null:
+		turn.surrender()
 
 
-## 资源建筑回费合计（a500 基础术语·资源建筑）
+## 资源建筑回费合计（a500 基础术语·资源建筑）—— 实现已搬至 BattleTurn
 func refund_of(side: String) -> int:
-	var sum := 0
-	for id in units:
-		var u: Dictionary = units[id]
-		if u["side"] == side:
-			sum += int(u["card"].get("refund", 0))
-	return sum
+	if turn != null:
+		return turn.refund_of(side)
+	return 0
 
 
 # ============================================================
@@ -558,42 +507,22 @@ func on_click_empty() -> void:
 		refresh()
 
 
+## 右下小按钮 / 投降三件套 —— 重构第6块·下之二：实现已搬至 BattleTurn（battle_turn.gd）
 func on_small_pressed(index: int) -> void:
-	match index:
-		0:
-			help_on = not help_on
-		2:
-			push_log("回合%d/%d · %s方 · 费%d" % [round_no, D.ROUND_MAX, cn(current), cost[current]])
-		3:
-			request_surrender()
-	refresh()
+	if turn != null:
+		turn.on_small_pressed(index)
 
 
-## A5 UI：投降需二次确认（确认 → 投降结算；取消 → 返回）
+## A5 UI：投降需二次确认（确认 → 投降结算；取消 → 返回）—— 实现已搬至 BattleTurn
 func request_surrender() -> void:
-	if winner != "":
-		return
-	if round_no < 4:
-		push_log("第 4 回合起才可投降（当前第 %d 回合）" % round_no)
-		refresh()
-		return
-	if surrender_pending:
-		surrender_pending = false
-		surrender()
-		return
-	surrender_pending = true
-	push_log("投降确认：再次点击投降按钮，或按主按钮「确认投降」")
-	popup_requested.emit("确认投降",
-		"点击任意处取消；点主按钮「确认投降」执行投降。\n\n（a500 胜利条件 4：从第 4 回合开始，允许主动投降）")
-	refresh()
+	if turn != null:
+		turn.request_surrender()
 
 
-## 取消投降（点击任意处关闭浮窗时）
+## 取消投降（点击任意处关闭浮窗时）—— 实现已搬至 BattleTurn
 func cancel_surrender() -> void:
-	if surrender_pending:
-		surrender_pending = false
-		push_log("已取消投降")
-		refresh()
+	if turn != null:
+		turn.cancel_surrender()
 
 
 # ============================================================
