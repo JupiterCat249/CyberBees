@@ -383,12 +383,12 @@ func _on_attack_resolved(aid: int, tid: int, dmg: int, counter: int, countered: 
 	if dmg > 0:
 		var tn: Node = _node_of(tid)
 		if tn != null:
-			action("受击抖动", tn)
+			shake_unit(tn, dmg)          # 检查点9：幅度随伤害数值缩放
 			action("受伤闪红", tn)
 	if countered and counter > 0 and aid != tid:
 		var an: Node = _node_of(aid)
 		if an != null:
-			action("受击抖动", an)
+			shake_unit(an, counter)
 
 
 func _on_state_changed() -> void:
@@ -413,12 +413,45 @@ func _on_battle_ended(_winner: String) -> void:
 
 
 ## AOE 地图抖动：技能命中多个目标（溅射/链式）时由技能层调用
-func shake_map(map_node: Node = null) -> void:
+## value>0 时**幅度随数值缩放**（伤害越高抖得越狠）—— 检查点9
+func shake_map(map_node: Node = null, value: int = 0) -> void:
 	var tgt: Node = map_node
 	if tgt == null and _state != null:
 		tgt = _state.get_parent()
 	if tgt != null:
+		_register_shake("地图抖动", 12.0, value, 6)
 		action("地图抖动", tgt)
+
+
+## 单位受击抖动（幅度随数值缩放）—— 检查点9
+func shake_unit(tgt: Node, value: int = 0) -> void:
+	if tgt == null:
+		return
+	_register_shake("受击抖动", 6.0, value, 4)
+	action("受击抖动", tgt)
+
+
+## 幅度随数值缩放：以 4 点为基准线性放大，钳制在 [0.6x, 2.0x]（避免过小看不清 / 过大失稳）
+func _scaled_amp(base: float, value: int) -> float:
+	if value <= 0:
+		return base
+	return base * clampf(float(value) / 4.0, 0.6, 2.0)
+
+
+## 按缩放后的幅度**重新注册**抖动 Pattern（幅度属 Pattern 数据，就地更新即可）
+func _register_shake(pname: String, base_amp: float, value: int, frames: int) -> void:
+	var amp: float = _scaled_amp(base_amp, value)
+	var clips: Array = []
+	var seq: Array = [amp, -amp * 2.0, amp * 2.0, -amp]
+	var is_map: bool = pname == "地图抖动"      # 地图抖动走"上下左右"往复；单位抖动走左右
+	var i: int = 0
+	for s in seq:
+		if is_map:
+			clips.append({"frames": frames, "step": (Vector2(0, s) if i % 2 == 0 else Vector2(-s, 0))})
+		else:
+			clips.append({"frames": frames, "step": Vector2(s, 0)})
+		i += 1
+	register(pname, {"units": [{"type": U.MOVE_BY, "clips": clips}]})
 
 
 ## 清除已见记录（对局重开时调用）
