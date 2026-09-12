@@ -95,6 +95,16 @@ func _ready() -> void:
 	else:
 		push_warning("BattleAction 载入失败，行动/支援不可用")
 
+	# 自写 Action Unit 动画引擎（迭代004 · T3）：Node 需挂到场景树才能逐帧推进
+	var anim_script := load("res://scenes/battle/battle_anim.gd")
+	if anim_script != null:
+		var an = anim_script.new()
+		state.add_child(an)
+		an.register_defaults()
+		state.anim = an
+	else:
+		push_warning("BattleAnim 载入失败，动画系统不可用")
+
 	# ---- 依赖注入（View 侧）----
 	var bgfx := get_node_or_null("BgFx")
 	var board := _ci("BoardView")

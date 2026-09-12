@@ -65,6 +65,7 @@ var action = null             ## 行动：选中/移动/攻击/支援（重构�
 var setup = null              ## 开局准备/地图/生成（重构第6块·上，RefCounted）
 var victory = null            ## 胜负判定（重构第6块·下，RefCounted）
 var turn = null               ## 回合流程/地形/投降（重构第6块·下之二，RefCounted）
+var anim = null                ## 自写动画引擎（迭代004，Node 挂场景树）
 var interaction = null        ## 显式交互状态机（重构节点7，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）

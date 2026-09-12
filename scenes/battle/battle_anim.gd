@@ -216,3 +216,91 @@ func _apply_initial(name: String, target: Node) -> void:
 	var init: Dictionary = _patterns.get(name, {}).get("inited", {})
 	for key in init:
 		target.set(str(key), init[key])
+
+
+# ============================================================
+# 迭代004 默认 Pattern（依据《动画系统及流程.md》二、动画顺序与表现规范）
+# ============================================================
+
+## 受伤/回费/回血 文本色（表现规范）
+const DAMAGE_COLOR := Color("ff2000")   ## 受伤
+const REFUND_COLOR := Color("ffa300")   ## 回费
+const HEAL_COLOR := Color("00dd00")     ## 回血
+const TURN_MINE := Color("499169")      ## 我方回合 UI
+const TURN_FOE := Color("a84331")       ## 敌方回合 UI
+
+
+## 注册默认 Pattern（cfg 可覆盖幅度/帧数，便于按表现规范调参而不改代码）
+func register_defaults(cfg: Dictionary = {}) -> void:
+	var amp: float = float(cfg.get("shake_amp", 6.0))      # 单位受击抖动幅度(px)
+	var eamp: float = float(cfg.get("aoe_amp", 12.0))      # AOE 地图抖动幅度(px)
+
+	# ① 单位受击抖动：左右往复（MOVE_BY **可叠加**）→ 末段反向抵消回原位
+	register("受击抖动", {
+		"units": [{"type": U.MOVE_BY, "clips": [
+			{"frames": 2, "step": Vector2(amp, 0)},
+			{"frames": 2, "step": Vector2(-amp * 2.0, 0)},
+			{"frames": 2, "step": Vector2(amp * 2.0, 0)},
+			{"frames": 2, "step": Vector2(-amp, 0)},
+		]}],
+	})
+	# ② 单位受伤闪红（TINT 变色）：#FF2000 → 橙 → 白
+	register("受伤闪红", {
+		"units": [
+			{"type": U.TINT, "clips": [{"frames": 2, "color": DAMAGE_COLOR}]},
+			{"type": U.TINT, "clips": [{"frames": 2, "color": Color("ff8800")}]},
+			{"type": U.TINT, "clips": [{"frames": 2, "color": Color.WHITE}]},
+		],
+	})
+	# ③ AOE 地图抖动：幅度更大、帧数更长（作用于地图根节点）
+	register("地图抖动", {
+		"units": [{"type": U.MOVE_BY, "clips": [
+			{"frames": 2, "step": Vector2(0, -eamp)},
+			{"frames": 2, "step": Vector2(0, eamp)},
+			{"frames": 2, "step": Vector2(-eamp, 0)},
+			{"frames": 2, "step": Vector2(eamp, 0)},
+			{"frames": 2, "step": Vector2(-eamp * 0.5, 0)},
+			{"frames": 2, "step": Vector2(eamp * 0.5, 0)},
+		]}],
+	})
+	# ④ 卡牌登场：**瞬间动作（无前摇）** —— 第 1 帧即到位，只做淡入
+	register("卡牌登场", {
+		"units": [
+			{"type": U.TINT, "clips": [{"frames": 1, "color": Color(1, 1, 1, 0.0)}]},
+			{"type": U.TINT, "clips": [{"frames": 4, "color": Color(1, 1, 1, 1.0)}]},
+		],
+	})
+	# ⑤ 卡牌退场：末帧即刻消失（无后摇）
+	register("卡牌退场", {
+		"units": [{"type": U.TINT, "clips": [
+			{"frames": 3, "color": Color(1, 0.6, 0.6, 1.0)},
+			{"frames": 2, "color": Color(1, 1, 1, 0.0)},
+		]}],
+	})
+	# ⑥ 回合色（我方/敌方）：UI 状态与颜色映射
+	register("回合色-我方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_MINE}]}]})
+	register("回合色-敌方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_FOE}]}]})
+
+
+## 按表现规范：数值文本字号随数值增长（返回字号）
+func text_size_for(value: int) -> int:
+	var v: int = absi(value)
+	if v >= 8:
+		return 72
+	if v >= 5:
+		return 60
+	if v >= 3:
+		return 52
+	return 44
+
+
+## 数值文本颜色（按种类）
+func text_color(kind: String) -> Color:
+	match kind:
+		"damage":
+			return DAMAGE_COLOR
+		"refund":
+			return REFUND_COLOR
+		"heal":
+			return HEAL_COLOR
+	return Color.WHITE
