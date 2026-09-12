@@ -316,6 +316,59 @@ func register_defaults(cfg: Dictionary = {}) -> void:
 	register("回合色-我方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_MINE}]}]})
 	register("回合色-敌方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_FOE}]}]})
 
+	# ⑦ 迭代004 检查点6 · 瞬时动作表现（六类中补齐：部署/移动/使用指令/数值buff）
+	#   部署：落位下沉 → 回弹（瞬间动作，无前摇）
+	register("部署落位", {
+		"units": [{"type": U.MOVE_BY, "clips": [
+			{"frames": 1, "step": Vector2(0, 8)},
+			{"frames": 2, "step": Vector2(0, -8)},
+		]}],
+	})
+	#   移动：一次短促左右微移（无前摇）
+	register("移动落位", {
+		"units": [{"type": U.MOVE_BY, "clips": [
+			{"frames": 1, "step": Vector2(5, 0)},
+			{"frames": 1, "step": Vector2(-10, 0)},
+			{"frames": 1, "step": Vector2(5, 0)},
+		]}],
+	})
+	#   使用指令：施放者闪白一次（第 1 帧即亮 = 无前摇）
+	register("施放闪白", {
+		"units": [
+			{"type": U.TINT, "clips": [{"frames": 1, "color": Color(1, 1, 1, 1)}]},
+			{"type": U.TINT, "clips": [{"frames": 1, "color": Color(1.0, 0.95, 0.6, 1)}]},
+			{"type": U.TINT, "clips": [{"frames": 2, "color": Color.WHITE}]},
+		],
+	})
+	#   数值 buff：目标变色脉冲（增益绿 / 减益红，由调用方选择）
+	register("增益脉冲", {
+		"units": [
+			{"type": U.TINT, "clips": [{"frames": 1, "color": Color("66ff88")}]},
+			{"type": U.TINT, "clips": [{"frames": 3, "color": Color.WHITE}]},
+		],
+	})
+	register("减益脉冲", {
+		"units": [
+			{"type": U.TINT, "clips": [{"frames": 1, "color": Color("ff6666")}]},
+			{"type": U.TINT, "clips": [{"frames": 3, "color": Color.WHITE}]},
+		],
+	})
+
+
+## 按**单位 id** 播放动画（内部经 node_provider 解析节点；解析不到则静默跳过）
+## —— 供各逻辑模块接线使用，避免它们直接依赖 View 的内部字段
+func play_on_unit(unit_id: int, pname: String) -> void:
+	var n: Node = _node_of(unit_id)
+	if n != null:
+		action(pname, n)
+
+
+## 带数值的抖动（幅度随数值缩放）
+func play_shake_on_unit(unit_id: int, value: int) -> void:
+	var n: Node = _node_of(unit_id)
+	if n != null:
+		shake_unit(n, value)
+
 
 ## 按表现规范：数值文本字号随数值增长（返回字号）
 func text_size_for(value: int) -> int:

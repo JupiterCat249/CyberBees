@@ -58,12 +58,16 @@ func place_at(cell: Vector2i) -> void:
 		s.push_log("费用不足")
 		return
 	s.cost[s.current] -= int(c["cost"])
-	s.spawn(cell, s.current, c)
+	var nid: int = s.spawn(cell, s.current, c)
 	s.grave[s.current].append(c)
 	s.hand[s.current].remove_at(s.armed_card)
 	s.push_log("%s方 部署 %s @(%d,%d)" % [s.cn(s.current), c["name"], cell.x, cell.y])
 	s.clear_sel()
 	s.refresh()
+	# 检查点6：部署瞬时动作 —— 必须放在 refresh() **之后**（View 此时才建出该单位节点，
+	# 否则 node_provider 解析不到 → 动画被静默跳过 ✗ —— V-004-22 实测的时序陷阱）
+	if s.anim != null and nid >= 0:
+		s.anim.play_on_unit(nid, "部署落位")
 
 
 ## 指令卡结算（费用 / 目标校验 / 免疫 / 效果；**效果全部由技能数据驱动**）
@@ -103,6 +107,9 @@ func cmd_at(cell: Vector2i) -> void:
 	if not bool(res.get("ok", false)):
 		s.refresh()
 		return
+	# 迭代004③/检查点6：使用指令 = 施放者闪白一次（无前摇）
+	if s.anim != null and s.selected_unit >= 0:
+		s.anim.play_on_unit(s.selected_unit, "施放闪白")
 	# 迭代004③：AOE 地图抖动 —— 命中 ≥2 处（溅射 / 链式传播）时抖地图
 	if s.anim != null and (res.get("hits", []) as Array).size() >= 2:
 		s.anim.shake_map()

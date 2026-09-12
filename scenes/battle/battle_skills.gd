@@ -409,6 +409,14 @@ func _match_unit(id: int, t: Dictionary, side: String) -> bool:
 # 效果执行（最终值 = 基础Int值 × 倍率值）
 # ============================================================
 func apply_effect(eff: Dictionary, cell: Vector2i, id: int, mult: float, ctx: Dictionary) -> bool:
+	# 迭代004 检查点6：数值 buff 的**瞬时表现**（无前摇）—— 按效果类型给目标一个变色脉冲
+	if state != null and state.anim != null and id >= 0:
+		var is_gain: bool = eff.has("atk_add") or eff.has("hp_add") or eff.has("instant_heal") or eff.has("range_add") or eff.has("spd_add")
+		var is_loss: bool = eff.has("reduce") or eff.has("atk_mult")
+		if is_gain:
+			state.anim.play_on_unit(id, "增益脉冲")
+		elif is_loss:
+			state.anim.play_on_unit(id, "减益脉冲")
 	var kind := str(eff.get("type", ""))
 	var base := int(eff.get("value", 0))
 	var final_v := int(round(float(base) * mult))

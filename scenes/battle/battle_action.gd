@@ -67,6 +67,10 @@ func act_at(cell: Vector2i) -> void:
 		s.units[uid]["moved"] = true
 		s.push_log("%s 移动到 (%d,%d)" % [s.unit_name(uid), cell.x, cell.y])
 		select_unit_at(cell)      # 就地重新选中：刷新为「不可再移动 + 仍可攻击/支援」
+		# 迭代004 检查点6：移动瞬时动作 —— 放在重新选中（已 refresh）之后：refresh 会**重建单位节点**，
+		# 若在重建前播放，动画会绑到即将被 queue_free 的旧节点上而被安全丢弃（表现丢失）✗
+		if s.anim != null:
+			s.anim.play_on_unit(uid, "移动落位")
 		return
 	if cell in s.atk_range:
 		var tid: int = s.unit_at(cell)
