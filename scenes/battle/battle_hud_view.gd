@@ -11,6 +11,8 @@ extends Node2D
 const D := preload("res://scenes/battle/battle_defs.gd")
 
 var overlay: Node2D = null
+## 迭代004 · 检查点10：UI 回合背景条（我方 #499169 / 敌方 #A84331 / 结束态 #FFFFFF-50%）
+var _turn_bg: ColorRect = null
 var state: Node = null
 
 var _labels := {}
@@ -50,10 +52,32 @@ func _mk_label(node_name: String, pos: Vector2, size: int, col: Color, centered:
 func _on_state_changed() -> void:
 	_labels["info"].text = "第%d回合 · 阶段:%s · %s方 · %s" % [
 		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
-	# 迭代004：UI 回合色 —— 我方 #499169 / 敌方 #A84331 / 结束态 半透明白（#FFFFFF-50%）
+	# 迭代004 · 检查点10：UI 回合色 —— 文本态 + **背景态**
+	#   我方 #499169 / 敌方 #A84331 / 结束态 #FFFFFF-50%
 	if state.anim != null:
-		var _tcol: Color = Color(1, 1, 1, 0.5) if state.winner != "" else state.anim.turn_color(state.current == "green")
+		var _over: bool = state.winner != ""
+		var _tcol: Color = Color(1, 1, 1, 0.5) if _over else state.anim.turn_color(state.current == "green")
 		_labels["info"].add_theme_color_override("font_color", _tcol)
+		_ensure_turn_bg()
+		if _turn_bg != null and is_instance_valid(_turn_bg):
+			# 背景条取同色、半透明，作为"回合背景"而不压过文字
+			_turn_bg.color = Color(_tcol.r, _tcol.g, _tcol.b, 0.2 if _over else 0.5)
+
+
+## 确保回合背景条存在（置于 Overlay 最底层，作为 info 信息条背景）
+func _ensure_turn_bg() -> void:
+	if _turn_bg != null and is_instance_valid(_turn_bg):
+		return
+	if overlay == null:
+		return
+	_turn_bg = ColorRect.new()
+	_turn_bg.name = "TurnBg"
+	_turn_bg.position = Vector2(440.0, 0.0)
+	_turn_bg.size = Vector2(700.0, 54.0)
+	_turn_bg.color = Color(1, 1, 1, 0.0)
+	_turn_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 绝不拦截点击
+	overlay.add_child(_turn_bg)
+	overlay.move_child(_turn_bg, 0)
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
 	elif state.surrender_pending:
