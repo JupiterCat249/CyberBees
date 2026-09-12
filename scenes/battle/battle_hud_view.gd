@@ -52,32 +52,8 @@ func _mk_label(node_name: String, pos: Vector2, size: int, col: Color, centered:
 func _on_state_changed() -> void:
 	_labels["info"].text = "第%d回合 · 阶段:%s · %s方 · %s" % [
 		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
-	# 迭代004 · 检查点10：UI 回合色 —— 文本态 + **背景态**
-	#   我方 #499169 / 敌方 #A84331 / 结束态 #FFFFFF-50%
-	if state.anim != null:
-		var _over: bool = state.winner != ""
-		var _tcol: Color = Color(1, 1, 1, 0.5) if _over else state.anim.turn_color(state.current == "green")
-		_labels["info"].add_theme_color_override("font_color", _tcol)
-		_ensure_turn_bg()
-		if _turn_bg != null and is_instance_valid(_turn_bg):
-			# 背景条取同色、半透明，作为"回合背景"而不压过文字
-			_turn_bg.color = Color(_tcol.r, _tcol.g, _tcol.b, 0.2 if _over else 0.5)
-
-
-## 确保回合背景条存在（置于 Overlay 最底层，作为 info 信息条背景）
-func _ensure_turn_bg() -> void:
-	if _turn_bg != null and is_instance_valid(_turn_bg):
-		return
-	if overlay == null:
-		return
-	_turn_bg = ColorRect.new()
-	_turn_bg.name = "TurnBg"
-	_turn_bg.position = Vector2(440.0, 0.0)
-	_turn_bg.size = Vector2(700.0, 54.0)
-	_turn_bg.color = Color(1, 1, 1, 0.0)
-	_turn_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 绝不拦截点击
-	overlay.add_child(_turn_bg)
-	overlay.move_child(_turn_bg, 0)
+	# 人的要求：不整条染色、不加阵营底色
+	# 主按钮文字
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
 	elif state.surrender_pending:
@@ -96,11 +72,30 @@ func _ensure_turn_bg() -> void:
 		_labels["btn"].text = "结束回合"
 	else:
 		_labels["btn"].text = "——"
+	# 日志与帮助
 	var n: int = state.log_lines.size()
 	_labels["log"].text = "\n".join(state.log_lines.slice(maxi(0, n - 6), n))
 	_labels["help"].text = ("a500 规则速览：蜂王被击败即负 | 第12回合比蜂王血量 | 第4回合起可投降\n"
 		+ "兵蜂→蜂王相邻格 · 建筑→己方领地 · 指令→任意目标(蜂王免疫)\n"
 		+ "每单位每回合：1 次移动 + 1 次攻击或支援 · 反击射程外无效 · 移动会被单位阻挡") if state.help_on else ""
+
+
+## 确保回合背景条存在（**只做创建**）
+## ⚠️ 历史缺陷（V-004-26 定位）：btn/log/help 的赋值曾被误并入本函数，
+##    导致"不调用本函数时，主按钮与日志文本全空" ✗ —— 已拆分还原到 _on_state_changed ✅
+func _ensure_turn_bg() -> void:
+	if _turn_bg != null and is_instance_valid(_turn_bg):
+		return
+	if overlay == null:
+		return
+	_turn_bg = ColorRect.new()
+	_turn_bg.name = "TurnBg"
+	_turn_bg.position = Vector2(440.0, 0.0)
+	_turn_bg.size = Vector2(700.0, 54.0)
+	_turn_bg.color = Color(1, 1, 1, 0.0)
+	_turn_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 绝不拦截点击
+	overlay.add_child(_turn_bg)
+	overlay.move_child(_turn_bg, 0)
 
 
 func _hint() -> String:
