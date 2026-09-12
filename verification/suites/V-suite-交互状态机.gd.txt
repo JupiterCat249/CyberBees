@@ -1,0 +1,42 @@
+> 状态：已封存（验证用，非生产文件）
+> 对应迭代·检查点：迭代003.1 · 可维护性重构 节点7（显式交互状态机）
+> 最近验证：2026-08-27 通过
+>   真实鼠标：点叶蜂格(351,99)→选中；点泥蜂格(501,99)→pending=支援/状态=待确认；
+>            再点同格→pending=[]/状态=空闲、施放者 acted=true、目标 effects=["atk_up"]
+> 用法：读取本文件正文，作为 mcp__godot-ai__editor_manage(op="game_eval") 的 code 执行
+> 结构断言（优先级表）：
+>   ① 待确认优先于模式：pending 存在时点同格必执行（不论 mode/选中是否仍在）
+>   ② 支援待确认点候选外 → 退出该状态
+>   ③ 非空闲态禁止长按（can_long_press 仅 IDLE 为 true）
+
+var D := preload(String("res://scenes/battle/battle_defs.gd"))
+var s = get_tree().current_scene.get_node(String("State"))
+var out := "交互状态机套件\n"
+out += "  interaction=%s 优先级表=%d条\n" % [str(s.interaction != null), s.interaction.priority_table().size()]
+s.start_battle()
+var side: String = s.current
+while s.phase != 3 and s.winner == "":
+	s.advance_phase()
+var c1 := Vector2i(0, 0)
+var c2 := Vector2i(0, 1)
+var a = s.spawn(c1, side, D.card("叶蜂"))
+var b = s.spawn(c2, side, D.card("泥蜂"))
+s.units[a]["acted"] = false
+s.units[a]["moved"] = false
+# 断言③ 空闲态才允许长按
+out += "③ 选中前 can_long_press=%s（应 true）\n" % str(s.interaction.can_long_press())
+s.on_cell_clicked(c1)
+out += "   选中后 can_long_press=%s（应 false）状态=%s\n" % [str(s.interaction.can_long_press()), s.interaction.state_name()]
+# 断言① 待确认优先
+s.on_cell_clicked(c2)
+var st1: String = s.interaction.state_name()
+s.on_cell_clicked(c2)
+out += "① 点目标→状态=%s；再点同格→pending=[%s] 状态=%s 施放者acted=%s 目标effects=%s\n" % [st1, s.pending_kind, s.interaction.state_name(), str(s.units[a]["acted"]), str(s.units[b]["effects"].keys())]
+# 断言② 支援待确认点候选外 → 退出
+s.units[a]["acted"] = false
+s.select_unit_at(c1)
+s.on_cell_clicked(c2)
+var p_before: String = s.pending_kind
+s.on_cell_clicked(Vector2i(3, 3))
+out += "② 待确认=[%s] → 点候选外 → pending=[%s] 状态=%s（应空/空闲）" % [p_before, s.pending_kind, s.interaction.state_name()]
+return out
