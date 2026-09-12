@@ -68,7 +68,9 @@ func action(name: String, target: Node = null) -> void:
 	if not _patterns.has(name):
 		return
 	_apply_initial(name, target)
-	_running[name] = {"i": 0, "c": 0, "f": 0, "target": target}
+	# ⚠️ 只存**弱引用**：节点被 free 后若还持有强引用，从字典取出并赋值这一步就会报
+	#    "Trying to assign invalid previously freed instance"（V-004-17 实测）——弱引用取到 null 即安全丢弃
+	_running[name] = {"i": 0, "c": 0, "f": 0, "tref": weakref(target)}
 	var p: Dictionary = _patterns[name]
 	var on_start := str(p.get("trigger_on_start", ""))
 	if on_start != "" and _patterns.has(on_start):
@@ -86,7 +88,12 @@ func reset_unit(name: String, target: Node = null) -> void:
 func stop(name: String) -> void:
 	if not _running.has(name):
 		return
-	var tgt: Node = _running[name].get("target", null)
+	# 目标用弱引用取（可能已释放 → null）
+	var tgt: Node = null
+	var st0: Dictionary = _running[name]
+	if st0.has("tref"):
+		var wr0 = st0["tref"]
+		tgt = wr0.get_ref() if wr0 != null else null
 	_running.erase(name)
 	var p: Dictionary = _patterns.get(name, {})
 	if bool(p.get("block_ui", false)) and not _any_running_blocking():
@@ -137,8 +144,14 @@ func _step(name: String) -> void:
 	# ⚠️ 目标已被释放 / 已被 queue_free（View 重建单位节点时会发生）→ 丢弃该动画，
 	#    否则会给"已释放实例"写属性，触发 "Trying to assign invalid previously freed instance"
 	#    并让游戏停在调试器断点（表现为卡死）—— V-004-16 实测缺陷
-	var tg: Node = st.get("target", null)
-	if tg != null and (not is_instance_valid(tg) or tg.is_queued_for_deletion()):
+	var tg: Node = null
+	if st.has("tref"):
+		var wr = st["tref"]
+		tg = wr.get_ref() if wr != null else null
+	if tg == null:
+		_running.erase(name)     # 目标已释放（弱引用失效）→ 丢弃
+		return
+	if not is_instance_valid(tg) or tg.is_queued_for_deletion():
 		_running.erase(name)
 		return
 	var units: Array = p.get("units", [])
@@ -167,7 +180,11 @@ func _step(name: String) -> void:
 # ============================================================
 
 func _apply_clip(clip: Dictionary, st: Dictionary, unit: Dictionary) -> void:
-	var tgt: Node = st.get("target", null)
+	# ⚠️ 从**弱引用**解析目标：节点已释放则 get_ref() 返回 null（绝不直接存强引用）
+	var tgt: Node = null
+	if st.has("tref"):
+		var wr = st["tref"]
+		tgt = wr.get_ref() if wr != null else null
 	if tgt == null or not is_instance_valid(tgt) or tgt.is_queued_for_deletion():
 		return
 	match int(unit.get("type", U.MOVE_BY)):
