@@ -228,6 +228,12 @@ const REFUND_COLOR := Color("ffa300")   ## 回费
 const HEAL_COLOR := Color("00dd00")     ## 回血
 const TURN_MINE := Color("499169")      ## 我方回合 UI
 const TURN_FOE := Color("a84331")       ## 敌方回合 UI
+const NEUTRAL_COLOR := Color(1, 1, 1, 0.5)  ## #FFFFFF-50%（中性/结束态）
+
+
+## UI 回合色（表现规范「UI状态与颜色映射」）：我方 #499169 / 敌方 #A84331
+func turn_color(is_mine: bool) -> Color:
+	return TURN_MINE if is_mine else TURN_FOE
 
 
 ## 注册默认 Pattern（cfg 可覆盖幅度/帧数，便于按表现规范调参而不改代码）
