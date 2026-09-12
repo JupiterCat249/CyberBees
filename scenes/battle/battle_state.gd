@@ -65,6 +65,7 @@ var action = null             ## 行动：选中/移动/攻击/支援（重构�
 var setup = null              ## 开局准备/地图/生成（重构第6块·上，RefCounted）
 var victory = null            ## 胜负判定（重构第6块·下，RefCounted）
 var turn = null               ## 回合流程/地形/投降（重构第6块·下之二，RefCounted）
+var interaction = null        ## 显式交互状态机（重构节点7，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -400,64 +401,19 @@ func on_hand_clicked(side: String, index: int) -> void:
 	select_hand(index)
 
 
+## ============================================================
+## 棋盘格点击 —— 重构节点7：裁决已收敛到 BattleInteraction（battle_interaction.gd）
+## 优先级表：①待确认执行 ②支援待确认退出 ③部署 ④指令 ⑤支援候选 ⑥支援候选外退出
+##           ⑦点自身进支援模式 ⑧移动 ⑨攻击 ⑩射程内己方支援 ⑪默认
+## ============================================================
 func on_cell_clicked(cell: Vector2i) -> void:
-	if winner != "":
-		return
-	# ①【待确认优先】点击与待确认相同的目标 = 执行 —— 不依赖 mode/选中是否仍在，
-	#    从根本上避免"多个状态互相冲突"导致待确认永远匹配不上（人实测：日志反复输出待确认）
-	if pending_kind != "" and pending_cell == cell:
-		confirm_pending_at(cell)
-		return
-	# ①b 支援待确认：点在蓝色候选范围之外 -> 退出该状态（人要求）
-	if pending_kind == "支援" and not (cell in support_range):
-		clear_pending()
-		_leave_support_mode()
-		clear_sel()
-		push_log("已退出支援对象选择")
-		refresh()
-		return
-	if armed_card >= 0 and mode == D.Mode.DEPLOY_TARGET:
-		if legal_place(cell) and confirm("部署", cell):
-			place_at(cell)
-		return
-	if armed_card >= 0 and mode == D.Mode.CMD_TARGET:
-		if confirm("指令", cell):
-			cmd_at(cell)
-		return
-	if mode == D.Mode.SUPPORT_TARGET:
-		# A5 UI：支援对象选择中 —— 点候选格走二次确认；**点蓝色高亮范围之外即退出该状态**（人要求）
-		if cell in support_range:
-			if confirm("支援", cell):
-				support_at(cell)
-		else:
-			clear_pending()
-			_leave_support_mode()
-			clear_sel()
-			push_log("已退出支援对象选择")
-			refresh()
-		return
-	if selected_unit >= 0 and units.has(selected_unit):
-		# A5 UI：再次点击当前选中单位 = 进入支援对象选择
-		if cell == units[selected_unit]["cell"]:
-			enter_support_mode()
-			return
-		if cell in move_range and unit_at(cell) < 0:
-			if confirm("移动", cell):
-				act_at(cell)
-			return
-		if cell in atk_range and unit_at(cell) >= 0 and units[unit_at(cell)]["side"] != current:
-			if confirm("攻击", cell):
-				act_at(cell)
-			return
-		# 支援目标：所选单位有支援技能且未行动、目标为己方且在射程内 —— 直接点友方即可进入确认
-		if can_support_at(cell):
-			if confirm("支援", cell):
-				support_at(cell)
-			return
-		# 点其他己方单位 = 改选
-		clear_pending()
-		select_unit_at(cell)
-		return
+	if interaction != null:
+		interaction.dispatch_cell(cell)
+
+
+## 默认处理：不属于任何"待确认/模式/已选单位"分支时 —— 改选单位 或 取消
+func on_cell_clicked_fallback(cell: Vector2i) -> void:
+	# 点其他己方单位 = 改选；点空 = 取消选中
 	clear_pending()
 	select_unit_at(cell)
 
