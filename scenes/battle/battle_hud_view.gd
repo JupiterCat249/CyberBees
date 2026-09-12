@@ -25,11 +25,25 @@ func setup(ov: Node2D, st: Node) -> void:
 	state.state_changed.connect(_on_state_changed)
 
 
+const INFO_POS := Vector2(452.0, 4.0)     ## 信息栏起点
+const INFO_FS := 26                      ## 信息栏字号
+
 func _bind() -> void:
-	_labels["info"] = _mk_label("InfoBar", Vector2(452.0, 4.0), 26, Color(1, 1, 1), false)
+	# 方案A：信息栏保持 Label 不变；把"阵营词"拆成**独立的小 Label** 叠放，只对它上阵营色
+	_labels["info"] = _mk_label("InfoBar", INFO_POS, INFO_FS, Color(1, 1, 1), false)          # 前缀：第N回合 · 阶段:X ·
+	_labels["faction"] = _mk_label("FactionText", INFO_POS, INFO_FS, Color(1, 1, 1), false)   # 阵营词：N方（上阵营色）
+	_labels["suf"] = _mk_label("InfoSuffix", INFO_POS, INFO_FS, Color(1, 1, 1), false)        # 后缀：· 提示
 	_labels["btn"] = _mk_label("BtnText", D.BTN_MAIN + Vector2(250.0, 26.0), 34, Color(0.14, 0.14, 0.14), true)
 	_labels["log"] = _mk_label("LogText", Vector2(1494.0, 674.0), 17, Color(0.86, 0.86, 0.86), false)
 	_labels["help"] = _mk_label("HelpText", Vector2(452.0, 120.0), 20, Color(1.0, 0.95, 0.75), false)
+
+
+## 文本宽度测量（用于把"阵营词"小 Label 精确摆在前后缀之间，避免位置抖动）
+func _measure(text: String, fsize: int) -> float:
+	var f: Font = _labels["info"].get_theme_font("font")
+	if f == null:
+		return 0.0
+	return f.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fsize).x
 
 
 func _mk_label(node_name: String, pos: Vector2, size: int, col: Color, centered: bool) -> Label:
@@ -50,9 +64,24 @@ func _mk_label(node_name: String, pos: Vector2, size: int, col: Color, centered:
 
 
 func _on_state_changed() -> void:
-	_labels["info"].text = "第%d回合 · 阶段:%s · %s方 · %s" % [
-		state.round_no, D.PHASE_NAME[state.phase], state.cn(state.current), _hint()]
-	# 人的要求：不整条染色、不加阵营底色
+	# 方案A：信息栏拆三段 —— **只给中间的"阵营词"上阵营色**（其余保持默认色，不加底色）
+	var pre := "第%d回合 · 阶段:%s · " % [state.round_no, D.PHASE_NAME[state.phase]]
+	var fac := "%s方" % state.cn(state.current)
+	var suf := " · %s" % _hint()
+	_labels["info"].text = pre
+	_labels["faction"].text = fac
+	_labels["suf"].text = suf
+	if state.anim != null:
+		# 我方 #499169 / 敌方 #A84331（结束态用半透明白提示不可操作）
+		if state.winner != "":
+			_labels["faction"].add_theme_color_override("font_color", Color(1, 1, 1, 0.5))
+		else:
+			_labels["faction"].add_theme_color_override("font_color", state.anim.turn_color(state.current == "green"))
+	# 用测量把三段无缝拼接（位置随文本实际宽度变化，避免抖动）
+	var w1: float = _measure(pre, INFO_FS)
+	var w2: float = _measure(fac, INFO_FS)
+	_labels["faction"].position = INFO_POS + Vector2(w1, 0.0)
+	_labels["suf"].position = INFO_POS + Vector2(w1 + w2, 0.0)
 	# 主按钮文字
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
