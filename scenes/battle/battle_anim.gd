@@ -319,7 +319,9 @@ var node_provider: Callable = Callable()
 var _seen := {}
 
 
-## 绑定共享 Model：连接游戏信号 → 驱动本引擎
+## 绑定共享 Model：连接**语义明确、低频**的游戏信号 → 驱动本引擎
+## ⚠️ 经验（V-004-4）：**不要用 state_changed（重绘信号）驱动逐帧动画** ——
+##    该信号频率高、易与状态推进形成同帧重入；只接语义明确的低频信号。
 func bind(st: Node) -> void:
 	_state = st
 	if st == null:
@@ -327,12 +329,12 @@ func bind(st: Node) -> void:
 	# ① 受击：战斗结算信号（此前全项目无人接收）→ 受击方抖动 + 受伤闪红；反击方也抖动
 	if st.combat != null and not st.combat.attack_resolved.is_connected(_on_attack_resolved):
 		st.combat.attack_resolved.connect(_on_attack_resolved)
-	# ② 卡牌登场：状态重绘后为新出现的单位卡播登场（瞬间动作，无前摇）
-	if not st.state_changed.is_connected(_on_state_changed):
-		st.state_changed.connect(_on_state_changed)
-	# ③ 胜负：终止全部动画（stop_all 不复位，符合规则 3）
+	# ② 胜负：终止全部动画（stop_all 不复位，符合规则 3）
 	if not st.battle_ended.is_connected(_on_battle_ended):
 		st.battle_ended.connect(_on_battle_ended)
+	# ③ 卡牌登场：改由**低频的 turn_started** 驱动探测（每回合开始探测一次，不跟重绘）
+	if not st.turn_started.is_connected(_on_turn_started_anim):
+		st.turn_started.connect(_on_turn_started_anim)
 
 
 func _node_of(id: int) -> Node:
@@ -355,6 +357,11 @@ func _on_attack_resolved(aid: int, tid: int, dmg: int, counter: int, countered: 
 
 
 func _on_state_changed() -> void:
+	pass   # 已废弃：不再用重绘信号驱动逐帧动画（见 bind 的注释）
+
+
+## 回合开始（低频）：探测并播出"卡牌登场"（瞬间动作，无前摇）
+func _on_turn_started_anim(_side: String, _rn: int) -> void:
 	if _state == null:
 		return
 	for id in _state.units.keys():
