@@ -1,0 +1,218 @@
+extends Node
+## ============================================================
+## BattleAnim —— **自写 Action Unit 动画引擎**（迭代004）
+##
+## 依据《电子蜂A5策划案/动画系统及流程.md》
+## 边界约束：**T3 自写 Action Unit 系统、禁用引擎动画系统**（不使用 AnimationPlayer / Tween / AnimationTree）
+##          **T2 帧数计时**（不使用 delta —— 逐帧推进）
+##
+## 层级：`Pattern（动画）` → `Unit（单元）` → `Clip（动作）`
+##   · 一个 Pattern 由若干 Unit 顺序组成；一个 Unit 由若干 Clip 组成
+##   · 单元触发后**自动按逻辑顺序执行**（动作1 → 动作2 → 动作3）
+##
+## 5 类 Unit（策划案「3. ActionUnit 类型」）：
+##   MOVE_BY   移动/旋转**指定数值**（可叠加）
+##   MOVE_TO   移动/旋转**到指定数值**（不可重复：到位即完成）
+##   ROT_TRACK 旋转**追踪目标**（不可重复）
+##   TINT      变色
+##   SPAWN_FX  生成特效
+##
+## 生命周期（策划案「2. 初始化与生命周期控制」）：
+##   reset_unit(名, 目标)   重置（渲染时自动初始化）
+##   action(名, 目标)       开始（A 开始时/终止时可触发 B）
+##   stop(名)              终止 —— **级联终止子单元，且不自动复位**（规则 3）
+##
+## 运行规则（策划案「4. 运行规则」）：
+##   ① 顺序执行 ② 可跳转/触发/终止（支持条件）③ 终止级联不复位 ④ 可禁 UI 交互 / 受全局暂停
+## ============================================================
+
+## Unit 类型
+enum U { MOVE_BY, MOVE_TO, ROT_TRACK, TINT, SPAWN_FX }
+
+## Pattern 名 → 定义
+var _patterns := {}
+## Pattern 名 → 运行态
+var _running := {}
+
+## 全局：UI 交互是否被动画锁定（规则 4）
+var ui_locked := false
+## 全局：是否暂停动画推进（规则 4）
+var anim_paused := false
+## 一次性特效挂载父节点（由协调器注入）
+var fx_parent: Node = null
+
+
+# ============================================================
+# 注册与生命周期
+# ============================================================
+
+func register(name: String, spec: Dictionary) -> void:
+	_patterns[name] = spec
+
+
+func has_pattern(name: String) -> bool:
+	return _patterns.has(name)
+
+
+func pattern_names() -> Array:
+	return _patterns.keys()
+
+
+## 开始播放（携带目标节点）：先按 Pattern 的 inited 重置目标（渲染时自动初始化）
+func action(name: String, target: Node = null) -> void:
+	if not _patterns.has(name):
+		return
+	_apply_initial(name, target)
+	_running[name] = {"i": 0, "c": 0, "f": 0, "target": target}
+	var p: Dictionary = _patterns[name]
+	var on_start := str(p.get("trigger_on_start", ""))
+	if on_start != "" and _patterns.has(on_start):
+		action(on_start, target)
+	if bool(p.get("block_ui", false)):
+		ui_locked = true
+
+
+## 重置：把目标恢复到 Pattern 的初始状态
+func reset_unit(name: String, target: Node = null) -> void:
+	_apply_initial(name, target)
+
+
+## 终止：级联终止（本 Pattern 的所有 Unit 一并终止），**不复位**（规则 3）；终止时可触发下一动画
+func stop(name: String) -> void:
+	if not _running.has(name):
+		return
+	var tgt: Node = _running[name].get("target", null)
+	_running.erase(name)
+	var p: Dictionary = _patterns.get(name, {})
+	if bool(p.get("block_ui", false)) and not _any_running_blocking():
+		ui_locked = false
+	var on_stop := str(p.get("trigger_on_stop", ""))
+	if on_stop != "" and _patterns.has(on_stop):
+		action(on_stop, tgt)
+
+
+func stop_all() -> void:
+	for n in _running.keys():
+		_running.erase(n)
+	ui_locked = false
+
+
+func is_running(name: String) -> bool:
+	return _running.has(name)
+
+
+func running_names() -> Array:
+	return _running.keys()
+
+
+func _any_running_blocking() -> bool:
+	for n in _running:
+		if bool(_patterns.get(n, {}).get("block_ui", false)):
+			return true
+	return false
+
+
+# ============================================================
+# 逐帧推进（T2：帧数计时）
+# ============================================================
+
+func _process(_delta: float) -> void:
+	if _running.is_empty():
+		return
+	for name in _running.keys():
+		var p: Dictionary = _patterns.get(name, {})
+		if anim_paused and bool(p.get("pause_global", true)):
+			continue
+		_step(name)
+
+
+func _step(name: String) -> void:
+	var st: Dictionary = _running[name]
+	var p: Dictionary = _patterns[name]
+	var units: Array = p.get("units", [])
+	var i: int = int(st["i"])
+	if i >= units.size():
+		stop(name)
+		return
+	var unit: Dictionary = units[i]
+	var clips: Array = unit.get("clips", [])
+	var c: int = int(st["c"])
+	if c >= clips.size():
+		st["i"] = i + 1
+		st["c"] = 0
+		st["f"] = 0
+		return
+	_apply_clip(clips[c], st, unit)
+	var frames: int = maxi(1, int(clips[c].get("frames", 1)))
+	st["f"] = int(st["f"]) + 1
+	if int(st["f"]) >= frames:
+		st["c"] = c + 1
+		st["f"] = 0
+
+
+# ============================================================
+# 5 类 Unit 的动作执行
+# ============================================================
+
+func _apply_clip(clip: Dictionary, st: Dictionary, unit: Dictionary) -> void:
+	var tgt: Node = st.get("target", null)
+	if tgt == null or not is_instance_valid(tgt):
+		return
+	match int(unit.get("type", U.MOVE_BY)):
+		U.MOVE_BY:
+			# 移动/旋转**指定数值**（可叠加）
+			var step: Vector2 = clip.get("step", Vector2.ZERO)
+			if tgt is Node2D:
+				(tgt as Node2D).position += step
+			elif tgt is Control:
+				(tgt as Control).position += step
+			var rot: float = float(clip.get("rot", 0.0))
+			if rot != 0.0 and tgt is Node2D:
+				(tgt as Node2D).rotation += rot
+		U.MOVE_TO:
+			# 移动/旋转**到指定数值**（不可重复）：有 from 则插值，否则直接置位
+			var to: Vector2 = clip.get("to", Vector2.ZERO)
+			var pos: Vector2 = to
+			if clip.has("from"):
+				var total: int = maxi(1, int(clip.get("frames", 1)))
+				var t: float = float(int(st["f"]) + 1) / float(total)
+				pos = (clip["from"] as Vector2).lerp(to, t)
+			if tgt is Node2D:
+				(tgt as Node2D).position = pos
+			elif tgt is Control:
+				(tgt as Control).position = pos
+		U.ROT_TRACK:
+			# 旋转追踪目标（不可重复）
+			var track: Node = clip.get("track", null)
+			if track != null and is_instance_valid(track) and tgt is Node2D and track is Node2D:
+				var a: Vector2 = (tgt as Node2D).global_position
+				var b: Vector2 = (track as Node2D).global_position
+				if a.distance_to(b) > 0.01:
+					(tgt as Node2D).global_rotation = (b - a).angle()
+		U.TINT:
+			var col: Color = clip.get("color", Color.WHITE)
+			if tgt is CanvasItem:
+				(tgt as CanvasItem).modulate = col
+		U.SPAWN_FX:
+			_spawn_fx(clip, tgt)
+
+
+func _spawn_fx(clip: Dictionary, tgt: Node) -> void:
+	var scene: PackedScene = clip.get("scene", null)
+	if scene == null or fx_parent == null:
+		return
+	var n: Node = scene.instantiate()
+	fx_parent.add_child(n)
+	if n is Node2D and tgt is Node2D:
+		(n as Node2D).global_position = (tgt as Node2D).global_position
+	if n.has_method("play_once"):
+		n.call("play_once", int(clip.get("frames", 12)))
+
+
+## 初始状态（ResetUnit）：恢复 pattern.inited 声明的字段
+func _apply_initial(name: String, target: Node) -> void:
+	if target == null or not is_instance_valid(target):
+		return
+	var init: Dictionary = _patterns.get(name, {}).get("inited", {})
+	for key in init:
+		target.set(str(key), init[key])
