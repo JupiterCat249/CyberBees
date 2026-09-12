@@ -332,6 +332,12 @@ func resolve_targets(t: Dictionary, ctx: Dictionary) -> Array[Vector2i]:
 	if state == null:
 		return out
 	var sid := int(ctx.get("source_id", -1))
+	# 迭代003.1 遗留缺口修复：把施放者 id 注入 targets 的**副本**，供 _match_unit 的
+	# range / exclude_source 两个过滤器使用（此前全项目无任何写入点 → 两者恒失效 ✗）
+	# 用副本而非直接改 t：避免污染共享的技能表常量（SKILLS）
+	if not t.has("_source_id"):
+		t = t.duplicate()
+		t["_source_id"] = sid
 	var side := str(ctx.get("side", state.current))
 	var cell: Vector2i = ctx.get("target", Vector2i(-1, -1))
 	match str(t.get("mode", "self")):
