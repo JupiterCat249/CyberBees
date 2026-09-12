@@ -101,6 +101,17 @@ func _ready() -> void:
 		var an = anim_script.new()
 		state.add_child(an)
 		an.register_defaults()
+		# 第4b步：注入"单位 id → 表现节点"解析回调；只接低频语义信号（见 bind 注释）
+		var bv: Node = _ci("BoardView")
+		if bv != null:
+			an.node_provider = func(uid: int) -> Node:
+				var tbl: Dictionary = bv._unit_nodes
+				if tbl.has(uid):
+					var un = tbl[uid]
+					if un != null and is_instance_valid(un):
+						return un
+				return null
+		an.bind(state)
 		state.anim = an
 	else:
 		push_warning("BattleAnim 载入失败，动画系统不可用")
