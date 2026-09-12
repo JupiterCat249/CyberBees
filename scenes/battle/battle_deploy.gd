@@ -103,6 +103,9 @@ func cmd_at(cell: Vector2i) -> void:
 	if not bool(res.get("ok", false)):
 		s.refresh()
 		return
+	# 迭代004③：AOE 地图抖动 —— 命中 ≥2 处（溅射 / 链式传播）时抖地图
+	if s.anim != null and (res.get("hits", []) as Array).size() >= 2:
+		s.anim.shake_map()
 	s.cost[s.current] -= pc
 	s.grave[s.current].append(c)
 	s.hand[s.current].remove_at(s.armed_card)
