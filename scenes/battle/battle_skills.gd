@@ -433,9 +433,9 @@ func apply_effect(eff: Dictionary, cell: Vector2i, id: int, mult: float, ctx: Di
 			return true
 		EFF_RESOURCE:
 			var side := str(ctx.get("side", state.current))
-			var sign := 1 if bool(eff.get("gain", true)) else -1
-			state.cost[side] = clampi(int(state.cost[side]) + sign * final_v, 0, D.COST_MAX)
-			state.push_log("%s方 费用 %+d（技能）" % [state.cn(side), sign * final_v])
+			var sgn := 1 if bool(eff.get("gain", true)) else -1   # 改名 sgn：避免与内置 sign() 同名（曾为 SHADOWED_GLOBAL_IDENTIFIER）
+			state.cost[side] = clampi(int(state.cost[side]) + sgn * final_v, 0, D.COST_MAX)
+			state.push_log("%s方 费用 %+d（技能）" % [state.cn(side), sgn * final_v])
 			return true
 		EFF_RECYCLE:
 			if id >= 0:

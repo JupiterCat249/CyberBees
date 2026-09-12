@@ -9,6 +9,9 @@ extends Node
 const D := preload("res://scenes/battle/battle_defs.gd")
 
 # ---------------- 信号（视图/协调器订阅） ----------------
+# ⚠️ 这些信号由**各模块**（BattleTurn / BattleVictory / BattlePending 等，经 `s.xxx.emit(...)`）发出，
+#    并由 battle_flow 连接；状态类自身不 emit，故 GDScript 会报 UNUSED_SIGNAL 误报 —— 此处统一静音。
+@warning_ignore_start("unused_signal")
 signal state_changed()                               ## 通用"状态已变，请重绘"
 signal turn_started(side: String, round_no: int)     ## 新回合开始
 signal phase_changed(phase: int)                     ## 阶段变化
@@ -16,6 +19,7 @@ signal log_added(text: String)                       ## 追加一条日志
 signal battle_ended(winner: String)                  ## 胜负已定
 signal selection_changed()                           ## 选中/待放置状态变化
 signal popup_requested(title: String, desc: String)  ## 请求弹出纯文本浮窗（投降确认等，复用 M3 浮窗）
+@warning_ignore_restore("unused_signal")
 
 # ---------------- 状态 ----------------
 var round_no := 1

@@ -1,4 +1,9 @@
 extends Node
+## ⚠️ 本引擎是 Node，函数参数 `name`（Pattern 名）会与基类属性 `Node.name` 同名 →
+##    GDScript 报 SHADOWED_VARIABLE_BASE_CLASS（10 处）。此处统一静音：
+##    引擎内所有 `name` 语义**明确指 Pattern 名**，从不指节点名；逐个改名会牵连所有调用点且无实际收益。
+##    （若日后需要区分，再把参数统一改名为 `pat`。）
+@warning_ignore_start("shadowed_variable_base_class")
 ## ============================================================
 ## BattleAnim —— **自写 Action Unit 动画引擎**（迭代004）
 ##
