@@ -63,6 +63,7 @@ var deck = null               ## 手牌/牌库/起手与换牌（重构第3块�
 var deploy = null             ## 部署与指令（重构第4块，RefCounted）
 var action = null             ## 行动：选中/移动/攻击/支援（重构第5块，RefCounted）
 var setup = null              ## 开局准备/地图/生成（重构第6块·上，RefCounted）
+var victory = null            ## 胜负判定（重构第6块·下，RefCounted）
 var started := false
 ## 部署范围被动（机场）：逐方部署半径（a500 兵蜂限蜂王相邻格 → 被动可扩大）
 var deploy_radius := {"green": 1, "red": 1}
@@ -430,47 +431,28 @@ func final_reduce(id: int) -> int:
 # ============================================================
 # 胜负（a500 胜利条件）
 # ============================================================
+## ============================================================
+## 胜负判定（a500 胜利条件）—— 重构第6块·下：实现已搬至 BattleVictory（battle_victory.gd）
+## 以下保留同签名转发，调用点零改动（行为不变）
+## ============================================================
 func check_victory() -> void:
-	if winner != "":
-		return
-	var gq := queen_alive("green")
-	var rq := queen_alive("red")
-	if not gq and not rq:
-		winner = "draw"
-	elif not gq:
-		winner = "red"
-	elif not rq:
-		winner = "green"
-	if winner != "":
-		push_log("游戏结束：%s" % ("平局" if winner == "draw" else cn(winner) + "方 获胜"))
-		battle_ended.emit(winner)
+	if victory != null:
+		victory.check_victory()
 
 
 func queen_alive(side: String) -> bool:
-	for id in units:
-		if units[id]["side"] == side and units[id]["card"]["kind"] == "queen":
-			return true
-	return false
+	return victory != null and victory.queen_alive(side)
 
 
 func queen_hp(side: String) -> int:
-	for id in units:
-		if units[id]["side"] == side and units[id]["card"]["kind"] == "queen":
-			return int(units[id]["hp"])
+	if victory != null:
+		return victory.queen_hp(side)
 	return 0
 
 
 func round12_result() -> void:
-	if winner != "":
-		return
-	var gh := queen_hp("green")
-	var rh := queen_hp("red")
-	if gh == rh:
-		winner = "draw"
-	else:
-		winner = "green" if gh > rh else "red"
-	push_log("第12回合结束：蜂王血量 绿%d / 红%d → %s" % [gh, rh, "平局" if winner == "draw" else cn(winner) + "方 获胜"])
-	battle_ended.emit(winner)
+	if victory != null:
+		victory.round12_result()
 
 
 # ============================================================
