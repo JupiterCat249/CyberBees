@@ -95,42 +95,6 @@ func _ready() -> void:
 	else:
 		push_warning("BattleAction 载入失败，行动/支援不可用")
 
-	# 开局准备/地图/生成（重构第6块·上）：RefCounted，无需场景节点
-	var setup_script := load("res://scenes/battle/battle_setup.gd")
-	if setup_script != null:
-		var su = setup_script.new()
-		su.state = state
-		state.setup = su
-	else:
-		push_warning("BattleSetup 载入失败，开局准备不可用")
-
-	# 胜负判定（重构第6块·下）：RefCounted，无需场景节点
-	var victory_script := load("res://scenes/battle/battle_victory.gd")
-	if victory_script != null:
-		var vt = victory_script.new()
-		vt.state = state
-		state.victory = vt
-	else:
-		push_warning("BattleVictory 载入失败，胜负判定不可用")
-
-	# 回合流程/地形/投降（重构第6块·下之二）：RefCounted，无需场景节点
-	var turn_script := load("res://scenes/battle/battle_turn.gd")
-	if turn_script != null:
-		var tn = turn_script.new()
-		tn.state = state
-		state.turn = tn
-	else:
-		push_warning("BattleTurn 载入失败，回合流程不可用")
-
-	# 显式交互状态机（重构节点7）：RefCounted，无需场景节点
-	var interact_script := load("res://scenes/battle/battle_interaction.gd")
-	if interact_script != null:
-		var it = interact_script.new()
-		it.state = state
-		state.interaction = it
-	else:
-		push_warning("BattleInteraction 载入失败，点击裁决不可用")
-
 	# ---- 依赖注入（View 侧）----
 	var bgfx := get_node_or_null("BgFx")
 	var board := _ci("BoardView")
@@ -167,14 +131,6 @@ func _ready() -> void:
 		var missing: Array[String] = []
 		if state.grid == null:
 			missing.append("棋盘几何注入 state.grid")
-		if state.interaction == null:
-			missing.append("交互状态机注入 state.interaction")
-		if state.turn == null:
-			missing.append("回合流程注入 state.turn")
-		if state.victory == null:
-			missing.append("胜负判定注入 state.victory")
-		if state.setup == null:
-			missing.append("开局准备注入 state.setup")
 		if state.action == null:
 			missing.append("行动注入 state.action")
 		if state.deploy == null:
@@ -198,7 +154,7 @@ func _ready() -> void:
 		if not state.popup_requested.is_connected(detail.show_text_popup):
 			missing.append("浮窗文本接线")
 		if missing.is_empty():
-			print("[BattleFlow] 接线自检通过（16 项）")
+			print("[BattleFlow] 接线自检通过（12 项）")
 		else:
 			push_error("[BattleFlow] 接线缺失 %d 项（疑似编辑器回退 G-01）：%s" % [missing.size(), str(missing)])
 
