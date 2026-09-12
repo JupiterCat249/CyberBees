@@ -93,6 +93,9 @@ func dispatch_cell(cell: Vector2i) -> void:
 	var s := state
 	if s == null or s.winner != "":
 		return
+	# 迭代004 检查点5/11：动画运行期间的**禁 UI 交互**（block_ui Pattern 会置 ui_locked）
+	if s.anim != null and s.anim.ui_locked:
+		return
 	# ① 待确认优先：点击与待确认相同的目标 → 执行（不依赖 mode/选中是否仍在）
 	if s.pending_kind != "" and s.pending_cell == cell:
 		s.confirm_pending_at(cell)

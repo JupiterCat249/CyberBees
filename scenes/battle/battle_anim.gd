@@ -321,6 +321,23 @@ func register_defaults(cfg: Dictionary = {}) -> void:
 	register("回合色-我方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_MINE}]}]})
 	register("回合色-敌方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_FOE}]}]})
 
+	# ⑧ 迭代004 检查点5/11 · **禁 UI 交互**演示 Pattern（block_ui）—— 用于实测"动画期间点击被拦"
+	#   真实用途：结算演示 / 胜负演出等"期间不允许操作"的整段表现
+	register("结算演示", {
+		"units": [
+			{"type": U.TINT, "clips": [{"frames": 20, "color": Color(1, 1, 1, 1)}]},
+		],
+		"block_ui": true,          # 运行期间 ui_locked = true
+		"pause_global": true,
+	})
+	# ⑨ 迭代004 检查点5 · **不受全局暂停**演示 Pattern（pause_global=false）—— 实测暂停语义
+	register("常驻呼吸", {
+		"units": [
+			{"type": U.TINT, "clips": [{"frames": 10, "color": Color(1, 1, 1, 1)}]},
+		],
+		"pause_global": false,     # 全局暂停时仍继续推进
+	})
+
 	# ⑦ 迭代004 检查点6 · 瞬时动作表现（六类中补齐：部署/移动/使用指令/数值buff）
 	#   部署：落位下沉 → 回弹（瞬间动作，无前摇）
 	register("部署落位", {
