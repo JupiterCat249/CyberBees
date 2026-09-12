@@ -5,7 +5,8 @@ extends Node2D
 ##      硬编码灰底 `vec3 col = COL_BG;` 换成对该函数的调用 → 赋给本场景材质副本。
 ##      不改 card-system 任何文件（材质 resource_local_to_scene=true）。
 ##   ② 层同步：文字层 / 背景层 / 特效层 跟随框架 Holder 的等比缩放与居中。
-##   ③ 背景特效（扫描线）是场景里的 FxLayer/BgFilter（TextureRect 平铺）+ AnimationPlayer 动画。
+##   ③ 背景特效（扫描线）：FxLayer/BgFilter（TextureRect 平铺）+ **本脚本逐帧推进着色器参数**
+##      （迭代004：原场景里的 AnimationPlayer(ScanAnim) 已按边界 T3 移除，改由本脚本帧数驱动）
 ## ============================================================
 
 const D := preload("res://scenes/battle/battle_defs.gd")
