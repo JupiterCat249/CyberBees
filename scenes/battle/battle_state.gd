@@ -218,14 +218,8 @@ func within_deploy_radius(cell: Vector2i) -> bool:
 	return deploy != null and deploy.within_deploy_radius(cell)
 
 
-func adjacent_own_queen(cell: Vector2i) -> bool:
-	for id in units:
-		var u: Dictionary = units[id]
-		if u["side"] == current and u["card"]["kind"] == "queen":
-			var q: Vector2i = u["cell"]
-			if abs(q.x - cell.x) + abs(q.y - cell.y) == 1:
-				return true
-	return false
+## （收尾清理）adjacent_own_queen 已删除 —— 迭代003.1 起部署范围改由**被动技能 deploy_radius** 驱动，
+## 该函数自 legal_place 改用 within_deploy_radius 后即**零调用**，属死代码。
 
 
 ## 落子 / 指令结算 —— 重构第4块：实现已搬至 BattleDeploy（battle_deploy.gd）
