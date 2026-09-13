@@ -184,40 +184,43 @@ func _ready() -> void:
 		# 编辑器脚本缓冲曾把本文件旧版本写回磁盘、抹掉上述接线，导致功能**静默失效**。
 		# 此处逐一核验关键接线是否存在；缺失即大声报错，避免再次静默。
 		var missing: Array[String] = []
-		if state.setup == null:
-			missing.append("开局准备注入 state.setup")
-		if state.victory == null:
-			missing.append("胜负判定注入 state.victory")
-		if state.turn == null:
-			missing.append("回合流程注入 state.turn")
-		if state.interaction == null:
-			missing.append("交互状态机注入 state.interaction")
-		if state.grid == null:
-			missing.append("棋盘几何注入 state.grid")
-		if state.action == null:
-			missing.append("行动注入 state.action")
-		if state.deploy == null:
-			missing.append("部署指令注入 state.deploy")
-		if state.deck == null:
-			missing.append("手牌牌库注入 state.deck")
-		if state.pending == null:
-			missing.append("待确认注入 state.pending")
-		if state.skills == null:
-			missing.append("技能系统注入 state.skills")
-		if state.combat == null:
-			missing.append("战斗结算注入 state.combat")
-		if not inp.click_empty.is_connected(state.on_click_empty):
-			missing.append("取消选中接线")
-		if not inp.long_pressed.is_connected(detail.open_popup_at):
-			missing.append("长按详情浮窗接线")
-		if not inp.popup_dismiss.is_connected(detail.close_popup):
-			missing.append("浮窗关闭接线")
-		if not inp.popup_dismiss.is_connected(state.cancel_surrender):
-			missing.append("投降取消接线")
-		if not state.popup_requested.is_connected(detail.show_text_popup):
-			missing.append("浮窗文本接线")
+		# 每项形如 [断言名, 断言]；**总项数由本表长度得出**（不再手写"通过（N 项）"，避免计数与代码脱节）
+		var checks: Array = [
+			["开局准备注入 state.setup", func() -> bool: return state.setup != null],
+			["胜负判定注入 state.victory", func() -> bool: return state.victory != null],
+			["回合流程注入 state.turn", func() -> bool: return state.turn != null],
+			["交互状态机注入 state.interaction", func() -> bool: return state.interaction != null],
+			["棋盘几何注入 state.grid", func() -> bool: return state.grid != null],
+			["行动注入 state.action", func() -> bool: return state.action != null],
+			["部署指令注入 state.deploy", func() -> bool: return state.deploy != null],
+			["手牌牌库注入 state.deck", func() -> bool: return state.deck != null],
+			["待确认注入 state.pending", func() -> bool: return state.pending != null],
+			["技能系统注入 state.skills", func() -> bool: return state.skills != null],
+			["战斗结算注入 state.combat", func() -> bool: return state.combat != null],
+			# 迭代005 补：动画引擎注入（迭代004 高危接线——曾整体丢失且导致完全静默，属 G-01 事故族）
+			["动画引擎注入 state.anim", func() -> bool: return state.anim != null],
+			["动画引擎挂场景树", func() -> bool: return state.anim != null and state.anim.get_parent() != null],
+			["动画节点解析回调注入", func() -> bool: return state.anim != null and state.anim.node_provider.is_valid()],
+			["动画特效挂载点注入", func() -> bool: return state.anim != null and state.anim.fx_parent != null],
+			# 迭代005 补：View 侧注入（此前完全没有断言；注入一旦被回退、视图会以空引用静默失效）
+			["背景注入 BgFx.setup()", func() -> bool: return bgfx == null or bgfx.holder != null],
+			["棋盘视图注入 BoardView.setup()", func() -> bool: return board.state != null],
+			["手牌视图注入 HandView.setup()", func() -> bool: return _ci("HandView").state != null],
+			["详情视图注入 DetailView.setup()", func() -> bool: return detail.state != null and detail.overlay != null],
+			["HUD 视图注入 HudView.setup()", func() -> bool: return _ci("HudView").state != null and _ci("HudView").overlay != null],
+			# 接线类（输入路由 → 状态机/详情）
+			["输入路由 holder 注入", func() -> bool: return inp.holder != null],
+			["取消选中接线", func() -> bool: return inp.click_empty.is_connected(state.on_click_empty)],
+			["长按详情浮窗接线", func() -> bool: return inp.long_pressed.is_connected(detail.open_popup_at)],
+			["浮窗关闭接线", func() -> bool: return inp.popup_dismiss.is_connected(detail.close_popup)],
+			["投降取消接线", func() -> bool: return inp.popup_dismiss.is_connected(state.cancel_surrender)],
+			["浮窗文本接线", func() -> bool: return state.popup_requested.is_connected(detail.show_text_popup)],
+		]
+		for c in checks:
+			if not (c[1] as Callable).call():
+				missing.append(str(c[0]))
 		if missing.is_empty():
-			print("[BattleFlow] 接线自检通过（12 项）")
+			print("[BattleFlow] 接线自检通过（%d 项）" % checks.size())
 		else:
 			push_error("[BattleFlow] 接线缺失 %d 项（疑似编辑器回退 G-01）：%s" % [missing.size(), str(missing)])
 
