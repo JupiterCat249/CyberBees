@@ -448,7 +448,9 @@ static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Nod
 	node.set("art_size", Vector2(tex.get_width(), tex.get_height()) if tex != null else Vector2(1, 1))
 	node.set("cost", int(d["cost"]))
 	node.set("art_fit", 1)
-	node.set("art_zoom", 1.0)
+	# 迭代008：人反复反馈"竖条" → 实测根因是**立绘没有横向铺满卡面**（素材红发特征段在屏幕上只有期望值的 0.62 倍宽），
+	# 于是左右两侧露出卡内格底色 = 两条竖条。放大立绘（art_zoom>1 居中裁边）使其横向铺满整卡。
+	node.set("art_zoom", 1.2)
 	# 迭代008（人明确）：**立绘铺满整卡宽** —— 框架默认只把立绘画在中央 170px 条带里，
 	# 两侧各 40px 的"信息栏"永远不画立绘 → 图标被压成窄条、左右露出一对竖条（人反馈的"两侧信息栏还在"）。
 	# full_art=1 让立绘铺满整宽，配合下方"侧栏底色透明 + 贴图槽透明"，真正做到"只剩费用 + 图标"。
@@ -464,9 +466,15 @@ static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Nod
 	node.set("icon_r2", -1)
 	node.set("icon_tag", -1)
 	# 侧栏"消失"：底色透明 + 专用贴图槽注入透明图（越界像素在框架着色器里直接返回透明）
+	# ⚠️ 迭代008 补齐：**所有**侧栏/中央底色都必须设透明，漏一个就会在卡上留下整条竖带 ——
+	#   此前漏了 `col_tag_bg`（右上类别格底，默认中灰 0.55）与 `col_center`/`col_stripe`（中央条纹底），
+	#   这正是人反复反馈的"竖条依然存在且广泛存在"。
 	node.set("col_cell", Color(0, 0, 0, 0))
 	node.set("col_band", Color(0, 0, 0, 0))
 	node.set("col_base", Color(0, 0, 0, 0))
+	node.set("col_tag_bg", Color(0, 0, 0, 0))
+	node.set("col_center", Color(0, 0, 0, 0))
+	node.set("col_stripe", Color(0, 0, 0, 0))
 	node.set("tag_texture", blank_tex())
 	# 左上角费用格保持框架原样（深底 + 橙色图集数字 = 复用既有字体/图集）
 	node.set("col_cost_bg", Color(0.16, 0.16, 0.16, 1.0))
