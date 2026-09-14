@@ -45,17 +45,18 @@ func prepare() -> void:
 				s.hand[side].append(cards[i])
 			else:
 				s.deckl[side].append(cards[i])
-	# a500 对战准备 6：随机决定先后手（后手初始费用 +2）
+	# a500 对战准备 6：随机决定先后手（后手额外回费 +2 —— 迭代005.2：改为在**后手自己的回合**发放）
 	var order := ["green", "red"]
 	order.shuffle()
 	s.first_side = order[0]
 	s.cost["green"] = 0
 	s.cost["red"] = 0
 	s.push_log("对战开始：%s方先手 · %s方后手" % [s.cn(order[0]), s.cn(order[1])])
-	# 迭代005.2（人明确）：**后手的额外回费只在开局发生这一次**，此后双方都只在自己的回合回费。
-	# 故在此「发放时」把一次性性质与前后数值一并写进日志，避免玩家误以为是"每回合多给"的机制。
-	s.cost[order[1]] = D.SECOND_PLAYER_BONUS
-	s.push_log("后手开局额外回费：%s方 0 → %d（**仅此一次**，此后按回合正常回费；且不占用先手的回合）" % [s.cn(order[1]), s.cost[order[1]]])
+	# 迭代005.2（人明确）：**后手的额外回费不在对战准备发放**，等后手自己的回合到了再拿（仅一次）。
+	# 此处只登记"待发放"，实际发放见 battle_turn.begin_turn()。
+	s.second_bonus_pending = true
+	s.second_bonus_granted = false
+	s.push_log("后手额外回费：待%s方自己的回合开始结算（**仅此一次**；不会占用先手的回合）" % s.cn(order[1]))
 	# a500 对战准备 5：抽取对战地图；提前部署蜂王并载入手牌
 	draw_map()
 	spawn(Vector2i(3, 1), "green", D.card("金刚蜂王"))

@@ -36,7 +36,7 @@ texture = ExtResource("2_b5gog")
 
 [node name="StatAtk" type="Label" parent="Overlay" unique_id=890945234]
 
-[node name="StatDef" type="Label" parent="Overlay" unique_id=1123878607]
+[node name="StatHp" type="Label" parent="Overlay" unique_id=1123878607]
 
 [node name="StatSpd" type="Label" parent="Overlay" unique_id=2142849373]
 

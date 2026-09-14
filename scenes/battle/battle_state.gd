@@ -54,6 +54,10 @@ var surrender_pending := false
 ## a500 对战准备：本局先手方 / 抽取到的地图名（回合数以「先手方再次开始回合」为界）
 var first_side := "green"
 var map_name := ""
+## 迭代005.2（人明确）：后手的「开局额外回费」**不在对战准备发放**，而是**等后手自己的回合到了再拿**（仅一次）。
+## second_bonus_pending：还没发放；second_bonus_granted：已发放（防重复）。
+var second_bonus_pending := false
+var second_bonus_granted := false
 ## 迭代005.1：换牌机制已整体移除（人明确「开局前不应有任何换牌机会」）→ 不再有换牌次数；
 ## 仅保留 armed_side（记录"当前持牌属于哪一方"，供手牌/指令流程使用）
 var armed_side := ""
@@ -592,16 +596,19 @@ func detail_card_live() -> Dictionary:
 
 
 ## 详情栏「属性值」：与当前查看对象一致（场上单位=实时值；手牌=卡牌基础值）
+## 顺序与卡面右侧图标一致：攻击 / **生命** / 移动 / 射程
+## ⚠️ 迭代005.2 缺陷修复：第 2 项此前被硬编码为 "0"（把"防御减免"当成了该栏语义），
+##    而卡面第 2 行图标是 **hp**（`card_auto` icon_r1=I_HP）→ 详情栏生命值恒显示 0 ✗，已改为取实际生命。
 func focus_values() -> Array:
 	var d: Dictionary = current_detail_card()
 	if d.is_empty():
 		return ["-", "-", "-", "-"]
 	var id := focus_unit_id()
 	if id >= 0 and units.has(id) and str(units[id]["card"]["name"]) == str(d.get("name", "")):
-		return [str(final_atk(id)), str(final_reduce(id)), str(final_spd(id)), str(final_range(id))]
+		return [str(final_atk(id)), str(int(units[id]["hp"])), str(final_spd(id)), str(final_range(id))]
 	if d["kind"] == "command" or d["kind"] == "command_x":
 		return ["—", "—", "—", str(int(d.get("range", 0)))]
-	return [str(int(d.get("atk", 0))), "0", str(int(d.get("spd", 0))), str(int(d.get("range", 0)))]
+	return [str(int(d.get("atk", 0))), str(int(d.get("hp", 0))), str(int(d.get("spd", 0))), str(int(d.get("range", 0)))]
 
 
 func queen_id_of(side: String) -> int:

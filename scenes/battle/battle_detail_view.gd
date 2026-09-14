@@ -66,8 +66,9 @@ func _bind_labels() -> void:
 		_labels["sk_" + str(k).to_lower()] = overlay.get_node_or_null(
 			NodePath("SkillBox/Skill" + str(k))) as Label
 	# 状态数值：位置/字号/颜色沿用代码设定（框架 shader 已画图标）
+	# 第 2 行图标 = hp（`card_auto` icon_r1=I_HP）→ 节点名用 StatHp（原名 StatDef 易被误读为"防御"，已更名）
 	_labels["st0"] = _stat_label("StatAtk", D.STAT_Y0)
-	_labels["st1"] = _stat_label("StatDef", D.STAT_Y0 + D.STAT_DY)
+	_labels["st1"] = _stat_label("StatHp", D.STAT_Y0 + D.STAT_DY)
 	_labels["st2"] = _stat_label("StatSpd", D.STAT_Y0 + D.STAT_DY * 2)
 	_labels["st3"] = _stat_label("StatRange", D.STAT_Y0 + D.STAT_DY * 3)
 

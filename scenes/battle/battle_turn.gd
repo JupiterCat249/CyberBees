@@ -58,14 +58,20 @@ func begin_turn(side: String) -> void:
 	s.current = side
 	s.turn_started.emit(side, s.round_no)
 	s.push_log("—— 第 %d 回合 · %s方 ——" % [s.round_no, s.cn(side)])
-	# 后手的第一回合：点明"额外回费已经在开局给过、本回合是正常回费"，避免被当成每回合额外加成
-	if s.round_no == 1 and side != s.first_side:
-		s.push_log("（后手首回合：开局额外回费已在开局结算，本回合为正常回费）")
+	# 迭代005.2（人明确）：后手的「额外回费 +2」在**后手自己的第一个回合**发放（一次性），
+	#   不在对战准备阶段预支 —— 因此双方在对战准备时费用都为 0，后手要到自己的回合才拿到这 2 费。
+	#   （`second_bonus_pending/granted` 保证只发一次；实现见 battle_setup.prepare 的登记）
+	var bonus := 0
+	if s.second_bonus_pending and not s.second_bonus_granted and side != s.first_side:
+		bonus = D.SECOND_PLAYER_BONUS
+		s.second_bonus_pending = false
+		s.second_bonus_granted = true
+		s.push_log("【后手额外回费】%s方 +%d（**仅此一次**，在自己的回合开始时结算）" % [s.cn(side), bonus])
 	s.phase = D.Phase.REFUND
 	s.phase_changed.emit(s.phase)
 	var gain: int = D.BASE_REFUND + (D.ROUND7_EXTRA if s.round_no >= 7 else 0)
 	var rf: int = refund_of(side)
-	s.cost[side] = mini(s.cost[side] + gain + rf, D.COST_MAX)
+	s.cost[side] = mini(s.cost[side] + gain + rf + bonus, D.COST_MAX)
 	if rf > 0:
 		s.push_log("【回费】%s方 +%d（基础%d + 资源建筑%d）→ 费用 %d（上限 %d）" % [s.cn(side), gain + rf, gain, rf, s.cost[side], D.COST_MAX])
 	else:
