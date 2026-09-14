@@ -49,13 +49,9 @@ func render_hand(side: String) -> void:
 	var base: Vector2 = D.PANEL_L if side == "green" else D.PANEL_R
 	var cards: Array = state.hand[side]
 	for i in cards.size():
-		# 迭代011（人明确）：**手牌区复用场上单位的渲染路径**（`D.make_card` → 完整卡面信息：
-		#   费用 / 攻击 / 移动 / 生命 / 射程 / 类别角标），不再用此前的"精简卡面"；
-		#   立绘仍优先用「图标」素材（无素材时自动回退旧卡面立绘）。
-		var ic: String = D.icon_path(str(cards[i]["name"]))
-		if ic == "":
-			ic = D.icon_path(str(cards[i].get("art", "")))
-		var node := D.make_card(cards[i], D.HAND_CARD_SCALE, ic)
+		# 迭代012（人明确）：**不再使用「图标」素材**（渲染层限制），回到早期版本做法 ——
+		#   手牌 = 框架卡面 + 框架卡面素材（立绘取 `card_auto` 的 art 目录），与场上单位同一条渲染路径。
+		var node := D.make_card(cards[i], D.HAND_CARD_SCALE)
 		var col := i % 2
 		@warning_ignore("integer_division")
 		var rowi := i / 2
