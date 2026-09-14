@@ -18,6 +18,9 @@ extends Node2D
 @export_range(-1, 99) var stat_l2 := -1: set = set_stat_l2
 @export_range(-1, 99) var stat_r1 := -1: set = set_stat_r1
 @export_range(-1, 99) var stat_r2 := 3: set = set_stat_r2
+# ---- 迭代007 新增（对齐《卡牌属性布局》右栏）：剩余生命值角标 + 射程行 ----
+@export_range(-1, 99) var stat_r0 := -1: set = set_stat_r0       # 类型格内·剩余生命值角标
+@export_range(-1, 99) var stat_r3 := -1: set = set_stat_r3       # 右栏第 3 行·射程/效果范围
 
 # ---------------- 图标 ----------------
 @export_group("图标：-1无 0攻击 1速度 2血量 3射程 4兵蜂 5建筑 6指令 7蜂王")
@@ -26,6 +29,10 @@ extends Node2D
 @export_range(-1, 7) var icon_r1 := 2: set = set_icon_r1
 @export_range(-1, 7) var icon_r2 := 3: set = set_icon_r2
 @export_range(-1, 7) var icon_tag := 6: set = set_icon_tag
+# ---- 迭代007 新增：效果轴图标（减益/增益）与射程行图标 ----
+@export_range(-1, 7) var icon_buff := -1: set = set_icon_buff     # 顶部效果轴·增益（-1 不显示）
+@export_range(-1, 7) var icon_debuff := -1: set = set_icon_debuff # 顶部效果轴·减益（-1 不显示）
+@export_range(-1, 7) var icon_r3 := -1: set = set_icon_r3         # 右栏第 3 行（射程）
 
 # ---------------- 素材 ----------------
 @export_group("素材")
@@ -33,6 +40,9 @@ extends Node2D
 @export var tag_texture: Texture2D: set = set_tag_texture  # 自定义类别图标（优先于 icon_tag）
 @export_range(0, 1) var art_fit := 1: set = set_art_fit    # 1=裁剪铺满（立绘撑满中央区，默认） 0=完整显示
 @export_range(1.0, 2.0, 0.01) var art_zoom := 1.0: set = set_art_zoom  # 立绘放大（裁掉素材边缘留白，角色更大）
+# ---- 迭代007 新增：顶部效果轴（减益/增益）自定义图标 ----
+@export var buff_texture: Texture2D: set = set_buff_texture      # 效果轴·增益自定义图标（优先于 icon_buff）
+@export var debuff_texture: Texture2D: set = set_debuff_texture  # 效果轴·减益自定义图标（优先于 icon_debuff）
 
 # ---------------- 配色 ----------------
 @export_group("配色")
@@ -85,6 +95,47 @@ func set_stat_r1(v: int) -> void:
 func set_stat_r2(v: int) -> void:
 	stat_r2 = v
 	_sp("num_r2", v)
+
+
+func set_stat_r0(v: int) -> void:
+	stat_r0 = v
+	_sp("num_r0", v)
+
+
+func set_stat_r3(v: int) -> void:
+	stat_r3 = v
+	_sp("num_r3", v)
+
+
+func set_icon_buff(v: int) -> void:
+	icon_buff = v
+	_sp("icon_buff", v)
+
+
+func set_icon_debuff(v: int) -> void:
+	icon_debuff = v
+	_sp("icon_debuff", v)
+
+
+func set_icon_r3(v: int) -> void:
+	icon_r3 = v
+	_sp("icon_r3", v)
+
+
+func set_buff_texture(v: Texture2D) -> void:
+	buff_texture = v
+	if is_node_ready():
+		_sp("buff_tex", v)
+		_sp("buff_mode", 1 if v != null else 0)
+		_sp("buff_size", Vector2(v.get_width(), v.get_height()) if v != null else Vector2(1, 1))
+
+
+func set_debuff_texture(v: Texture2D) -> void:
+	debuff_texture = v
+	if is_node_ready():
+		_sp("debuff_tex", v)
+		_sp("debuff_mode", 1 if v != null else 0)
+		_sp("debuff_size", Vector2(v.get_width(), v.get_height()) if v != null else Vector2(1, 1))
 
 func set_icon_l1(v: int) -> void:
 	icon_l1 = v
@@ -186,13 +237,20 @@ func _apply_all() -> void:
 	set_stat_l2(stat_l2)
 	set_stat_r1(stat_r1)
 	set_stat_r2(stat_r2)
+	set_stat_r0(stat_r0)
+	set_stat_r3(stat_r3)
 	set_icon_l1(icon_l1)
 	set_icon_l2(icon_l2)
 	set_icon_r1(icon_r1)
 	set_icon_r2(icon_r2)
+	set_icon_r3(icon_r3)
+	set_icon_buff(icon_buff)
+	set_icon_debuff(icon_debuff)
 	set_icon_tag(icon_tag)
 	set_art(art)
 	set_tag_texture(tag_texture)
+	set_buff_texture(buff_texture)
+	set_debuff_texture(debuff_texture)
 	set_art_fit(art_fit)
 	set_art_zoom(art_zoom)
 	set_col_base(col_base)
