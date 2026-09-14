@@ -29,7 +29,7 @@ const SBTN_DX := 104.0
 const SBTN_HIT := 44.0
 
 ## 手牌卡：面板 400x400 内 2x2（卡设计尺寸 250 -> 0.76 = 190px）
-const HAND_CARD_SCALE := 0.76
+const HAND_CARD_SCALE := 0.76   # 手牌卡＝框架卡面（250×0.76=190px，card-system 原先的手牌规格）
 const HAND_CARD_STEP := 195.0
 const HAND_CARD_PAD := 5.0
 ## 迭代006：手牌卡名条（贴每格下沿留白；宽度需 ≤ 面板宽 400 - 2×PAD，避免出面板被裁）
