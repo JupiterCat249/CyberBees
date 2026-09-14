@@ -29,7 +29,7 @@ const SBTN_DX := 104.0
 const SBTN_HIT := 44.0
 
 ## 手牌卡：面板 400x400 内 2x2（卡设计尺寸 250 -> 0.76 = 190px）
-const HAND_CARD_SCALE := 0.76
+const HAND_CARD_SCALE := 0.95   ## 迭代008：卡面填满手牌格（0.76 时卡只有 114px，格子 190px → 左右各空 30px 露出底色的“竖条”）
 const HAND_CARD_STEP := 195.0
 const HAND_CARD_PAD := 5.0
 ## 迭代006：手牌卡名条（贴每格下沿留白；宽度需 ≤ 面板宽 400 - 2×PAD，避免出面板被裁）
@@ -377,6 +377,8 @@ const ATLAS_RES := preload("res://card-system/card_system/card_atlas.png")
 ##   本侧副本：`res://assets/card_icons/`（**不改 card-system 的 art 目录** —— 边界 T11）
 ## ============================================================
 const ICON_DIR := "res://assets/card_icons/"
+## 迭代008：**去透明边**后的图标素材（等价于原图裁掉四周透明留白；观感尺寸不变，但左右不再露出底色）
+const ICON_TRIM_DIR := "res://assets/card_icons/art/"
 
 ## 卡名 → 图标文件（多一层 art 名映射：同一图标素材被多张卡借用的情形）
 ## 现状：卡池 22 张中只有 6 张（金刚蜂王/叶蜂/泥蜂/熊蜂/蜂巢/蜂巢III）有同名图标；
@@ -402,11 +404,15 @@ const ICON_MAP := {
 }
 
 
-## 取该卡的图标贴图路径（没有对应素材 → 返回 ""，调用方回退到旧卡面立绘）
+## 取该卡的图标贴图路径：优先用**去透明边版**（`card_icons/art/`），无则回退原图；
+## 都没有 → 返回 ""，由调用方回退到旧卡面立绘
 static func icon_path(name_or_art: String) -> String:
 	var f := str(ICON_MAP.get(name_or_art, ""))
 	if f == "":
 		return ""
+	var trimmed := ICON_TRIM_DIR + f
+	if ResourceLoader.exists(trimmed):
+		return trimmed
 	var p := ICON_DIR + f
 	return p if ResourceLoader.exists(p) else ""
 
@@ -442,7 +448,7 @@ static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Nod
 	node.set("art_size", Vector2(tex.get_width(), tex.get_height()) if tex != null else Vector2(1, 1))
 	node.set("cost", int(d["cost"]))
 	node.set("art_fit", 1)
-	node.set("art_zoom", 1.0 if use_icon else 1.05)
+	node.set("art_zoom", 1.0)
 	# 迭代008（人明确）：**立绘铺满整卡宽** —— 框架默认只把立绘画在中央 170px 条带里，
 	# 两侧各 40px 的"信息栏"永远不画立绘 → 图标被压成窄条、左右露出一对竖条（人反馈的"两侧信息栏还在"）。
 	# full_art=1 让立绘铺满整宽，配合下方"侧栏底色透明 + 贴图槽透明"，真正做到"只剩费用 + 图标"。
@@ -487,7 +493,7 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 	node.set("cost", int(d["cost"]))
 	node.set("art_fit", 1)
 	# 图标是"画好留白"的方形素材：用 zoom 1.0 保留全部内容；旧卡面沿用 1.05 的裁边观感
-	node.set("art_zoom", 1.0 if use_icon else 1.05)
+	node.set("art_zoom", 1.0)   # 迭代008：图标素材已去透明边 → 1.0 即可（旧卡面兜底也保持 1.0，避免裁切）
 	if bare:
 		# 精简卡面：四角数值/图标全部隐藏（渲染以 -1 为"不显示"），并抹掉空白格底避免出现方格
 		node.set("stat_l1", -1)
