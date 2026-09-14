@@ -411,9 +411,65 @@ static func icon_path(name_or_art: String) -> String:
 	return p if ResourceLoader.exists(p) else ""
 
 
-## 实例化一张框架卡牌（复用 card_auto.tscn）；按类型设置角标与四维属性
-## icon_tex_path 非空 → 用「图标」素材作中央立绘（迭代006）；name_pos.y >= 0 → 卡面加一行卡名文字
-static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos := Vector2(-1, -1)) -> Node2D:
+## 1×1 透明贴图（懒加载缓存）—— 精简卡面用：
+##   框架把「左右侧栏」的底色交给专用贴图槽（`tag_tex`）采样，而 `sample_fit()` 对越界像素返回 `vec4(0)`，
+##   因此给该槽注入 1×1 透明图即可让**整块侧栏不绘制**（成本仅为一次纹理读取）。
+##   ⚠️ 这样**无需改 card-system 的着色器**（边界 T11：框架只读）。
+static var _blank_tex: Texture2D = null
+
+static func blank_tex() -> Texture2D:
+	if _blank_tex == null:
+		var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0, 0, 0, 0))
+		_blank_tex = ImageTexture.create_from_image(img)
+	return _blank_tex
+
+
+## 精简卡面（迭代006 修正 · 人明确「手牌与详情卡只留左上角费用、不要两侧信息栏、不要卡名」）
+## 做法：① 四角数值/图标与类别角标全部关闭；② 侧栏底色置透明；③ 侧栏贴图槽注入 1×1 透明图 → 侧栏整块不绘制
+## 结果：卡面 = **左上角费用格（框架图集数字 + 深色底，沿用既有字体）** + 中央图标立绘
+static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Node2D:
+	var node := CARD_RES.instantiate()
+	node.scale = Vector2(sc, sc)
+	var tex: Texture2D = null
+	var use_icon := str(icon_tex_path) != ""
+	if use_icon:
+		tex = load(str(icon_tex_path)) as Texture2D
+	if tex == null:
+		tex = load(ART_DIR + str(d["art"]) + ".png") as Texture2D      # 无图标素材 → 回退旧卡面立绘
+		use_icon = false
+	node.set("art", tex)
+	node.set("art_size", Vector2(tex.get_width(), tex.get_height()) if tex != null else Vector2(1, 1))
+	node.set("cost", int(d["cost"]))
+	node.set("art_fit", 1)
+	node.set("art_zoom", 1.0 if use_icon else 1.05)
+	# 关闭四角（框架渲染以 -1 为"不显示"）
+	node.set("stat_l1", -1)
+	node.set("stat_l2", -1)
+	node.set("stat_r1", -1)
+	node.set("stat_r2", -1)
+	node.set("icon_l1", -1)
+	node.set("icon_l2", -1)
+	node.set("icon_r1", -1)
+	node.set("icon_r2", -1)
+	node.set("icon_tag", -1)
+	# 侧栏"消失"：底色透明 + 专用贴图槽注入透明图（越界像素在框架着色器里直接返回透明）
+	node.set("col_cell", Color(0, 0, 0, 0))
+	node.set("col_band", Color(0, 0, 0, 0))
+	node.set("col_base", Color(0, 0, 0, 0))
+	node.set("tag_texture", blank_tex())
+	# 左上角费用格保持框架原样（深底 + 橙色图集数字 = 复用既有字体/图集）
+	node.set("col_cost_bg", Color(0.16, 0.16, 0.16, 1.0))
+	node.set("col_cost_num", Color(0.96, 0.62, 0.04, 1.0))
+	return node
+
+
+## 实例化一张框架卡牌（复用 card_auto.tscn）
+## icon_tex_path 非空 → 用「图标」素材作中央立绘（迭代006）
+## bare=true → **精简卡面（迭代006 修正，人明确）**：只显示左上角费用，隐藏左右两侧信息栏
+##   （触发点/数值/类别角标全部 -1；空白格底调成与卡底同色，观感上"两侧栏消失"）
+## name_pos.y >= 0 → 卡面加一行卡名文字（**本轮已按要求停用，改由技能框显示卡名**）
+static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos := Vector2(-1, -1), bare := false) -> Node2D:
 	var node := CARD_RES.instantiate()
 	node.scale = Vector2(sc, sc)
 	var tex: Texture2D = null
@@ -428,6 +484,20 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 	node.set("art_fit", 1)
 	# 图标是"画好留白"的方形素材：用 zoom 1.0 保留全部内容；旧卡面沿用 1.05 的裁边观感
 	node.set("art_zoom", 1.0 if use_icon else 1.05)
+	if bare:
+		# 精简卡面：四角数值/图标全部隐藏（渲染以 -1 为"不显示"），并抹掉空白格底避免出现方格
+		node.set("stat_l1", -1)
+		node.set("stat_l2", -1)
+		node.set("stat_r1", -1)
+		node.set("stat_r2", -1)
+		node.set("icon_l1", -1)
+		node.set("icon_l2", -1)
+		node.set("icon_r1", -1)
+		node.set("icon_r2", -1)
+		node.set("icon_tag", -1)                     # 类别角标也不显示
+		node.set("col_cell", Color(1, 1, 1, 1))      # 空白格底 → 与卡底同色（视觉上两侧栏消失）
+		node.set("col_band", Color(1, 1, 1, 1))      # 横带/分隔条同样抹平
+		return node
 	match d["kind"]:
 		"queen":
 			node.set("icon_tag", I_QUEEN)

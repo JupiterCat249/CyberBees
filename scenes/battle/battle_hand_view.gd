@@ -53,7 +53,8 @@ func render_hand(side: String) -> void:
 		var ic: String = D.icon_path(str(cards[i]["name"]))
 		if ic == "":
 			ic = D.icon_path(str(cards[i].get("art", "")))
-		var node := D.make_card(cards[i], D.HAND_CARD_SCALE, ic)
+		# 迭代006 修正（人明确）：手牌**精简卡面** —— 只留左上角费用 + 图标，两侧信息栏与卡名都不显示
+		var node := D.make_bare_card(cards[i], D.HAND_CARD_SCALE, ic)
 		var col := i % 2
 		@warning_ignore("integer_division")
 		var rowi := i / 2
@@ -61,13 +62,7 @@ func render_hand(side: String) -> void:
 			D.HAND_CARD_PAD + col * D.HAND_CARD_STEP,
 			D.HAND_CARD_PAD + rowi * D.HAND_CARD_STEP)
 		_cards_node.add_child(node)
-		# 卡名文字：挂在 **overlay**（无缩放坐标系）上，贴在每格面板下沿留白里
-		#   x：卡面左上角 + (卡面设计宽 250 × 0.76)/2 = 95 → 卡面水平中心
-		#   y：卡视觉下沿约 114 + 12 留白；宽 150 < 面板宽 400-2×PAD，故偶数格不出面板被裁
-		var lbl := D.make_name_label(str(cards[i]["name"]),
-			node.position + Vector2(95.0, 126.0), D.HAND_NAME_W, D.HAND_NAME_FS)
-		overlay.add_child(lbl)
-		_name_labels.append(lbl)
+		# 注：手牌上的**卡名条已按要求移除**（卡名统一在左下技能框顶部显示）
 		# A5：待放置/待使用的手牌显示框架「卡牌x-选中」边框（扩展既有素材）
 		var armed_here: bool = state.armed_card == i and (state.armed_side == side or (state.armed_side == "" and side == state.current))
 		if armed_here:

@@ -58,13 +58,11 @@ func render_detail() -> void:
 	var ic: String = D.icon_path(str(d["name"]))
 	if ic == "":
 		ic = D.icon_path(str(d.get("art", "")))
-	var node := D.make_card(d, D.DETAIL_SCALE, ic)
+	# 迭代006 修正（人明确）：详情卡同样**精简** —— 只留左上角费用 + 图标，两侧信息栏不显示
+	var node := D.make_bare_card(d, D.DETAIL_SCALE, ic)
 	node.position = D.DETAIL_POS
 	_detail_node.add_child(node)
-	# 卡名文字：挂在 overlay（无缩放坐标系），压在卡面**底部名称带**上（无底色，避免盖住立绘）
-	var lbl := D.make_name_label(str(d["name"]),
-		D.DETAIL_POS + Vector2(95.0, 221.0), 186.0, 22, 0.0)
-	overlay.add_child(lbl)
+	# 注：详情卡上的卡名已按要求移除 —— 卡名改在**上方技能框**顶部显示（见 update_skill_box）
 
 
 # ---------------- ② 技能详情显示区 ----------------
@@ -93,6 +91,8 @@ func _stat_label(node_name: String, y: float) -> Label:
 	return l
 
 
+## 技能框：**顶部显示「卡名 ·」**（迭代006 修正，人明确：卡名不放卡面，放这里）
+##   技能名沿用原样（如「【支援】鼓舞」）；无技能卡显示"（无技能）"
 func update_skill_box() -> void:
 	var d: Dictionary = state.current_detail_card()
 	for key in ["sk_title", "sk_desc", "sk_tags"]:
@@ -102,7 +102,12 @@ func update_skill_box() -> void:
 		if d.is_empty():
 			l.text = ""
 		elif key == "sk_title":
-			l.text = str(d.get("sk", "（无技能）"))
+			var nm := str(d.get("name", ""))
+			var sk := str(d.get("sk", "")).strip_edges()
+			if sk == "" or sk == "（无技能）":
+				l.text = (nm + "（无技能）") if nm != "" else "（无技能）"
+			else:
+				l.text = (nm + " · " + sk) if nm != "" else sk
 		elif key == "sk_desc":
 			l.text = str(d.get("sdesc", ""))
 		else:
