@@ -54,8 +54,8 @@ var surrender_pending := false
 ## a500 对战准备：本局先手方 / 抽取到的地图名（回合数以「先手方再次开始回合」为界）
 var first_side := "green"
 var map_name := ""
-## a500 对战准备 5：准备阶段「调整初始手牌」——逐方剩余次数 + 当前操作的是哪一方的手牌
-var exchange_left := {"green": 0, "red": 0}
+## 迭代005.1：换牌机制已整体移除（人明确「开局前不应有任何换牌机会」）→ 不再有换牌次数；
+## 仅保留 armed_side（记录"当前持牌属于哪一方"，供手牌/指令流程使用）
 var armed_side := ""
 
 ## 由协调器注入
@@ -141,18 +141,11 @@ func can_discard() -> bool:
 
 
 # ============================================================
-# 对战准备：调整初始手牌（a500 对战准备 5；决策一：一次性，不引入每回合换牌机会）
+# 对战准备：开局即锁定手牌（迭代005.1 人明确移除换牌）
 # ============================================================
-## 换牌：指定手牌回墓地 → 从备卡补 1 张（手牌仍为 4 张）；每方上限 EXCHANGE_MAX
-## 换牌 / 起手调度 与 可否换牌 —— 重构第3块：实现已搬至 BattleDeck（battle_deck.gd）
-func exchange_hand() -> void:
-	if deck != null:
-		deck.exchange_hand()
-
-
-## 当前是否可以换牌（供 HUD 决定主按钮文案）
-func can_exchange() -> bool:
-	return deck != null and deck.can_exchange()
+## ⚠️ 换牌（原 a500 对战准备 5 的一次性调整初始手牌）已于迭代005.1 **整体移除**：
+##   开局前不提供任何换牌/调整手牌机会，手牌一经发出即锁定。
+##   原地保留说明以免后来者"补回"该功能（如需恢复，见 git tag `iter/005` 之前版本的 battle_deck.gd）。
 
 
 ## 准备阶段结束，进入第一回合（a500 对战准备 9）
@@ -382,18 +375,10 @@ func round12_result() -> void:
 # 输入语义槽（由 BattleInput 的信号连接）
 # ============================================================
 func on_hand_clicked(side: String, index: int) -> void:
-	# a500 对战准备 5：准备阶段双方手牌均可点击（本地对战无 AI），用于「调整初始手牌」
+	# 迭代005.1 人明确：**开局前无任何换牌机会** —— 准备阶段点击手牌不再选中/持牌
+	#   （原先此处由 BattleState 自行处理"准备阶段持牌"→ 是换牌入口的真实来源；
+	#    此处与 BattleDeck.select_hand 两处都必须拦，任一漏拦都会留下换牌漏洞）
 	if phase == D.Phase.PREPARE:
-		if index < 0 or index >= hand[side].size():
-			return
-		if armed_side == side and armed_card == index:
-			armed_side = ""
-			armed_card = -1          # 再次点击同一张 = 取消选中
-		else:
-			armed_side = side
-			armed_card = index
-		selection_changed.emit()
-		refresh()
 		return
 	if side != current:
 		return

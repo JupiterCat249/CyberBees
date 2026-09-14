@@ -128,8 +128,8 @@ func _on_state_changed() -> void:
 		# A5：待确认态主按钮 = 确认
 		_labels["btn"].text = "确认"
 	elif state.phase == D.Phase.PREPARE:
-		# a500 对战准备 5/9：选中手牌时=换牌，否则=开始对局
-		_labels["btn"].text = "换牌" if state.can_exchange() else "开始对局"
+		# 迭代005.1：准备阶段只有「开始对局」（换牌已移除，手牌开局即锁定）
+		_labels["btn"].text = "开始对局"
 	elif state.can_discard():
 		_labels["btn"].text = "弃卡过牌"
 	elif state.phase == D.Phase.DEPLOY:
@@ -173,7 +173,8 @@ func _hint() -> String:
 	if state.pending_kind != "":
 		return "待确认：%s @(%d,%d) —— 再次点击同一目标，或按主按钮「确认」" % [state.pending_kind, state.pending_cell.x, state.pending_cell.y]
 	if state.phase == D.Phase.PREPARE:
-		return "对战准备：点手牌选中 → 主按钮换牌（每方 %d 次）/ 或直接点「开始对局」" % D.EXCHANGE_MAX
+		# 迭代005.1：开局前无换牌机会（手牌已锁定）
+		return "对战准备：初始手牌已锁定（无换牌）—— 点主按钮「开始对局」进入第一回合"
 	if state.can_discard():
 		return "主按钮=弃卡过牌 / 点高亮格放置或使用指令"
 	match state.mode:

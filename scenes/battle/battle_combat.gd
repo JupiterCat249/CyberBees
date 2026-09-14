@@ -93,6 +93,12 @@ func final_reduce(id: int) -> int:
 # 攻击结算
 # ============================================================
 ## 主动攻击 + 反击。返回 {dmg, counter, countered}
+## 结算顺序（a500 战斗系统 1：「主动攻击与反击**同时计算**伤害」+ 迭代005.1 人明确）：
+##   ① 先算**反击**并即刻扣攻方血（此时守方尚未掉血）
+##   ② 再结算主伤害
+## → 因此**目标即使被直接打死，其反击依然成立并造成伤害**（此前用「守方 hp>0」作反击前置条件，
+##   导致一击致死的目标无法反击 ✗，已修正）。
+## 反击条件（a500 战斗系统 2）：守方攻击力 > 0 且攻击方在其射程内。
 func attack(aid: int, tid: int) -> Dictionary:
 	var res := {"dmg": 0, "counter": 0, "countered": false}
 	if state == null:
@@ -101,17 +107,20 @@ func attack(aid: int, tid: int) -> Dictionary:
 		return res
 	var units: Dictionary = state.units
 	var dmg := maxi(0, final_atk(aid) - final_reduce(tid))
-	units[tid]["hp"] = int(units[tid]["hp"]) - dmg
-	res["dmg"] = dmg
-	state.push_log("%s 攻击 %s：%d" % [state.unit_name(aid), state.unit_name(tid), dmg])
-	# 反击：攻击方存活且反击方射程覆盖对方才触发
+	var cdmg := 0
 	var ac: Vector2i = units[aid]["cell"]
 	var tc: Vector2i = units[tid]["cell"]
-	if int(units[tid]["hp"]) > 0 and abs(tc.x - ac.x) + abs(tc.y - ac.y) <= final_range(tid):
-		var cdmg := maxi(0, final_atk(tid) - final_reduce(aid))
+	var in_range: bool = abs(tc.x - ac.x) + abs(tc.y - ac.y) <= final_range(tid)
+	if final_atk(tid) > 0 and in_range:
+		cdmg = maxi(0, final_atk(tid) - final_reduce(aid))
 		units[aid]["hp"] = int(units[aid]["hp"]) - cdmg
 		res["counter"] = cdmg
 		res["countered"] = true
+	units[tid]["hp"] = int(units[tid]["hp"]) - dmg
+	res["dmg"] = dmg
+	# 日志保持「攻击 → 反击」的阅读顺序（数值结算顺序与之无关）
+	state.push_log("%s 攻击 %s：%d" % [state.unit_name(aid), state.unit_name(tid), dmg])
+	if bool(res["countered"]):
 		state.push_log("%s 反击：%d" % [state.unit_name(tid), cdmg])
 	attack_resolved.emit(aid, tid, int(res["dmg"]), int(res["counter"]), bool(res["countered"]))
 	return res

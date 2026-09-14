@@ -68,7 +68,6 @@ const I_SOLDIER := 4
 const I_BUILDING := 5
 const I_COMMAND := 6
 const I_QUEEN := 7
-const I_TERRAIN := 5
 
 ## 长按阈值（帧数，T2：不使用 delta）；60fps 下 30 帧 ≈ 0.5 秒
 const LONG_PRESS_FRAMES := 30
@@ -83,8 +82,7 @@ const SECOND_PLAYER_BONUS := 2
 
 enum Phase { REFUND, FIELD, DEPLOY, ACTION, PREPARE }
 const PHASE_NAME := ["回费", "场地", "部署", "行动", "准备"]
-## a500 对战准备 5：调整卡组的初始手牌 —— 对战准备阶段一次性换牌
-const EXCHANGE_MAX := 1
+## 迭代005.1：换牌（原 EXCHANGE_MAX / 对战准备 5 的初始手牌调整）已整体移除 —— 开局前无换牌机会
 enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET, SUPPORT_TARGET }
 
 # ---------------- 卡池（含技能数据，供技能显示区使用） ----------------
@@ -316,21 +314,20 @@ static func skill(nm: String) -> Dictionary:
 	return SKILLS.get(nm, {})
 const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "电击", "治疗"]
 
-## 对战地图池（a500 对战准备 5：抽取对战地图）
-## 注：a500 未规定特殊地形细则，此处以「特殊地形格 + 该格增益」表达；细则补充后按细则扩充。
+## 对战地图池（a500 对战准备 4：抽取对战地图）
+## ⚠️ 迭代005.1（人明确）：地图上的特殊地形**由地图素材自带**（制作地图时直接画好），
+##   游戏内**不再额外绘制地形标签/图标**；地形格坐标等**地图素材到位后**再填 `terrain_cells`。
+## 地图名取自《电子蜂A5策划案》场地效果表（6 张）；其**场地效果细则同样待素材/细则到位后落地**
+##   （A5策划案：默认=无 · 铁锈=地形格获得 1 层力场 · 寒潮=第3/6/9/12回合扣 2 血(蜂王除外)
+##     · 禁区=障碍地形不可部署 · 丰饶=第3/9回合额外回费 4 · 水没=地形格减 2 指令伤害）。
+##   现状：全部 `terrain_cells` 为空 → 不影响数值；效果字段留空以免自造规则。
 const MAP_POOL := [
-	{"name": "原野", "terrain_name": "蜂巢地面", "terrain_id": "hive_ground",
-		"terrain_desc": "位于该格的单位 攻击 +1", "terrain_atk_add": 1, "terrain_spd_add": 0,
-		"terrain_cells": [Vector2i(1, 1), Vector2i(2, 2)]},
-	{"name": "蜜源", "terrain_name": "蜜浆地", "terrain_id": "nectar",
-		"terrain_desc": "位于该格的单位 移动 +1", "terrain_atk_add": 0, "terrain_spd_add": 1,
-		"terrain_cells": [Vector2i(1, 0), Vector2i(2, 3)]},
-	{"name": "锈地", "terrain_name": "锈蚀地", "terrain_id": "rust",
-		"terrain_desc": "位于该格的单位 攻击 +1、移动 -1", "terrain_atk_add": 1, "terrain_spd_add": -1,
-		"terrain_cells": [Vector2i(0, 0), Vector2i(3, 3), Vector2i(1, 2)]},
-	{"name": "空地", "terrain_name": "无", "terrain_id": "",
-		"terrain_desc": "无特殊地形", "terrain_atk_add": 0, "terrain_spd_add": 0,
-		"terrain_cells": []},
+	{"name": "默认", "terrain_cells": []},
+	{"name": "铁锈", "terrain_cells": []},
+	{"name": "寒潮", "terrain_cells": []},
+	{"name": "禁区", "terrain_cells": []},
+	{"name": "丰饶", "terrain_cells": []},
+	{"name": "水没", "terrain_cells": []},
 ]
 
 

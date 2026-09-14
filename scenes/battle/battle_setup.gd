@@ -58,27 +58,33 @@ func prepare() -> void:
 	spawn(Vector2i(0, 2), "red", D.card("金刚蜂王"))
 	s.push_log("对战开始：%s方先手 · %s方后手（初始费用 +2）" % [s.cn(order[0]), s.cn(order[1])])
 	s.push_log("牌组：初始手牌 %d 张 + 备卡 %d 张（a500 构筑 2）" % [s.hand[s.first_side].size(), s.deckl[s.first_side].size()])
-	# a500 对战准备 5 + 9：进入「准备」阶段调整初始手牌（一次性），由主按钮开始第一回合
+	# a500 对战准备 9：进入「准备」阶段，由主按钮开始第一回合
+	# 迭代005.1 人明确：**开局前无任何换牌/调整手牌机会**（手牌直接锁定，换牌机制已移除）→ 不再初始化换牌次数
 	s.current = s.first_side
 	s.armed_side = ""
-	s.exchange_left = {"green": D.EXCHANGE_MAX, "red": D.EXCHANGE_MAX}
 	s.phase = D.Phase.PREPARE
 	s.phase_changed.emit(s.phase)
-	s.push_log("对战准备：可调整初始手牌（每方 %d 次），点主按钮「开始对局」进入第一回合" % D.EXCHANGE_MAX)
+	s.push_log("对战准备：初始手牌已锁定（无换牌），点主按钮「开始对局」进入第一回合")
 	s.refresh()
 
 
 ## 抽取地图并写入特殊地形
+## 迭代005.1（人明确）：地形格由**地图素材自带**（制作时画在图上），游戏内不再绘制地形标签；
+##   地图池里 terrain_cells 暂为空 → 本局无地形数值影响，日志只播报地图名（细则到位后按数据填充）。
 func draw_map() -> void:
 	var s := state
 	var maps: Array = D.MAP_POOL
 	var m: Dictionary = maps[randi() % maps.size()]
 	s.map_name = str(m["name"])
 	s.terrain.clear()
-	for c in m["terrain_cells"]:
-		s.terrain[c] = {"id": m["terrain_id"], "name": m["terrain_name"],
-			"atk_add": int(m["terrain_atk_add"]), "spd_add": int(m["terrain_spd_add"])}
-	s.push_log("地图「%s」：特殊地形 %d 格「%s」（%s）" % [s.map_name, s.terrain.size(), m["terrain_name"], m["terrain_desc"]])
+	for c in (m.get("terrain_cells", []) as Array):
+		s.terrain[c] = {"id": m.get("terrain_id", ""), "name": m.get("terrain_name", ""),
+			"atk_add": int(m.get("terrain_atk_add", 0)), "spd_add": int(m.get("terrain_spd_add", 0))}
+	if s.terrain.is_empty():
+		s.push_log("地图「%s」：无特殊地形" % s.map_name)
+	else:
+		s.push_log("地图「%s」：特殊地形 %d 格「%s」（%s）" % [s.map_name, s.terrain.size(),
+			m.get("terrain_name", ""), m.get("terrain_desc", "")])
 
 
 ## 生成单位（a500 行动机会 3：部署当回合没有行动机会 —— acted/moved 置 true）

@@ -114,12 +114,8 @@ func render_highlights() -> void:
 				var cell := Vector2i(r, c)
 				if state.legal_place(cell):
 					_hl_node.add_child(_hl(cell, Color(1.0, 0.80, 0.30, 0.35)))
-	# 特殊地形：淡色底 + 图集图标（复用框架图集，不新建渲染文件）
-	for c in state.terrain:
-		_hl_node.add_child(_hl(c, Color(0.95, 0.80, 0.10, 0.14)))
-		_hl_node.add_child(D.atlas_icon(D.I_TERRAIN, 76.0,
-			D.cell_pos(c) + Vector2(D.CELL * 0.5, D.CELL * 0.5),
-			Color(0.38, 0.28, 0.04, 0.80)))
+	# 特殊地形：**不在游戏内额外绘制**（迭代005.1 人明确）——
+	# 地形表现在地图素材上（制作地图时直接画好），数据侧只影响数值与部署合法性。
 	# A5 程序需求：待确认目标 —— 叠加框架「地图格选中」素材 + 预计剩余血量（扩展 card-system 素材，不重做）
 	if state.pending_kind != "" and D.in_map(state.pending_cell):
 		var pcell: Vector2i = state.pending_cell

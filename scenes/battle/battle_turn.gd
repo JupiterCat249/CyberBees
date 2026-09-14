@@ -9,7 +9,8 @@ extends RefCounted
 ##   回合数以「先手方再次开始回合」为界（先手方随机，不可写死绿方）；
 ##   回合结束补手牌至 4 张；超过 12 回合按蜂王生命比较；第 4 回合起允许主动投降（需二次确认）。
 ##
-## 主按钮（advance_phase）优先级：投降确认 > 准备阶段(换牌/开始对局) > 已持牌(弃卡) > 待确认 > 阶段推进
+## 主按钮（advance_phase）优先级：投降确认 > 准备阶段(开始对局) > 已持牌(弃卡) > 待确认 > 阶段推进
+## 注：迭代005.1 起准备阶段不再有「换牌」分支（换牌机制已移除）。
 ## ============================================================
 
 const D := preload("res://scenes/battle/battle_defs.gd")
@@ -28,10 +29,8 @@ func advance_phase() -> void:
 		surrender()
 		return
 	if s.phase == D.Phase.PREPARE:
-		if s.can_exchange():
-			s.exchange_hand()
-		else:
-			s.start_battle()
+		# 迭代005.1：准备阶段只有「开始对局」一个动作（换牌已移除）
+		s.start_battle()
 		return
 	if s.armed_card >= 0:
 		s.discard_armed()

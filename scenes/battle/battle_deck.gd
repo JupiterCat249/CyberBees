@@ -1,6 +1,8 @@
 extends RefCounted
 ## ============================================================
-## BattleDeck —— 手牌 / 牌库 / 起手与换牌 块（可维护性重构 第3块）
+## BattleDeck —— 手牌 / 牌库 / 起手 块（可维护性重构 第3块）
+##   职责：抽牌、弃卡过牌、备卡拆分、开始对局。
+##   注：**换牌（exchange_hand / can_exchange）已于迭代005.1 整体移除**（人明确：开局前无换牌机会）。
 ##
 ## 从 battle_state.gd 搬出：select_hand / draw_one / discard_armed / can_discard /
 ##                          exchange_hand / can_exchange / start_battle
@@ -19,20 +21,16 @@ const D := preload("res://scenes/battle/battle_defs.gd")
 var state: Node = null
 
 
-## 点击手牌：准备阶段=仅选中（供换牌）；行动阶段=持牌进入「部署」或「指令」目标选择
+## 点击手牌：准备阶段=不可选（开局前无换牌机会）；行动阶段=持牌进入「部署」或「指令」目标选择
 func select_hand(index: int) -> void:
 	var s := state
 	if s.winner != "":
 		return
 	if index < 0 or index >= s.hand[s.current].size():
 		return
-	# 准备阶段（a500 对战准备 5）：只做选中，供「换牌」使用，不进入部署/指令模式
+	# 准备阶段（迭代005.1 人明确）：**开局前无任何换牌/调整手牌机会**，手牌一经发出即锁定；
+	# 此阶段点击手牌不选中、不进入任何模式（换牌机制已整体移除）
 	if s.phase == D.Phase.PREPARE:
-		s.armed_side = s.current
-		s.armed_card = index
-		s.mode = D.Mode.IDLE
-		s.selection_changed.emit()
-		s.refresh()
 		return
 	var c: Dictionary = s.hand[s.current][index]
 	var empty_cells: Array[Vector2i] = []      # 跨对象赋值必须显式带类型（无类型 [] 不能赋给 Array[Vector2i]）
@@ -102,42 +100,9 @@ func can_discard() -> bool:
 	return s.winner == "" and s.armed_card >= 0 and s.armed_card < s.hand[s.current].size()
 
 
-## 换牌 / 起手调度（a500 对战准备 5；决策一：准备阶段**一次性**，每方 1 次）
-func exchange_hand() -> void:
-	var s := state
-	if s.phase != D.Phase.PREPARE or s.armed_card < 0:
-		return
-	var side: String = s.side_of_armed()
-	if side == "" or s.exchange_left[side] <= 0:
-		s.push_log("%s方 已无换牌次数（对战准备阶段每方 %d 次）" % [s.cn(side), D.EXCHANGE_MAX])
-		s.clear_sel()
-		s.refresh()
-		return
-	if s.armed_card >= s.hand[side].size():
-		s.clear_sel()
-		s.refresh()
-		return
-	var c: Dictionary = s.hand[side][s.armed_card]
-	if s.deckl[side].is_empty():
-		s.push_log("%s方 备卡已空，无法换牌" % s.cn(side))
-		s.clear_sel()
-		s.refresh()
-		return
-	s.exchange_left[side] -= 1
-	s.grave[side].append(c)
-	s.hand[side].remove_at(s.armed_card)
-	draw_one(side)
-	s.push_log("%s方 调整初始手牌：%s 回墓地 → 备卡补入（剩余 %d 次）" % [s.cn(side), c["name"], s.exchange_left[side]])
-	s.clear_sel()
-	s.refresh()
-
-
-func can_exchange() -> bool:
-	var s := state
-	if s.phase != D.Phase.PREPARE:
-		return false
-	var side: String = s.side_of_armed()
-	return side != "" and s.armed_card >= 0 and s.exchange_left[side] > 0
+## 换牌 / 起手调度 —— **迭代005.1 已整体移除**（人明确：开局前不应有任何换牌机会）。
+## 原实现（a500 对战准备 5 的一次性换牌 + 每方 1 次上限）见 git 历史 `iter/005` 之前版本。
+## 现保留的空号仅用于回退定位；不要再在此处新增换牌逻辑。
 
 
 ## 开始对局（a500 对战准备 9）：先结算被动技能（【机场】设定部署范围），再进入第一回合
