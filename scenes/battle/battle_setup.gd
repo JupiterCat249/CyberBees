@@ -51,12 +51,15 @@ func prepare() -> void:
 	s.first_side = order[0]
 	s.cost["green"] = 0
 	s.cost["red"] = 0
+	s.push_log("对战开始：%s方先手 · %s方后手" % [s.cn(order[0]), s.cn(order[1])])
+	# 迭代005.2（人明确）：**后手的额外回费只在开局发生这一次**，此后双方都只在自己的回合回费。
+	# 故在此「发放时」把一次性性质与前后数值一并写进日志，避免玩家误以为是"每回合多给"的机制。
 	s.cost[order[1]] = D.SECOND_PLAYER_BONUS
+	s.push_log("后手开局额外回费：%s方 0 → %d（**仅此一次**，此后按回合正常回费；且不占用先手的回合）" % [s.cn(order[1]), s.cost[order[1]]])
 	# a500 对战准备 5：抽取对战地图；提前部署蜂王并载入手牌
 	draw_map()
 	spawn(Vector2i(3, 1), "green", D.card("金刚蜂王"))
 	spawn(Vector2i(0, 2), "red", D.card("金刚蜂王"))
-	s.push_log("对战开始：%s方先手 · %s方后手（初始费用 +2）" % [s.cn(order[0]), s.cn(order[1])])
 	s.push_log("牌组：初始手牌 %d 张 + 备卡 %d 张（a500 构筑 2）" % [s.hand[s.first_side].size(), s.deckl[s.first_side].size()])
 	# a500 对战准备 9：进入「准备」阶段，由主按钮开始第一回合
 	# 迭代005.1 人明确：**开局前无任何换牌/调整手牌机会**（手牌直接锁定，换牌机制已移除）→ 不再初始化换牌次数

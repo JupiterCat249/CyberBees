@@ -49,11 +49,18 @@ func advance_phase() -> void:
 
 
 ## 回合开始（回费 → 场地 → 停在部署阶段等玩家操作）
+## 迭代005.2（人明确的回费口径）：
+##   ① **只有当前行动方回费**（后手在**先手的回合**不回费，先手在后手的回合也不回费）；
+##   ② 后手的「开局额外回费 +2」是**一次性**的（在 BattleSetup.prepare 发放），此后不再有任何额外机制回费；
+##   ③ 本函数只对 `side`（= 本回合行动方）加费 —— 这是上述口径的唯一实现入口，勿改为"双方都加"。
 func begin_turn(side: String) -> void:
 	var s := state
 	s.current = side
 	s.turn_started.emit(side, s.round_no)
 	s.push_log("—— 第 %d 回合 · %s方 ——" % [s.round_no, s.cn(side)])
+	# 后手的第一回合：点明"额外回费已经在开局给过、本回合是正常回费"，避免被当成每回合额外加成
+	if s.round_no == 1 and side != s.first_side:
+		s.push_log("（后手首回合：开局额外回费已在开局结算，本回合为正常回费）")
 	s.phase = D.Phase.REFUND
 	s.phase_changed.emit(s.phase)
 	var gain: int = D.BASE_REFUND + (D.ROUND7_EXTRA if s.round_no >= 7 else 0)
