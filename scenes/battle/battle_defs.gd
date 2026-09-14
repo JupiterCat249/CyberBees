@@ -443,6 +443,10 @@ static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Nod
 	node.set("cost", int(d["cost"]))
 	node.set("art_fit", 1)
 	node.set("art_zoom", 1.0 if use_icon else 1.05)
+	# 迭代008（人明确）：**立绘铺满整卡宽** —— 框架默认只把立绘画在中央 170px 条带里，
+	# 两侧各 40px 的"信息栏"永远不画立绘 → 图标被压成窄条、左右露出一对竖条（人反馈的"两侧信息栏还在"）。
+	# full_art=1 让立绘铺满整宽，配合下方"侧栏底色透明 + 贴图槽透明"，真正做到"只剩费用 + 图标"。
+	node.set("full_art", 1)
 	# 关闭四角（框架渲染以 -1 为"不显示"）
 	node.set("stat_l1", -1)
 	node.set("stat_l2", -1)
