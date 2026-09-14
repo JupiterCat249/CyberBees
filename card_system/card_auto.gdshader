@@ -41,6 +41,7 @@ uniform int has_art = 0;   // 0=未设立绘（只画条纹底）
 uniform int tag_mode = 0;  // 0=内置类别图标  1=自定义 tag_tex
 uniform int art_fit = 1;   // 1=裁剪铺满(cover，立绘撑满中央区)  0=完整显示(contain)
 uniform float art_zoom = 1.0; // 立绘放大倍率（>1 裁掉素材边缘留白，角色占牌面更大）
+uniform int full_art = 0;     // 1=立绘铺满整卡宽（精简图标卡用）；0=只铺中央条带（默认，保持既有观感）
 
 // ---------------- 数字（-1 = 不显示，>=10 自动两位） ----------------
 uniform int cost_num = 6;
@@ -196,7 +197,9 @@ void fragment() {
 			col = mix(sbase, sline, s);
 		}
 		if (has_art == 1) {
-			vec4 a = sample_fit(art_tex, art_size, px, vec4(COL_W, 0.0, COL_RX - COL_W, W), art_fit, art_zoom);
+			// full_art=1 → 立绘铺满**整卡宽**（供"只显示费用+图标"的精简卡用；默认 0 = 只铺中央条带）
+			vec4 art_rect = (full_art == 1) ? vec4(0.0, 0.0, W, W) : vec4(COL_W, 0.0, COL_RX - COL_W, W);
+			vec4 a = sample_fit(art_tex, art_size, px, art_rect, art_fit, art_zoom);
 			col = mix(col, a.rgb, a.a);
 		}
 	} else {

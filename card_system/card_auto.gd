@@ -33,6 +33,7 @@ extends Node2D
 @export var tag_texture: Texture2D: set = set_tag_texture  # 自定义类别图标（优先于 icon_tag）
 @export_range(0, 1) var art_fit := 1: set = set_art_fit    # 1=裁剪铺满（立绘撑满中央区，默认） 0=完整显示
 @export_range(1.0, 2.0, 0.01) var art_zoom := 1.0: set = set_art_zoom  # 立绘放大（裁掉素材边缘留白，角色更大）
+@export_range(0, 1) var full_art := 0: set = set_full_art              # 1=立绘铺满整卡宽（精简图标卡用）
 
 # ---------------- 配色 ----------------
 @export_group("配色")
@@ -128,6 +129,11 @@ func set_art_zoom(v: float) -> void:
 	art_zoom = v
 	_sp("art_zoom", v)
 
+
+func set_full_art(v: int) -> void:
+	full_art = v
+	_sp("full_art", v)
+
 func set_col_base(v: Color) -> void:
 	col_base = v
 	_sp("col_base", v)
@@ -195,6 +201,7 @@ func _apply_all() -> void:
 	set_tag_texture(tag_texture)
 	set_art_fit(art_fit)
 	set_art_zoom(art_zoom)
+	set_full_art(full_art)
 	set_col_base(col_base)
 	set_col_cell(col_cell)
 	set_col_band(col_band)
