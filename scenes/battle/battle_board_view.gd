@@ -77,25 +77,12 @@ func render_units() -> void:
 		var u: Dictionary = state.units[id]
 		var node := D.make_card(u["card"], 1.0)
 		node.position = D.cell_pos(u["cell"])
-		# 迭代007（卡面按《卡牌属性布局》扩到右栏三行）：
-		#   右栏第1行 = **剩余生命值**（实时 hp）· 第2行 = 生命值上限 · 第3行 = 射程
-		#   类型格内的角标（stat_r0）也显示剩余生命
-		var hp_now: int = int(u["hp"])
-		var hp_max: int = int(state.combat.final_hp_max(id))
-		node.set("stat_r0", hp_now)
-		node.set("stat_r1", hp_now)
-		node.set("stat_r2", hp_max)
-		node.set("icon_r1", D.I_HP)
-		node.set("icon_r2", D.I_HP)
+		node.set("stat_r1", int(u["hp"]))
 		# 攻击/速度/射程也必须用**实时值**（含 buff 与地形加成）——
 		# 此前只覆盖了血量，导致支援「攻击+1」等效果在卡面上看不出来
 		node.set("stat_l1", int(state.final_atk(id)))
 		node.set("stat_l2", int(state.final_spd(id)))
-		node.set("stat_r3", int(state.final_range(id)))
-		# 迭代007：顶部**效果轴** —— 卡面直接展示当前减益/增益（护甲/力场等按上限截断，图集仅 8 图标）
-		var eff: Dictionary = u["effects"]
-		node.set("icon_debuff", D.I_HP if eff.has("burn") else -1)
-		node.set("icon_buff", D.I_HP if eff.size() > 0 and not eff.has("burn") else -1)
+		node.set("stat_r2", int(state.final_range(id)))
 		if u["side"] == "red":
 			node.set("col_base", Color(0.88, 0.74, 0.74))
 			node.set("col_center", Color(0.94, 0.86, 0.86))

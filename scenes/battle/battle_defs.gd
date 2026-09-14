@@ -490,17 +490,13 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 		node.set("stat_l2", -1)
 		node.set("stat_r1", -1)
 		node.set("stat_r2", -1)
-		node.set("stat_r0", -1)
-		node.set("stat_r3", -1)
 		node.set("icon_l1", -1)
 		node.set("icon_l2", -1)
 		node.set("icon_r1", -1)
 		node.set("icon_r2", -1)
-		node.set("icon_r3", -1)
 		node.set("icon_tag", -1)                     # 类别角标也不显示
 		node.set("col_cell", Color(1, 1, 1, 1))      # 空白格底 → 与卡底同色（视觉上两侧栏消失）
 		node.set("col_band", Color(1, 1, 1, 1))      # 横带/分隔条同样抹平
-		node.set("col_band_bot", Color(1, 1, 1, 1))
 		return node
 	match d["kind"]:
 		"queen":
@@ -511,29 +507,24 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 			node.set("icon_tag", I_BUILDING)
 		_:
 			node.set("icon_tag", I_COMMAND)
-	# 迭代007：底带淡绿 + 中央顶部高光条（对齐《卡牌属性布局》的卡面基底；高光只在有立绘时出现）
-	node.set("col_band_bot", Color(0.62, 0.72, 0.66, 1.0))
-	node.set("col_hl", Color(0.62, 0.76, 0.68, 0.55 if use_icon else 0.0))
-	# 迭代007：右栏按设计扩到三行 —— 第1行=剩余生命、第2行=生命、第3行=射程；类型格内加"剩余生命"角标
-	node.set("icon_l1", I_ATK if int(d.get("atk", 0)) > 0 else -1)
-	node.set("stat_l1", int(d.get("atk", -1)))
-	node.set("icon_l2", I_SPD if int(d.get("spd", 0)) > 0 else -1)
-	node.set("stat_l2", int(d.get("spd", -1)))
-	node.set("icon_r1", I_HP if str(d["kind"]) != "command" and str(d["kind"]) != "command_x" else -1)
-	node.set("stat_r1", int(d.get("hp", -1)))
-	node.set("icon_r2", I_HP if str(d["kind"]) != "command" and str(d["kind"]) != "command_x" else -1)
-	node.set("stat_r2", int(d.get("hp", -1)))
-	node.set("icon_r3", I_RANGE if int(d.get("range", 0)) > 0 else -1)
-	node.set("stat_r3", int(d.get("range", -1)))
-	node.set("stat_r0", int(d.get("hp", -1)) if (str(d["kind"]) != "command" and str(d["kind"]) != "command_x") else -1)
 	if d["kind"] == "command" or d["kind"] == "command_x":
-		# 指令卡无攻/速：左栏第1行改示"伤害/治疗"，第3行（右栏）示射程，第1、2行留空
-		node.set("icon_l1", I_HP if d.has("heal") else I_ATK)
 		node.set("stat_l1", int(d["heal"]) if d.has("heal") else int(d.get("dmg", 0)))
-		node.set("icon_r1", -1)
+		node.set("icon_l1", I_HP if d.has("heal") else I_ATK)
+		node.set("stat_l2", -1)
+		node.set("icon_l2", -1)
 		node.set("stat_r1", -1)
-		node.set("icon_r2", -1)
-		node.set("stat_r2", -1)
+		node.set("icon_r1", -1)
+		node.set("stat_r2", int(d.get("range", 0)))
+		node.set("icon_r2", I_RANGE)
+	else:
+		node.set("stat_l1", int(d.get("atk", -1)))
+		node.set("icon_l1", I_ATK if int(d.get("atk", 0)) > 0 else -1)
+		node.set("stat_l2", int(d.get("spd", -1)))
+		node.set("icon_l2", I_SPD if int(d.get("spd", 0)) > 0 else -1)
+		node.set("stat_r1", int(d.get("hp", -1)))
+		node.set("icon_r1", I_HP)
+		node.set("stat_r2", int(d.get("range", -1)))
+		node.set("icon_r2", I_RANGE if int(d.get("range", 0)) > 0 else -1)
 	if name_pos.y >= 0.0:
 		node.add_child(make_name_label(str(d["name"]), name_pos))
 	return node
