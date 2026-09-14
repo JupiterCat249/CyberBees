@@ -54,9 +54,16 @@ func render_detail() -> void:
 	var d: Dictionary = state.detail_card_live()
 	if d.is_empty():
 		return
-	var node := D.make_card(d, D.DETAIL_SCALE)
+	# 迭代006（人要求）：详情块改用「图标」素材作立绘（复用框架卡牌节点；无图标 → 自动回退旧卡面）
+	var ic: String = D.icon_path(str(d["name"]))
+	if ic == "":
+		ic = D.icon_path(str(d.get("art", "")))
+	var node := D.make_card(d, D.DETAIL_SCALE, ic)
 	node.position = D.DETAIL_POS
 	_detail_node.add_child(node)
+	# 卡名文字：放在卡面上方的留白带（技能区 y750 与卡面视觉上沿 y758 之间偏上，避免压住图标）
+	_detail_node.add_child(D.make_name_label(str(d["name"]), D.DETAIL_SCALE,
+		D.DETAIL_POS + Vector2(120.0, -154.0), 230.0, 24))
 
 
 # ---------------- ② 技能详情显示区 ----------------

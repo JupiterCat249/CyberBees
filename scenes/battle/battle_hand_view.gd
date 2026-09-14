@@ -44,7 +44,11 @@ func render_hand(side: String) -> void:
 	var base: Vector2 = D.PANEL_L if side == "green" else D.PANEL_R
 	var cards: Array = state.hand[side]
 	for i in cards.size():
-		var node := D.make_card(cards[i], D.HAND_CARD_SCALE)
+		# 迭代006（人要求）：手牌改用「图标」素材作立绘（复用框架卡牌节点；无图标素材 → 自动回退旧卡面）
+		var ic: String = D.icon_path(str(cards[i]["name"]))
+		if ic == "":
+			ic = D.icon_path(str(cards[i].get("art", "")))
+		var node := D.make_card(cards[i], D.HAND_CARD_SCALE, ic)
 		var col := i % 2
 		@warning_ignore("integer_division")
 		var rowi := i / 2
@@ -52,6 +56,11 @@ func render_hand(side: String) -> void:
 			D.HAND_CARD_PAD + col * D.HAND_CARD_STEP,
 			D.HAND_CARD_PAD + rowi * D.HAND_CARD_STEP)
 		_cards_node.add_child(node)
+		# 卡名文字：贴在每格**面板下沿留白**里（卡面视觉高 114px，格高 190px，故 118~145 是空带）
+		var nm := D.make_name_label(str(cards[i]["name"]), D.HAND_CARD_SCALE,
+			node.position + Vector2(95.0, 133.0), 176.0, 20)
+		_cards_node.add_child(nm)
+		_hand_nodes[side].append(nm)
 		# A5：待放置/待使用的手牌显示框架「卡牌x-选中」边框（扩展既有素材）
 		var armed_here: bool = state.armed_card == i and (state.armed_side == side or (state.armed_side == "" and side == state.current))
 		if armed_here:

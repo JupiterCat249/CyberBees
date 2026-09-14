@@ -367,15 +367,63 @@ static func in_map(cell: Vector2i) -> bool:
 const CARD_RES := preload("res://card-system/card_system/card_auto.tscn")
 const ATLAS_RES := preload("res://card-system/card_system/card_atlas.png")
 
+## ============================================================
+## 卡牌图标素材（迭代006 · 人要求：基于 card-system 卡牌节点，复用「图标」素材优化 UI）
+##   来源：`电子蜂A5策划案/素材/zip原图/图标<类型码>-<卡名>.png`（400×400 RGBA）
+##   本侧副本：`res://assets/card_icons/`（**不改 card-system 的 art 目录** —— 边界 T11）
+## ============================================================
+const ICON_DIR := "res://assets/card_icons/"
+
+## 卡名 → 图标文件（多一层 art 名映射：同一图标素材被多张卡借用的情形）
+## 现状：卡池 22 张中只有 6 张（金刚蜂王/叶蜂/泥蜂/熊蜂/蜂巢/蜂巢III）有同名图标；
+##   其余卡沿用"借用图"（如 补给/回收/轮换 → 借用 卡牌d2-治疗），此处按 art 名回退到对应图标，
+##   使**手牌图标与卡面立绘一致**；未来正式素材到位后只需补 ICON_MAP 的卡名条目。
+const ICON_MAP := {
+	"金刚蜂王": "icon-金刚蜂王.png",
+	"叶蜂": "icon-叶蜂.png",
+	"泥蜂": "icon-泥蜂.png",
+	"熊蜂": "icon-熊蜂.png",
+	"蜂巢": "icon-蜂巢.png",
+	"蜂巢III": "icon-蜂巢III.png",
+	"卡牌a-金刚蜂王": "icon-金刚蜂王.png",
+	"卡牌c1-叶蜂": "icon-叶蜂.png",
+	"卡牌c1-泥蜂": "icon-泥蜂.png",
+	"卡牌c2-熊蜂": "icon-熊蜂.png",
+	"卡牌b1-蜂巢": "icon-蜂巢.png",
+	"卡牌b1-蜂巢III": "icon-蜂巢III.png",
+	"卡牌d1-电击": "icon-电击.png",
+	"卡牌d1-电击III": "icon-电击III.png",
+	"卡牌d1-巡航导弹": "icon-巡航导弹.png",
+	"卡牌d2-治疗": "icon-治疗.png",
+}
+
+
+## 取该卡的图标贴图路径（没有对应素材 → 返回 ""，调用方回退到旧卡面立绘）
+static func icon_path(name_or_art: String) -> String:
+	var f := str(ICON_MAP.get(name_or_art, ""))
+	if f == "":
+		return ""
+	var p := ICON_DIR + f
+	return p if ResourceLoader.exists(p) else ""
+
 
 ## 实例化一张框架卡牌（复用 card_auto.tscn）；按类型设置角标与四维属性
-static func make_card(d: Dictionary, sc: float) -> Node2D:
+## icon_tex_path 非空 → 用「图标」素材作中央立绘（迭代006）；name_pos.y >= 0 → 卡面加一行卡名文字
+static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos := Vector2(-1, -1)) -> Node2D:
 	var node := CARD_RES.instantiate()
 	node.scale = Vector2(sc, sc)
-	node.set("art", load(ART_DIR + str(d["art"]) + ".png"))
+	var tex: Texture2D = null
+	var use_icon := str(icon_tex_path) != ""
+	if use_icon:
+		tex = load(str(icon_tex_path)) as Texture2D
+	if tex == null:
+		tex = load(ART_DIR + str(d["art"]) + ".png") as Texture2D      # 无图标素材 → 回退旧卡面立绘
+		use_icon = false
+	node.set("art", tex)
 	node.set("cost", int(d["cost"]))
 	node.set("art_fit", 1)
-	node.set("art_zoom", 1.05)
+	# 图标是"画好留白"的方形素材：用 zoom 1.0 保留全部内容；旧卡面沿用 1.05 的裁边观感
+	node.set("art_zoom", 1.0 if use_icon else 1.05)
 	match d["kind"]:
 		"queen":
 			node.set("icon_tag", I_QUEEN)
@@ -403,7 +451,36 @@ static func make_card(d: Dictionary, sc: float) -> Node2D:
 		node.set("icon_r1", I_HP)
 		node.set("stat_r2", int(d.get("range", -1)))
 		node.set("icon_r2", I_RANGE if int(d.get("range", 0)) > 0 else -1)
+	if name_pos.y >= 0.0:
+		node.add_child(make_name_label(str(d["name"]), sc, name_pos))
 	return node
+
+
+## 卡名文字（迭代006）：深底浅字；`pos` 为**卡面设计坐标（250×250 空间）**，内部补偿节点缩放
+## 位置由调用方按版面留白决定（手牌：卡面下沿外的面板留白；详情块：卡面上方留白带）
+static func make_name_label(nm: String, sc: float, pos: Vector2, box_w := 240.0, fs := 22) -> Node2D:
+	var root := Node2D.new()
+	root.name = "NamePlate"
+	root.position = pos / maxf(sc, 0.01)
+	var bg := ColorRect.new()
+	bg.name = "NameBg"
+	bg.color = Color(0.08, 0.08, 0.08, 0.74)
+	bg.size = Vector2(box_w, float(fs) + 10.0)
+	bg.position = Vector2(-box_w * 0.5, -(float(fs) + 10.0) * 0.5)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE          # 绝不拦截点击
+	root.add_child(bg)
+	var l := Label.new()
+	l.name = "NameText"
+	l.text = nm
+	l.size = Vector2(box_w, float(fs) + 10.0)
+	l.position = Vector2(-box_w * 0.5, -(float(fs) + 10.0) * 0.5)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.add_theme_font_size_override("font_size", fs)
+	l.add_theme_color_override("font_color", Color(0.96, 0.96, 0.96))
+	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(l)
+	return root
 
 
 ## 用框架图集的 0-9 字形拼出数字（与 card_auto.gdshader 同一套 DIGW/字形区映射）
