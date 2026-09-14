@@ -54,15 +54,14 @@ func render_detail() -> void:
 	var d: Dictionary = state.detail_card_live()
 	if d.is_empty():
 		return
-	# 迭代006（人要求）：详情块改用「图标」素材作立绘（复用框架卡牌节点；无图标 → 自动回退旧卡面）
+	# 迭代009（人拍板「详情区重做」）：详情块改用**游戏侧 CardFace 图块**（图标满幅 + 左上费用）
 	var ic: String = D.icon_path(str(d["name"]))
 	if ic == "":
 		ic = D.icon_path(str(d.get("art", "")))
-	# 迭代006 修正（人明确）：详情卡同样**精简** —— 只留左上角费用 + 图标，两侧信息栏不显示
-	var node := D.make_bare_card(d, D.DETAIL_SCALE, ic)
+	var node := D.tile_node(d, D.DETAIL_SCALE, ic)
 	node.position = D.DETAIL_POS
 	_detail_node.add_child(node)
-	# 注：详情卡上的卡名已按要求移除 —— 卡名改在**上方技能框**顶部显示（见 update_skill_box）
+	# 注：卡名仍在**上方技能框**顶部显示（见 update_skill_box），不回到卡面
 
 
 # ---------------- ② 技能详情显示区 ----------------

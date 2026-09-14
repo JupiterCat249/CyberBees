@@ -49,12 +49,13 @@ func render_hand(side: String) -> void:
 	var base: Vector2 = D.PANEL_L if side == "green" else D.PANEL_R
 	var cards: Array = state.hand[side]
 	for i in cards.size():
-		# 迭代006（人要求）：手牌改用「图标」素材作立绘（复用框架卡牌节点；无图标素材 → 自动回退旧卡面）
+		# 迭代009（人拍板「手牌区重做」）：手牌改用**游戏侧 CardFace 图块**（图标满幅 + 左上费用），
+		# 不再使用框架卡 —— 框架卡的左右信息栏/横带会被看成竖条，与满幅图标素材语义冲突。
 		var ic: String = D.icon_path(str(cards[i]["name"]))
 		if ic == "":
 			ic = D.icon_path(str(cards[i].get("art", "")))
-		# 迭代006 修正（人明确）：手牌**精简卡面** —— 只留左上角费用 + 图标，两侧信息栏与卡名都不显示
-		var node := D.make_bare_card(cards[i], D.HAND_CARD_SCALE, ic)
+		var armed_here: bool = state.armed_card == i and (state.armed_side == side or (state.armed_side == "" and side == state.current))
+		var node := D.tile_node(cards[i], D.HAND_CARD_SCALE, ic, armed_here)
 		var col := i % 2
 		@warning_ignore("integer_division")
 		var rowi := i / 2
@@ -62,21 +63,8 @@ func render_hand(side: String) -> void:
 			D.HAND_CARD_PAD + col * D.HAND_CARD_STEP,
 			D.HAND_CARD_PAD + rowi * D.HAND_CARD_STEP)
 		_cards_node.add_child(node)
-		# 注：手牌上的**卡名条已按要求移除**（卡名统一在左下技能框顶部显示）
-		# A5：待放置/待使用的手牌显示框架「卡牌x-选中」边框（扩展既有素材）
-		var armed_here: bool = state.armed_card == i and (state.armed_side == side or (state.armed_side == "" and side == state.current))
-		if armed_here:
-			var tex := load(D.CARD_SELECTED_PATH) as Texture2D
-			if tex != null:
-				var fr := Sprite2D.new()
-				fr.texture = tex
-				fr.centered = false
-				fr.position = node.position
-				var sc := (D.CELL * D.HAND_CARD_SCALE) / float(tex.get_width())
-				fr.scale = Vector2(sc, sc)
-				_cards_node.add_child(fr)
-				_hand_nodes[side].append(fr)
 		_hand_nodes[side].append(node)
+		# 注：手牌上的**卡名条已按要求移除**（卡名统一在左下技能框顶部显示）
 
 
 # ---------------- 费用徽章数字 ----------------

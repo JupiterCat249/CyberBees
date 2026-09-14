@@ -29,7 +29,7 @@ const SBTN_DX := 104.0
 const SBTN_HIT := 44.0
 
 ## 手牌卡：面板 400x400 内 2x2（卡设计尺寸 250 -> 0.76 = 190px）
-const HAND_CARD_SCALE := 0.95   ## 迭代008：卡面填满手牌格（0.76 时卡只有 114px，格子 190px → 左右各空 30px 露出底色的“竖条”）
+const HAND_CARD_SCALE := 0.85   ## 迭代009：CardFace 图块尺寸（250×0.85=212.5 < 面板内宽 240，不出框）
 const HAND_CARD_STEP := 195.0
 const HAND_CARD_PAD := 5.0
 ## 迭代006：手牌卡名条（贴每格下沿留白；宽度需 ≤ 面板宽 400 - 2×PAD，避免出面板被裁）
@@ -482,6 +482,78 @@ static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Nod
 	return node
 
 
+## ============================================================
+## 迭代009：**CardFace 图块**（人拍板「手牌与详情区重做」→ 方案 A：游戏侧自建组件）
+##   手牌/详情**不再用框架卡**：框架卡是"结构化卡面"（左右信息栏 + 中央立绘 + 类别格 + 横带），
+##   其格子列/横带会被看成竖条；而「图标」素材是**满幅图块**，两者语义冲突 → 竖条反复出现。
+##   本组件只做三件事：① 满幅图标 ② 左上角费用（复用框架图集字形 + 现有字体）③ 选中高亮。
+##   框架 `card-system` 恢复**只读**（T11）；场上单位仍用框架卡（人已确认恢复）。
+## ============================================================
+const TILE_SIZE := 250.0                       ## 图块设计尺寸（与框架卡同为 250，便于沿用现有排布常量）
+const TILE_COST_BOX := Vector2(68.0, 56.0)     ## 费用角标块尺寸
+const TILE_COST_BG := Color(0.16, 0.16, 0.16, 0.92)
+const TILE_COST_NUM := Color(0.96, 0.62, 0.04) ## 与框架 col_cost_num 同色
+const TILE_SEL := Color(1.0, 0.86, 0.36, 1.0)  ## 选中高亮
+
+
+## 生成一张「图标图块」；icon_tex_path 为空 → 回退旧卡面立绘（保证不空白）
+static func tile_node(d: Dictionary, sc: float, icon_tex_path := "", sel := false) -> Node2D:
+	var root := Node2D.new()
+	root.name = "CardFace"
+	root.scale = Vector2(sc, sc)
+	var tex: Texture2D = null
+	if str(icon_tex_path) != "":
+		tex = load(str(icon_tex_path)) as Texture2D
+	var use_icon := tex != null
+	if tex == null:
+		tex = load(ART_DIR + str(d["art"]) + ".png") as Texture2D     # 无图标素材 → 旧卡面兜底
+	if tex != null:
+		var sp := Sprite2D.new()
+		sp.name = "Icon"
+		sp.texture = tex
+		sp.centered = false
+		# 满幅铺满图块：按 cover 等比缩放并居中（保证不留边）
+		var k: float = maxf(TILE_SIZE / float(tex.get_width()), TILE_SIZE / float(tex.get_height()))
+		sp.scale = Vector2(k, k)
+		sp.position = Vector2(
+			(TILE_SIZE - float(tex.get_width()) * k) * 0.5,
+			(TILE_SIZE - float(tex.get_height()) * k) * 0.5)
+		root.add_child(sp)
+	# 左上角费用：深底块 + 图集字形（复用框架图集与既有字体）
+	var cost := int(d.get("cost", -1))
+	if cost >= 0:
+		var box := ColorRect.new()
+		box.name = "CostBox"
+		box.color = TILE_COST_BG
+		box.size = TILE_COST_BOX
+		box.position = Vector2(6.0, 6.0)
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(box)
+		var num := digit_node(cost, 34.0, TILE_COST_NUM,
+			Vector2(6.0 + TILE_COST_BOX.x * 0.5, 6.0 + TILE_COST_BOX.y * 0.5))
+		num.name = "CostNum"
+		root.add_child(num)
+	# 选中高亮：四边描边（不遮素材）
+	if sel:
+		var col := ColorRect.new()
+		col.name = "SelHolder"
+		col.color = Color(0, 0, 0, 0)
+		col.size = Vector2(TILE_SIZE, TILE_SIZE)
+		col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(col)
+		var w := 5.0
+		for r in [Rect2(0, 0, TILE_SIZE, w), Rect2(0, TILE_SIZE - w, TILE_SIZE, w),
+				Rect2(0, 0, w, TILE_SIZE), Rect2(TILE_SIZE - w, 0, w, TILE_SIZE)]:
+			var bar := ColorRect.new()
+			bar.color = TILE_SEL
+			bar.size = r.size
+			bar.position = r.position
+			bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			root.add_child(bar)
+	root.set_meta("card_face", "icon" if use_icon else "legacy")
+	return root
+
+
 ## 实例化一张框架卡牌（复用 card_auto.tscn）
 ## icon_tex_path 非空 → 用「图标」素材作中央立绘（迭代006）
 ## bare=true → **精简卡面（迭代006 修正，人明确）**：只显示左上角费用，隐藏左右两侧信息栏
@@ -491,17 +563,17 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 	var node := CARD_RES.instantiate()
 	node.scale = Vector2(sc, sc)
 	var tex: Texture2D = null
-	var use_icon := str(icon_tex_path) != ""
-	if use_icon:
+	var use_icon := false
+	if str(icon_tex_path) != "":
 		tex = load(str(icon_tex_path)) as Texture2D
+		use_icon = tex != null
 	if tex == null:
 		tex = load(ART_DIR + str(d["art"]) + ".png") as Texture2D      # 无图标素材 → 回退旧卡面立绘
-		use_icon = false
 	node.set("art", tex)
 	node.set("cost", int(d["cost"]))
+	# 图标素材（去边满幅）→ fit=1(cover) 铺满中央区、zoom=1.0；旧卡面兜底 → 保留 1.05 裁边观感
 	node.set("art_fit", 1)
-	# 图标是"画好留白"的方形素材：用 zoom 1.0 保留全部内容；旧卡面沿用 1.05 的裁边观感
-	node.set("art_zoom", 1.0)   # 迭代008：图标素材已去透明边 → 1.0 即可（旧卡面兜底也保持 1.0，避免裁切）
+	node.set("art_zoom", 1.0 if use_icon else 1.05)
 	if bare:
 		# 精简卡面：四角数值/图标全部隐藏（渲染以 -1 为"不显示"），并抹掉空白格底避免出现方格
 		node.set("stat_l1", -1)
