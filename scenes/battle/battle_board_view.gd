@@ -77,29 +77,25 @@ func render_units() -> void:
 		var u: Dictionary = state.units[id]
 		var node := D.make_card(u["card"], 1.0)
 		node.position = D.cell_pos(u["cell"])
-		# 迭代007（卡面按《卡牌属性布局》重排）——**场上单位卡**的数值语义：
-		#   左栏：攻击力（实时含 buff/地形）· 移动速度（实时）
-		#   右栏：生命值上限 · 射程/效果范围（实时）
-		#   ⚠️ 类型格内角标（stat_r0）**场上卡不用**（那是"剩余生命"角标；场上血量由右侧生命行体现），
-		#      它也用于区分"场上卡"与"手牌/详情精简卡"两套渲染，勿随手打开。
-		node.set("stat_r0", -1)
-		node.set("stat_l1", int(state.final_atk(id)))
-		node.set("icon_l1", D.I_ATK)
-		node.set("stat_l2", int(state.final_spd(id)))
-		node.set("icon_l2", D.I_SPD)
-		# 右栏第 1 行 = 生命值（上限）；第 2 行 = 射程（都带各自图标，语义必须成对正确）
+		# 迭代007（卡面按《卡牌属性布局》扩到右栏三行）：
+		#   右栏第1行 = **剩余生命值**（实时 hp）· 第2行 = 生命值上限 · 第3行 = 射程
+		#   类型格内的角标（stat_r0）也显示剩余生命
+		var hp_now: int = int(u["hp"])
 		var hp_max: int = int(state.combat.final_hp_max(id))
-		node.set("stat_r1", hp_max)
+		node.set("stat_r0", hp_now)
+		node.set("stat_r1", hp_now)
+		node.set("stat_r2", hp_max)
 		node.set("icon_r1", D.I_HP)
-		node.set("stat_r2", int(state.final_range(id)))
-		node.set("icon_r2", D.I_RANGE)
-		node.set("stat_r3", -1)
-		node.set("icon_r3", -1)
-		# 迭代007：顶部**效果轴** —— 卡面直接展示当前减益/增益。
-		#   图集目前只有 8 个通用图标，故先用"血量图标"占位；真正的"效果→图标"映射待图集扩充/接 buff_tex。
+		node.set("icon_r2", D.I_HP)
+		# 攻击/速度/射程也必须用**实时值**（含 buff 与地形加成）——
+		# 此前只覆盖了血量，导致支援「攻击+1」等效果在卡面上看不出来
+		node.set("stat_l1", int(state.final_atk(id)))
+		node.set("stat_l2", int(state.final_spd(id)))
+		node.set("stat_r3", int(state.final_range(id)))
+		# 迭代007：顶部**效果轴** —— 卡面直接展示当前减益/增益（护甲/力场等按上限截断，图集仅 8 图标）
 		var eff: Dictionary = u["effects"]
 		node.set("icon_debuff", D.I_HP if eff.has("burn") else -1)
-		node.set("icon_buff", D.I_HP if (eff.size() > 0 and not eff.has("burn")) else -1)
+		node.set("icon_buff", D.I_HP if eff.size() > 0 and not eff.has("burn") else -1)
 		if u["side"] == "red":
 			node.set("col_base", Color(0.88, 0.74, 0.74))
 			node.set("col_center", Color(0.94, 0.86, 0.86))
