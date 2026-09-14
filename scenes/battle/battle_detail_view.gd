@@ -61,9 +61,10 @@ func render_detail() -> void:
 	var node := D.make_card(d, D.DETAIL_SCALE, ic)
 	node.position = D.DETAIL_POS
 	_detail_node.add_child(node)
-	# 卡名文字：放在卡面上方的留白带（技能区 y750 与卡面视觉上沿 y758 之间偏上，避免压住图标）
-	_detail_node.add_child(D.make_name_label(str(d["name"]), D.DETAIL_SCALE,
-		D.DETAIL_POS + Vector2(120.0, -154.0), 230.0, 24))
+	# 卡名文字：挂在 overlay（无缩放坐标系），压在卡面**底部名称带**上（无底色，避免盖住立绘）
+	var lbl := D.make_name_label(str(d["name"]),
+		D.DETAIL_POS + Vector2(95.0, 221.0), 186.0, 22, 0.0)
+	overlay.add_child(lbl)
 
 
 # ---------------- ② 技能详情显示区 ----------------

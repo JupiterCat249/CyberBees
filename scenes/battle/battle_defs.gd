@@ -32,6 +32,9 @@ const SBTN_HIT := 44.0
 const HAND_CARD_SCALE := 0.76
 const HAND_CARD_STEP := 195.0
 const HAND_CARD_PAD := 5.0
+## 迭代006：手牌卡名条（贴每格下沿留白；宽度需 ≤ 面板宽 400 - 2×PAD，避免出面板被裁）
+const HAND_NAME_W := 150.0
+const HAND_NAME_FS := 19
 
 # ---------------- 框架资源（card-system 提供，禁止改动） ----------------
 const ATLAS_PATH := "res://card-system/card_system/card_atlas.png"
@@ -312,7 +315,8 @@ const SKILLS := {
 ## 取技能定义（无该技能返回 {}）
 static func skill(nm: String) -> Dictionary:
 	return SKILLS.get(nm, {})
-const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "电击", "治疗"]
+## 出战中涉及的卡（迭代006：补入 蜂巢III —— 它在卡池内且**有图标素材**，但此前两个卡组表都没用到它）
+const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "蜂巢III", "电击", "治疗"]
 
 ## 对战地图池（a500 对战准备 4：抽取对战地图）
 ## ⚠️ 迭代005.1（人明确）：地图上的特殊地形**由地图素材自带**（制作地图时直接画好），
@@ -452,23 +456,39 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 		node.set("stat_r2", int(d.get("range", -1)))
 		node.set("icon_r2", I_RANGE if int(d.get("range", 0)) > 0 else -1)
 	if name_pos.y >= 0.0:
-		node.add_child(make_name_label(str(d["name"]), sc, name_pos))
+		node.add_child(make_name_label(str(d["name"]), name_pos))
 	return node
 
 
-## 卡名文字（迭代006）：深底浅字；`pos` 为**卡面设计坐标（250×250 空间）**，内部补偿节点缩放
-## 位置由调用方按版面留白决定（手牌：卡面下沿外的面板留白；详情块：卡面上方留白带）
-static func make_name_label(nm: String, sc: float, pos: Vector2, box_w := 240.0, fs := 22) -> Node2D:
+## 卡名文字（迭代006）：深底浅字
+## ⚠️ 坐标契约：`pos` 是 **overlay 坐标系下的屏幕坐标（1920×1080 设计空间）**。
+##   必须挂在 Overlay 上（其父链无缩放）；**不要挂到 Holder/卡节点下** ——
+##   那里叠了 Holder 0.6 × 卡节点 0.76 两层缩放，位置与字号都会被再缩一次（本轮已踩此坑）。
+static func make_name_label(nm: String, pos: Vector2, box_w := 190.0, fs := 22, bg_a := 0.74) -> Node2D:
 	var root := Node2D.new()
 	root.name = "NamePlate"
-	root.position = pos / maxf(sc, 0.01)
+	root.position = pos
 	var bg := ColorRect.new()
 	bg.name = "NameBg"
-	bg.color = Color(0.08, 0.08, 0.08, 0.74)
+	bg.color = Color(0.08, 0.08, 0.08, bg_a)
 	bg.size = Vector2(box_w, float(fs) + 10.0)
 	bg.position = Vector2(-box_w * 0.5, -(float(fs) + 10.0) * 0.5)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE          # 绝不拦截点击
-	root.add_child(bg)
+	if bg_a > 0.0:
+		root.add_child(bg)
+	# 无底色时（详情卡名压在卡面名称带上）加字影，保证在灰底上也读得清
+	if bg_a <= 0.0:
+		var sh := Label.new()
+		sh.name = "NameShadow"
+		sh.text = nm
+		sh.size = Vector2(box_w, float(fs) + 10.0)
+		sh.position = Vector2(-box_w * 0.5 + 2.0, -(float(fs) + 10.0) * 0.5 + 2.0)
+		sh.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sh.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		sh.add_theme_font_size_override("font_size", fs)
+		sh.add_theme_color_override("font_color", Color(0.0, 0.0, 0.0, 0.85))
+		sh.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(sh)
 	var l := Label.new()
 	l.name = "NameText"
 	l.text = nm
