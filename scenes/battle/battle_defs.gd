@@ -448,14 +448,20 @@ static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Nod
 	node.set("stat_l2", -1)
 	node.set("stat_r1", -1)
 	node.set("stat_r2", -1)
+	node.set("stat_r0", -1)          # 迭代007 新增槽位：类型格内"剩余生命值"角标
+	node.set("stat_r3", -1)          # 迭代007 新增槽位：右栏第 3 行
 	node.set("icon_l1", -1)
 	node.set("icon_l2", -1)
 	node.set("icon_r1", -1)
 	node.set("icon_r2", -1)
+	node.set("icon_r3", -1)
+	node.set("icon_buff", -1)        # 迭代007 新增槽位：顶部效果轴
+	node.set("icon_debuff", -1)
 	node.set("icon_tag", -1)
 	# 侧栏"消失"：底色透明 + 专用贴图槽注入透明图（越界像素在框架着色器里直接返回透明）
 	node.set("col_cell", Color(0, 0, 0, 0))
 	node.set("col_band", Color(0, 0, 0, 0))
+	node.set("col_band_bot", Color(0, 0, 0, 0))   # 迭代007 新增的底带同样要抹掉（否则侧栏又出现一条）
 	node.set("col_base", Color(0, 0, 0, 0))
 	node.set("tag_texture", blank_tex())
 	# 左上角费用格保持框架原样（深底 + 橙色图集数字 = 复用既有字体/图集）
