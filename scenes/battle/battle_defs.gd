@@ -32,9 +32,6 @@ const SBTN_HIT := 44.0
 const HAND_CARD_SCALE := 0.76   # 手牌卡＝框架卡面（250×0.76=190px，card-system 原先的手牌规格）
 const HAND_CARD_STEP := 195.0
 const HAND_CARD_PAD := 5.0
-## 迭代006：手牌卡名条（贴每格下沿留白；宽度需 ≤ 面板宽 400 - 2×PAD，避免出面板被裁）
-const HAND_NAME_W := 150.0
-const HAND_NAME_FS := 19
 
 # ---------------- 框架资源（card-system 提供，禁止改动） ----------------
 const ATLAS_PATH := "res://card-system/card_system/card_atlas.png"
@@ -90,7 +87,9 @@ enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET, SUPPORT_TARGET }
 
 # ---------------- 卡池（含技能数据，供技能显示区使用） ----------------
 const POOL := [
-	{"art": "卡牌a-金刚蜂王", "name": "金刚蜂王", "kind": "queen", "cost": 8, "atk": 7, "spd": 1, "hp": 8, "range": 2,
+	# refund = 每回合回费量（A5：蜂王左上角显示「每回合回复费用」而非部署费用；金刚蜂王 = 回费 4）
+	# refund = 每回合回费量（A5：蜂王左上角显示「每回合回复费用」而非部署费用；金刚蜂王 = 回费 4）
+	{"art": "卡牌a-金刚蜂王", "name": "金刚蜂王", "kind": "queen", "cost": 8, "atk": 7, "spd": 1, "hp": 8, "range": 2, "refund": 4,
 		"sk": "【机场】蜂王巢口", "sdesc": "部署阶段可在自身相邻格部署兵蜂；蜂王免疫指令卡伤害与减益。",
 		"stags": "被动 · 部署 · 蜂王"},
 	{"art": "卡牌c1-叶蜂", "name": "叶蜂", "kind": "soldier", "cost": 2, "atk": 2, "spd": 1, "hp": 3, "range": 1,
@@ -371,97 +370,14 @@ static func in_map(cell: Vector2i) -> bool:
 const CARD_RES := preload("res://card-system/card_system/card_auto.tscn")
 const ATLAS_RES := preload("res://card-system/card_system/card_atlas.png")
 
-## ============================================================
-## 卡牌图标素材（迭代006 · 人要求：基于 card-system 卡牌节点，复用「图标」素材优化 UI）
-##   来源：`电子蜂A5策划案/素材/zip原图/图标<类型码>-<卡名>.png`（400×400 RGBA）
-##   本侧副本：`res://assets/card_icons/`（**不改 card-system 的 art 目录** —— 边界 T11）
-## ============================================================
-const ICON_DIR := "res://assets/card_icons/"
-
-## 卡名 → 图标文件（多一层 art 名映射：同一图标素材被多张卡借用的情形）
-## 现状：卡池 22 张中只有 6 张（金刚蜂王/叶蜂/泥蜂/熊蜂/蜂巢/蜂巢III）有同名图标；
-##   其余卡沿用"借用图"（如 补给/回收/轮换 → 借用 卡牌d2-治疗），此处按 art 名回退到对应图标，
-##   使**手牌图标与卡面立绘一致**；未来正式素材到位后只需补 ICON_MAP 的卡名条目。
-const ICON_MAP := {
-	"金刚蜂王": "icon-金刚蜂王.png",
-	"叶蜂": "icon-叶蜂.png",
-	"泥蜂": "icon-泥蜂.png",
-	"熊蜂": "icon-熊蜂.png",
-	"蜂巢": "icon-蜂巢.png",
-	"蜂巢III": "icon-蜂巢III.png",
-	"卡牌a-金刚蜂王": "icon-金刚蜂王.png",
-	"卡牌c1-叶蜂": "icon-叶蜂.png",
-	"卡牌c1-泥蜂": "icon-泥蜂.png",
-	"卡牌c2-熊蜂": "icon-熊蜂.png",
-	"卡牌b1-蜂巢": "icon-蜂巢.png",
-	"卡牌b1-蜂巢III": "icon-蜂巢III.png",
-	"卡牌d1-电击": "icon-电击.png",
-	"卡牌d1-电击III": "icon-电击III.png",
-	"卡牌d1-巡航导弹": "icon-巡航导弹.png",
-	"卡牌d2-治疗": "icon-治疗.png",
-}
-
-
-## 取该卡的图标贴图路径（没有对应素材 → 返回 ""，调用方回退到旧卡面立绘）
-static func icon_path(name_or_art: String) -> String:
-	var f := str(ICON_MAP.get(name_or_art, ""))
-	if f == "":
-		return ""
-	var p := ICON_DIR + f
-	return p if ResourceLoader.exists(p) else ""
-
-
-## 1×1 透明贴图（懒加载缓存）—— 精简卡面用：
-##   框架把「左右侧栏」的底色交给专用贴图槽（`tag_tex`）采样，而 `sample_fit()` 对越界像素返回 `vec4(0)`，
-##   因此给该槽注入 1×1 透明图即可让**整块侧栏不绘制**（成本仅为一次纹理读取）。
-##   ⚠️ 这样**无需改 card-system 的着色器**（边界 T11：框架只读）。
-static var _blank_tex: Texture2D = null
-
-static func blank_tex() -> Texture2D:
-	if _blank_tex == null:
-		var img := Image.create(1, 1, false, Image.FORMAT_RGBA8)
-		img.fill(Color(0, 0, 0, 0))
-		_blank_tex = ImageTexture.create_from_image(img)
-	return _blank_tex
-
-
-## 精简卡面（迭代006 修正 · 人明确「手牌与详情卡只留左上角费用、不要两侧信息栏、不要卡名」）
-## 做法：① 四角数值/图标与类别角标全部关闭；② 侧栏底色置透明；③ 侧栏贴图槽注入 1×1 透明图 → 侧栏整块不绘制
-## 结果：卡面 = **左上角费用格（框架图集数字 + 深色底，沿用既有字体）** + 中央图标立绘
-static func make_bare_card(d: Dictionary, sc: float, icon_tex_path := "") -> Node2D:
-	var node := CARD_RES.instantiate()
-	node.scale = Vector2(sc, sc)
-	var tex: Texture2D = null
-	var use_icon := str(icon_tex_path) != ""
-	if use_icon:
-		tex = load(str(icon_tex_path)) as Texture2D
-	if tex == null:
-		tex = load(ART_DIR + str(d["art"]) + ".png") as Texture2D      # 无图标素材 → 回退旧卡面立绘
-		use_icon = false
-	node.set("art", tex)
-	node.set("art_size", Vector2(tex.get_width(), tex.get_height()) if tex != null else Vector2(1, 1))
-	node.set("cost", int(d["cost"]))
-	node.set("art_fit", 1)
-	node.set("art_zoom", 1.0 if use_icon else 1.05)
-	# 关闭四角（框架渲染以 -1 为"不显示"）
-	node.set("stat_l1", -1)
-	node.set("stat_l2", -1)
-	node.set("stat_r1", -1)
-	node.set("stat_r2", -1)
-	node.set("icon_l1", -1)
-	node.set("icon_l2", -1)
-	node.set("icon_r1", -1)
-	node.set("icon_r2", -1)
-	node.set("icon_tag", -1)
-	# 侧栏"消失"：底色透明 + 专用贴图槽注入透明图（越界像素在框架着色器里直接返回透明）
-	node.set("col_cell", Color(0, 0, 0, 0))
-	node.set("col_band", Color(0, 0, 0, 0))
-	node.set("col_base", Color(0, 0, 0, 0))
-	node.set("tag_texture", blank_tex())
-	# 左上角费用格保持框架原样（深底 + 橙色图集数字 = 复用既有字体/图集）
-	node.set("col_cost_bg", Color(0.16, 0.16, 0.16, 1.0))
-	node.set("col_cost_num", Color(0.96, 0.62, 0.04, 1.0))
-	return node
+## 迭代013（G-30）：该卡是否「借用」他人立绘 —— 判定：art 名里不含卡名本身
+##   （如「补给」用 卡牌d2-治疗.png → 借用；「叶蜂」用 卡牌c1-叶蜂.png → 非借用）
+static func is_borrowed_art(d: Dictionary) -> bool:
+	var nm := str(d.get("name", ""))
+	var art := str(d.get("art", ""))
+	if nm == "" or art == "":
+		return false
+	return not art.contains(nm)
 
 
 ## 实例化一张框架卡牌（复用 card_auto.tscn）
@@ -480,7 +396,8 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 		tex = load(ART_DIR + str(d["art"]) + ".png") as Texture2D      # 无图标素材 → 回退旧卡面立绘
 		use_icon = false
 	node.set("art", tex)
-	node.set("cost", int(d["cost"]))
+	# 迭代013（G-07）：蜂王卡面角落显示**每回合回费量**（A5：蜂王不显示部署费用）；其余卡显示部署费用
+	node.set("cost", int(d.get("refund", d["cost"])))
 	node.set("art_fit", 1)
 	# 图标是"画好留白"的方形素材：用 zoom 1.0 保留全部内容；旧卡面沿用 1.05 的裁边观感
 	node.set("art_zoom", 1.0 if use_icon else 1.05)

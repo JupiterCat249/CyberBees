@@ -108,6 +108,9 @@ func update_skill_box() -> void:
 			l.text = str(d.get("sdesc", ""))
 		else:
 			l.text = "关键词：" + str(d.get("stags", "—"))
+			# 迭代013（G-30）：借用他人立绘的卡在此标注，避免误认为是正式素材
+			if D.is_borrowed_art(d):
+				l.text += "　·　借用立绘"
 
 
 # ---------------- ③ 状态数值（当前查看对象；无则当前方蜂王） ----------------
