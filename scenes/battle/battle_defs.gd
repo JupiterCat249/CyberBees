@@ -114,6 +114,44 @@ const PHASE_NAME := ["回费", "场地", "部署", "行动", "准备"]
 ## 迭代005.1：换牌（原 EXCHANGE_MAX / 对战准备 5 的初始手牌调整）已整体移除 —— 开局前无换牌机会
 enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET, SUPPORT_TARGET }
 
+# ---------------- 效果图鉴（迭代016）：源自 A5《电子蜂A5策划案》「效果图鉴」（计算优先级从上到下） ----------------
+## 已实现：burn 灼烧 · armor 装甲 · force_field 力场 · shield 护盾
+##   力场：地域效果，**每层减少 2 点非指令伤害**（作用于目标格上的单位）
+##   护盾：兵蜂效果，**抵挡一次攻击**；参与防御计算或己方回费阶段消失
+##   装甲：单位效果，抵挡一次攻击，参与防御计算则消失
+const EFFECT_FORCE_FIELD_REDUCE := 2   ## 力场每层减伤（A5 效果图鉴）
+const EFFECT_DEFS := {
+	"burn": {"name": "灼烧", "icon": "灼烧.png", "kind": "debuff"},
+	"armor": {"name": "装甲", "icon": "装甲.png", "kind": "buff_def"},
+	"shield": {"name": "护盾", "icon": "护盾.png", "kind": "buff_def"},
+	"force_field": {"name": "力场", "icon": "力场.png", "kind": "buff_def_area"},
+	"freeze": {"name": "冻结", "icon": "冻结.png", "kind": "debuff"},
+	"intercept": {"name": "拦截", "icon": "拦截.png", "kind": "buff_def_area"},
+	"crit": {"name": "暴击", "icon": "暴击.png", "kind": "buff_area"},
+	"haste": {"name": "速攻", "icon": "速攻.png", "kind": "buff"},
+	"startup": {"name": "启动", "icon": "启动.png", "kind": "buff"},
+	"decoy": {"name": "诱饵", "icon": "诱饵.png", "kind": "debuff"},
+}
+## 己方回费阶段会**消失**的效果（A5 各类效果的消失时机）
+const EFFECT_EXPIRE_ON_REFUND := ["shield", "freeze", "burn", "haste", "decoy"]
+
+
+## 构造一个效果对象（键 = 效果 id，与 status_icon_path() 的映射一致）
+static func make_effect(eid: String, layers := 1) -> Dictionary:
+	var e := {"id": eid, "layers": layers}
+	var meta: Dictionary = EFFECT_DEFS.get(eid, {})
+	if not meta.is_empty():
+		e["name"] = str(meta.get("name", eid))
+	match eid:
+		"burn":
+			e["dot"] = 1          # ⚠️ 现有实现：回合结束扣血（与 A5「受攻击时追加 2 点指令伤害」口径不同 — 见迭代016 遗留）
+		"armor":
+			e["reduce"] = 1
+		"force_field":
+			e["ff_reduce"] = EFFECT_FORCE_FIELD_REDUCE * layers
+	return e
+
+
 # ---------------- 卡池（含技能数据，供技能显示区使用） ----------------
 const POOL := [
 	# refund = 每回合回费量（A5：蜂王左上角显示「每回合回复费用」而非部署费用；金刚蜂王 = 回费 4）
@@ -128,6 +166,11 @@ const POOL := [
 	{"art": "卡牌c1-泥蜂", "name": "泥蜂", "kind": "soldier", "cost": 2, "atk": 3, "spd": 1, "hp": 4, "range": 2,
 		"sk": "（无技能）", "sdesc": "纯战斗兵蜂：攻击 3 / 速度 1 / 生命 4 / 射程 2。",
 		"stags": "兵蜂"},
+	# A5《美术资源图鉴》「护盾单元」：回费 1 / 套盾（支援：赋予射程内 1 个友方兵蜂护盾）
+	{"art": "卡牌d2-治疗", "name": "护盾单元", "kind": "building", "cost": 2, "atk": 0, "spd": 0, "hp": 2, "range": 0, "refund": 1,
+		"support": {"id": "shield_grant", "name": "护盾", "rng": 2, "buff": {"id": "shield", "name": "护盾", "layers": 1}},
+		"sk": "【支援】护盾", "sdesc": "选择 2 格内的 1 个己方兵蜂，赋予「护盾」：抵挡一次攻击（参与防御计算或己方回费阶段消失）。",
+		"stags": "支援 · 单位效果 · 增益 · 套盾"},
 	{"art": "卡牌c2-熊蜂", "name": "熊蜂", "kind": "soldier", "cost": 5, "atk": 5, "spd": 1, "hp": 8, "range": 1,
 		"support": {"id": "guard", "name": "护卫", "rng": 1, "buff": {"id": "def_up", "name": "护甲", "reduce": 1}},
 		"sk": "【支援】护卫", "sdesc": "选择 1 格内的 1 个己方单位，赋予「护甲」：受到的每次伤害 -1。使用后结束该单位行动。",
@@ -194,11 +237,20 @@ const SKILLS := {
 	"护卫": {
 		"id": "guard", "name": "护卫", "source": "support",
 		"sk": "【支援】护卫", "stags": "支援 · 单位效果 · 增益",
-		"sdesc": "选择 1 格内的 1 个己方单位，赋予「护甲」：受到的每次伤害 -1。使用后结束该单位行动。",
+		"sdesc": "选择 1 格内的 1 个己方单位，赋予「护甲」：抵挡一次攻击，参与防御计算则消失（A5 效果图鉴）。使用后结束该单位行动。",
 		"conditions": {"all": [{"dim": "unit_pos", "key": "in_map", "op": "==", "value": true}]},
 		"targets": {"mode": "single", "kind": "any", "side": "ally", "range": 1},
 		"effects": [{"type": "modify", "id": "armor", "value": 1,
 			"effect": {"id": "armor", "name": "护甲", "reduce": 1}}],
+	},
+	"护盾": {
+		"id": "shield_grant", "name": "护盾", "source": "support",
+		"sk": "【支援】护盾", "stags": "支援 · 单位效果 · 增益",
+		"sdesc": "选择 2 格内的 1 个己方兵蜂，赋予「护盾」：抵挡一次攻击（参与防御计算或己方回费阶段消失）。使用后结束该单位行动。",
+		"conditions": {"all": [{"dim": "unit_pos", "key": "in_map", "op": "==", "value": true}]},
+		"targets": {"mode": "single", "kind": "soldier", "side": "ally", "range": 2},
+		"effects": [{"type": "modify", "id": "shield", "value": 1,
+			"effect": {"id": "shield", "name": "护盾", "layers": 1}}],
 	},
 	"机场": {
 		"id": "airfield", "name": "机场", "source": "passive",
@@ -344,7 +396,7 @@ const SKILLS := {
 static func skill(nm: String) -> Dictionary:
 	return SKILLS.get(nm, {})
 ## 出战中涉及的卡（迭代006：补入 蜂巢III —— 它在卡池内且**有图标素材**，但此前两个卡组表都没用到它）
-const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "蜂巢III", "电击", "治疗"]
+const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "蜂巢III", "电击", "治疗", "护盾单元"]
 
 ## 对战地图池（a500 对战准备 4：抽取对战地图）
 ## ⚠️ 迭代005.1（人明确）：地图上的特殊地形**由地图素材自带**（制作地图时直接画好），

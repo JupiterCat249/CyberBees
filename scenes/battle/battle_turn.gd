@@ -76,6 +76,8 @@ func begin_turn(side: String) -> void:
 		s.push_log("【回费】%s方 +%d（基础%d + 资源建筑%d）→ 费用 %d（上限 %d）" % [s.cn(side), gain + rf, gain, rf, s.cost[side], D.COST_MAX])
 	else:
 		s.push_log("【回费】%s方 +%d → 费用 %d（上限 %d）" % [s.cn(side), gain, s.cost[side], D.COST_MAX])
+	# 迭代016（A5 效果图鉴）：**己方回费阶段消失**的效果 —— 护盾 / 冻结 / 灼烧 / 速攻 / 诱饵
+	expire_refund_effects(side)
 	# 迭代004 检查点7/8：回费**数值文本**（#FFA300 + 字号随数值）浮在己方费用六边形上方
 	if s.anim != null:
 		var hex_at: Vector2 = D.HEX_L if side == "green" else D.HEX_R
@@ -192,3 +194,15 @@ func cancel_surrender() -> void:
 		s.surrender_pending = false
 		s.push_log("已取消投降")
 		s.refresh()
+
+## 迭代016（A5 效果图鉴）：清除该方单位身上「己方回费阶段消失」的效果
+##   A5：效果消失与赋予同阶段时**先算消失、再算赋予** → 故本函数在 begin_turn（回费结算）内、部署/行动之前调用
+func expire_refund_effects(side: String) -> void:
+	var s := state
+	for id in s.units.keys():
+		if str(s.units[id]["side"]) != side:
+			continue
+		for k in D.EFFECT_EXPIRE_ON_REFUND:
+			if s.units[id]["effects"].has(k):
+				s.units[id]["effects"].erase(k)
+				s.push_log("%s 的「%s」在回费阶段消失" % [s.unit_name(id), str(D.EFFECT_DEFS[k]["name"])])

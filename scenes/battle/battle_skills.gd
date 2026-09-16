@@ -435,8 +435,20 @@ func apply_effect(eff: Dictionary, cell: Vector2i, id: int, mult: float, ctx: Di
 			var dmg_v := final_v
 			if bool(eff.get("by_target_cost", false)):
 				dmg_v = int(state.units[id]["card"]["cost"]) * 2   # X 费卡：伤害 = 目标部署费 × 2（a500 费用 4）
+			# 迭代016（A5 效果图鉴）：指令伤害也走防御计算 ——
+			#   装甲(reduce) 参与减伤并在计算后消失；护盾**抵挡一次攻击**（本次伤害归 0，护盾消耗）；
+			#   力场(ff_reduce) 只减"非指令伤害" → 指令伤害**不计入力场**。
+			dmg_v = maxi(0, dmg_v - state.reduce_for_damage(id, false))
+			var blocked := false
+			if dmg_v > 0 and state.shield_layers(id) > 0:
+				blocked = true
+				dmg_v = 0
 			state.units[id]["hp"] = int(state.units[id]["hp"]) - dmg_v
-			state.push_log("%s 受指令伤害 -%d" % [state.unit_name(id), dmg_v])
+			if blocked:
+				state.push_log("%s 的「护盾」抵挡了本次指令伤害" % state.unit_name(id))
+			else:
+				state.push_log("%s 受指令伤害 -%d" % [state.unit_name(id), dmg_v])
+			state.consume_defense_effects(id)
 			return true
 		EFF_MODIFY:
 			if id < 0:

@@ -81,12 +81,41 @@ func final_hp_max(id: int) -> int:
 
 ## 伤害减免合计（护甲/力场/拦截等）
 func final_reduce(id: int) -> int:
+	return reduce_for_damage(id, true)
+
+
+## 迭代016：按 A5 效果图鉴计算的减伤 —— 装甲(reduce) + 力场(ff_reduce，仅对**非指令**伤害生效)
+##   `is_command=false` 时（指令伤害）不计入力场，符合「力场：每层减少 2 点非指令伤害」
+##   拦截（intercept）按 A5 是"减少指令伤害"，本轮**数据未落地**，故暂不参与
+func reduce_for_damage(id: int, is_attack: bool) -> int:
 	if state == null or not state.units.has(id):
 		return 0
 	var r := 0
 	for k in state.units[id]["effects"]:
-		r += int(state.units[id]["effects"][k].get("reduce", 0))
+		var e: Dictionary = state.units[id]["effects"][k]
+		r += int(e.get("reduce", 0))
+		if is_attack:
+			r += int(e.get("ff_reduce", 0))
 	return r
+
+
+## 该单位当前是否有「护盾」（抵挡一次攻击；层数 = layers）
+func shield_layers(id: int) -> int:
+	if state == null or not state.units.has(id):
+		return 0
+	if state.units[id]["effects"].has("shield"):
+		return maxi(1, int(state.units[id]["effects"]["shield"].get("layers", 1)))
+	return 0
+
+
+## 参与防御计算后消耗「护盾 / 装甲」（A5：两者都是"抵挡一次，参与防御计算则消失"）
+func consume_defense_effects(id: int) -> void:
+	if state == null or not state.units.has(id):
+		return
+	for k in ["shield", "armor"]:
+		if state.units[id]["effects"].has(k):
+			state.units[id]["effects"].erase(k)
+			state.push_log("%s 的「%s」参与防御后消失" % [state.unit_name(id), D.EFFECT_DEFS[k]["name"]])
 
 
 # ============================================================
@@ -100,17 +129,23 @@ func final_reduce(id: int) -> int:
 ##   · target_hp_after / attacker_hp_after = 结算后双方剩余血量（下限 0）
 ## ⚠️ attack() 与本函数必须共用同一套公式，避免"预览与实战不符"（迭代013 发现过此漂移风险）。
 func preview_damage(aid: int, tid: int) -> Dictionary:
-	var res := {"ok": false, "dmg": 0, "counter": 0, "countered": false,
+	var res := {"ok": false, "dmg": 0, "counter": 0, "countered": false, "blocked": false,
 		"target_hp_now": 0, "target_hp_after": 0, "attacker_hp_now": 0, "attacker_hp_after": 0,
 		"coverage": []}
 	if state == null or not state.units.has(aid) or not state.units.has(tid):
 		return res
 	var units: Dictionary = state.units
-	var dmg := maxi(0, final_atk(aid) - final_reduce(tid))
+	# 迭代016：力场只减**非指令**伤害；主动攻击属非指令 → is_attack = true
+	var dmg := maxi(0, final_atk(aid) - reduce_for_damage(tid, true))
+	# 护盾：抵挡一次攻击 → 预览显示"本次伤害 0、血量不变、护盾会被消耗"
+	var blocked := false
+	if dmg > 0 and shield_layers(tid) > 0:
+		blocked = true
+		dmg = 0
 	var cdmg := 0
 	var in_range := _in_range_of(units[aid]["cell"], units[tid]["cell"], final_range(tid))
 	if final_atk(tid) > 0 and in_range:
-		cdmg = maxi(0, final_atk(tid) - final_reduce(aid))
+		cdmg = maxi(0, final_atk(tid) - reduce_for_damage(aid, true))
 	res["ok"] = true
 	res["dmg"] = dmg
 	res["counter"] = cdmg
@@ -120,6 +155,7 @@ func preview_damage(aid: int, tid: int) -> Dictionary:
 	res["attacker_hp_now"] = int(units[aid]["hp"])
 	# 攻方剩余血量：反击按"同时结算"照扣（即使守方被一击打死）
 	res["attacker_hp_after"] = maxi(0, int(units[aid]["hp"]) - cdmg)
+	res["blocked"] = blocked
 	# 迭代014（IDEA-012）：**伤害覆盖格** —— 普攻只覆盖目标格；攻击者技能带溅射时按曼哈顿半径展开
 	#   口径与 battle_skills 的 `targets.mode=cell + splash` 一致（战斗系统按射程/范围结算）
 	var cell: Vector2i = units[tid]["cell"]
@@ -177,6 +213,9 @@ func attack(aid: int, tid: int) -> Dictionary:
 		res["countered"] = true
 	units[tid]["hp"] = int(units[tid]["hp"]) - dmg
 	res["dmg"] = dmg
+	res["blocked"] = bool(pv.get("blocked", false))
+	# 迭代016：护盾/装甲"参与防御计算后消失"（护盾抵挡成功时也消耗）
+	consume_defense_effects(tid)
 	# 日志保持「攻击 → 反击」的阅读顺序（数值结算顺序与之无关）
 	state.push_log("%s 攻击 %s：%d" % [state.unit_name(aid), state.unit_name(tid), dmg])
 	if bool(res["countered"]):

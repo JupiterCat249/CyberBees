@@ -348,6 +348,22 @@ func final_reduce(id: int) -> int:
 	return int(combat.final_reduce(id)) if combat != null else 0
 
 
+## 迭代016：按 A5 效果图鉴的减伤（装甲 + 力场；力场仅对**非指令**伤害生效）
+func reduce_for_damage(id: int, is_attack: bool) -> int:
+	return int(combat.reduce_for_damage(id, is_attack)) if combat != null else 0
+
+
+## 迭代016：护盾层数（抵挡一次攻击）
+func shield_layers(id: int) -> int:
+	return int(combat.shield_layers(id)) if combat != null else 0
+
+
+## 迭代016：防御效果参与计算后消耗（护盾/装甲）
+func consume_defense_effects(id: int) -> void:
+	if combat != null:
+		combat.consume_defense_effects(id)
+
+
 # ============================================================
 # 胜负（a500 胜利条件）
 # ============================================================
