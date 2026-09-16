@@ -26,6 +26,13 @@ texture = ExtResource("2_b5gog")
 
 [node name="BattleUI" parent="." unique_id=1818800244 instance=ExtResource("1_ui")]
 
+[node name="BoardView" type="Node2D" parent="." unique_id=1920209255]
+script = ExtResource("9_t8jia")
+[node name="HandView" type="Node2D" parent="." unique_id=738741888]
+script = ExtResource("10_v5ipb")
+[node name="DetailView" type="Node2D" parent="." unique_id=59177591]
+script = ExtResource("11_5bde7")
+
 [node name="Overlay" type="Node2D" parent="." unique_id=1901149892]
 
 [node name="InfoBar" type="Label" parent="Overlay" unique_id=1556655212]
@@ -137,16 +144,8 @@ script = ExtResource("7_5aynm")
 [node name="BgFx" type="Node2D" parent="." unique_id=492905699]
 script = ExtResource("8_gywsw")
 
-[node name="BoardView" type="Node2D" parent="." unique_id=1920209255]
-script = ExtResource("9_t8jia")
-
-[node name="HandView" type="Node2D" parent="." unique_id=738741888]
-script = ExtResource("10_v5ipb")
-
-[node name="DetailView" type="Node2D" parent="." unique_id=59177591]
-script = ExtResource("11_5bde7")
-
 [node name="HudView" type="Node2D" parent="." unique_id=1375420282]
 script = ExtResource("12_res52")
 
-[node name="EffectsTop" type="Node2D" parent="." unique_id=2019042817]
+[node name="EffectsTop" type="Node2D" parent="Overlay" unique_id=2019042817]
+z_index = 100

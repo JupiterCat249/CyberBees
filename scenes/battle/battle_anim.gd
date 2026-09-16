@@ -562,10 +562,18 @@ func _node_of(id: int) -> Node:
 
 
 func _on_attack_resolved(aid: int, tid: int, dmg: int, counter: int, countered: bool) -> void:
+	# 迭代021 缺陷修复：战斗信号在 combat.attack() 内**同步发出**，而调用方随后会 `refresh()` ——
+	#   refresh 会**重建棋盘单位节点**，于是打在旧节点上的抖动/闪红随旧节点被丢弃
+	#   （实测：攻击后受击单位位移 = 0，即"抖动从未生效"）。
+	#   → 推迟到**本帧末**执行 `call_deferred`：此时 refresh 已完成，取到的是**新节点**，表现才留得住。
+	_deferred_hit_fx.call_deferred(aid, tid, dmg, counter, countered)
+
+
+func _deferred_hit_fx(aid: int, tid: int, dmg: int, counter: int, countered: bool) -> void:
 	if dmg > 0:
 		var tn: Node = _node_of(tid)
 		if tn != null:
-			shake_unit(tn, dmg)          # 检查点9：幅度随伤害数值缩放
+			shake_unit(tn, dmg)          # 幅度随伤害数值缩放
 			action("受伤闪红", tn)
 	if countered and counter > 0 and aid != tid:
 		var an: Node = _node_of(aid)

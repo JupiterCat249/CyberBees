@@ -67,15 +67,27 @@ func _on_state_changed() -> void:
 
 # ---------------- 场上单位 ----------------
 func render_units() -> void:
-	for n in _unit_nodes.values():
-		if is_instance_valid(n):
-			n.queue_free()
-	_unit_nodes = {}
 	if state == null:
+		_unit_nodes = {}
 		return
+	# 迭代021 缺陷修复：**不再"全量重建"单位节点，改为复用 + 原地更新**。
+	#   原实现每次刷新都 queue_free 全部单位卡并重新 make_card →
+	#   ① 施加在单位上的动画（受击抖动/受伤闪红/增益脉冲等）**随即被丢弃**（实测：攻击后位移恒为 0，
+	#      即"抖动从未生效"）；② 单位多时每帧重建开销大。
+	#   现在：只在单位"新增/退场"时增删节点，其余原地改属性 → 动画得以保留。
+	for id in _unit_nodes.keys():
+		if not state.units.has(id):
+			var old = _unit_nodes[id]
+			if is_instance_valid(old):
+				old.queue_free()
+			_unit_nodes.erase(id)
 	for id in state.units:
 		var u: Dictionary = state.units[id]
-		var node := D.make_card(u["card"], 1.0)
+		var node = _unit_nodes.get(id, null)
+		var fresh := false
+		if node == null or not is_instance_valid(node):
+			node = D.make_card(u["card"], 1.0)
+			fresh = true
 		node.position = D.cell_pos(u["cell"])
 		node.set("stat_r1", int(u["hp"]))
 		# 攻击/速度/射程也必须用**实时值**（含 buff 与地形加成）——
@@ -91,10 +103,20 @@ func render_units() -> void:
 			node.set("col_center", Color(0.88, 0.94, 0.89))
 		if u["acted"]:
 			node.modulate = Color(0.72, 0.72, 0.72)
-		_units_node.add_child(node)
-		_unit_nodes[id] = node
+		else:
+			# 未行动单位必须恢复原色（复用节点时上一帧可能被置灰）
+			node.modulate = Color(1, 1, 1, 1)
+		if fresh:
+			_units_node.add_child(node)
+			_unit_nodes[id] = node
 		# 迭代014：效果角标（灼烧/护甲等）—— 叠加在单位格上缘
-		_units_node.add_child(_effect_badges(id))
+		#   复用节点时需先清掉上一帧的角标，避免残留/叠加
+		for ch in _units_node.get_children():
+			if ch.has_meta("badge_of") and int(ch.get_meta("badge_of")) == id:
+				ch.queue_free()
+		var badge := _effect_badges(id)
+		badge.set_meta("badge_of", id)
+		_units_node.add_child(badge)
 
 
 # ---------------- 高亮 ----------------

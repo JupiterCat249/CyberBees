@@ -144,14 +144,17 @@ func _ready() -> void:
 						return un
 				return null
 		an.bind(state)
-		# 浮字/一次性特效的挂载点
-		# 迭代020 缺陷修复：原挂 Overlay，但场景绘制顺序为
-		#   BgLayer → BattleUI → Overlay → FxLayer → BgFx → BoardView → …
-		#   → **BoardView 画在 Overlay 之后，会遮住落在单位格上的飘字**（只有空地格能看见）。
-		#   规范要求"文本处于 UI 最上层"→ 改挂 EffectsTop（场景中位于所有 View 之后）。
-		an.fx_parent = get_node_or_null("EffectsTop")
-		if an.fx_parent == null:
-			an.fx_parent = _ci("Overlay")
+		# 浮字/一次性特效的挂载点（规范 §三：文本处于 UI 最上层）
+		# 迭代021 两条必须同时满足，缺一不可：
+		#   ① **坐标空间**：挂 Overlay 的子节点（继承 Holder 0.6 缩放）—— 挂根级 Node2D 会按未被缩放的空间绘制，位置错 0.6 倍；
+		#   ② **绘制顺序**：BoardView 在场景树中排在 Overlay 之后（后绘制=盖在上面）→ 用 z_index 提升到最上层。
+		var fx_layer := _overlay.get_node_or_null("EffectsTop")
+		if fx_layer == null:
+			fx_layer = Node2D.new()
+			fx_layer.name = "EffectsTop"
+			fx_layer.z_index = 100
+			_overlay.add_child(fx_layer)
+		an.fx_parent = fx_layer
 		state.anim = an
 	else:
 		push_warning("BattleAnim 载入失败，动画系统不可用")
