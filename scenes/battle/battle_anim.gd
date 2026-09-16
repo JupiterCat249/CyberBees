@@ -50,6 +50,8 @@ var debug_hold := false
 ## 迭代024：**时长自检**开关 —— 置真时每个动画结束会打印「实际帧 / 配置帧 / 耗时」，
 ##   用于核对"配置时长"是否真的等于"观感时长"（本次修复即靠它定位：曾出现实际 100 帧 / 配置 60 帧）。
 var debug_log_timing := false
+## 迭代028：本次抖动的随机播种来源（由 shake_unit / shake_map 按"目标实例 + 伤害"设置）
+var _shake_seed := 0
 ## 全局：是否暂停动画推进（规则 4）
 var anim_paused := false
 ## 一次性特效挂载父节点（由协调器注入）
@@ -619,6 +621,7 @@ func shake_map(map_node: Node = null, value: int = 0) -> void:
 	if tgt == null and _state != null:
 		tgt = _state.get_parent()
 	if tgt != null:
+		_shake_seed = tgt.get_instance_id() + value * 7919  # 迭代028：按目标+伤害播种
 		_register_shake("地图抖动", D.SHAKE_AMP_MAP, value, D.SHAKE_FRAMES_MAP)
 		action("地图抖动", tgt)
 
@@ -627,6 +630,7 @@ func shake_map(map_node: Node = null, value: int = 0) -> void:
 func shake_unit(tgt: Node, value: int = 0) -> void:
 	if tgt == null:
 		return
+	_shake_seed = tgt.get_instance_id() + value * 7919      # 迭代028：按目标+伤害播种
 	_register_shake("受击抖动", D.SHAKE_AMP_UNIT, value, D.SHAKE_FRAMES_UNIT)
 	action("受击抖动", tgt)
 
@@ -659,7 +663,14 @@ func _register_shake(pname: String, base_amp: float, value: int, _frames: int) -
 	#   现在只**按数值重算振幅**，时序沿用规范：受击 15 帧（0.25s）· 地图 30 帧（0.5s）。
 	var amp: float = _scaled_amp(base_amp, value)
 	var is_map: bool = pname == "地图抖动"      # 地图抖动走 上下→左右 往复；单位抖动走左右
-	var k: int = D.SHAKE_STEPS
+	# 迭代028（人实测：抖动需要随机性）：以"本次抖动实例 id"播种 →
+	#   同一实例结果**固定可复现**（对局/回放一致），但不同次抖动**各不相同**（相位/幅度起伏/段数）
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(_shake_seed) + D.SHAKE_SEED_SALT
+	@warning_ignore("integer_division")
+	var k_min: int = maxi(4, D.SHAKE_STEPS / 2)
+	var k: int = clampi(D.SHAKE_STEPS + rng.randi_range(-D.SHAKE_JITTER_STEPS, D.SHAKE_JITTER_STEPS),
+		k_min, D.SHAKE_STEPS + D.SHAKE_JITTER_STEPS)
 	var total: int = _shake_frames_for(pname, value)   # 迭代026：高伤害延长时长
 	@warning_ignore("integer_division")
 	var per: int = maxi(1, total / k)
@@ -675,11 +686,14 @@ func _register_shake(pname: String, base_amp: float, value: int, _frames: int) -
 	#   → 首段即围绕原位、全程对称、末段精确回到 0。
 	# ============================================================
 	var loc: Array = []                  # 目标位置（相对原位）
+	# 起始方向也随机（先左还是先右）——居中处理会自动吸收由此带来的偏移
 	var mag := amp
-	var sign_ := 1.0
+	var sign_ := 1.0 if rng.randf() < 0.5 else -1.0
 	var cur := 0.0
 	for i in k:
-		cur += sign_ * mag
+		# 每段振幅加随机起伏（±JITTER_AMP）→ 波形不再"标准"，每次手感不同
+		var jitter := 1.0 + rng.randf_range(-D.SHAKE_JITTER_AMP, D.SHAKE_JITTER_AMP)
+		cur += sign_ * mag * jitter
 		loc.append(cur)
 		mag *= D.SHAKE_DECAY
 		sign_ = -sign_

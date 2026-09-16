@@ -136,9 +136,14 @@ const SHAKE_FRAMES_UNIT := 36     ## 单位受击抖动：36 帧 ≈ 0.60s @60fp
 const SHAKE_FRAMES_MAP := 54      ## AOE 地图抖动：54 帧 ≈ 0.90s @60fps
 const SHAKE_STEPS := 18           ## 往复段数 —— **段数即频率**：段数越多摆臂越短、抖动越快（旧 13 段偏慢）
 const SHAKE_DECAY := 0.88         ## 每段振幅衰减系数（段数多 → 衰减放缓，末段仍可见）
-const SHAKE_AMP_UNIT := 5.0       ## 单位受击基准振幅（设计空间 px）
-const SHAKE_AMP_MAP := 9.0        ## AOE 地图基准振幅（设计空间 px）
+const SHAKE_AMP_UNIT := 4.0       ## 单位受击基准振幅（设计空间 px）（027 的 5.0 再缩）
+const SHAKE_AMP_MAP := 7.0        ## AOE 地图基准振幅（设计空间 px）
 const SHAKE_FRAMES_BONUS_MAX := 18  ## 高伤害延长量（= 1 个段长 × 2 帧；36 → 54 帧 ≈ 0.90s）
+## 迭代028（人实测）：**抖动需要随机性** —— 否则每次受击看起来完全一样。
+##   随机项（均以"该次抖动的实例 id"播种 → 同一实例结果固定、对局可复现）：
+const SHAKE_JITTER_AMP := 0.18    ## 每段振幅随机抖动幅度（±18%）
+const SHAKE_JITTER_STEPS := 2     ## 段数随机浮动（±2 段，即 ±0.07s）
+const SHAKE_SEED_SALT := 0xA5B3   ## 播种盐（保证不同来源的实例也各不相同）
 const FLOAT_TEXT_FRAMES := 60     ## 场景内飘字（含回费数字）显示时长：60 帧 = 1.0s @60fps
 const FLOAT_TEXT_RISE := 40       ##   其中「上浮」占 40 帧，其余为淡出
 const EFFECT_BURN_DAMAGE := 2         ## 灼烧每层追加的指令伤害（A5 效果图鉴）
