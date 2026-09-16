@@ -179,11 +179,14 @@ func _apply_btn_bg() -> void:
 		return
 	if state.anim == null:
 		return
-	var c: Color = state.anim.turn_color(state.current == "green")
+	# ⚠️ 迭代034：这里**不能用"类型标注 + 直接赋值"**（`state.anim` 无静态类型 → 右值是 Variant，
+	#   `var c: Color = …` 会报 "Cannot infer the type of c" 并使脚本整体解析失败）。
+	#   改为**先取 Variant、再显式转换**；变量名也避开易混淆的短名。
+	var tc_variant = state.anim.turn_color(state.current == "green")
+	var turn_col: Color = Color(tc_variant)
 	if state.winner != "":
-		c = Color(1, 1, 1, 0.5)      # 结束态：与信息栏阵营词一致（半透明白）
-	if battle_ui.has_method("set_btn_color"):
-		battle_ui.call("set_btn_color", c)
+		turn_col = Color(1, 1, 1, 0.5)      # 结束态：与信息栏阵营词一致（半透明白）
+	battle_ui.call("set_btn_color", turn_col)
 
 
 func _hint() -> String:

@@ -216,7 +216,17 @@ func _process(_delta: float) -> void:
 		return          # 迭代020：调试冻结（表现停在当前帧，便于截图取证）
 	if _running.is_empty():
 		return
-	for key in _running.keys():
+	# ⚠️ 迭代034 崩溃修复：**必须先复制键快照，并逐个校验键仍存在**
+	#   真因：本循环体里 `_step` → 动画结束 → `_stop_instance` → 回调钩子 `purge_dead`
+	#   → 又给"另一个垂死单位"起退场动画 → `_running` 被**增删**，
+	#   而遍历用的还是旧快照 → 访问已删除的键 → 报
+	#   `Invalid access to property or key '<pattern>#<id>' on a base object of type 'Dictionary'`
+	#   并把调试运行打进断点（表现为"系统退出"）。
+	#   实测触发场景：**蜂王互杀**（两单位接连退场）。
+	var keys: Array = _running.keys()
+	for key in keys:
+		if not _running.has(key):
+			continue        # 循环体里被移除（或已被重播替换）→ 跳过
 		var nm := str(_running[key].get("name", _key_pattern(str(key))))
 		var p: Dictionary = _patterns.get(nm, {})
 		if anim_paused and bool(p.get("pause_global", true)):
