@@ -365,7 +365,7 @@ func register_defaults(_cfg: Dictionary = {}) -> void:
 	# ① 单位受击抖动 / ③ AOE 地图抖动：**定义只有一处** —— 统一由 _register_shake 构建
 	#   （迭代022：此前默认序列与运行时重新注册各写一份，时长/段数会互相打架）
 	_register_shake("受击抖动", D.SHAKE_AMP_UNIT, 5, D.SHAKE_FRAMES_UNIT)
-	_register_shake("地图抖动", D.SHAKE_AMP_MAP, 5, D.SHAKE_FRAMES_MAP)
+	_register_shake("地图抖动", D.SHAKE_AMP_MAP, 5, D.SHAKE_FRAMES_MAP)   # value=5 为基准（不延长）
 	# ② 场景内飘字（含回费数字）：同样在默认注册时就建好，避免"查不到/两处定义"
 	_register_float_pattern()
 	# ④ 卡牌登场：**瞬间动作（无前摇）** —— 第 1 帧即到位，只做淡入
@@ -412,11 +412,12 @@ func register_defaults(_cfg: Dictionary = {}) -> void:
 		]}],
 	})
 	#   移动：一次短促左右微移（无前摇）
+	# 迭代026（人实测：**移动时的抖动过于影响观感**）→ 移除左右抖动，只做"落位"
+	#   原为 +5 / -10 / +5 的 3 帧左右抖，移动时会与受击抖动混淆；现仅保留一次轻微下沉回弹（纵向，不左右晃）
 	register("移动落位", {
 		"units": [{"type": U.MOVE_BY, "clips": [
-			{"frames": 1, "step": Vector2(5, 0)},
-			{"frames": 1, "step": Vector2(-10, 0)},
-			{"frames": 1, "step": Vector2(5, 0)},
+			{"frames": 1, "step": Vector2(0, 3)},
+			{"frames": 1, "step": Vector2(0, -3)},
 		]}],
 	})
 	#   使用指令：施放者闪白一次（第 1 帧即亮 = 无前摇）
@@ -638,6 +639,20 @@ func _scaled_amp(base: float, value: int) -> float:
 
 
 ## 按缩放后的幅度**重新注册**抖动 Pattern（幅度属 Pattern 数据，就地更新即可）
+## 迭代026（人实测策略）：高伤害**优先延长时间**（而非堆幅度）——
+##   总帧数 = 基准帧数 + round(BONUS_MAX × clamp((伤害-4)/8, 0, 1))
+##   段数与衰减不变，故"每段帧数"随之变长 → 高伤害抖得更久、且单次摇摆更舒缓（不 Q 弹）
+func _shake_frames_for(pname: String, value: int) -> int:
+	var base_frames: int = D.SHAKE_FRAMES_MAP if pname == "地图抖动" else D.SHAKE_FRAMES_UNIT
+	if value <= 4:
+		return base_frames
+	var t01: float = clampf(float(value - 4) / 4.0, 0.0, 1.0)   # 伤害 ≤6 不延长；≥7 延长一段（≈0.88s）
+	# 以**整段**为单位延长：每段帧数 = 总帧数 / SHAKE_STEPS 会取整，
+	# 若延长量不是段长的整数倍，多出的帧会被取整吃掉（迭代026 实测 56→52）
+	var steps_up: int = int(round(t01))                      # 0 或 1 段（伤害 ≥7 → 1 段）
+	return base_frames + steps_up * D.SHAKE_FRAMES_BONUS_MAX
+
+
 func _register_shake(pname: String, base_amp: float, value: int, _frames: int) -> void:
 	# 迭代019：此处**不能**用旧的四段等幅序列 —— 它会在运行时覆盖 `_build_defaults` 里
 	#   已按《基础动画.md》§四 修正过的"弹性衰减 + 固定时长"定义（此前 8/16 帧的偏差即由此产生）。
@@ -645,7 +660,7 @@ func _register_shake(pname: String, base_amp: float, value: int, _frames: int) -
 	var amp: float = _scaled_amp(base_amp, value)
 	var is_map: bool = pname == "地图抖动"      # 地图抖动走 上下→左右 往复；单位抖动走左右
 	var k: int = D.SHAKE_STEPS
-	var total: int = D.SHAKE_FRAMES_MAP if is_map else D.SHAKE_FRAMES_UNIT
+	var total: int = _shake_frames_for(pname, value)   # 迭代026：高伤害延长时长
 	@warning_ignore("integer_division")
 	var per: int = maxi(1, total / k)
 	var clips: Array = []

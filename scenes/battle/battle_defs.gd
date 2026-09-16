@@ -129,10 +129,15 @@ const EFFECT_FORCE_FIELD_REDUCE := 2   ## 力场每层减伤（A5 效果图鉴�
 const SHAKE_FRAMES_UNIT := 40     ## 单位受击抖动：40 帧 ≈ 0.67s @60fps
 const SHAKE_FRAMES_MAP := 60      ## AOE 地图抖动：60 帧 ≈ 1.0s @60fps
 const SHAKE_STEPS := 13           ## 往复段数（段数不足会"像只摇一次"）
+                                  ##   ⚠️ 每段帧数 = `总帧数 / SHAKE_STEPS` 取整 → **总帧数须能整除本值**，
+                                  ##   否则"延长时长"会被取整吃掉几帧（迭代026 实测：目标 56 帧 → 实际 52 帧）
 const SHAKE_DECAY := 0.82         ## 每段振幅衰减系数（缓衰减 → 末段仍可见）
-## 迭代025（人实测："时长合理，只是抖动幅度有点太大了显得 Q 弹，适度缩减"）→ 幅度缩减约 40%
-const SHAKE_AMP_UNIT := 6.0       ## 单位受击基准振幅（设计空间 px）
-const SHAKE_AMP_MAP := 11.0       ## AOE 地图基准振幅（设计空间 px）
+## 迭代026（人实测策略调整）：**高伤害不要再靠幅度堆（会显得 Q 弹）→ 优先"延长时长"，幅度只略升**
+const SHAKE_AMP_UNIT := 7.0       ## 单位受击基准振幅（设计空间 px）（025 的 6.0 略升）
+const SHAKE_AMP_MAP := 13.0       ## AOE 地图基准振幅（设计空间 px）（025 的 11.0 略升）
+const SHAKE_FRAMES_BONUS_MAX := 13  ## 高伤害时**额外延长的帧数上限**（= 1 个段长；40 → 53 帧 ≈ 0.88s）
+                                    ##   实际延长 = 13 × round(clamp((伤害-4)/6, 0, 1)) → **按整段延长**，避免被取整吃掉
+                                    ##   （起点取 5 而非 8：实际对局伤害多在 5~8，取 8 会几乎不触发）
 const FLOAT_TEXT_FRAMES := 60     ## 场景内飘字（含回费数字）显示时长：60 帧 = 1.0s @60fps
 const FLOAT_TEXT_RISE := 40       ##   其中「上浮」占 40 帧，其余为淡出
 const EFFECT_BURN_DAMAGE := 2         ## 灼烧每层追加的指令伤害（A5 效果图鉴）
