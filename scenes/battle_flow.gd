@@ -175,6 +175,7 @@ func _ready() -> void:
 	var detail := _ci("DetailView")
 	detail.setup(_holder, _overlay, state)
 	_ci("HudView").setup(_overlay, state)
+	_ci("HudView").battle_ui = ui        # 迭代029：把框架 BattleUI 交给 HUD（用于主按钮底色）
 
 	# ---- 接线：输入路由 → 状态机（语义信号）----
 	var inp := get_node_or_null("InputRouter")

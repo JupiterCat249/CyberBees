@@ -11,6 +11,8 @@ extends Node2D
 const D := preload("res://scenes/battle/battle_defs.gd")
 
 var overlay: Node2D = null
+## 迭代029：框架 BattleUI 引用（用于把「回合色」写进**主按钮底色**的 shader uniform）
+var battle_ui: Node = null
 ## 迭代004 · 检查点10：UI 回合背景条（我方 #499169 / 敌方 #A84331 / 结束态 #FFFFFF-50%）
 var _turn_bg: ColorRect = null
 var state: Node = null
@@ -119,6 +121,9 @@ func _on_state_changed() -> void:
 	var w2: float = _measure(fac, INFO_FS)
 	_labels["faction"].position = INFO_POS + Vector2(w1, 0.0)
 	_labels["suf"].position = INFO_POS + Vector2(w1 + w2, 0.0)
+	# 迭代029：**主按钮底色**随回合硬切（我方 #499169 / 敌方 #A84331）
+	#   原先 shader 把按钮色写死为灰 vec3(0.71)，且"回合色"Pattern 从未被播放 → 按钮永远不变色
+	_apply_btn_bg()
 	# 主按钮文字
 	if state.winner != "":
 		_labels["btn"].text = "游戏结束"
@@ -165,6 +170,20 @@ func _ensure_turn_bg() -> void:
 	_turn_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 绝不拦截点击
 	overlay.add_child(_turn_bg)
 	overlay.move_child(_turn_bg, 0)
+
+
+## 迭代029：把当前「回合色」写入主按钮底色（框架 BattleUI 的 shader uniform）
+##   硬切、无过渡动画（符合《基础动画.md》§五：所有状态切换均为瞬间硬切）
+func _apply_btn_bg() -> void:
+	if battle_ui == null or not battle_ui.has_method("set_btn_color"):
+		return
+	if state.anim == null:
+		return
+	var c: Color = state.anim.turn_color(state.current == "green")
+	if state.winner != "":
+		c = Color(1, 1, 1, 0.5)      # 结束态：与信息栏阵营词一致（半透明白）
+	if battle_ui.has_method("set_btn_color"):
+		battle_ui.call("set_btn_color", c)
 
 
 func _hint() -> String:
