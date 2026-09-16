@@ -111,6 +111,10 @@ func update_skill_box() -> void:
 			# 迭代013（G-30）：借用他人立绘的卡在此标注，避免误认为是正式素材
 			if D.is_borrowed_art(d):
 				l.text += "　·　借用立绘"
+			# 迭代014（方案 A）：列出该单位当前身上的效果（灼烧/护甲等）—— 棋盘角标 + 此处文字双通道
+			var eff_line: String = _effect_line(d)
+			if eff_line != "":
+				l.text += "　·　" + eff_line
 
 
 # ---------------- ③ 状态数值（当前查看对象；无则当前方蜂王） ----------------
@@ -215,3 +219,25 @@ func _stats_text(d: Dictionary) -> String:
 		return "治疗/伤害：%d　范围：%d" % [int(d.get("heal", d.get("dmg", 0))), int(d.get("range", 0))]
 	return "攻击 %d　生命 %d　移动 %d　射程 %d" % [
 		int(d.get("atk", 0)), int(d.get("hp", 0)), int(d.get("spd", 0)), int(d.get("range", 0))]
+
+## 迭代014：把「当前查看对象身上的效果」拼成一行文字（无效果则返回空串）
+func _effect_line(d: Dictionary) -> String:
+	var s := state
+	if s == null:
+		return ""
+	# 找与详情卡同名的单位（场上单位才有效果；手牌卡无）
+	for id in s.units:
+		var u: Dictionary = s.units[id]
+		if str(u["card"].get("name", "")) != str(d.get("name", "")):
+			continue
+		var eff: Dictionary = u["effects"]
+		if eff.is_empty():
+			return ""
+		var parts: Array = []
+		for key in eff.keys():
+			var e: Dictionary = eff[key]
+			var nm := str(e.get("name", key))
+			var v := int(e.get("dot", e.get("reduce", e.get("atk_add", e.get("spd_add", e.get("range_add", e.get("hp_add", 0)))))))
+			parts.append(nm + ((" %d" % v) if v != 0 else ""))
+		return "效果：" + "、".join(parts)
+	return ""

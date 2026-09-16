@@ -93,6 +93,8 @@ func render_units() -> void:
 			node.modulate = Color(0.72, 0.72, 0.72)
 		_units_node.add_child(node)
 		_unit_nodes[id] = node
+		# 迭代014：效果角标（灼烧/护甲等）—— 叠加在单位格上缘
+		_units_node.add_child(_effect_badges(id))
 
 
 # ---------------- 高亮 ----------------
@@ -151,6 +153,45 @@ func render_highlights() -> void:
 				var acell: Vector2i = state.units[aid]["cell"]
 				_hl_node.add_child(D.digit_node(int(state.preview["attacker_hp_after"]), 46.0, Color(0.35, 0.75, 1.0),
 					D.cell_pos(acell) + Vector2(D.CELL * 0.5, D.CELL * 0.80)))
+
+
+## 迭代014（方案 A）：**效果角标** —— 在单位格上缘标出"身上有灼烧/护甲"
+##   ⚠️ 框架卡面四角已被四维数值占满且 card-system 只读（T11）→ 效果只能做在项目侧叠加层
+##   颜色：减益 = 红橙；增益 = 青蓝（与 anim 的减益/增益脉冲取色同族，便于玩家建立联系）
+func _effect_badges(id: int) -> Node2D:
+	var root := Node2D.new()
+	if state == null or not state.units.has(id):
+		return root
+	var eff: Dictionary = state.units[id]["effects"]
+	if eff.is_empty():
+		return root
+	var u: Dictionary = state.units[id]
+	var base := D.cell_pos(u["cell"])
+	var n: int = eff.size()
+	var bw := 30.0            # 角标宽
+	var bh := 34.0            # 角标高
+	var gap := 8.0
+	var total: float = float(n) * bw + float(maxi(n - 1, 0)) * gap
+	var x := base.x + (D.CELL - total) * 0.5
+	var y := base.y + 6.0
+	for key in eff.keys():
+		var e: Dictionary = eff[key]
+		var is_debuff: bool = e.has("dot") or e.has("reduce") or e.has("atk_mult")
+		var col: Color = Color(0.95, 0.34, 0.20, 1.0) if is_debuff else Color(0.30, 0.72, 1.0, 1.0)
+		var bg := ColorRect.new()
+		bg.color = col
+		bg.size = Vector2(bw, bh)
+		bg.position = Vector2(x, y)
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(bg)
+		var ink := ColorRect.new()
+		ink.color = Color(1, 1, 1, 0.92)
+		ink.size = Vector2(bw - 8.0, 5.0)
+		ink.position = Vector2(x + 4.0, y + bh - 12.0)
+		ink.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(ink)
+		x += bw + gap
+	return root
 
 
 func _hl(cell: Vector2i, col: Color) -> ColorRect:
