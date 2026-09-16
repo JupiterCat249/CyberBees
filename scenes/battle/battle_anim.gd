@@ -164,6 +164,15 @@ func _stop_instance(key: String) -> void:
 	var on_stop := str(p.get("trigger_on_stop", ""))
 	if on_stop != "" and _patterns.has(on_stop):
 		action(on_stop, tgt)
+	# 迭代030：Pattern **结束时的回调钩子**（用于"退场动画播完 → 真正移除单位"这类时序要求）
+	#   ⚠️ 必须放在本函数（_stop_instance）里 —— 这里才是"动画自然播完"的唯一出口；
+	#   曾误插到 action() 开头（那只在"开始播放"时执行）→ 表现为"动画播完了但单位不消失、卡成透明节点"。
+	var cb := str(p.get("trigger_on_stop_call", ""))
+	if cb != "":
+		if has_method(cb):
+			call(cb)
+		elif _state != null and _state.has_method(cb):
+			_state.call(cb)
 
 
 func stop_all() -> void:
