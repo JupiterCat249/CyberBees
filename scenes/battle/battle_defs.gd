@@ -120,6 +120,8 @@ enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET, SUPPORT_TARGET }
 ##   护盾：兵蜂效果，**抵挡一次攻击**；参与防御计算或己方回费阶段消失
 ##   装甲：单位效果，抵挡一次攻击，参与防御计算则消失
 const EFFECT_FORCE_FIELD_REDUCE := 2   ## 力场每层减伤（A5 效果图鉴）
+const EFFECT_BURN_DAMAGE := 2         ## 灼烧每层追加的指令伤害（A5 效果图鉴）
+const EFFECT_AURA_FORCE_FIELD := 1    ## 「力场」地域效果授予相邻己方单位的层数（A5：相邻己方单位获得 1 层力场）
 const EFFECT_DEFS := {
 	"burn": {"name": "灼烧", "icon": "灼烧.png", "kind": "debuff"},
 	"armor": {"name": "装甲", "icon": "装甲.png", "kind": "buff_def"},
@@ -137,18 +139,24 @@ const EFFECT_EXPIRE_ON_REFUND := ["shield", "freeze", "burn", "haste", "decoy"]
 
 
 ## 构造一个效果对象（键 = 效果 id，与 status_icon_path() 的映射一致）
-static func make_effect(eid: String, layers := 1) -> Dictionary:
+static func make_effect(eid: String, layers := 1, aura := false) -> Dictionary:
 	var e := {"id": eid, "layers": layers}
 	var meta: Dictionary = EFFECT_DEFS.get(eid, {})
 	if not meta.is_empty():
 		e["name"] = str(meta.get("name", eid))
 	match eid:
 		"burn":
-			e["dot"] = 1          # ⚠️ 现有实现：回合结束扣血（与 A5「受攻击时追加 2 点指令伤害」口径不同 — 见迭代016 遗留）
+			# 迭代017（G-35 修正）：A5 效果图鉴 —— 「受攻击时每层效果追加 2 点**指令伤害**，己方回费阶段消失」
+			#   旧实现为"回合结束扣血"（dot），与 A5 不符，已改为受攻击时追加指令伤害
+			e["burn_dmg"] = EFFECT_BURN_DAMAGE * layers
 		"armor":
 			e["reduce"] = 1
 		"force_field":
 			e["ff_reduce"] = EFFECT_FORCE_FIELD_REDUCE * layers
+			# 迭代017（G-37）：`aura=true` 标记该力场由**地域效果**（相邻授予）产生，
+			#   每个回费阶段按场上光环重新计算（光环消失/单位离场时随之移除）
+			if aura:
+				e["aura"] = true
 	return e
 
 
@@ -166,6 +174,13 @@ const POOL := [
 	{"art": "卡牌c1-泥蜂", "name": "泥蜂", "kind": "soldier", "cost": 2, "atk": 3, "spd": 1, "hp": 4, "range": 2,
 		"sk": "（无技能）", "sdesc": "纯战斗兵蜂：攻击 3 / 速度 1 / 生命 4 / 射程 2。",
 		"stags": "兵蜂"},
+	# A5《美术资源图鉴》「力场蜂巢」「力场炮台」：被动 —— 相邻己方单位获得 1 层力场
+	{"art": "卡牌b1-蜂巢", "name": "力场蜂巢", "kind": "building", "cost": 3, "atk": 0, "spd": 0, "hp": 3, "range": 0, "refund": 1,
+		"sk": "【被动】力场", "sdesc": "相邻己方单位获得 1 层「力场」：每层减少 2 点非指令伤害。",
+		"stags": "被动 · 地域效果 · 增益 · 力场"},
+	{"art": "卡牌b1-蜂巢III", "name": "力场炮台", "kind": "building", "cost": 2, "atk": 4, "spd": 0, "hp": 2, "range": 2,
+		"sk": "【被动】力场", "sdesc": "相邻己方单位获得 1 层「力场」：每层减少 2 点非指令伤害。",
+		"stags": "被动 · 地域效果 · 增益 · 力场"},
 	# A5《美术资源图鉴》「护盾单元」：回费 1 / 套盾（支援：赋予射程内 1 个友方兵蜂护盾）
 	{"art": "卡牌d2-治疗", "name": "护盾单元", "kind": "building", "cost": 2, "atk": 0, "spd": 0, "hp": 2, "range": 0, "refund": 1,
 		"support": {"id": "shield_grant", "name": "护盾", "rng": 2, "buff": {"id": "shield", "name": "护盾", "layers": 1}},
@@ -251,6 +266,14 @@ const SKILLS := {
 		"targets": {"mode": "single", "kind": "soldier", "side": "ally", "range": 2},
 		"effects": [{"type": "modify", "id": "shield", "value": 1,
 			"effect": {"id": "shield", "name": "护盾", "layers": 1}}],
+	},
+	"力场": {
+		"id": "force_field_aura", "name": "力场", "source": "passive",
+		"sk": "【被动】力场", "stags": "被动 · 地域效果 · 增益",
+		"sdesc": "相邻己方单位获得 1 层「力场」：每层减少 2 点非指令伤害（A5 效果图鉴）。",
+		"conditions": {},
+		"targets": {"mode": "self", "aura": "force_field", "aura_layers": 1},
+		"effects": [],
 	},
 	"机场": {
 		"id": "airfield", "name": "机场", "source": "passive",
@@ -396,7 +419,7 @@ const SKILLS := {
 static func skill(nm: String) -> Dictionary:
 	return SKILLS.get(nm, {})
 ## 出战中涉及的卡（迭代006：补入 蜂巢III —— 它在卡池内且**有图标素材**，但此前两个卡组表都没用到它）
-const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "蜂巢III", "电击", "治疗", "护盾单元"]
+const DECK_LIST := ["叶蜂", "叶蜂", "泥蜂", "泥蜂", "熊蜂", "蜂巢", "蜂巢III", "电击", "治疗", "护盾单元", "力场蜂巢", "力场炮台"]
 
 ## 对战地图池（a500 对战准备 4：抽取对战地图）
 ## ⚠️ 迭代005.1（人明确）：地图上的特殊地形**由地图素材自带**（制作地图时直接画好），

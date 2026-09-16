@@ -78,6 +78,8 @@ func begin_turn(side: String) -> void:
 		s.push_log("【回费】%s方 +%d → 费用 %d（上限 %d）" % [s.cn(side), gain, s.cost[side], D.COST_MAX])
 	# 迭代016（A5 效果图鉴）：**己方回费阶段消失**的效果 —— 护盾 / 冻结 / 灼烧 / 速攻 / 诱饵
 	expire_refund_effects(side)
+	# 迭代017（G-37）：**地域效果「力场」的相邻授予** —— 清除上一轮光环授予的力场，再按当前场上光环重算
+	apply_force_field_auras(side)
 	# 迭代004 检查点7/8：回费**数值文本**（#FFA300 + 字号随数值）浮在己方费用六边形上方
 	if s.anim != null:
 		var hex_at: Vector2 = D.HEX_L if side == "green" else D.HEX_R
@@ -97,11 +99,9 @@ func begin_turn(side: String) -> void:
 ## 回合结束：结算持续效果 → 补手牌 → 胜负检查 → 交给对方
 func end_turn() -> void:
 	var s := state
-	for id in s.units.keys():
-		var eff: Dictionary = s.units[id]["effects"]
-		if eff.has("burn"):
-			s.units[id]["hp"] = int(s.units[id]["hp"]) - int(eff["burn"]["dot"])
-			s.push_log("%s 受灼烧 -%d" % [s.unit_name(id), int(eff["burn"]["dot"])])
+	# 迭代017（G-35 修正）：**灼烧不再是回合结束扣血** —— A5 效果图鉴为
+	#   「受攻击时每层追加 2 点指令伤害，己方回费阶段消失」；受攻击时的追加伤害见 battle_combat。
+	#   本处仅保留回合收尾的死亡清理。
 	s.remove_dead()
 	if s.winner != "":
 		s.refresh()
@@ -206,3 +206,43 @@ func expire_refund_effects(side: String) -> void:
 			if s.units[id]["effects"].has(k):
 				s.units[id]["effects"].erase(k)
 				s.push_log("%s 的「%s」在回费阶段消失" % [s.unit_name(id), str(D.EFFECT_DEFS[k]["name"])])
+
+## 迭代017（G-37）：**地域效果「力场」** —— 持有该被动的单位，使其相邻己方单位获得 1 层力场
+##   A5：地域效果作用于目标格上的单位；「力场蜂巢 / 力场炮台」的被动为"相邻己方单位获得 1 层力场"。
+##   实现：每个回费阶段**整体重算**（先清除上一轮 aura，再按当前场上光环赋予）——
+##   自愈式：提供者离场 / 单位走开时力场随之消失，无需额外钩子。
+func apply_force_field_auras(side: String) -> void:
+	var s := state
+	# ① 清除该方单位身上由光环产生的力场（aura 标记）
+	for id in s.units.keys():
+		if str(s.units[id]["side"]) != side:
+			continue
+		var e: Dictionary = s.units[id]["effects"].get("force_field", {})
+		if bool(e.get("aura", false)):
+			s.units[id]["effects"].erase("force_field")
+	# ② 按当前场上光环重新赋予（相邻四格内的己方单位，不含提供者自身）
+	for pid in s.units.keys():
+		var pcard: Dictionary = s.units[pid]["card"]
+		var sk: Dictionary = D.skill(str(pcard.get("sk", "").replace("【被动】", "")))
+		if sk.is_empty():
+			continue
+		var tg: Dictionary = sk.get("targets", {})
+		if str(tg.get("aura", "")) != "force_field":
+			continue
+		if str(s.units[pid]["side"]) != side:
+			continue
+		var layers: int = int(tg.get("aura_layers", D.EFFECT_AURA_FORCE_FIELD))
+		var pc: Vector2i = s.units[pid]["cell"]
+		var granted := 0
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var nc := Vector2i(pc.x + d.x, pc.y + d.y)
+			if not D.in_map(nc):
+				continue
+			var uid: int = s.unit_at(nc)
+			if uid < 0 or str(s.units[uid]["side"]) != side:
+				continue
+			var cur: int = int(s.units[uid]["effects"].get("force_field", {}).get("layers", 0))
+			s.units[uid]["effects"]["force_field"] = D.make_effect("force_field", cur + layers, true)
+			granted += 1
+		if granted > 0:
+			s.push_log("%s 的「力场」授予相邻 %d 个己方单位 %d 层" % [s.unit_name(pid), granted, layers])

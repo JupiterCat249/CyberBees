@@ -364,6 +364,12 @@ func consume_defense_effects(id: int) -> void:
 		combat.consume_defense_effects(id)
 
 
+## 迭代017（G-37）：重算地域效果「力场」的相邻授予（供回费阶段与调试调用）
+func apply_force_field_auras(side: String) -> void:
+	if turn != null and turn.has_method("apply_force_field_auras"):
+		turn.apply_force_field_auras(side)
+
+
 # ============================================================
 # 胜负（a500 胜利条件）
 # ============================================================

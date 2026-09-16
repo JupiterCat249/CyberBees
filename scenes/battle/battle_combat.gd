@@ -99,6 +99,22 @@ func reduce_for_damage(id: int, is_attack: bool) -> int:
 	return r
 
 
+## 迭代017（G-35）：某单位身上「灼烧」产生的**追加指令伤害**（每层 2 点，A5 效果图鉴）
+##   触发时机：该单位**受到攻击时**（主动攻击或指令伤害）
+func burn_extra_damage(id: int) -> int:
+	if state == null or not state.units.has(id):
+		return 0
+	var e: Dictionary = state.units[id]["effects"].get("burn", {})
+	if e.is_empty():
+		return 0
+	if e.has("burn_dmg"):
+		return int(e["burn_dmg"])
+	return EFFECT_BURN_FALLBACK_BASE * maxi(1, int(e.get("layers", 1)))
+
+
+const EFFECT_BURN_FALLBACK_BASE := 2   ## 旧数据（只有 dot 字段）的兜底每层伤害
+
+
 ## 该单位当前是否有「护盾」（抵挡一次攻击；层数 = layers）
 func shield_layers(id: int) -> int:
 	if state == null or not state.units.has(id):
@@ -156,6 +172,15 @@ func preview_damage(aid: int, tid: int) -> Dictionary:
 	# 攻方剩余血量：反击按"同时结算"照扣（即使守方被一击打死）
 	res["attacker_hp_after"] = maxi(0, int(units[aid]["hp"]) - cdmg)
 	res["blocked"] = blocked
+	# 迭代017（G-35）：预览把「灼烧追加指令伤害」也计入（与实战同源）
+	var burn_v: int = burn_extra_damage(tid)
+	if burn_v > 0:
+		var bd: int = maxi(0, burn_v - reduce_for_damage(tid, false))
+		if bd > 0 and shield_layers(tid) > 0:
+			bd = 0
+		if bd > 0:
+			res["burn_dmg"] = bd
+			res["target_hp_after"] = maxi(0, int(res["target_hp_after"]) - bd)
 	# 迭代014（IDEA-012）：**伤害覆盖格** —— 普攻只覆盖目标格；攻击者技能带溅射时按曼哈顿半径展开
 	#   口径与 battle_skills 的 `targets.mode=cell + splash` 一致（战斗系统按射程/范围结算）
 	var cell: Vector2i = units[tid]["cell"]
@@ -277,6 +302,17 @@ func attack(aid: int, tid: int) -> Dictionary:
 	units[tid]["hp"] = int(units[tid]["hp"]) - dmg
 	res["dmg"] = dmg
 	res["blocked"] = bool(pv.get("blocked", false))
+	# 迭代017（G-35）：**灼烧在受攻击时追加指令伤害**（A5：每层 2 点；经减伤、可被护盾抵挡）
+	var burn_v: int = burn_extra_damage(tid)
+	if burn_v > 0:
+		var bd: int = maxi(0, burn_v - reduce_for_damage(tid, false))
+		if bd > 0 and shield_layers(tid) > 0:
+			bd = 0
+			res["burn_blocked"] = true
+		if bd > 0:
+			units[tid]["hp"] = int(units[tid]["hp"]) - bd
+			res["burn_dmg"] = bd
+			state.push_log("%s 受灼烧追加指令伤害 -%d" % [state.unit_name(tid), bd])
 	# 迭代016：护盾/装甲"参与防御计算后消失"（护盾抵挡成功时也消耗）
 	consume_defense_effects(tid)
 	# 日志保持「攻击 → 反击」的阅读顺序（数值结算顺序与之无关）
