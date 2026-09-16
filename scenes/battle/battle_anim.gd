@@ -431,16 +431,17 @@ func _ensure_float_pattern() -> void:
 	})
 
 
-## 按表现规范：数值文本字号随数值增长（返回字号）
+## 按表现规范（基础动画.md §三）：**数值越大字号越大**，在 0~25 区间**线性映射**。
+## 字号单位为**固定设计空间像素（1920×1080 基准）**；屏幕整体缩放时内容比例不变（T2 用帧数，此处为设计空间尺寸）。
+## ⚠️ 迭代019（人明确）：BASE/MAX 先按设计空间**预设**，随后按**实机测试结果返工**调整这两个常量即可。
+const TEXT_FS_BASE := 40    ## 数值 0 时的字号（设计空间 px）
+const TEXT_FS_MAX := 96     ## 数值 ≥ TEXT_FS_VMAX 时的字号（设计空间 px）
+const TEXT_FS_VMAX := 25    ## 规范区间上限（A5：绝大多数数值落在 0~25）
+
 func text_size_for(value: int) -> int:
-	var v: int = absi(value)
-	if v >= 8:
-		return 72
-	if v >= 5:
-		return 60
-	if v >= 3:
-		return 52
-	return 44
+	var v: int = mini(absi(value), TEXT_FS_VMAX)
+	var k: float = float(v) / float(TEXT_FS_VMAX)
+	return int(round(lerpf(float(TEXT_FS_BASE), float(TEXT_FS_MAX), k)))
 
 
 ## 数值文本颜色（按种类）
