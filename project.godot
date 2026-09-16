@@ -14,6 +14,9 @@ config/name="电子蜂"
 run/main_scene="res://scenes/battle_card.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+# 迭代024：**锁定 60fps** —— 动画系统按"帧数"计时（T2），其时长换算基准是 60fps；
+#   此前未锁帧，实测跑到 ~165fps → "60 帧"实际只播 0.36s（飘字/抖动统统比配置短得多）。
+run/max_fps=60
 
 [autoload]
 

@@ -26,6 +26,12 @@ var _overlay: Node2D = null
 
 
 func _ready() -> void:
+	# ⚠️ 迭代024（关键修复）：**锁定 60fps**
+	#   动画系统按**帧数**计时（T2），其"帧数 → 秒"的换算基准是 60fps；而此前未锁帧，
+	#   实测跑到 ~165fps → 配置 60 帧的飘字实际只播 **613ms**（且实例帧数记到 100），
+	#   于是"飘字/抖动看起来远短于配置时长"。
+	#   `project.godot` 的 `run/max_fps` 在本机未生效，故在此显式设定（更可靠、且注释可查）。
+	Engine.max_fps = 60
 	# 框架场景（card-system 的 battle_ui）由编辑器实例化在本场景下；这里只取用其 Holder
 	var ui := get_node_or_null("BattleUI")
 	if ui == null:

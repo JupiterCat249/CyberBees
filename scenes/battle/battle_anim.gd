@@ -47,6 +47,9 @@ var ui_locked := false
 ##   便于用截图核查"飘字/抖动是否真的画出来了"（0.5s 的表现靠工具往返很难抓到）。
 ##   正常游戏恒为 false；仅在需要取证时由调试脚本临时置真。
 var debug_hold := false
+## 迭代024：**时长自检**开关 —— 置真时每个动画结束会打印「实际帧 / 配置帧 / 耗时」，
+##   用于核对"配置时长"是否真的等于"观感时长"（本次修复即靠它定位：曾出现实际 100 帧 / 配置 60 帧）。
+var debug_log_timing := false
 ## 全局：是否暂停动画推进（规则 4）
 var anim_paused := false
 ## 一次性特效挂载父节点（由协调器注入）
@@ -82,7 +85,13 @@ func action(name: String, target: Node = null) -> void:
 	var key := _run_key(name, target)
 	if _running.has(key):
 		stop(key)      # 同一目标重播：先收尾上一段（含一次性特效释放），再起新的
-	_running[key] = {"name": name, "i": 0, "c": 0, "f": 0, "tref": weakref(target)}
+	# i/c/f 改为**按单元下标的数组**：i=当前 clip 下标，f=该 clip 已播帧数（迭代024）
+	var n_units := (_patterns[name].get("units", []) as Array).size()
+	var zeros: Array = []
+	for _k in n_units:
+		zeros.append(0)
+	_running[key] = {"name": name, "i": 0, "c": zeros.duplicate(), "f": zeros.duplicate(),
+		"tref": weakref(target), "t0": Time.get_ticks_msec(), "frames": 0}
 	var p: Dictionary = _patterns[name]
 	var on_start := str(p.get("trigger_on_start", ""))
 	if on_start != "" and _patterns.has(on_start):
@@ -136,6 +145,13 @@ func _stop_instance(key: String) -> void:
 		var wr0 = st0["tref"]
 		tgt = wr0.get_ref() if wr0 != null else null
 	var name := str(st0.get("name", _key_pattern(key)))
+	# 迭代024 埋点：动画**实际**存活帧数与耗时（核对"配置时长"与"观感时长"是否一致）
+	if debug_log_timing:      # 迭代024：默认关闭；核查时长时置真（BattleAnim.debug_log_timing = true）
+		var cfgf := _inst_frames(name)
+		var gotf := int(st0.get("frames", 0))
+		var ms := Time.get_ticks_msec() - int(st0.get("t0", 0))
+		print("[anim] %s 结束：实际帧=%d 配置帧=%d 耗时=%dms %s" % [
+			name, gotf, cfgf, ms, ("OK" if absf(float(gotf - cfgf)) <= 2.0 else "不符")])
 	_running.erase(key)
 	# 一次性特效（浮字等）：播完自释放
 	if tgt != null and is_instance_valid(tgt) and tgt.has_meta("fx_once"):
@@ -219,25 +235,38 @@ func _step(key: String) -> void:
 	if not is_instance_valid(tg) or tg.is_queued_for_deletion():
 		_running.erase(key)
 		return
+	# 迭代024 缺陷修复：**本函数一次调用 = 推进一个游戏帧**，因此在同一次调用里
+	#   **把所有 units（并行单元）各推进一帧**。
+	#   此前实现按"当前单元下标"一次只推进一个单元，导致多单元 Pattern（如浮字=移动+变色）
+	#   每帧被推进多次 → 帧数计时失真（实测浮字配置 60 帧却调用 100 次、耗时 1711ms）。
 	var units: Array = p.get("units", [])
-	var i: int = int(st["i"])
-	if i >= units.size():
+	if units.is_empty():
 		stop(key)
 		return
-	var unit: Dictionary = units[i]
-	var clips: Array = unit.get("clips", [])
-	var c: int = int(st["c"])
-	if c >= clips.size():
-		st["i"] = i + 1
-		st["c"] = 0
-		st["f"] = 0
-		return
-	_apply_clip(clips[c], st, unit)
-	var frames: int = maxi(1, int(clips[c].get("frames", 1)))
-	st["f"] = int(st["f"]) + 1
-	if int(st["f"]) >= frames:
-		st["c"] = c + 1
-		st["f"] = 0
+	st["frames"] = int(st.get("frames", 0)) + 1      # 实例存活帧数（用于实测时长）
+	for i in units.size():
+		var unit: Dictionary = units[i]
+		var clips: Array = unit.get("clips", [])
+		var c: int = maxi(0, int((st["c"] as Array)[i]))
+		if c >= clips.size():
+			continue
+		_apply_clip(clips[c], st, unit)
+		var frames: int = maxi(1, int(clips[c].get("frames", 1)))
+		var f: int = int((st["f"] as Array)[i]) + 1
+		(st["f"] as Array)[i] = f
+		if f >= frames:
+			(st["c"] as Array)[i] = c + 1
+			(st["f"] as Array)[i] = 0
+	# 所有单元都播完 → 结束
+	# ⚠️ 空 clips 的单元必须视为"已完成"，否则 done 永远为 false → 该实例永不停、主循环空转（实测卡死）
+	var done := true
+	for i in units.size():
+		var nclips: int = (units[i].get("clips", []) as Array).size()
+		if nclips > 0 and int((st["c"] as Array)[i]) < nclips:
+			done = false
+			break
+	if done:
+		stop(key)
 
 
 # ============================================================
@@ -641,3 +670,14 @@ func _register_shake(pname: String, base_amp: float, value: int, _frames: int) -
 ## 清除已见记录（对局重开时调用）
 func clear_seen() -> void:
 	_seen.clear()
+
+## 迭代024：该 Pattern 各单元中**最长**的帧数（并行口径 = 动画时长）
+func _inst_frames(name: String) -> int:
+	var p: Dictionary = _patterns.get(name, {})
+	var mx := 0
+	for u in (p.get("units", []) as Array):
+		var f := 0
+		for c in (u.get("clips", []) as Array):
+			f += int(c.get("frames", 0))
+		mx = maxi(mx, f)
+	return mx
