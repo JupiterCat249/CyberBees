@@ -337,6 +337,8 @@ func register_defaults(_cfg: Dictionary = {}) -> void:
 	#   （迭代022：此前默认序列与运行时重新注册各写一份，时长/段数会互相打架）
 	_register_shake("受击抖动", D.SHAKE_AMP_UNIT, 5, D.SHAKE_FRAMES_UNIT)
 	_register_shake("地图抖动", D.SHAKE_AMP_MAP, 5, D.SHAKE_FRAMES_MAP)
+	# ② 场景内飘字（含回费数字）：同样在默认注册时就建好，避免"查不到/两处定义"
+	_register_float_pattern()
 	# ④ 卡牌登场：**瞬间动作（无前摇）** —— 第 1 帧即到位，只做淡入
 	register("卡牌登场", {
 		"units": [
@@ -450,20 +452,27 @@ func float_text(value: int, kind: String, at: Vector2, parent: Node = null) -> N
 func _ensure_float_pattern() -> void:
 	if _patterns.has("浮字上浮"):
 		return
-	# 迭代019：飘字**持续 0.5s = 30 帧 @60fps**（原 12 帧 ≈0.2s）
-	#   上浮用**递减步长**（先快后慢，符合"浮起后缓停"的观感），淡出占最后 10 帧
+	# 迭代023（人实测"太快了"）：飘字时长上修到 60 帧 = 1.0s（含回费数字）
+	#   上浮 40 帧（递减步长）+ 淡出 20 帧；时长/上浮帧数取自 battle_defs 常量（单一来源）
+	_register_float_pattern()
+
+
+func _register_float_pattern() -> void:
+	var total: int = D.FLOAT_TEXT_FRAMES
+	var rise: int = mini(D.FLOAT_TEXT_RISE, total - 1)
+	var fade: int = maxi(1, total - rise)
+	@warning_ignore("integer_division")
+	var seg: int = maxi(1, rise / 5)
+	var clips_move: Array = []
+	var steps: Array = [-8, -7, -5, -3, -2]
+	for sv in steps:
+		clips_move.append({"frames": seg, "step": Vector2(0, sv)})
 	register("浮字上浮", {
 		"units": [
-			{"type": U.MOVE_BY, "clips": [
-				{"frames": 4, "step": Vector2(0, -8)},
-				{"frames": 4, "step": Vector2(0, -7)},
-				{"frames": 4, "step": Vector2(0, -5)},
-				{"frames": 4, "step": Vector2(0, -3)},
-				{"frames": 4, "step": Vector2(0, -2)},
-			]},
+			{"type": U.MOVE_BY, "clips": clips_move},
 			{"type": U.TINT, "clips": [
-				{"frames": 20, "color": Color(1, 1, 1, 1)},
-				{"frames": 10, "color": Color(1, 1, 1, 0)},
+				{"frames": rise, "color": Color(1, 1, 1, 1)},
+				{"frames": fade, "color": Color(1, 1, 1, 0)},
 			]},
 		],
 	})

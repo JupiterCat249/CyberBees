@@ -124,12 +124,16 @@ const EFFECT_FORCE_FIELD_REDUCE := 2   ## 力场每层减伤（A5 效果图鉴�
 ## ⚠️ 迭代022（人实测反馈后调整）：原按《基础动画.md》§四取 0.25s / 5 段，实机手感"像只摇了一次就停"。
 ##   人明确要求"更长时间、更大频率" → 时长与段数上修（**与规范 0.25s 暂不一致，以实机手感为准**，
 ##   规范侧已同步记录该偏差）。调参只需改下面 4 个常量。
-const SHAKE_FRAMES_UNIT := 27     ## 单位受击抖动：27 帧 ≈ 0.45s @60fps（9 次往复 × 3 帧）
-const SHAKE_FRAMES_MAP := 40      ## AOE 地图抖动：40 帧 ≈ 0.67s @60fps
-const SHAKE_STEPS := 9            ## 往复段数（≥9 才不像"只摇一次"；占 3 段才像 1 次摇摆）
-const SHAKE_DECAY := 0.78         ## 每段振幅衰减系数（缓衰减 → 末段仍可见）
+## ⚠️ 手感类参数（T15：以实机测试反馈为准）——全部集中在这里，便于按反馈一处调整
+## 迭代023（人实测："还是太快了，进一步拉长时间"）→ 时长再一次上修
+const SHAKE_FRAMES_UNIT := 40     ## 单位受击抖动：40 帧 ≈ 0.67s @60fps
+const SHAKE_FRAMES_MAP := 60      ## AOE 地图抖动：60 帧 ≈ 1.0s @60fps
+const SHAKE_STEPS := 13           ## 往复段数（段数不足会"像只摇一次"）
+const SHAKE_DECAY := 0.82         ## 每段振幅衰减系数（缓衰减 → 末段仍可见）
 const SHAKE_AMP_UNIT := 10.0      ## 单位受击基准振幅（设计空间 px）
 const SHAKE_AMP_MAP := 18.0       ## AOE 地图基准振幅（设计空间 px）
+const FLOAT_TEXT_FRAMES := 60     ## 场景内飘字（含回费数字）显示时长：60 帧 = 1.0s @60fps
+const FLOAT_TEXT_RISE := 40       ##   其中「上浮」占 40 帧，其余为淡出
 const EFFECT_BURN_DAMAGE := 2         ## 灼烧每层追加的指令伤害（A5 效果图鉴）
 const EFFECT_AURA_FORCE_FIELD := 1    ## 「力场」地域效果授予相邻己方单位的层数（A5：相邻己方单位获得 1 层力场）
 ## 迭代018（人明确）：**buff 不能叠加**（a500「相同效果最多一个」）—— 光环不累加层数，
