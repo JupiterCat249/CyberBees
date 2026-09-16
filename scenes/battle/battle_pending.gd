@@ -62,6 +62,22 @@ func clear_pending() -> void:
 ## ⚠️ 此处此前**自己重算**且反击条件写成"守方存活才算" → 与 attack() 漂移（一击必杀时预览不显示反击，实战却照扣）。
 func build_preview(kind: String, cell: Vector2i) -> Dictionary:
 	var p := {"kind": kind, "cell": cell}
+	# 迭代016③（修迭代014 遗留）：**指令卡也先预览再确认** —— 玩家选定指令目标时给出
+	#   预计伤害 / 覆盖格（溅射或链式）/ 护盾抵挡提示，与实伤口径同源（都走防御计算）
+	if kind == "指令":
+		var s_cmd = state
+		if s_cmd.armed_card >= 0 and s_cmd.armed_card < s_cmd.hand[s_cmd.current].size():
+			var c_cmd: Dictionary = s_cmd.hand[s_cmd.current][s_cmd.armed_card]
+			if s_cmd.combat != null:
+				var pc: Dictionary = s_cmd.combat.preview_command(str(c_cmd.get("name", "")), cell)
+				if bool(pc.get("ok", false)):
+					p["dmg"] = int(pc["dmg"])
+					p["blocked"] = bool(pc["blocked"])
+					p["coverage"] = pc["cells"]
+					p["hp_after"] = int(pc["hp_after"])
+					p["hp_now"] = int(pc["hp_now"])
+					p["target_id"] = int(pc["target_id"])
+		return p
 	if kind != "攻击":
 		return p
 	var aid: int = state.selected_unit

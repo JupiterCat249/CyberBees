@@ -170,6 +170,69 @@ func preview_damage(aid: int, tid: int) -> Dictionary:
 	return res
 
 
+## 迭代016③（修迭代014 遗留）：**指令卡伤害预估**（纯函数）—— 与 battle_skills.apply_effect 的实伤口径一致
+##   管线：基础值（或用「目标部署费×2」）→ 按 reduce_for_damage(false) 减伤（**力场不计入指令伤害**）
+##        → 若仍有伤害且目标有护盾 → 本次归 0（护盾抵挡）
+##   `skill_name` 为指令卡对应的技能名；返回 {ok, dmg, blocked, cells, target_id, hp_now, hp_after}
+func preview_command(skill_name: String, cell: Vector2i) -> Dictionary:
+	var res := {"ok": false, "dmg": 0, "blocked": false, "cells": [], "target_id": -1, "hp_now": 0, "hp_after": 0}
+	if state == null or not D.in_map(cell):
+		return res
+	var def: Dictionary = D.skill(skill_name)
+	if def.is_empty():
+		return res
+	var tg: Dictionary = def.get("targets", {})
+	var v := 0
+	var by_cost := false
+	for e in (def.get("effects", []) as Array):
+		if str(e.get("type", "")) == "damage":
+			v = int(e.get("value", 0))
+			by_cost = bool(e.get("by_target_cost", false))
+			break
+	# 覆盖格：cell 模式按 splash 半径；chain 模式 = 目标格 + 上下左右
+	var cells: Array = []
+	if str(tg.get("mode", "")) == "cell":
+		var sp := int(tg.get("splash", 0))
+		for r in D.ROWS:
+			for c in D.COLS:
+				var p := Vector2i(r, c)
+				if absi(p.x - cell.x) + absi(p.y - cell.y) <= sp:
+					cells.append(p)
+	else:
+		cells.append(cell)
+		if bool(tg.get("chain", false)):
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var nc := Vector2i(cell.x + d.x, cell.y + d.y)
+				if D.in_map(nc):
+					cells.append(nc)
+	res["cells"] = cells
+	var tid: int = state.unit_at(cell)
+	if tid < 0:
+		res["ok"] = true      # 地格类指令可对空格使用（无单位目标）
+		return res
+	if str(state.units[tid]["card"]["kind"]) == "queen":
+		res["ok"] = true      # 蜂王免疫指令卡伤害与减益
+		res["target_id"] = tid
+		res["hp_now"] = int(state.units[tid]["hp"])
+		res["hp_after"] = int(state.units[tid]["hp"])
+		return res
+	var dmg := v
+	if by_cost:
+		dmg = int(state.units[tid]["card"]["cost"]) * 2
+	dmg = maxi(0, dmg - reduce_for_damage(tid, false))
+	var blocked := false
+	if dmg > 0 and shield_layers(tid) > 0:
+		blocked = true
+		dmg = 0
+	res["ok"] = true
+	res["dmg"] = dmg
+	res["blocked"] = blocked
+	res["target_id"] = tid
+	res["hp_now"] = int(state.units[tid]["hp"])
+	res["hp_after"] = maxi(0, int(state.units[tid]["hp"]) - dmg)
+	return res
+
+
 ## 攻击者的溅射半径（来自其卡牌的技能 targets.splash；无技能/无溅射 = 0）
 func attack_splash(id: int) -> int:
 	if state == null or not state.units.has(id):
