@@ -121,10 +121,15 @@ enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET, SUPPORT_TARGET }
 ##   装甲：单位效果，抵挡一次攻击，参与防御计算则消失
 const EFFECT_FORCE_FIELD_REDUCE := 2   ## 力场每层减伤（A5 效果图鉴）
 ## 迭代019（《基础动画.md》§四）：抖动参数 —— 幅度随数值缩放，但**时长固定不变**
-const SHAKE_FRAMES_UNIT := 15     ## 单位受击抖动：0.25s @60fps
-const SHAKE_FRAMES_MAP := 30      ## AOE 地图抖动：0.5s @60fps
-const SHAKE_STEPS := 5            ## 弹性衰减段数
-const SHAKE_DECAY := 0.5          ## 每段振幅衰减系数（弹簧阻尼观感）
+## ⚠️ 迭代022（人实测反馈后调整）：原按《基础动画.md》§四取 0.25s / 5 段，实机手感"像只摇了一次就停"。
+##   人明确要求"更长时间、更大频率" → 时长与段数上修（**与规范 0.25s 暂不一致，以实机手感为准**，
+##   规范侧已同步记录该偏差）。调参只需改下面 4 个常量。
+const SHAKE_FRAMES_UNIT := 27     ## 单位受击抖动：27 帧 ≈ 0.45s @60fps（9 次往复 × 3 帧）
+const SHAKE_FRAMES_MAP := 40      ## AOE 地图抖动：40 帧 ≈ 0.67s @60fps
+const SHAKE_STEPS := 9            ## 往复段数（≥9 才不像"只摇一次"；占 3 段才像 1 次摇摆）
+const SHAKE_DECAY := 0.78         ## 每段振幅衰减系数（缓衰减 → 末段仍可见）
+const SHAKE_AMP_UNIT := 10.0      ## 单位受击基准振幅（设计空间 px）
+const SHAKE_AMP_MAP := 18.0       ## AOE 地图基准振幅（设计空间 px）
 const EFFECT_BURN_DAMAGE := 2         ## 灼烧每层追加的指令伤害（A5 效果图鉴）
 const EFFECT_AURA_FORCE_FIELD := 1    ## 「力场」地域效果授予相邻己方单位的层数（A5：相邻己方单位获得 1 层力场）
 ## 迭代018（人明确）：**buff 不能叠加**（a500「相同效果最多一个」）—— 光环不累加层数，

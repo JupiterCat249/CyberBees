@@ -331,41 +331,12 @@ func turn_color(is_mine: bool) -> Color:
 
 
 ## 注册默认 Pattern（cfg 可覆盖幅度/帧数，便于按表现规范调参而不改代码）
-func register_defaults(cfg: Dictionary = {}) -> void:
-	var amp: float = float(cfg.get("shake_amp", 6.0))      # 单位受击抖动幅度(px)
-	var eamp: float = float(cfg.get("aoe_amp", 12.0))      # AOE 地图抖动幅度(px)
+func register_defaults(_cfg: Dictionary = {}) -> void:
 
-	# ① 单位受击抖动：**弹性衰减**往复（振幅逐次减半 → 类似弹簧阻尼），总时长 **15 帧 = 0.25s @60fps**
-	#   迭代019：原为等幅 8 帧（≈0.13s）；按《基础动画.md》§四 修正为 0.25s + 弹性衰减
-	register("受击抖动", {
-		"units": [{"type": U.MOVE_BY, "clips": [
-			{"frames": 3, "step": Vector2(amp, 0)},
-			{"frames": 3, "step": Vector2(-amp * 1.5, 0)},
-			{"frames": 3, "step": Vector2(amp * 0.75, 0)},
-			{"frames": 3, "step": Vector2(-amp * 0.375, 0)},
-			{"frames": 3, "step": Vector2(amp - amp * 1.5 + amp * 0.75 - amp * 0.375, 0)},
-		]}],
-	})
-	# ② 单位受伤闪红（TINT 变色）：#FF2000 → 橙 → 白
-	register("受伤闪红", {
-		"units": [
-			{"type": U.TINT, "clips": [{"frames": 2, "color": DAMAGE_COLOR}]},
-			{"type": U.TINT, "clips": [{"frames": 2, "color": Color("ff8800")}]},
-			{"type": U.TINT, "clips": [{"frames": 2, "color": Color.WHITE}]},
-		],
-	})
-	# ③ AOE 地图抖动：幅度更大、帧数更长（作用于地图根节点）
-	# 迭代019：总时长 **30 帧 = 0.5s @60fps**（原 12 帧 ≈0.2s）；等幅 → **弹性衰减**
-	register("地图抖动", {
-		"units": [{"type": U.MOVE_BY, "clips": [
-			{"frames": 5, "step": Vector2(0, -eamp)},
-			{"frames": 5, "step": Vector2(0, eamp * 0.75)},
-			{"frames": 5, "step": Vector2(-eamp * 0.5, 0)},
-			{"frames": 5, "step": Vector2(eamp * 0.3, 0)},
-			{"frames": 5, "step": Vector2(-eamp * 0.1, 0)},
-			{"frames": 5, "step": Vector2(0, -eamp * 1.0 + eamp * 0.75 - eamp * 0.1)},
-		]}],
-	})
+	# ① 单位受击抖动 / ③ AOE 地图抖动：**定义只有一处** —— 统一由 _register_shake 构建
+	#   （迭代022：此前默认序列与运行时重新注册各写一份，时长/段数会互相打架）
+	_register_shake("受击抖动", D.SHAKE_AMP_UNIT, 5, D.SHAKE_FRAMES_UNIT)
+	_register_shake("地图抖动", D.SHAKE_AMP_MAP, 5, D.SHAKE_FRAMES_MAP)
 	# ④ 卡牌登场：**瞬间动作（无前摇）** —— 第 1 帧即到位，只做淡入
 	register("卡牌登场", {
 		"units": [
@@ -609,7 +580,7 @@ func shake_map(map_node: Node = null, value: int = 0) -> void:
 	if tgt == null and _state != null:
 		tgt = _state.get_parent()
 	if tgt != null:
-		_register_shake("地图抖动", 12.0, value, 6)
+		_register_shake("地图抖动", D.SHAKE_AMP_MAP, value, D.SHAKE_FRAMES_MAP)
 		action("地图抖动", tgt)
 
 
@@ -617,7 +588,7 @@ func shake_map(map_node: Node = null, value: int = 0) -> void:
 func shake_unit(tgt: Node, value: int = 0) -> void:
 	if tgt == null:
 		return
-	_register_shake("受击抖动", 6.0, value, 4)
+	_register_shake("受击抖动", D.SHAKE_AMP_UNIT, value, D.SHAKE_FRAMES_UNIT)
 	action("受击抖动", tgt)
 
 
