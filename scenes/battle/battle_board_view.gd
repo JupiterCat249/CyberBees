@@ -119,6 +119,10 @@ func render_highlights() -> void:
 	# A5 程序需求：待确认目标 —— 叠加框架「地图格选中」素材 + 预计剩余血量（扩展 card-system 素材，不重做）
 	if state.pending_kind != "" and D.in_map(state.pending_cell):
 		var pcell: Vector2i = state.pending_cell
+		# 迭代014（IDEA-012）：**伤害覆盖格描边**（青色细框）—— 普攻=目标格；溅射技能=半径内全部格
+		if state.preview.has("coverage"):
+			for cc in (state.preview["coverage"] as Array):
+				_hl_node.add_child(_hl_outline(cc, Color(0.25, 0.95, 0.98, 0.85)))
 		var tex := load(D.CELL_PENDING_PATH) as Texture2D
 		if tex != null:
 			var spr := Sprite2D.new()
@@ -156,3 +160,23 @@ func _hl(cell: Vector2i, col: Color) -> ColorRect:
 	r.color = col
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
+
+
+## 迭代014（IDEA-012）：**伤害覆盖格**描边 —— 只画细边框（不铺色），
+## 避免与"可移动(绿铺色)/可攻击(红铺色)/支援(蓝铺色)"三种既有高亮混淆
+func _hl_outline(cell: Vector2i, col: Color, w := 8.0) -> Node2D:
+	var root := Node2D.new()
+	var base := D.cell_pos(cell)
+	var ins := w * 0.5
+	for r in [
+		Rect2(base.x + ins, base.y + ins, D.CELL - w, w),
+		Rect2(base.x + ins, base.y + D.CELL - ins - w, D.CELL - w, w),
+		Rect2(base.x + ins, base.y + ins, w, D.CELL - w),
+		Rect2(base.x + D.CELL - ins - w, base.y + ins, w, D.CELL - w)]:
+		var bar := ColorRect.new()
+		bar.position = r.position
+		bar.size = r.size
+		bar.color = col
+		bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		root.add_child(bar)
+	return root

@@ -58,6 +58,8 @@ func clear_pending() -> void:
 
 
 ## 预览数据：攻击给出预计伤害与预计剩余血量（含反击预估）；移动/部署/支援给出目标格
+## 迭代014（IDEA-012）：伤害/反击**统一走 BattleCombat.preview_damage()**（纯函数、与实战同源）。
+## ⚠️ 此处此前**自己重算**且反击条件写成"守方存活才算" → 与 attack() 漂移（一击必杀时预览不显示反击，实战却照扣）。
 func build_preview(kind: String, cell: Vector2i) -> Dictionary:
 	var p := {"kind": kind, "cell": cell}
 	if kind != "攻击":
@@ -66,22 +68,18 @@ func build_preview(kind: String, cell: Vector2i) -> Dictionary:
 	var tid: int = state.unit_at(cell)
 	if aid < 0 or tid < 0 or state.combat == null:
 		return p
-	var units: Dictionary = state.units
-	var dmg := maxi(0, int(state.combat.final_atk(aid)) - int(state.combat.final_reduce(tid)))
+	var pv: Dictionary = state.combat.preview_damage(aid, tid)
+	if not bool(pv["ok"]):
+		return p
 	p["attacker_id"] = aid
-	p["attacker_hp_now"] = int(units[aid]["hp"])
 	p["target_id"] = tid
-	p["dmg"] = dmg
-	p["hp_now"] = int(units[tid]["hp"])
-	p["hp_after"] = maxi(0, int(units[tid]["hp"]) - dmg)
-	# 反击预估（对方存活且射程覆盖）：同时给出「攻方」预计剩余血量
-	var back := 0
-	if p["hp_after"] > 0:
-		var ac: Vector2i = units[aid]["cell"]
-		if abs(cell.x - ac.x) + abs(cell.y - ac.y) <= int(state.combat.final_range(tid)):
-			back = maxi(0, int(state.combat.final_atk(tid)) - int(state.combat.final_reduce(aid)))
-	p["counter"] = back
-	p["attacker_hp_after"] = maxi(0, int(units[aid]["hp"]) - back)
+	p["dmg"] = int(pv["dmg"])
+	p["hp_now"] = int(pv["target_hp_now"])
+	p["hp_after"] = int(pv["target_hp_after"])
+	p["counter"] = int(pv["counter"])
+	p["attacker_hp_now"] = int(pv["attacker_hp_now"])
+	p["attacker_hp_after"] = int(pv["attacker_hp_after"])
+	p["coverage"] = pv["coverage"]   # 迭代014：伤害覆盖格（供棋盘高亮）
 	return p
 
 
