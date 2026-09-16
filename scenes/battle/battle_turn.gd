@@ -210,6 +210,7 @@ func expire_refund_effects(side: String) -> void:
 ## 迭代017（G-37）：**地域效果「力场」** —— 持有该被动的单位，使其相邻己方单位获得 1 层力场
 ##   A5：地域效果作用于目标格上的单位；「力场蜂巢 / 力场炮台」的被动为"相邻己方单位获得 1 层力场"。
 ##   实现：每个回费阶段**整体重算**（先清除上一轮 aura，再按当前场上光环赋予）——
+##   ⚠️ 迭代018（人明确）：**buff 不能叠加** —— 已有「力场」的单位不再被光环重复赋予（a500「相同效果最多一个」）
 ##   自愈式：提供者离场 / 单位走开时力场随之消失，无需额外钩子。
 func apply_force_field_auras(side: String) -> void:
 	var s := state
@@ -241,8 +242,11 @@ func apply_force_field_auras(side: String) -> void:
 			var uid: int = s.unit_at(nc)
 			if uid < 0 or str(s.units[uid]["side"]) != side:
 				continue
-			var cur: int = int(s.units[uid]["effects"].get("force_field", {}).get("layers", 0))
-			s.units[uid]["effects"]["force_field"] = D.make_effect("force_field", cur + layers, true)
+			# 迭代018（人明确）：**buff 不能叠加** —— a500「相同效果最多一个」
+			#   该单位已有「力场」（无论来自哪个光环或手动赋予）→ 不再重复赋予层数
+			if s.units[uid]["effects"].has("force_field"):
+				continue
+			s.units[uid]["effects"]["force_field"] = D.make_effect("force_field", layers, true)
 			granted += 1
 		if granted > 0:
 			s.push_log("%s 的「力场」授予相邻 %d 个己方单位 %d 层" % [s.unit_name(pid), granted, layers])

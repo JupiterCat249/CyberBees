@@ -122,10 +122,12 @@ enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET, SUPPORT_TARGET }
 const EFFECT_FORCE_FIELD_REDUCE := 2   ## 力场每层减伤（A5 效果图鉴）
 const EFFECT_BURN_DAMAGE := 2         ## 灼烧每层追加的指令伤害（A5 效果图鉴）
 const EFFECT_AURA_FORCE_FIELD := 1    ## 「力场」地域效果授予相邻己方单位的层数（A5：相邻己方单位获得 1 层力场）
+## 迭代018（人明确）：**buff 不能叠加**（a500「相同效果最多一个」）—— 光环不累加层数，
+##   手动赋予与光环授予也互不叠加；同名效果恒为 1 层。
 const EFFECT_DEFS := {
 	"burn": {"name": "灼烧", "icon": "灼烧.png", "kind": "debuff"},
 	"armor": {"name": "装甲", "icon": "装甲.png", "kind": "buff_def"},
-	"shield": {"name": "护盾", "icon": "护盾.png", "kind": "buff_def"},
+	"shield": {"name": "护盾", "icon": "护盾.png", "kind": "buff_def"},   # 迭代018（人明确）：护盾**同样抵挡指令伤害**
 	"force_field": {"name": "力场", "icon": "力场.png", "kind": "buff_def_area"},
 	"freeze": {"name": "冻结", "icon": "冻结.png", "kind": "debuff"},
 	"intercept": {"name": "拦截", "icon": "拦截.png", "kind": "buff_def_area"},
