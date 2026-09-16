@@ -663,22 +663,45 @@ func _register_shake(pname: String, base_amp: float, value: int, _frames: int) -
 	var total: int = _shake_frames_for(pname, value)   # 迭代026：高伤害延长时长
 	@warning_ignore("integer_division")
 	var per: int = maxi(1, total / k)
-	var clips: Array = []
+	# ============================================================
+	# 波形生成（迭代027 重大修正）：**围绕原位对称震荡**
+	#
+	# 迭代026 及以前：直接交替 ±振幅并累加 → 由于 MOVE_BY 是**累加**位移，
+	#   累加和序列的**均值不为 0**（实测 +7.3px），整段动画都偏在一侧 →
+	#   观感就是"单位先右移一段、在新位置震动、结束时才跳回原位"（人实测指出）。
+	#
+	# 现在：先算出**逐段的目标位置**（标准弹性衰减：递减的峰值 0→+A→-A′→+A″…），
+	#   再**减去位置均值**做居中，最后**转为相邻位移（step）**。
+	#   → 首段即围绕原位、全程对称、末段精确回到 0。
+	# ============================================================
+	var loc: Array = []                  # 目标位置（相对原位）
 	var mag := amp
 	var sign_ := 1.0
-	var acc := 0.0
+	var cur := 0.0
 	for i in k:
-		var step: float = sign_ * mag
-		# 末段补偿：保证 Σstep = 0（不残留偏移）
-		if i == k - 1:
-			step = -acc
-		acc += step
+		cur += sign_ * mag
+		loc.append(cur)
+		mag *= D.SHAKE_DECAY
+		sign_ = -sign_
+	# ① 居中：减去均值（这是"基准位置=原始位置"的关键）
+	var mean := 0.0
+	for v in loc:
+		mean += float(v)
+	mean /= float(k)
+	for i in k:
+		loc[i] = float(loc[i]) - mean
+	# ② 末尾归零（收尾必须回到原位）
+	loc[k - 1] = 0.0
+	# ③ 位置 → 相邻位移（step）；地图抖动走"上下→左右"交替，单位抖动走左右
+	var clips: Array = []
+	var prev := 0.0
+	for i in k:
+		var step: float = float(loc[i]) - prev
+		prev = float(loc[i])
 		if is_map:
 			clips.append({"frames": per, "step": (Vector2(0, step) if i % 2 == 0 else Vector2(step, 0))})
 		else:
 			clips.append({"frames": per, "step": Vector2(step, 0)})
-		mag *= D.SHAKE_DECAY
-		sign_ = -sign_
 	register(pname, {"units": [{"type": U.MOVE_BY, "clips": clips}]})
 
 
