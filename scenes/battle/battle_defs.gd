@@ -120,6 +120,11 @@ enum Mode { IDLE, DEPLOY_TARGET, CMD_TARGET, SUPPORT_TARGET }
 ##   护盾：兵蜂效果，**抵挡一次攻击**；参与防御计算或己方回费阶段消失
 ##   装甲：单位效果，抵挡一次攻击，参与防御计算则消失
 const EFFECT_FORCE_FIELD_REDUCE := 2   ## 力场每层减伤（A5 效果图鉴）
+## 迭代019（《基础动画.md》§四）：抖动参数 —— 幅度随数值缩放，但**时长固定不变**
+const SHAKE_FRAMES_UNIT := 15     ## 单位受击抖动：0.25s @60fps
+const SHAKE_FRAMES_MAP := 30      ## AOE 地图抖动：0.5s @60fps
+const SHAKE_STEPS := 5            ## 弹性衰减段数
+const SHAKE_DECAY := 0.5          ## 每段振幅衰减系数（弹簧阻尼观感）
 const EFFECT_BURN_DAMAGE := 2         ## 灼烧每层追加的指令伤害（A5 效果图鉴）
 const EFFECT_AURA_FORCE_FIELD := 1    ## 「力场」地域效果授予相邻己方单位的层数（A5：相邻己方单位获得 1 层力场）
 ## 迭代018（人明确）：**buff 不能叠加**（a500「相同效果最多一个」）—— 光环不累加层数，

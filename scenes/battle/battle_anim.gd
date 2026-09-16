@@ -72,13 +72,32 @@ func action(name: String, target: Node = null) -> void:
 	_apply_initial(name, target)
 	# ⚠️ 只存**弱引用**：节点被 free 后若还持有强引用，从字典取出并赋值这一步就会报
 	#    "Trying to assign invalid previously freed instance"（V-004-17 实测）——弱引用取到 null 即安全丢弃
-	_running[name] = {"i": 0, "c": 0, "f": 0, "tref": weakref(target)}
+	# 迭代019 缺陷修复：运行态**按"pattern + 目标实例"分别追踪** ——
+	#   此前以 pattern 名为键，同一 pattern 用在多个目标上时**后开始的会覆盖前一个**，
+	#   被覆盖的节点永不被 stop() → 永不释放（飘字会持续泄漏；溅射/链式伤害一次生成多个飘字）。
+	var key := _run_key(name, target)
+	if _running.has(key):
+		stop(key)      # 同一目标重播：先收尾上一段（含一次性特效释放），再起新的
+	_running[key] = {"name": name, "i": 0, "c": 0, "f": 0, "tref": weakref(target)}
 	var p: Dictionary = _patterns[name]
 	var on_start := str(p.get("trigger_on_start", ""))
 	if on_start != "" and _patterns.has(on_start):
 		action(on_start, target)
 	if bool(p.get("block_ui", false)):
 		ui_locked = true
+
+
+## 运行态键：`pattern名#实例ID`（target 为 null 时退化为 pattern 名）
+func _run_key(name: String, target: Node) -> String:
+	if target == null or not is_instance_valid(target):
+		return name
+	return "%s#%d" % [name, target.get_instance_id()]
+
+
+## 运行态键 → pattern 名
+func _key_pattern(key: String) -> String:
+	var i := key.find("#")
+	return key if i < 0 else key.substr(0, i)
 
 
 ## 重置：把目标恢复到 Pattern 的初始状态
@@ -88,15 +107,32 @@ func reset_unit(name: String, target: Node = null) -> void:
 
 ## 终止：级联终止（本 Pattern 的所有 Unit 一并终止），**不复位**（规则 3）；终止时可触发下一动画
 func stop(name: String) -> void:
-	if not _running.has(name):
+	# 支持两种入参：**实例键**（pattern#id）停单个实例；**pattern 名**停该 pattern 的全部实例
+	var keys: Array = []
+	if _running.has(name):
+		keys.append(name)
+	else:
+		for k in _running.keys():
+			if _key_pattern(str(k)) == name:
+				keys.append(k)
+	if keys.is_empty():
+		return
+	for k0 in keys:
+		_stop_instance(str(k0))
+
+
+## 收尾单个运行实例：释放一次性特效、解锁 UI、按定义触发后续动画
+func _stop_instance(key: String) -> void:
+	if not _running.has(key):
 		return
 	# 目标用弱引用取（可能已释放 → null）
 	var tgt: Node = null
-	var st0: Dictionary = _running[name]
+	var st0: Dictionary = _running[key]
 	if st0.has("tref"):
 		var wr0 = st0["tref"]
 		tgt = wr0.get_ref() if wr0 != null else null
-	_running.erase(name)
+	var name := str(st0.get("name", _key_pattern(key)))
+	_running.erase(key)
 	# 一次性特效（浮字等）：播完自释放
 	if tgt != null and is_instance_valid(tgt) and tgt.has_meta("fx_once"):
 		tgt.queue_free()
@@ -114,17 +150,28 @@ func stop_all() -> void:
 	ui_locked = false
 
 
+## 该 pattern 是否有任意实例在播（键为 `pattern#id`，故按前缀匹配）
 func is_running(name: String) -> bool:
-	return _running.has(name)
+	for k in _running.keys():
+		if _key_pattern(str(k)) == name:
+			return true
+	return false
 
 
+## 正在播放的 **pattern 名**（去重，不含实例 id）
 func running_names() -> Array:
-	return _running.keys()
+	var out: Array = []
+	for k in _running.keys():
+		var nm := str(_running[k].get("name", _key_pattern(str(k))))
+		if not out.has(nm):
+			out.append(nm)
+	return out
 
 
 func _any_running_blocking() -> bool:
-	for n in _running:
-		if bool(_patterns.get(n, {}).get("block_ui", false)):
+	for k in _running.keys():
+		var nm := str(_running[k].get("name", _key_pattern(str(k))))
+		if bool(_patterns.get(nm, {}).get("block_ui", false)):
 			return true
 	return false
 
@@ -136,16 +183,23 @@ func _any_running_blocking() -> bool:
 func _process(_delta: float) -> void:
 	if _running.is_empty():
 		return
-	for name in _running.keys():
-		var p: Dictionary = _patterns.get(name, {})
+	for key in _running.keys():
+		var nm := str(_running[key].get("name", _key_pattern(str(key))))
+		var p: Dictionary = _patterns.get(nm, {})
 		if anim_paused and bool(p.get("pause_global", true)):
 			continue
-		_step(name)
+		_step(str(key))
 
 
-func _step(name: String) -> void:
-	var st: Dictionary = _running[name]
-	var p: Dictionary = _patterns[name]
+func _step(key: String) -> void:
+	if not _running.has(key):
+		return
+	var st: Dictionary = _running[key]
+	var name := str(st.get("name", _key_pattern(key)))
+	var p: Dictionary = _patterns.get(name, {})
+	if p.is_empty():
+		_running.erase(key)
+		return
 	# ⚠️ 目标已被释放 / 已被 queue_free（View 重建单位节点时会发生）→ 丢弃该动画，
 	#    否则会给"已释放实例"写属性，触发 "Trying to assign invalid previously freed instance"
 	#    并让游戏停在调试器断点（表现为卡死）—— V-004-16 实测缺陷
@@ -154,15 +208,15 @@ func _step(name: String) -> void:
 		var wr = st["tref"]
 		tg = wr.get_ref() if wr != null else null
 	if tg == null:
-		_running.erase(name)     # 目标已释放（弱引用失效）→ 丢弃
+		_running.erase(key)      # 目标已释放（弱引用失效）→ 丢弃
 		return
 	if not is_instance_valid(tg) or tg.is_queued_for_deletion():
-		_running.erase(name)
+		_running.erase(key)
 		return
 	var units: Array = p.get("units", [])
 	var i: int = int(st["i"])
 	if i >= units.size():
-		stop(name)
+		stop(key)
 		return
 	var unit: Dictionary = units[i]
 	var clips: Array = unit.get("clips", [])
@@ -561,18 +615,32 @@ func _scaled_amp(base: float, value: int) -> float:
 
 
 ## 按缩放后的幅度**重新注册**抖动 Pattern（幅度属 Pattern 数据，就地更新即可）
-func _register_shake(pname: String, base_amp: float, value: int, frames: int) -> void:
+func _register_shake(pname: String, base_amp: float, value: int, _frames: int) -> void:
+	# 迭代019：此处**不能**用旧的四段等幅序列 —— 它会在运行时覆盖 `_build_defaults` 里
+	#   已按《基础动画.md》§四 修正过的"弹性衰减 + 固定时长"定义（此前 8/16 帧的偏差即由此产生）。
+	#   现在只**按数值重算振幅**，时序沿用规范：受击 15 帧（0.25s）· 地图 30 帧（0.5s）。
 	var amp: float = _scaled_amp(base_amp, value)
+	var is_map: bool = pname == "地图抖动"      # 地图抖动走 上下→左右 往复；单位抖动走左右
+	var k: int = D.SHAKE_STEPS
+	var total: int = D.SHAKE_FRAMES_MAP if is_map else D.SHAKE_FRAMES_UNIT
+	@warning_ignore("integer_division")
+	var per: int = maxi(1, total / k)
 	var clips: Array = []
-	var seq: Array = [amp, -amp * 2.0, amp * 2.0, -amp]
-	var is_map: bool = pname == "地图抖动"      # 地图抖动走"上下左右"往复；单位抖动走左右
-	var i: int = 0
-	for s in seq:
+	var mag := amp
+	var sign_ := 1.0
+	var acc := 0.0
+	for i in k:
+		var step: float = sign_ * mag
+		# 末段补偿：保证 Σstep = 0（不残留偏移）
+		if i == k - 1:
+			step = -acc
+		acc += step
 		if is_map:
-			clips.append({"frames": frames, "step": (Vector2(0, s) if i % 2 == 0 else Vector2(-s, 0))})
+			clips.append({"frames": per, "step": (Vector2(0, step) if i % 2 == 0 else Vector2(step, 0))})
 		else:
-			clips.append({"frames": frames, "step": Vector2(s, 0)})
-		i += 1
+			clips.append({"frames": per, "step": Vector2(step, 0)})
+		mag *= D.SHAKE_DECAY
+		sign_ = -sign_
 	register(pname, {"units": [{"type": U.MOVE_BY, "clips": clips}]})
 
 
