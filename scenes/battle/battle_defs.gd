@@ -105,7 +105,7 @@ const LONG_PRESS_FRAMES := 30
 const HAND_MAX := 4
 const COST_MAX := 10
 const ROUND_MAX := 12
-const BASE_REFUND := 2
+const BASE_REFUND := 0   ## 迭代020（人明确）：**没有默认两费回费** —— 回费只来自「回费」技能/资源建筑
 const ROUND7_EXTRA := 2
 const SECOND_PLAYER_BONUS := 2
 
@@ -507,8 +507,9 @@ static func make_card(d: Dictionary, sc: float, icon_tex_path := "", name_pos :=
 		tex = load(ART_DIR + str(d["art"]) + ".png") as Texture2D      # 无图标素材 → 回退旧卡面立绘
 		use_icon = false
 	node.set("art", tex)
-	# 迭代013（G-07）：蜂王卡面角落显示**每回合回费量**（A5：蜂王不显示部署费用）；其余卡显示部署费用
-	node.set("cost", int(d.get("refund", d["cost"])))
+	# 迭代020（人明确）：**只有蜂王**卡面角落显示「每回合回费量」；
+	#   资源建筑（蜂巢等）虽然也带回费能力，但角落**依然显示其部署成本**（避免与费用点数混淆）。
+	node.set("cost", int(d["cost"]) if str(d.get("kind", "")) != "queen" else int(d.get("refund", d["cost"])))
 	node.set("art_fit", 1)
 	# 图标是"画好留白"的方形素材：用 zoom 1.0 保留全部内容；旧卡面沿用 1.05 的裁边观感
 	node.set("art_zoom", 1.0 if use_icon else 1.05)

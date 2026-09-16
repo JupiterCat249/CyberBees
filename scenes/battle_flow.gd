@@ -144,8 +144,14 @@ func _ready() -> void:
 						return un
 				return null
 		an.bind(state)
-		# 浮字/一次性特效的挂载点（数值文本浮在 Overlay 之上）
-		an.fx_parent = _ci("Overlay")
+		# 浮字/一次性特效的挂载点
+		# 迭代020 缺陷修复：原挂 Overlay，但场景绘制顺序为
+		#   BgLayer → BattleUI → Overlay → FxLayer → BgFx → BoardView → …
+		#   → **BoardView 画在 Overlay 之后，会遮住落在单位格上的飘字**（只有空地格能看见）。
+		#   规范要求"文本处于 UI 最上层"→ 改挂 EffectsTop（场景中位于所有 View 之后）。
+		an.fx_parent = get_node_or_null("EffectsTop")
+		if an.fx_parent == null:
+			an.fx_parent = _ci("Overlay")
 		state.anim = an
 	else:
 		push_warning("BattleAnim 载入失败，动画系统不可用")

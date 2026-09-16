@@ -148,3 +148,5 @@ script = ExtResource("11_5bde7")
 
 [node name="HudView" type="Node2D" parent="." unique_id=1375420282]
 script = ExtResource("12_res52")
+
+[node name="EffectsTop" type="Node2D" parent="." unique_id=2019042817]

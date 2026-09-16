@@ -43,6 +43,10 @@ var _running := {}
 
 ## 全局：UI 交互是否被动画锁定（规则 4）
 var ui_locked := false
+## 迭代020：**调试用**——置 true 时冻结所有动画推进（不消耗帧数），
+##   便于用截图核查"飘字/抖动是否真的画出来了"（0.5s 的表现靠工具往返很难抓到）。
+##   正常游戏恒为 false；仅在需要取证时由调试脚本临时置真。
+var debug_hold := false
 ## 全局：是否暂停动画推进（规则 4）
 var anim_paused := false
 ## 一次性特效挂载父节点（由协调器注入）
@@ -181,6 +185,8 @@ func _any_running_blocking() -> bool:
 # ============================================================
 
 func _process(_delta: float) -> void:
+	if debug_hold:
+		return          # 迭代020：调试冻结（表现停在当前帧，便于截图取证）
 	if _running.is_empty():
 		return
 	for key in _running.keys():
