@@ -275,13 +275,15 @@ func register_defaults(cfg: Dictionary = {}) -> void:
 	var amp: float = float(cfg.get("shake_amp", 6.0))      # 单位受击抖动幅度(px)
 	var eamp: float = float(cfg.get("aoe_amp", 12.0))      # AOE 地图抖动幅度(px)
 
-	# ① 单位受击抖动：左右往复（MOVE_BY **可叠加**）→ 末段反向抵消回原位
+	# ① 单位受击抖动：**弹性衰减**往复（振幅逐次减半 → 类似弹簧阻尼），总时长 **15 帧 = 0.25s @60fps**
+	#   迭代019：原为等幅 8 帧（≈0.13s）；按《基础动画.md》§四 修正为 0.25s + 弹性衰减
 	register("受击抖动", {
 		"units": [{"type": U.MOVE_BY, "clips": [
-			{"frames": 2, "step": Vector2(amp, 0)},
-			{"frames": 2, "step": Vector2(-amp * 2.0, 0)},
-			{"frames": 2, "step": Vector2(amp * 2.0, 0)},
-			{"frames": 2, "step": Vector2(-amp, 0)},
+			{"frames": 3, "step": Vector2(amp, 0)},
+			{"frames": 3, "step": Vector2(-amp * 1.5, 0)},
+			{"frames": 3, "step": Vector2(amp * 0.75, 0)},
+			{"frames": 3, "step": Vector2(-amp * 0.375, 0)},
+			{"frames": 3, "step": Vector2(amp - amp * 1.5 + amp * 0.75 - amp * 0.375, 0)},
 		]}],
 	})
 	# ② 单位受伤闪红（TINT 变色）：#FF2000 → 橙 → 白
@@ -293,14 +295,15 @@ func register_defaults(cfg: Dictionary = {}) -> void:
 		],
 	})
 	# ③ AOE 地图抖动：幅度更大、帧数更长（作用于地图根节点）
+	# 迭代019：总时长 **30 帧 = 0.5s @60fps**（原 12 帧 ≈0.2s）；等幅 → **弹性衰减**
 	register("地图抖动", {
 		"units": [{"type": U.MOVE_BY, "clips": [
-			{"frames": 2, "step": Vector2(0, -eamp)},
-			{"frames": 2, "step": Vector2(0, eamp)},
-			{"frames": 2, "step": Vector2(-eamp, 0)},
-			{"frames": 2, "step": Vector2(eamp, 0)},
-			{"frames": 2, "step": Vector2(-eamp * 0.5, 0)},
-			{"frames": 2, "step": Vector2(eamp * 0.5, 0)},
+			{"frames": 5, "step": Vector2(0, -eamp)},
+			{"frames": 5, "step": Vector2(0, eamp * 0.75)},
+			{"frames": 5, "step": Vector2(-eamp * 0.5, 0)},
+			{"frames": 5, "step": Vector2(eamp * 0.3, 0)},
+			{"frames": 5, "step": Vector2(-eamp * 0.1, 0)},
+			{"frames": 5, "step": Vector2(0, -eamp * 1.0 + eamp * 0.75 - eamp * 0.1)},
 		]}],
 	})
 	# ④ 卡牌登场：**瞬间动作（无前摇）** —— 第 1 帧即到位，只做淡入
@@ -416,16 +419,20 @@ func float_text(value: int, kind: String, at: Vector2, parent: Node = null) -> N
 func _ensure_float_pattern() -> void:
 	if _patterns.has("浮字上浮"):
 		return
+	# 迭代019：飘字**持续 0.5s = 30 帧 @60fps**（原 12 帧 ≈0.2s）
+	#   上浮用**递减步长**（先快后慢，符合"浮起后缓停"的观感），淡出占最后 10 帧
 	register("浮字上浮", {
 		"units": [
 			{"type": U.MOVE_BY, "clips": [
-				{"frames": 2, "step": Vector2(0, -7)},
-				{"frames": 2, "step": Vector2(0, -6)},
-				{"frames": 2, "step": Vector2(0, -4)},
+				{"frames": 4, "step": Vector2(0, -8)},
+				{"frames": 4, "step": Vector2(0, -7)},
+				{"frames": 4, "step": Vector2(0, -5)},
+				{"frames": 4, "step": Vector2(0, -3)},
+				{"frames": 4, "step": Vector2(0, -2)},
 			]},
 			{"type": U.TINT, "clips": [
-				{"frames": 3, "color": Color(1, 1, 1, 1)},
-				{"frames": 3, "color": Color(1, 1, 1, 0)},
+				{"frames": 20, "color": Color(1, 1, 1, 1)},
+				{"frames": 10, "color": Color(1, 1, 1, 0)},
 			]},
 		],
 	})
