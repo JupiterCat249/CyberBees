@@ -21,6 +21,11 @@ const D := preload("res://scenes/battle/battle_defs.gd")
 var state: Node = null
 
 
+## 迭代030：濒死单位被点击时的兜底（仅记录，不做任何状态改动）
+func can_act_guard(_u: Dictionary, _s: Node) -> void:
+	pass
+
+
 ## 选中单位：任何单位都可选中用于**查看**（详情/技能区/属性栏跟随）；
 ## 仅「己方 + 行动阶段 + 未行动」才给出可行动范围
 func select_unit_at(cell: Vector2i) -> void:
@@ -29,6 +34,10 @@ func select_unit_at(cell: Vector2i) -> void:
 	if id < 0:
 		return
 	var u: Dictionary = s.units[id]
+	# 迭代030：已判定死亡（等退场动画）的单位**不可选中、不可行动**
+	if s.has_method("is_dying") and bool(s.call("is_dying", id)):
+		can_act_guard(u, s)
+		return
 	var can_act: bool = u["side"] == s.current and s.phase == D.Phase.ACTION and not u["acted"]
 	var empty_cells: Array[Vector2i] = []
 	# 改选单位 -> 使旧的待确认失效（待确认独立状态，只在明确改选/取消/执行时清除）

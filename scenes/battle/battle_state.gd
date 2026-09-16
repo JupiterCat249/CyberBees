@@ -297,14 +297,43 @@ func add_effect(id: int, eff: Dictionary) -> void:
 	push_log("%s 获得效果「%s」" % [unit_name(id), eff.get("name", eid)])
 
 
+## 迭代030（人明确）：**单位退场必须等动画播完** —— 本函数只做"标记"，不立即移除。
+##   标记后的单位以 `dying = true` 留在 units 里（棋盘仍绘制它 → 死亡动画得以完整播放），
+##   死亡动画结束时由 `BattleAnim` 调用 `purge_dead()` 真正移除。
+##   ⚠️ 期间该单位**不可被选中/不可行动**（选择与行动判定都要求 hp > 0）。
 func remove_dead() -> void:
+	var marked := false
+	for id in units:
+		if int(units[id]["hp"]) <= 0 and not bool(units[id].get("dying", false)):
+			units[id]["dying"] = true          # 已判定死亡，等死亡动画播完再退场
+			marked = true
+	if marked and anim != null and anim.has_method("play_death"):
+		# 各死亡单位的"死亡表现 + 结束后真正退场"由动画系统负责（见 BattleAnim.play_death）
+		for id in units:
+			if bool(units[id].get("dying", false)):
+				anim.play_death(id)
+
+
+## 真正移除已判定死亡的单位（死亡动画播完后由动画系统调用）
+##   返回本次移除的数量；移除后会做一次死亡清理（避免连带的"已死未退场"残留）
+func purge_dead() -> int:
 	var dead: Array = []
 	for id in units:
-		if int(units[id]["hp"]) <= 0:
+		if bool(units[id].get("dying", false)) or int(units[id]["hp"]) <= 0:
 			dead.append(id)
 	for id in dead:
 		push_log("%s 退场" % unit_name(id))
 		units.erase(id)
+	if not dead.is_empty():
+		remove_dead()      # 若有"本帧新死"的单位，继续走 标记→动画 流程
+		check_victory()    # 退场后重新判胜负（蜂王退场即结束）
+		refresh()          # 视图重绘 → 该单位从棋盘消失
+	return dead.size()
+
+
+## 该单位是否已判定死亡（等待退场动画）
+func is_dying(id: int) -> bool:
+	return units.has(id) and (bool(units[id].get("dying", false)) or int(units[id]["hp"]) <= 0)
 
 
 ## 移动范围：走格子寻路（BFS 最短路；等权网格上与 A* 结果等价）

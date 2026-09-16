@@ -388,6 +388,20 @@ func register_defaults(_cfg: Dictionary = {}) -> void:
 	register("回合色-我方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_MINE}]}]})
 	register("回合色-敌方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_FOE}]}]})
 
+	# 迭代030（人明确）：**单位退场动画** —— 播完才真正移除（`dying` 单位在此期间仍被绘制）
+	register("单位退场", {
+		"units": [
+			{"type": U.TINT, "clips": [
+				{"frames": 6, "color": Color(1, 0.55, 0.45, 1.0)},
+				{"frames": 24, "color": Color(1, 0.4, 0.4, 0.0)},
+			]},
+			{"type": U.MOVE_BY, "clips": [
+				{"frames": 30, "step": Vector2(0, -1.2)},
+			]},
+		],
+		"trigger_on_stop_call": "purge_dead",
+	})
+
 	# ⑧ 迭代004 检查点5/11 · **禁 UI 交互**演示 Pattern（block_ui）—— 用于实测"动画期间点击被拦"
 	#   真实用途：结算演示 / 胜负演出等"期间不允许操作"的整段表现
 	register("结算演示", {
@@ -582,10 +596,13 @@ func _on_attack_resolved(aid: int, tid: int, dmg: int, counter: int, countered: 
 
 
 func _deferred_hit_fx(aid: int, tid: int, dmg: int, counter: int, countered: bool) -> void:
+	# 迭代030：**濒死单位不抖** —— 只闪红并等退场动画；存活单位照常抖动
+	var dying := _state != null and _state.has_method("is_dying") and bool(_state.call("is_dying", tid))
 	if dmg > 0:
 		var tn: Node = _node_of(tid)
 		if tn != null:
-			shake_unit(tn, dmg)          # 幅度随伤害数值缩放
+			if not dying:
+				shake_unit(tn, dmg)      # 幅度随伤害数值缩放
 			action("受伤闪红", tn)
 	if countered and counter > 0 and aid != tid:
 		var an: Node = _node_of(aid)
@@ -612,6 +629,17 @@ func _on_turn_started_anim(_side: String, _rn: int) -> void:
 
 func _on_battle_ended(_winner: String) -> void:
 	stop_all()
+
+
+## 迭代030：播放"单位退场"动画（结束后由 trigger_on_stop_call 自动调用 purge_dead 真正移除）
+func play_death(unit_id: int) -> void:
+	var n: Node = _node_of(unit_id)
+	if n == null:
+		# 取不到节点（节点已被换掉等）→ 直接退场，避免"卡住不消失"
+		if _state != null and _state.has_method("purge_dead"):
+			_state.call("purge_dead")
+		return
+	action("单位退场", n)
 
 
 ## AOE 地图抖动：技能命中多个目标（溅射/链式）时由技能层调用
