@@ -397,15 +397,13 @@ func register_defaults(_cfg: Dictionary = {}) -> void:
 	register("回合色-我方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_MINE}]}]})
 	register("回合色-敌方", {"units": [{"type": U.TINT, "clips": [{"frames": 1, "color": TURN_FOE}]}]})
 
-	# 迭代030（人明确）：**单位退场动画** —— 播完才真正移除（`dying` 单位在此期间仍被绘制）
+	# 迭代030/032：**单位退场** —— 播完立即真正移除（`dying` 单位在此期间仍被绘制）
+	#   迭代032（人明确"不要加那么多东西，正常抖动播放完就直接退场即可"）：
+	#   **削到最简** —— 只做一次淡出（20 帧 ≈0.33s），去掉偏红染色与上浮位移
 	register("单位退场", {
 		"units": [
 			{"type": U.TINT, "clips": [
-				{"frames": 6, "color": Color(1, 0.55, 0.45, 1.0)},
-				{"frames": 24, "color": Color(1, 0.4, 0.4, 0.0)},
-			]},
-			{"type": U.MOVE_BY, "clips": [
-				{"frames": 30, "step": Vector2(0, -1.2)},
+				{"frames": 20, "color": Color(1, 1, 1, 0.0)},
 			]},
 		],
 		"trigger_on_stop_call": "purge_dead",

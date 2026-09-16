@@ -122,7 +122,7 @@ autowrap_mode = 2
 visible = false
 
 [node name="BgFilter" type="TextureRect" parent="FxLayer" unique_id=1563674030]
-modulate = Color(1, 1, 1, 0.32)
+modulate = Color(1, 1, 1, 0.05)
 texture_repeat = 1
 offset_top = -100.0
 offset_right = 1920.0
