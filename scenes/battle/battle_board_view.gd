@@ -158,6 +158,9 @@ func render_highlights() -> void:
 ## 迭代014（方案 A）：**效果角标** —— 在单位格上缘标出"身上有灼烧/护甲"
 ##   ⚠️ 框架卡面四角已被四维数值占满且 card-system 只读（T11）→ 效果只能做在项目侧叠加层
 ##   颜色：减益 = 红橙；增益 = 青蓝（与 anim 的减益/增益脉冲取色同族，便于玩家建立联系）
+## 迭代014/015（方案 A）：**效果角标** —— 在单位格上缘标出"身上有灼烧/装甲"等状态
+##   ⚠️ 框架卡面四角已被四维数值占满且 card-system 只读（T11）→ 效果只能做在项目侧叠加层
+##   迭代015：改用 **A5 状态图标素材**（assets/status_icons/，80×80）；无对应素材时回退到纯色角标
 func _effect_badges(id: int) -> Node2D:
 	var root := Node2D.new()
 	if state == null or not state.units.has(id):
@@ -168,32 +171,42 @@ func _effect_badges(id: int) -> Node2D:
 	var u: Dictionary = state.units[id]
 	var base := D.cell_pos(u["cell"])
 	var n: int = eff.size()
-	var bw := 30.0            # 角标宽
-	var bh := 34.0            # 角标高
-	var gap := 8.0
+	var bw := 38.0        # 迭代015：图标略放大（源素材 80×80，缩到 38 仍清晰）
+	var gap := 6.0
 	var total: float = float(n) * bw + float(maxi(n - 1, 0)) * gap
 	var x := base.x + (D.CELL - total) * 0.5
 	var y := base.y + 6.0
 	for key in eff.keys():
 		var e: Dictionary = eff[key]
-		var is_debuff: bool = e.has("dot") or e.has("reduce") or e.has("atk_mult")
-		var col: Color = Color(0.95, 0.34, 0.20, 1.0) if is_debuff else Color(0.30, 0.72, 1.0, 1.0)
-		var bg := ColorRect.new()
-		bg.color = col
-		bg.size = Vector2(bw, bh)
-		bg.position = Vector2(x, y)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		root.add_child(bg)
-		var ink := ColorRect.new()
-		ink.color = Color(1, 1, 1, 0.92)
-		ink.size = Vector2(bw - 8.0, 5.0)
-		ink.position = Vector2(x + 4.0, y + bh - 12.0)
-		ink.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		root.add_child(ink)
+		var tex_path: String = D.status_icon_path(str(key))
+		if tex_path != "":
+			# 暗底衬：让图标在杂色卡面上也能看清（素材本身是彩色描线，无底板）
+			var plate := ColorRect.new()
+			plate.color = Color(0.10, 0.11, 0.10, 0.62)
+			plate.size = Vector2(bw, bw)
+			plate.position = Vector2(x - 2.0, y - 2.0)
+			plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			root.add_child(plate)
+			var sp := Sprite2D.new()
+			sp.texture = load(tex_path) as Texture2D
+			sp.centered = false
+			var tex := sp.texture
+			var sc: float = bw / float(tex.get_width()) if tex != null else 1.0
+			sp.scale = Vector2(sc, sc)
+			sp.position = Vector2(x, y)
+			root.add_child(sp)
+		else:
+			# 回退：纯色角标（减益红橙 / 增益青蓝）—— 该效果尚无对应素材
+			var is_debuff: bool = e.has("dot") or e.has("reduce") or e.has("atk_mult")
+			var col: Color = Color(0.95, 0.34, 0.20, 1.0) if is_debuff else Color(0.30, 0.72, 1.0, 1.0)
+			var bg := ColorRect.new()
+			bg.color = col
+			bg.size = Vector2(bw, 34.0)
+			bg.position = Vector2(x, y)
+			bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			root.add_child(bg)
 		x += bw + gap
 	return root
-
-
 func _hl(cell: Vector2i, col: Color) -> ColorRect:
 	var r := ColorRect.new()
 	r.position = D.cell_pos(cell)

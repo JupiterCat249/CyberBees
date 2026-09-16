@@ -38,6 +38,35 @@ const ATLAS_PATH := "res://card-system/card_system/card_atlas.png"
 const CARD_SCENE := "res://card-system/card_system/card_auto.tscn"
 const UI_SCENE := "res://card-system/card_system/battle_ui.tscn"
 const ART_DIR := "res://card-system/card_system/art/"
+
+
+# ---------------- 状态图标（迭代015）：A5 素材「状态图标/」10 张 80×80 ----------------
+## 素材原目录：电子蜂A5策划案/素材/状态图标/  →  已迁移到本仓 assets/status_icons/
+const STATUS_ICON_DIR := "res://assets/status_icons/"
+## 效果 id → 图标文件（对应 A5《美术资源图鉴》里的状态关键词）
+##   目前已实现的效果：burn 灼烧 · armor 装甲
+##   其余 8 张（护盾/力场/冻结/暴击/拦截/诱饵/速攻/启动）为**已迁移待用**——对应规则尚未在代码中实现
+const STATUS_ICON_MAP := {
+	"burn": "灼烧.png",
+	"armor": "装甲.png",
+	"shield": "护盾.png",
+	"force_field": "力场.png",
+	"freeze": "冻结.png",
+	"crit": "暴击.png",
+	"intercept": "拦截.png",
+	"decoy": "诱饵.png",
+	"haste": "速攻.png",
+	"startup": "启动.png",
+}
+
+
+## 取效果对应的状态图标路径；无对应/素材缺失 → 返回 ""（调用方回退到纯色角标）
+static func status_icon_path(effect_id: String) -> String:
+	var f := str(STATUS_ICON_MAP.get(effect_id, ""))
+	if f == "":
+		return ""
+	var p := STATUS_ICON_DIR + f
+	return p if ResourceLoader.exists(p) else ""
 const ATLAS_CELL := 96.0
 const DIGIT_Y := 4.0
 const DIGIT_H := 88.0
