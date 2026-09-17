@@ -47,22 +47,22 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="SystemFont" id="R6"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-font_weight = 700
-subpixel_positioning = 0
-
 [sub_resource type="SystemFont" id="R7"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 font_weight = 700
 subpixel_positioning = 0
 
-[sub_resource type="SystemFont" id="R37"]
+[sub_resource type="SystemFont" id="R38"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 font_weight = 700
 subpixel_positioning = 0
 
-[sub_resource type="SystemFont" id="R38"]
+[sub_resource type="SystemFont" id="R6"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
+subpixel_positioning = 0
+
+[sub_resource type="SystemFont" id="R37"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 font_weight = 700
 subpixel_positioning = 0
@@ -105,18 +105,22 @@ corner_radius_bottom_left = 10
 
 [sub_resource type="SystemFont" id="R13"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 subpixel_positioning = 0
 
 [sub_resource type="SystemFont" id="R14"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 subpixel_positioning = 0
 
 [sub_resource type="SystemFont" id="R15"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 subpixel_positioning = 0
 
 [sub_resource type="SystemFont" id="R16"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 subpixel_positioning = 0
 
 [sub_resource type="StyleBoxFlat" id="R17"]
@@ -352,65 +356,26 @@ offset_bottom = 550.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R5")
 
-[node name="CostBadgeLeft" type="Control" parent="Battle" unique_id=1516146781]
-layout_mode = 1
-anchor_left = 36.7
-anchor_top = 41.7
-anchor_right = 126.700005
-anchor_bottom = 140.70001
-offset_bottom = -1.5258789e-05
-mouse_filter = 2
-
-[node name="BadgeImage" type="TextureRect" parent="Battle/CostBadgeLeft" unique_id=214178393]
+[node name="PlayerBesaInfoRight" type="HBoxContainer" parent="Battle" unique_id=1377072214]
 layout_mode = 0
-offset_left = -0.9
-offset_top = -0.9
-offset_right = 99.1
-offset_bottom = 99.1
-mouse_filter = 2
-texture = ExtResource("x2")
-expand_mode = 1
-
-[node name="Value" type="Label" parent="Battle/CostBadgeLeft" unique_id=402849053]
-layout_mode = 0
-offset_left = 30.0
-offset_right = 68.0
-offset_bottom = 94.0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = SubResource("R6")
-theme_override_font_sizes/font_size = 65
-text = "0"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="CenterContainer" type="CenterContainer" parent="Battle/CostBadgeLeft" unique_id=1084785526]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
-
-[node name="CostBadgeRight" type="Control" parent="Battle" unique_id=1233238034]
-anchors_preset = 0
 offset_left = 1496.7
 offset_top = 41.7
 offset_right = 1586.7
 offset_bottom = 140.7
 mouse_filter = 2
 
-[node name="BadgeImage" type="TextureRect" parent="Battle/CostBadgeRight" unique_id=1920861006]
-layout_mode = 0
-offset_left = -0.9
-offset_top = -0.9
-offset_right = 99.1
-offset_bottom = 99.1
+[node name="BadgeImage" type="TextureRect" parent="Battle/PlayerBesaInfoRight" unique_id=1920861006]
+layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("x2")
-expand_mode = 1
+expand_mode = 2
 
-[node name="Value" type="Label" parent="Battle/CostBadgeRight" unique_id=790936648]
+[node name="Value" type="Label" parent="Battle/PlayerBesaInfoRight/BadgeImage" unique_id=790936648]
 layout_mode = 0
-offset_left = 30.0
-offset_right = 68.0
-offset_bottom = 94.0
+offset_left = 30.900024
+offset_top = 0.9000015
+offset_right = 68.900024
+offset_bottom = 94.9
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R7")
 theme_override_font_sizes/font_size = 65
@@ -418,33 +383,45 @@ text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PlayerNames" type="Control" parent="Battle" unique_id=1316536483]
-anchors_preset = 0
-offset_right = 1.0
-offset_bottom = 1.0
-mouse_filter = 2
-
-[node name="Left" type="Label" parent="Battle/PlayerNames" unique_id=1628766763]
-layout_mode = 0
-offset_left = 136.0
-offset_top = 66.0
-offset_right = 356.0
-offset_bottom = 114.0
+[node name="PlayerNamesRight" type="Label" parent="Battle/PlayerBesaInfoRight" unique_id=2107872475]
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = SubResource("R37")
-theme_override_font_sizes/font_size = 51
+theme_override_fonts/font = SubResource("R38")
+theme_override_font_sizes/font_size = 48
 text = "玩家名称"
 vertical_alignment = 1
 
-[node name="Right" type="Label" parent="Battle/PlayerNames" unique_id=2107872475]
+[node name="PlayerBesaInfoLift" type="HBoxContainer" parent="Battle" unique_id=1544304127]
 layout_mode = 0
-offset_left = 1596.0
-offset_top = 66.0
-offset_right = 1816.0
-offset_bottom = 114.0
+offset_left = 30.0
+offset_top = 40.0
+offset_right = 430.0
+offset_bottom = 142.0
+
+[node name="BadgeImage" type="TextureRect" parent="Battle/PlayerBesaInfoLift" unique_id=214178393]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("x2")
+expand_mode = 2
+
+[node name="Value" type="Label" parent="Battle/PlayerBesaInfoLift/BadgeImage" unique_id=402849053]
+layout_mode = 0
+offset_left = 30.9
+offset_top = 0.9000015
+offset_right = 68.9
+offset_bottom = 94.9
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = SubResource("R38")
-theme_override_font_sizes/font_size = 51
+theme_override_fonts/font = SubResource("R6")
+theme_override_font_sizes/font_size = 65
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerNamesLeft" type="Label" parent="Battle/PlayerBesaInfoLift" unique_id=1628766763]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = SubResource("R37")
+theme_override_font_sizes/font_size = 48
 text = "玩家名称"
 vertical_alignment = 1
 
@@ -518,118 +495,87 @@ offset_bottom = 300.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R12")
 
-[node name="Attributes" type="Control" parent="HUD/InfoPanel" unique_id=480071500]
-anchors_preset = 0
+[node name="Attributes" type="VBoxContainer" parent="HUD/InfoPanel" unique_id=219494896]
+layout_mode = 0
 offset_left = 310.0
 offset_top = 210.0
-offset_right = 510.0
-offset_bottom = 450.0
+offset_right = 406.0
+offset_bottom = 426.0
 mouse_filter = 2
 
-[node name="Row1" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=987440820]
-anchors_preset = 0
-offset_right = 110.0
-offset_bottom = 40.0
+[node name="Row1" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1654434942]
+layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row1" unique_id=2074367686]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("3_61epf")
-expand_mode = 1
+expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row1" unique_id=1277448839]
-layout_mode = 0
-offset_left = 41.0
-offset_top = 2.0
-offset_right = 81.0
-offset_bottom = 38.0
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R13")
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 42
 text = "0"
 vertical_alignment = 1
 
-[node name="Row2" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=695486340]
-anchors_preset = 0
-offset_top = 60.0
-offset_right = 110.0
-offset_bottom = 100.0
+[node name="Row2" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1845661383]
+layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row2" unique_id=2065809764]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("x3")
-expand_mode = 1
+expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row2" unique_id=623202510]
-layout_mode = 0
-offset_left = 41.0
-offset_top = 2.0
-offset_right = 81.0
-offset_bottom = 38.0
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 42
 text = "0"
 vertical_alignment = 1
 
-[node name="Row3" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=1214351965]
-anchors_preset = 0
-offset_top = 120.0
-offset_right = 110.0
-offset_bottom = 160.0
+[node name="Row3" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=47291006]
+layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row3" unique_id=2081540134]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("x4")
-expand_mode = 1
+expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row3" unique_id=915690393]
-layout_mode = 0
-offset_left = 41.0
-offset_top = 2.0
-offset_right = 81.0
-offset_bottom = 38.0
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R15")
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 42
 text = "0"
 vertical_alignment = 1
 
-[node name="Row4" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=1008294797]
-anchors_preset = 0
-offset_top = 180.0
-offset_right = 110.0
-offset_bottom = 220.0
+[node name="Row4" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1307267724]
+layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row4" unique_id=386429402]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("x5")
-expand_mode = 1
+expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row4" unique_id=1723479802]
-layout_mode = 0
-offset_left = 41.0
-offset_top = 2.0
-offset_right = 81.0
-offset_bottom = 38.0
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R16")
-theme_override_font_sizes/font_size = 27
+theme_override_font_sizes/font_size = 42
 text = "0"
 vertical_alignment = 1
 
@@ -840,7 +786,7 @@ offset_right = 364.7
 offset_bottom = 76.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R34")
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 60
 text = "回合1--先手"
 vertical_alignment = 1
 
@@ -864,7 +810,7 @@ offset_right = 300.9
 offset_bottom = 238.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R36")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 24
 text = "场地效果描述-行1
 场地效果描述-行2
 场地效果描述-行3"
