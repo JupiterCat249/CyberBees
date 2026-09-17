@@ -323,10 +323,10 @@ libraries/ = SubResource("AnimationLibrary_jr2ln")
 autoplay = &"scan"
 
 [node name="Mover" type="Control" parent="Background/CrtFx" unique_id=141771399]
+anchors_preset = 0modulate = Color(1, 1, 1, 0.05)
 anchors_preset = 0
 
 [node name="Sheet1" type="TextureRect" parent="Background/CrtFx/Mover"]
-modulate = Color(1, 1, 1, 0.05)
 texture_repeat = 1
 layout_mode = 0
 offset_top = -1080.0
@@ -337,7 +337,6 @@ texture = ExtResource("2_jr2ln")
 expand_mode = 1
 stretch_mode = 1
 [node name="Sheet2" type="TextureRect" parent="Background/CrtFx/Mover"]
-modulate = Color(1, 1, 1, 0.05)
 texture_repeat = 1
 layout_mode = 0
 offset_top = 0.0
@@ -348,7 +347,6 @@ texture = ExtResource("2_jr2ln")
 expand_mode = 1
 stretch_mode = 1
 [node name="Sheet3" type="TextureRect" parent="Background/CrtFx/Mover"]
-modulate = Color(1, 1, 1, 0.05)
 texture_repeat = 1
 layout_mode = 0
 offset_top = 1080.0
