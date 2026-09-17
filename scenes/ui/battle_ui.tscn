@@ -694,12 +694,12 @@ stretch_mode = 0
 
 [node name="CostBadgeLeftValue" type="Label" parent="Battle"]
 offset_left = 61
-offset_top = 63
+offset_top = 60
 offset_right = 98
-offset_bottom = 117
+offset_bottom = 118
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R42")
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -727,12 +727,12 @@ stretch_mode = 0
 
 [node name="CostBadgeRightValue" type="Label" parent="Battle"]
 offset_left = 1521
-offset_top = 63
+offset_top = 60
 offset_right = 1558
-offset_bottom = 117
+offset_bottom = 118
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R43")
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 30
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 1
 vertical_alignment = 1
