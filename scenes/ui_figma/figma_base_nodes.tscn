@@ -1,4 +1,20 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=29 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_01.png" id="x1"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/stroke_02.png" id="x2"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_03.png" id="x3"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/stroke_04.png" id="x4"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/stroke_05.png" id="x5"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_06.png" id="x6"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/stroke_07.png" id="x7"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/stroke_08.png" id="x8"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_09.png" id="x9"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_10.png" id="x10"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_11.png" id="x11"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_12.png" id="x12"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_13.png" id="x13"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/stroke_14.png" id="x14"]
+[ext_resource type="Texture2D" path="res://assets/ui_figma/icon_15.png" id="x15"]
 
 [sub_resource type="StyleBoxFlat" id="R1"]
 bg_color = Color(0.400000, 0.400000, 0.400000, 1.000000)
@@ -65,22 +81,13 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R10"]
-draw_center = false
-bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
-border_width_left = 6
-border_width_top = 6
-border_width_right = 6
-border_width_bottom = 6
-border_color = Color(0.188235, 0.188235, 0.188235, 1.000000)
-
-[sub_resource type="StyleBoxFlat" id="R11"]
 bg_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="R12"]
+[sub_resource type="StyleBoxFlat" id="R11"]
 draw_center = false
 bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
 corner_radius_top_left = 8
@@ -93,11 +100,11 @@ border_width_right = 4
 border_width_bottom = 4
 border_color = Color(0.000000, 0.000000, 0.000000, 1.000000)
 
-[sub_resource type="StyleBoxFlat" id="R13"]
+[sub_resource type="StyleBoxFlat" id="R12"]
 draw_center = false
 bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
 
-[sub_resource type="SystemFont" id="R14"]
+[sub_resource type="SystemFont" id="R13"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 
 [node name="FigmaBaseNodes" type="Control"]
@@ -155,28 +162,20 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("R6")
 modulate = Color(1.000000, 1.000000, 1.000000, 0.200000)
 
-[node name="Poly1" type="Polygon2D" parent="."]
-position = Vector2(1496.7, 41.732)
-polygon = PackedVector2Array(40.3, 0, 46.3, 0.0001, 86.07968, 24.28569, 86.6, 26.7321, 85.45952, 73.32509, 83.6, 75, 42.67984, 97.30784, 40.3, 96.536, 0.52032, 72.25003, 0, 69.804, 1.14048, 23.21064, 3, 21.536)
-color = Color(1.000000, 0.639216, 0.000000, 1.000000)
+[node name="Icon01" type="Sprite2D" parent="."]
+position = Vector2(1494.7, 39.732)
+centered = false
+texture = ExtResource("x1")
 
-[node name="Line1" type="Line2D" parent="."]
-points = PackedVector2Array(1538, 43.4639, 1542, 43.4639, 1581.3, 68.4639, 1579.3, 115, 1538, 136.536, 1498.7, 111.536, 1500.7, 65, 1538, 43.4639)
-width = 4
-default_color = Color(0.000000, 0.000000, 0.000000, 0.500000)
-begin_cap_mode = 1
-end_cap_mode = 1
-joint_mode = 2
+[node name="Stroke02" type="Sprite2D" parent="."]
+position = Vector2(1492.7, 37.4639)
+centered = false
+texture = ExtResource("x2")
 
-[node name="Poly2" type="Polygon2D" parent="."]
-position = Vector2(1523.82, 65.744)
-polygon = PackedVector2Array(16.06, 49.152, 10.68032, 48.14285, 6.23376, 45.13382, 2.87104, 40.15258, 0.74288, 33.22675, 0, 24.384, 0.74288, 15.55661, 2.87104, 8.72294, 6.23376, 3.86458, 10.68032, 0.96307, 16.06, 0, 21.43728, 0.96922, 25.86944, 3.88301, 29.21296, 8.75059, 31.32432, 15.58118, 32.06, 24.384, 31.32432, 33.22675, 29.21296, 40.15258, 25.86944, 45.13382, 21.43728, 48.14285)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
-[node name="Poly3" type="Polygon2D" parent="."]
-position = Vector2(1532.71, 73.04)
-polygon = PackedVector2Array(7.17, 34.496, 10.51386, 33.25184, 12.95808, 28.9664, 14.28, 17.088, 12.95808, 5.34989, 10.51386, 1.18714, 7.17, 0, 3.81759, 1.18714, 1.34592, 5.34989, 0, 17.088, 1.34592, 28.9664, 3.81759, 33.25184)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+[node name="Icon03" type="Sprite2D" parent="."]
+position = Vector2(1521.82, 63.744)
+centered = false
+texture = ExtResource("x3")
 
 [node name="Rect7" type="Panel" parent="."]
 offset_left = 1490
@@ -220,21 +219,15 @@ offset_bottom = 1038
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R7")
 
-[node name="Line2" type="Line2D" parent="."]
-points = PackedVector2Array(1583.33, 1018.73, 1598, 1006.52, 1594.69, 987.783, 1576.67, 981.267, 1562, 993.494, 1565.32, 1012.23, 1583.33, 1018.73)
-width = 6
-default_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
-begin_cap_mode = 1
-end_cap_mode = 1
-joint_mode = 2
+[node name="Stroke04" type="Sprite2D" parent="."]
+position = Vector2(1554, 973.267)
+centered = false
+texture = ExtResource("x4")
 
-[node name="Line3" type="Line2D" parent="."]
-points = PackedVector2Array(1573.76, 1000, 1575.59, 1004.3775, 1580, 1006.19, 1584.41, 1004.3775, 1586.24, 1000, 1584.41, 995.6215, 1580, 993.808, 1575.59, 995.6215, 1573.76, 1000)
-width = 6
-default_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
-begin_cap_mode = 1
-end_cap_mode = 1
-joint_mode = 2
+[node name="Stroke05" type="Sprite2D" parent="."]
+position = Vector2(1565.76, 985.808)
+centered = false
+texture = ExtResource("x5")
 
 [node name="Rect12" type="Panel" parent="."]
 offset_left = 1630
@@ -253,18 +246,10 @@ offset_bottom = 1038
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R7")
 
-[node name="Circle1" type="Panel" parent="."]
-offset_left = 1648
-offset_top = 978
-offset_right = 1692
-offset_bottom = 1022
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R10")
-
-[node name="Poly4" type="Polygon2D" parent="."]
-position = Vector2(1659.64, 1003.57)
-polygon = PackedVector2Array(21.43, 0, 6.62, 9.9, 0, 0)
-color = Color(0.188235, 0.188235, 0.188235, 1.000000)
+[node name="Icon06" type="Sprite2D" parent="."]
+position = Vector2(1657.64, 1001.57)
+centered = false
+texture = ExtResource("x6")
 
 [node name="Rect14" type="Panel" parent="."]
 offset_left = 1720
@@ -283,13 +268,10 @@ offset_bottom = 1038
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R7")
 
-[node name="Line4" type="Line2D" parent="."]
-points = PackedVector2Array(1760, 1020, 1753.6768, 1018.9808, 1748.1864, 1016.1424, 1743.8576, 1011.8136, 1741.0192, 1006.3232, 1740, 1000, 1741.0192, 993.67834, 1743.8576, 988.18813, 1748.1864, 983.85875, 1753.6768, 981.01958, 1760, 980, 1766.3232, 981.01958, 1771.8136, 983.85875, 1776.1424, 988.18813, 1778.9808, 993.67834, 1780, 1000, 1778.9808, 1006.3232, 1776.1424, 1011.8136, 1771.8136, 1016.1424, 1766.3232, 1018.9808, 1760, 1020)
-width = 6
-default_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
-begin_cap_mode = 1
-end_cap_mode = 1
-joint_mode = 2
+[node name="Stroke07" type="Sprite2D" parent="."]
+position = Vector2(1732, 972)
+centered = false
+texture = ExtResource("x7")
 
 [node name="Rect16" type="Panel" parent="."]
 offset_left = 1810
@@ -308,21 +290,10 @@ offset_bottom = 1038
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R7")
 
-[node name="Line5" type="Line2D" parent="."]
-points = PackedVector2Array(1850, 992.5, 1842.5, 1000, 1850, 1007.5)
-width = 6
-default_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
-begin_cap_mode = 1
-end_cap_mode = 1
-joint_mode = 2
-
-[node name="Line6" type="Line2D" parent="."]
-points = PackedVector2Array(1870, 988.12, 1865.75912, 980.11772, 1830.27648, 983.41853, 1833.42008, 1019.72352, 1869.72352, 1016.57984, 1870, 1011.88)
-width = 6
-default_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
-begin_cap_mode = 1
-end_cap_mode = 1
-joint_mode = 2
+[node name="Stroke08" type="Sprite2D" parent="."]
+position = Vector2(1822.27648, 972.11772)
+centered = false
+texture = ExtResource("x8")
 
 [node name="Rect18" type="Panel" parent="."]
 offset_left = 30
@@ -330,7 +301,7 @@ offset_top = 740
 offset_right = 330
 offset_bottom = 1040
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R11")
+theme_override_styles/panel = SubResource("R10")
 
 [node name="Rect19" type="Panel" parent="."]
 offset_left = 32
@@ -338,7 +309,7 @@ offset_top = 742
 offset_right = 328
 offset_bottom = 1038
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R12")
+theme_override_styles/panel = SubResource("R11")
 
 [node name="Rect20" type="Panel" parent="."]
 offset_left = 340
@@ -346,17 +317,12 @@ offset_top = 780
 offset_right = 380
 offset_bottom = 820
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R13")
+theme_override_styles/panel = SubResource("R12")
 
-[node name="Poly5" type="Polygon2D" parent="."]
-position = Vector2(381.408, 789.872)
-polygon = PackedVector2Array(8.032, 24.576, 4.16618, 23.4433, 1.43565, 20.07629, 0, 12.192, 1.43565, 4.36147, 4.16618, 1.08518, 8.032, 0, 11.89091, 1.09123, 14.60762, 4.3753, 16.032, 12.192, 14.60762, 20.07629, 11.89091, 23.4433)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
-[node name="Poly6" type="Polygon2D" parent="."]
-position = Vector2(386.52774, 793.58038)
-polygon = PackedVector2Array(2.91226, 17.18762, 5.45626, 15.33162, 5.45626, 1.72762, 2.31424, 0, 0, 2.61456, 0.35226, 15.33162)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+[node name="Icon09" type="Sprite2D" parent="."]
+position = Vector2(379.408, 787.872)
+centered = false
+texture = ExtResource("x9")
 
 [node name="Rect21" type="Panel" parent="."]
 offset_left = 340
@@ -364,17 +330,12 @@ offset_top = 840
 offset_right = 380
 offset_bottom = 880
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R13")
+theme_override_styles/panel = SubResource("R12")
 
-[node name="Poly7" type="Polygon2D" parent="."]
-position = Vector2(381.408, 849.872)
-polygon = PackedVector2Array(8.032, 24.576, 4.16618, 23.4433, 1.43565, 20.07629, 0, 12.192, 1.43565, 4.36147, 4.16618, 1.08518, 8.032, 0, 11.89091, 1.09123, 14.60762, 4.3753, 16.032, 12.192, 14.60762, 20.07629, 11.89091, 23.4433)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
-[node name="Poly8" type="Polygon2D" parent="."]
-position = Vector2(386.52774, 853.58038)
-polygon = PackedVector2Array(2.91226, 17.18762, 5.45626, 15.33162, 5.45626, 1.72762, 2.31424, 0, 0, 2.61456, 0.35226, 15.33162)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+[node name="Icon10" type="Sprite2D" parent="."]
+position = Vector2(379.408, 847.872)
+centered = false
+texture = ExtResource("x10")
 
 [node name="Rect22" type="Panel" parent="."]
 offset_left = 340
@@ -382,17 +343,12 @@ offset_top = 900
 offset_right = 380
 offset_bottom = 940
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R13")
+theme_override_styles/panel = SubResource("R12")
 
-[node name="Poly9" type="Polygon2D" parent="."]
-position = Vector2(381.408, 909.872)
-polygon = PackedVector2Array(8.032, 24.576, 4.16618, 23.4433, 1.43565, 20.07629, 0, 12.192, 1.43565, 4.36147, 4.16618, 1.08518, 8.032, 0, 11.89091, 1.09123, 14.60762, 4.3753, 16.032, 12.192, 14.60762, 20.07629, 11.89091, 23.4433)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
-[node name="Poly10" type="Polygon2D" parent="."]
-position = Vector2(386.52774, 913.58038)
-polygon = PackedVector2Array(2.91226, 17.18762, 5.45626, 15.33162, 5.45626, 1.72762, 2.31424, 0, 0, 2.61456, 0.35226, 15.33162)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+[node name="Icon11" type="Sprite2D" parent="."]
+position = Vector2(379.408, 907.872)
+centered = false
+texture = ExtResource("x11")
 
 [node name="Rect23" type="Panel" parent="."]
 offset_left = 340
@@ -400,17 +356,12 @@ offset_top = 960
 offset_right = 380
 offset_bottom = 1000
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R13")
+theme_override_styles/panel = SubResource("R12")
 
-[node name="Poly11" type="Polygon2D" parent="."]
-position = Vector2(381.408, 969.872)
-polygon = PackedVector2Array(8.032, 24.576, 4.16618, 23.4433, 1.43565, 20.07629, 0, 12.192, 1.43565, 4.36147, 4.16618, 1.08518, 8.032, 0, 11.89091, 1.09123, 14.60762, 4.3753, 16.032, 12.192, 14.60762, 20.07629, 11.89091, 23.4433)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
-[node name="Poly12" type="Polygon2D" parent="."]
-position = Vector2(386.52774, 973.58038)
-polygon = PackedVector2Array(2.91226, 17.18762, 5.45626, 15.33162, 5.45626, 1.72762, 2.31424, 0, 0, 2.61456, 0.35226, 15.33162)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+[node name="Icon12" type="Sprite2D" parent="."]
+position = Vector2(379.408, 967.872)
+centered = false
+texture = ExtResource("x12")
 
 [node name="Rect24" type="Panel" parent="."]
 offset_left = 30.0012
@@ -421,28 +372,20 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("R6")
 modulate = Color(1.000000, 1.000000, 1.000000, 0.200000)
 
-[node name="Poly13" type="Polygon2D" parent="."]
-position = Vector2(36.6999, 41.732)
-polygon = PackedVector2Array(40.3013, 0, 46.3013, 0.0001, 86.08092, 24.28569, 86.6021, 26.7321, 85.46032, 73.32509, 83.6021, 75, 42.68062, 97.30784, 40.3013, 96.536, 0.52136, 72.25003, 0, 69.804, 1.14204, 23.21064, 3, 21.536)
-color = Color(1.000000, 0.639216, 0.000000, 1.000000)
+[node name="Icon13" type="Sprite2D" parent="."]
+position = Vector2(34.6999, 39.732)
+centered = false
+texture = ExtResource("x13")
 
-[node name="Line7" type="Line2D" parent="."]
-points = PackedVector2Array(78.0012, 43.4639, 82.0012, 43.4639, 121.303, 68.4639, 119.302, 115, 78.0012, 136.536, 38.7004, 111.536, 40.7004, 65, 78.0012, 43.4639)
-width = 4
-default_color = Color(0.000000, 0.000000, 0.000000, 0.500000)
-begin_cap_mode = 1
-end_cap_mode = 1
-joint_mode = 2
+[node name="Stroke14" type="Sprite2D" parent="."]
+position = Vector2(32.7004, 37.4639)
+centered = false
+texture = ExtResource("x14")
 
-[node name="Poly14" type="Polygon2D" parent="."]
-position = Vector2(63.8172, 65.744)
-polygon = PackedVector2Array(16.064, 49.152, 10.68237, 48.14285, 6.23462, 45.13382, 2.8713, 40.15258, 0.74291, 33.22675, 0, 24.384, 0.74291, 15.55661, 2.8713, 8.72294, 6.23462, 3.86458, 10.68237, 0.96307, 16.064, 0, 21.43898, 0.96922, 25.87085, 3.88301, 29.21523, 8.75059, 31.32774, 15.58118, 32.064, 24.384, 31.32774, 33.22675, 29.21523, 40.15258, 25.87085, 45.13382, 21.43898, 48.14285)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
-[node name="Poly15" type="Polygon2D" parent="."]
-position = Vector2(72.7132, 73.04)
-polygon = PackedVector2Array(7.168, 34.496, 10.5088, 33.25184, 12.95104, 28.9664, 14.272, 17.088, 12.95104, 5.34989, 10.5088, 1.18714, 7.168, 0, 3.81338, 1.18714, 1.34349, 5.34989, 0, 17.088, 1.34349, 28.9664, 3.81338, 33.25184)
-color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+[node name="Icon15" type="Sprite2D" parent="."]
+position = Vector2(61.8172, 63.744)
+centered = false
+texture = ExtResource("x15")
 
 [node name="Text01" type="Label" parent="."]
 offset_left = 136
@@ -450,7 +393,7 @@ offset_top = 67.9
 offset_right = 355.6
 offset_bottom = 121.2
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 35
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "玩家名称"
@@ -461,7 +404,7 @@ offset_top = 67.9
 offset_right = 1815.6
 offset_bottom = 121.2
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 35
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "玩家名称"
@@ -472,7 +415,7 @@ offset_top = 579.3
 offset_right = 203
 offset_bottom = 621.2
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "卡牌名称"
@@ -483,7 +426,7 @@ offset_top = 600.9
 offset_right = 1778.8
 offset_bottom = 646.6
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 29
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "主按钮"
@@ -494,7 +437,7 @@ offset_top = 627.8
 offset_right = 201
 offset_bottom = 727.9
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "技能描述-行1\n技能描述-行2\n技能描述-行3"
@@ -505,7 +448,7 @@ offset_top = 707.5
 offset_right = 1858.4
 offset_bottom = 776
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 47
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "回合1--先手"
@@ -516,7 +459,7 @@ offset_top = 792.7
 offset_right = 1622.6
 offset_bottom = 833.8
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 25
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "地图名"
@@ -527,51 +470,7 @@ offset_top = 840.8
 offset_right = 1709
 offset_bottom = 941
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
+theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 26
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 text = "场地效果描述-行1\n场地效果描述-行2\n场地效果描述-行3"
-
-[node name="AttrNum1" type="Label" parent="."]
-offset_left = 377.4
-offset_top = 786.9
-offset_right = 421.4
-offset_bottom = 820.5
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 29
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-text = "0"
-
-[node name="AttrNum2" type="Label" parent="."]
-offset_left = 377.4
-offset_top = 846.9
-offset_right = 421.4
-offset_bottom = 880.5
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 29
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-text = "0"
-
-[node name="AttrNum3" type="Label" parent="."]
-offset_left = 377.4
-offset_top = 906.9
-offset_right = 421.4
-offset_bottom = 940.5
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 29
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-text = "0"
-
-[node name="AttrNum4" type="Label" parent="."]
-offset_left = 377.4
-offset_top = 966.9
-offset_right = 421.4
-offset_bottom = 1000.5
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 29
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-text = "0"
