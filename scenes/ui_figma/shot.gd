@@ -1,6 +1,6 @@
 extends Node2D
 ## 取证：加载目标场景 → 以整幅 1920×1080 取景 → 存 PNG（文件名带时间戳）
-const TARGET := "res://scenes/ui_figma/figma_base.tscn"
+const TARGET := "res://scenes/ui_figma/figma_base_nodes.tscn"
 
 func _ready() -> void:
 	var packed: PackedScene = load(TARGET) as PackedScene
