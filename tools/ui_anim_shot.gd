@@ -1,19 +1,36 @@
 extends Node2D
-## 动画取证：按约 0.5 秒间隔连续取帧，验证特效在动（并可用于任何 UI 动画复核）
+## 显像管拼接滚动取证：覆盖一个完整周期，逐帧检查
+##  ① 三张图是否持续覆盖屏幕（无空白）② 滚动是否平滑 ③ 是否可见
 @export_file("*.tscn") var target_scene := "res://scenes/ui/battle_ui_alpha.tscn"
-@export var count := 6
-@export var interval := 0.25
+const SNAP := [0, 15, 30, 45, 60, 75, 90]      # 帧号（60FPS 下覆盖 1.5s 周期）
 
 func _ready() -> void:
 	var ui: Node = (load(target_scene) as PackedScene).instantiate()
 	add_child(ui)
-	var filt: Control = ui.get_node_or_null("Background/CrtFx/CrtFilter")
-	if filt == null:
-		printerr("[ANIM] CrtFilter 未找到"); get_tree().quit(1); return
-	for i in count:
-		var t0 := Time.get_ticks_msec()
-		while Time.get_ticks_msec() - t0 < int(interval * 1000.0):
-			await RenderingServer.frame_post_draw
-		printerr("[ANIM] t=%.2fs pos=%s a=%.4f" % [i * interval, str(filt.position), filt.modulate.a])
-		get_viewport().get_texture().get_image().save_png("user://anim_%02d.png" % i)
+	var anim: AnimationPlayer = ui.get_node_or_null("Background/CrtFx/CrtAnim")
+	var mover: Control = ui.get_node_or_null("Background/CrtFx/Mover")
+	if anim == null or mover == null:
+		printerr("[ANIM] 节点缺失"); get_tree().quit(1); return
+	printerr("[ANIM] len=%.2f playing=%s" % [anim.current_animation_length, str(anim.is_playing())])
+	var ys: Array[float] = []
+	for i in 100:
+		await RenderingServer.frame_post_draw
+		ys.append(mover.position.y)
+		if i in SNAP:
+			var img := get_viewport().get_texture().get_image()
+			img.save_png("user://crt_%03d.png" % i)
+			# 检查屏幕最上方 60px 是否有"空白"（与相邻行的均匀性）
+			var top_mean := 0.0
+			for y in 60:
+				top_mean += img.get_pixel(30, y).r
+			top_mean /= 60.0
+			printerr("[ANIM] frame=%3d mover.y=%7.3f  顶部60px平均R=%.4f" % [i, mover.position.y, top_mean])
+	printerr("[ANIM] mover.y: min=%.2f max=%.2f 取值数=%d 末值=%.2f" % [
+		ys.min(), ys.max(), _uniq(ys).size(), ys[-1]])
 	get_tree().quit(0)
+
+func _uniq(a: Array) -> Dictionary:
+	var d := {}
+	for v in a:
+		d[snappedf(v, 0.01)] = true
+	return d
