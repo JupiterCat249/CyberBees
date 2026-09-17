@@ -1,0 +1,478 @@
+[gd_scene load_steps=26 format=3]
+
+[ext_resource type="Script" path="res://scenes/ui_battle/ui_battle_index.gd" id="SCRIPT"]
+[ext_resource type="PackedScene" path="res://scenes/ui_battle/ui_unit_card.tscn" id="e2"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/fill-image0-1000x1000.png" id="e3"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/base-image0-2000x2000.png" id="e4"]
+
+[sub_resource type="StyleBoxFlat" id="S1"]
+bg_color = Color(0.600000, 0.600000, 0.600000, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S2"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+
+[sub_resource type="StyleBoxFlat" id="S3"]
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S4"]
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S5"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S6"]
+bg_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S7"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.000000, 0.000000, 0.000000, 1.000000)
+
+[sub_resource type="SystemFont" id="SysFont"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="S8"]
+bg_color = Color(0.286275, 0.568627, 0.411765, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S9"]
+bg_color = Color(0.247059, 0.490196, 0.349020, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S10"]
+bg_color = Color(0.207843, 0.411765, 0.294118, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S11"]
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
+
+[sub_resource type="StyleBoxFlat" id="S12"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="S13"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S14"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="S15"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S16"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="S17"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S18"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="S19"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="S20"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[node name="BattleUIIndex" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+script = ExtResource("SCRIPT")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 1920
+offset_bottom = 1080
+mouse_filter = 2
+color = Color(0.400000, 0.400000, 0.400000, 1.000000)
+
+[node name="Board" type="Control" parent="."]
+offset_left = 459
+offset_top = 40
+offset_right = 1459
+offset_bottom = 1040
+mouse_filter = 2
+
+[node name="Plate" type="Panel" parent="Board"]
+offset_left = 0
+offset_top = 0
+offset_right = 1000
+offset_bottom = 1000
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S1")
+
+[node name="Texture" type="TextureRect" parent="Board"]
+offset_left = 0
+offset_top = 0
+offset_right = 1000
+offset_bottom = 1000
+mouse_filter = 2
+texture = ExtResource("e3")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(1.000000, 1.000000, 1.000000, 1.000000)
+
+[node name="CrossPattern" type="TextureRect" parent="Board"]
+offset_left = 0
+offset_top = 0
+offset_right = 1000
+offset_bottom = 1000
+mouse_filter = 2
+texture = ExtResource("e4")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(1.000000, 1.000000, 1.000000, 0.101961)
+texture_repeat = 1
+
+[node name="Frame" type="Control" parent="Board"]
+offset_left = -2
+offset_top = -2
+offset_right = 1002
+offset_bottom = 1002
+mouse_filter = 2
+
+[node name="Line" type="Panel" parent="Board/Frame"]
+offset_left = 0
+offset_top = 0
+offset_right = 1004
+offset_bottom = 1004
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S2")
+
+[node name="UnitCards" type="Control" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 1
+offset_bottom = 1
+mouse_filter = 2
+
+[node name="UnitQueenRed" type="Control" parent="UnitCards" instance=ExtResource("e2")]
+offset_left = 709
+offset_top = 40
+offset_right = 959
+offset_bottom = 290
+mouse_filter = 0
+
+[node name="UnitBear" type="Control" parent="UnitCards" instance=ExtResource("e2")]
+offset_left = 959
+offset_top = 540
+offset_right = 1209
+offset_bottom = 790
+mouse_filter = 0
+
+[node name="UnitQueenGreen" type="Control" parent="UnitCards" instance=ExtResource("e2")]
+offset_left = 959
+offset_top = 790
+offset_right = 1209
+offset_bottom = 1040
+mouse_filter = 0
+
+[node name="Hands" type="Control" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 1
+offset_bottom = 1
+mouse_filter = 2
+
+[node name="HandLeft" type="Panel" parent="Hands"]
+offset_left = 30
+offset_top = 150
+offset_right = 430
+offset_bottom = 550
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S3")
+
+[node name="HandRight" type="Panel" parent="Hands"]
+offset_left = 1490
+offset_top = 150
+offset_right = 1890
+offset_bottom = 550
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S4")
+
+[node name="LeftPanel" type="Control" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 1
+offset_bottom = 1
+mouse_filter = 2
+
+[node name="InfoPanel" type="Panel" parent="LeftPanel"]
+offset_left = 30
+offset_top = 570
+offset_right = 430
+offset_bottom = 1040
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S5")
+
+[node name="DetailBlock" type="Panel" parent="LeftPanel"]
+offset_left = 30
+offset_top = 740
+offset_right = 330
+offset_bottom = 1040
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S6")
+
+[node name="DetailLine" type="Panel" parent="LeftPanel"]
+offset_left = 32
+offset_top = 742
+offset_right = 328
+offset_bottom = 1038
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S7")
+
+[node name="MainButton" type="Button" parent="."]
+offset_left = 1490
+offset_top = 570
+offset_right = 1890
+offset_bottom = 670
+mouse_default_cursor_shape = 2
+theme_override_fonts/font = SubResource("SysFont")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.058824, 0.101961, 0.078431, 1.000000)
+theme_override_styles/normal = SubResource("S8")
+theme_override_styles/hover = SubResource("S9")
+theme_override_styles/pressed = SubResource("S10")
+text = "完成部署"
+
+[node name="Seg" type="Panel" parent="MainButton"]
+offset_left = 262
+offset_top = 0
+offset_right = 400
+offset_bottom = 100
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S11")
+
+[node name="Line" type="Panel" parent="MainButton"]
+offset_left = 2
+offset_top = 2
+offset_right = 398
+offset_bottom = 98
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S12")
+
+[node name="FuncButtons" type="Control" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 1
+offset_bottom = 1
+mouse_filter = 2
+
+[node name="Func1" type="Control" parent="FuncButtons"]
+offset_left = 1540
+offset_top = 960
+offset_right = 1620
+offset_bottom = 1040
+mouse_filter = 2
+
+[node name="Bg" type="Panel" parent="FuncButtons/Func1"]
+offset_left = 0
+offset_top = 0
+offset_right = 80
+offset_bottom = 80
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S13")
+
+[node name="Line" type="Panel" parent="FuncButtons/Func1"]
+offset_left = 2
+offset_top = 2
+offset_right = 78
+offset_bottom = 78
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S14")
+
+[node name="Func2" type="Control" parent="FuncButtons"]
+offset_left = 1630
+offset_top = 960
+offset_right = 1710
+offset_bottom = 1040
+mouse_filter = 2
+
+[node name="Bg" type="Panel" parent="FuncButtons/Func2"]
+offset_left = 0
+offset_top = 0
+offset_right = 80
+offset_bottom = 80
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S15")
+
+[node name="Line" type="Panel" parent="FuncButtons/Func2"]
+offset_left = 2
+offset_top = 2
+offset_right = 78
+offset_bottom = 78
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S16")
+
+[node name="Func3" type="Control" parent="FuncButtons"]
+offset_left = 1720
+offset_top = 960
+offset_right = 1800
+offset_bottom = 1040
+mouse_filter = 2
+
+[node name="Bg" type="Panel" parent="FuncButtons/Func3"]
+offset_left = 0
+offset_top = 0
+offset_right = 80
+offset_bottom = 80
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S17")
+
+[node name="Line" type="Panel" parent="FuncButtons/Func3"]
+offset_left = 2
+offset_top = 2
+offset_right = 78
+offset_bottom = 78
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S18")
+
+[node name="Func4" type="Control" parent="FuncButtons"]
+offset_left = 1810
+offset_top = 960
+offset_right = 1890
+offset_bottom = 1040
+mouse_filter = 2
+
+[node name="Bg" type="Panel" parent="FuncButtons/Func4"]
+offset_left = 0
+offset_top = 0
+offset_right = 80
+offset_bottom = 80
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S19")
+
+[node name="Line" type="Panel" parent="FuncButtons/Func4"]
+offset_left = 2
+offset_top = 2
+offset_right = 78
+offset_bottom = 78
+mouse_filter = 2
+theme_override_styles/panel = SubResource("S20")
+
+[node name="PreviewCamera" type="Camera2D" parent="."]
+position = Vector2(960, 540)
+zoom = Vector2(0.6, 0.6)
+
+[connection signal="pressed" from="MainButton" to="." method="_on_main_button_pressed"]
+
+[connection signal="card_pressed" from="UnitCards/UnitQueenRed" to="." method="_on_unit_card_pressed"]
+
+[connection signal="card_pressed" from="UnitCards/UnitBear" to="." method="_on_unit_card_pressed"]
+
+[connection signal="card_pressed" from="UnitCards/UnitQueenGreen" to="." method="_on_unit_card_pressed"]
