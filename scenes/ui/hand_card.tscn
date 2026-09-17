@@ -1,0 +1,98 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/static_ui/fill-image11-320x320.png" id="x1"]
+
+[sub_resource type="StyleBoxFlat" id="R1"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R2"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.901961)
+
+[sub_resource type="SystemFont" id="R3"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="SystemFont" id="R4"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R5"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
+
+[node name="HandCard" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 200
+offset_bottom = 200
+
+[node name="CardBg" type="Panel" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 200
+offset_bottom = 200
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R1")
+
+[node name="Art" type="TextureRect" parent="."]
+offset_left = 10
+offset_top = 10
+offset_right = 190
+offset_bottom = 190
+mouse_filter = 2
+texture = ExtResource("x1")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CostPlate" type="Panel" parent="."]
+offset_left = 8
+offset_top = 8
+offset_right = 31
+offset_bottom = 41
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R2")
+
+[node name="Cost" type="Label" parent="."]
+offset_left = 8
+offset_top = 10
+offset_right = 31
+offset_bottom = 40
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R3")
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Name" type="Label" parent="."]
+offset_left = 10
+offset_top = 172
+offset_right = 190
+offset_bottom = 196
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R4")
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "卡牌"
+
+[node name="CardOutline" type="Panel" parent="."]
+offset_left = 2
+offset_top = 2
+offset_right = 198
+offset_bottom = 198
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R5")
