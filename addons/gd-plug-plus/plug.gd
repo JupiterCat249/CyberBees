@@ -73,7 +73,7 @@ func _init():
 	project_dir = DirAccess.open("res://")
 
 
-func _initialize():
+func _initialize() -> void:
 	var args = OS.get_cmdline_args()
 	for arg in Array(args):
 		args.remove_at(0)
@@ -130,7 +130,7 @@ func _initialize():
 	request_quit(0)
 
 
-func show_syntax():
+func show_syntax() -> void:
 	PlugLogger.debug("gd-plug - Minimal plugin manager for Godot")
 	PlugLogger.debug("")
 	PlugLogger.debug("Usage: godot --headless -s plug.gd action [options...]")
@@ -180,7 +180,7 @@ func show_syntax():
 	PlugLogger.debug("")
 
 
-func show_config_syntax():
+func show_config_syntax() -> void:
 	PlugLogger.debug("Configs: plug(src, args={})")
 	PlugLogger.debug("")
 	PlugLogger.debug("Sources:")
@@ -223,11 +223,12 @@ func show_config_syntax():
 	PlugLogger.debug("")
 
 
-func _process(delta):
+func _process(delta: float) -> bool:
 	threadpool.process(delta)
+	return true
 
 
-func _finalize():
+func _finalize() -> void:
 	_plug_end()
 	threadpool.stop()
 	PlugLogger.info(_tr("LOG_CLI_FINISHED") % ((Time.get_ticks_msec() - _start_time) / 1000.0))
@@ -477,7 +478,7 @@ func install_plugin(plugin):
 			PlugLogger.info(_tr("LOG_CLI_INSTALL_FAILED") % [plugin.name, result])
 
 
-func uninstall_plugin(plugin):
+func uninstall_plugin(plugin) -> void:
 	var test = !OS.get_environment(ENV_TEST).is_empty()
 	PlugLogger.info(_tr("LOG_CLI_UNINSTALLING_PLUGIN") % plugin.name)
 	uninstall(plugin)
@@ -543,7 +544,7 @@ func update_plugin(plugin, checking = false):
 			install(plugin)
 
 
-func check_plugin(plugin):
+func check_plugin(plugin) -> void:
 	update_plugin(plugin, true)
 
 
@@ -613,7 +614,7 @@ func install(plugin):
 	return OK
 
 
-func uninstall(plugin):
+func uninstall(plugin) -> void:
 	var test = !OS.get_environment(ENV_TEST).is_empty()
 	var keep_import_file = !OS.get_environment(ENV_KEEP_IMPORT_FILE).is_empty()
 	var keep_import_resource_file = !OS.get_environment(ENV_KEEP_IMPORT_RESOURCE_FILE).is_empty()
@@ -647,7 +648,7 @@ func get_installed_plugin(plugin_name):
 	return installed_plugin
 
 
-func set_installed_plugin(plugin):
+func set_installed_plugin(plugin) -> void:
 	assert(_installed_plugins != null, MSG_PLUG_START_ASSERTION)
 	_mutex.lock()
 	_installed_plugins[plugin.name] = plugin
