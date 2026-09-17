@@ -18,7 +18,7 @@
 bg_color = Color(0.4, 0.4, 0.4, 1)
 
 [sub_resource type="Animation" id="Animation_tvb1q"]
-length = 1.5
+length = 3.0
 loop_mode = 1
 tracks/0/type = "value"
 tracks/0/imported = false
@@ -27,46 +27,10 @@ tracks/0/path = NodePath("Mover:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 1.5),
+"times": PackedFloat32Array(0, 3),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Vector2(0, 0), Vector2(0, 100)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("Mover/Sheet1:modulate")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.75, 1.5),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 0.05), Color(1, 1, 1, 0.07), Color(1, 1, 1, 0.05)]
-}
-tracks/2/type = "value"
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/path = NodePath("Mover/Sheet2:modulate")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/keys = {
-"times": PackedFloat32Array(0, 0.75, 1.5),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 0.05), Color(1, 1, 1, 0.07), Color(1, 1, 1, 0.05)]
-}
-tracks/3/type = "value"
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/path = NodePath("Mover/Sheet3:modulate")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/keys = {
-"times": PackedFloat32Array(0, 0.75, 1.5),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 0,
-"values": [Color(1, 1, 1, 0.05), Color(1, 1, 1, 0.07), Color(1, 1, 1, 0.05)]
+"values": [Vector2(0, 0), Vector2(0, 1080)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_jr2ln"]
@@ -361,42 +325,39 @@ autoplay = &"scan"
 [node name="Mover" type="Control" parent="Background/CrtFx" unique_id=141771399]
 anchors_preset = 0
 
-[node name="Sheet1" type="TextureRect" parent="Background/CrtFx/Mover" unique_id=1030141903]
-modulate = Color(1, 1, 1, 0.050000012)
+[node name="Sheet1" type="TextureRect" parent="Background/CrtFx/Mover"]
+modulate = Color(1, 1, 1, 0.05)
 texture_repeat = 1
 layout_mode = 0
-offset_top = -100.0
+offset_top = -1080.0
+offset_right = 2020.0
+offset_bottom = 0.0
+mouse_filter = 2
+texture = ExtResource("2_jr2ln")
+expand_mode = 1
+stretch_mode = 1
+[node name="Sheet2" type="TextureRect" parent="Background/CrtFx/Mover"]
+modulate = Color(1, 1, 1, 0.05)
+texture_repeat = 1
+layout_mode = 0
+offset_top = 0.0
 offset_right = 2020.0
 offset_bottom = 1080.0
 mouse_filter = 2
 texture = ExtResource("2_jr2ln")
 expand_mode = 1
 stretch_mode = 1
-
-[node name="Sheet2" type="TextureRect" parent="Background/CrtFx/Mover" unique_id=1709212358]
-modulate = Color(1, 1, 1, 0.050000012)
+[node name="Sheet3" type="TextureRect" parent="Background/CrtFx/Mover"]
+modulate = Color(1, 1, 1, 0.05)
 texture_repeat = 1
 layout_mode = 0
+offset_top = 1080.0
 offset_right = 2020.0
-offset_bottom = 1180.0
+offset_bottom = 2160.0
 mouse_filter = 2
 texture = ExtResource("2_jr2ln")
 expand_mode = 1
-stretch_mode = 1
-
-[node name="Sheet3" type="TextureRect" parent="Background/CrtFx/Mover" unique_id=1857948738]
-modulate = Color(1, 1, 1, 0.050000012)
-texture_repeat = 1
-layout_mode = 0
-offset_top = 100.0
-offset_right = 2020.0
-offset_bottom = 1280.0
-mouse_filter = 2
-texture = ExtResource("2_jr2ln")
-expand_mode = 1
-stretch_mode = 1
-
-[node name="Battle" type="Control" parent="." unique_id=750457065]
+stretch_mode = 1[node name="Battle" type="Control" parent="." unique_id=750457065]
 anchors_preset = 0
 offset_right = 1.0
 offset_bottom = 1.0
