@@ -330,7 +330,7 @@ offset_right = 1920.0
 offset_bottom = 1080.0
 
 [node name="CrtFilter" type="TextureRect" parent="Background/CrtFx" unique_id=1030141903]
-modulate = Color(1, 1, 1, 0.05)
+modulate = Color(1, 1, 1, 0.050000012)
 texture_repeat = 1
 layout_mode = 0
 offset_right = 1920.0
