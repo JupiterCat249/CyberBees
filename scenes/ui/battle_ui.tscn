@@ -1,10 +1,10 @@
-[gd_scene load_steps=44 format=3]
+[gd_scene load_steps=51 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/static_ui/fill-image0-1000x1000.png" id="x1"]
-[ext_resource type="Texture2D" path="res://assets/ui/icon_attr_1.png" id="x2"]
-[ext_resource type="Texture2D" path="res://assets/ui/icon_attr_2.png" id="x3"]
-[ext_resource type="Texture2D" path="res://assets/ui/icon_attr_3.png" id="x4"]
-[ext_resource type="Texture2D" path="res://assets/ui/icon_attr_4.png" id="x5"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/base-image0-2000x2000.png" id="x1"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/base-image1-40x40.png" id="x2"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/base-image2-40x40.png" id="x3"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/base-image3-40x40.png" id="x4"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/base-image4-40x40.png" id="x5"]
 
 [sub_resource type="StyleBoxFlat" id="R1"]
 bg_color = Color(0.400000, 0.400000, 0.400000, 1.000000)
@@ -36,34 +36,190 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="R5"]
-bg_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
+[sub_resource type="SystemFont" id="R5"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R6"]
+bg_color = Color(0.600000, 0.600000, 0.600000, 1.000000)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="R6"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
 [sub_resource type="StyleBoxFlat" id="R7"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+bg_color = Color(0.541176, 0.541176, 0.541176, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R8"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+bg_color = Color(0.490196, 0.490196, 0.490196, 1.000000)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R9"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="R10"]
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
+
+[sub_resource type="StyleBoxFlat" id="R11"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R12"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.701961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R13"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R14"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="R15"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R16"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.701961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R17"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R18"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="R19"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R20"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.701961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R21"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R22"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="R23"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R24"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.701961)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R25"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R26"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1.000000, 1.000000, 1.000000, 0.101961)
+
+[sub_resource type="StyleBoxFlat" id="R27"]
 bg_color = Color(0.200000, 0.200000, 0.200000, 1.000000)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="R10"]
+[sub_resource type="StyleBoxFlat" id="R28"]
 draw_center = false
 bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
 corner_radius_top_left = 8
@@ -76,82 +232,12 @@ border_width_right = 4
 border_width_bottom = 4
 border_color = Color(0.000000, 0.000000, 0.000000, 1.000000)
 
-[sub_resource type="StyleBoxFlat" id="R11"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R12"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R13"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R14"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R15"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R16"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R17"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R18"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R19"]
-bg_color = Color(0.286275, 0.568627, 0.411765, 1.000000)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="SystemFont" id="R20"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R21"]
+[sub_resource type="StyleBoxFlat" id="R29"]
 bg_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
-
-[sub_resource type="StyleBoxFlat" id="R22"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-
-[sub_resource type="SystemFont" id="R23"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R24"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="SystemFont" id="R25"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R26"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="SystemFont" id="R27"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R28"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.501961)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="SystemFont" id="R29"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 
 [sub_resource type="SystemFont" id="R30"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
@@ -177,11 +263,35 @@ font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft 
 [sub_resource type="SystemFont" id="R37"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 
+[sub_resource type="SystemFont" id="R38"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="SystemFont" id="R39"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="SystemFont" id="R40"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="SystemFont" id="R41"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R42"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+
+[sub_resource type="SystemFont" id="R43"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R44"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+
+[sub_resource type="SystemFont" id="R45"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
 [node name="BattleUI" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 1920
-offset_bottom = 1080
+offset_right = 1920.0
+offset_bottom = 1080.0
 
 [node name="Background" type="Panel" parent="."]
 offset_left = 0
@@ -192,20 +302,9 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("R1")
 
 [node name="Battle" type="Control" parent="."]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
 mouse_filter = 2
 
-[node name="Board" type="Control" parent="Battle"]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
-mouse_filter = 2
-
-[node name="Plate" type="Panel" parent="Battle/Board"]
+[node name="BoardPlate" type="Panel" parent="Battle"]
 offset_left = 459
 offset_top = 40
 offset_right = 1459
@@ -213,7 +312,7 @@ offset_bottom = 1040
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R2")
 
-[node name="Texture" type="TextureRect" parent="Battle/Board"]
+[node name="BoardCrossPattern" type="TextureRect" parent="Battle"]
 offset_left = 459
 offset_top = 40
 offset_right = 1459
@@ -221,9 +320,11 @@ offset_bottom = 1040
 mouse_filter = 2
 texture = ExtResource("x1")
 expand_mode = 1
-stretch_mode = 0
+stretch_mode = 1
+texture_repeat = 1
+modulate = Color(1.000000, 1.000000, 1.000000, 0.101961)
 
-[node name="Frame" type="Panel" parent="Battle/Board"]
+[node name="BoardFrame" type="Panel" parent="Battle"]
 offset_left = 457
 offset_top = 38
 offset_right = 1461
@@ -231,113 +332,133 @@ offset_bottom = 1042
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R3")
 
-[node name="Units" type="Control" parent="Battle/Board"]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
-mouse_filter = 2
-
-[node name="HandPanels" type="Control" parent="Battle"]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
-mouse_filter = 2
-
-[node name="Left" type="Panel" parent="Battle/HandPanels"]
-offset_left = 30
-offset_top = 150
-offset_right = 430
-offset_bottom = 550
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R4")
-
-[node name="Right" type="Panel" parent="Battle/HandPanels"]
+[node name="HandPanelRight" type="Panel" parent="Battle"]
 offset_left = 1490
 offset_top = 150
 offset_right = 1890
 offset_bottom = 550
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R5")
+theme_override_styles/panel = SubResource("R4")
 
-[node name="CostBadges" type="Control" parent="Battle"]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
-mouse_filter = 2
-
-[node name="BadgeLeftHex" type="Polygon2D" parent="Battle/CostBadges"]
-polygon = PackedVector2Array(81, 40.7, 123.7, 65.35, 123.7, 114.65, 81, 139.3, 38.3, 114.65, 38.3, 65.35)
-color = Color(1.000000, 0.639216, 0.000000, 1.000000)
-
-[node name="BadgeLeftOutline" type="Line2D" parent="Battle/CostBadges"]
-points = PackedVector2Array(81, 40.7, 123.7, 65.35, 123.7, 114.65, 81, 139.3, 38.3, 114.65, 38.3, 65.35, 81, 40.7)
-width = 4.0
-default_color = Color(0.000000, 0.000000, 0.000000, 0.501961)
-joint_mode = 2
-antialiased = true
-
-[node name="BadgeLeftNumber" type="Panel" parent="Battle/CostBadges"]
-offset_left = 61
-offset_top = 63
-offset_right = 98
-offset_bottom = 117
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R6")
-
-[node name="BadgeRightHex" type="Polygon2D" parent="Battle/CostBadges"]
-polygon = PackedVector2Array(1540, 40.7, 1582.7, 65.35, 1582.7, 114.65, 1540, 139.3, 1497.3, 114.65, 1497.3, 65.35)
-color = Color(1.000000, 0.639216, 0.000000, 1.000000)
-
-[node name="BadgeRightOutline" type="Line2D" parent="Battle/CostBadges"]
-points = PackedVector2Array(1540, 40.7, 1582.7, 65.35, 1582.7, 114.65, 1540, 139.3, 1497.3, 114.65, 1497.3, 65.35, 1540, 40.7)
-width = 4.0
-default_color = Color(0.000000, 0.000000, 0.000000, 0.501961)
-joint_mode = 2
-antialiased = true
-
-[node name="BadgeRightNumber" type="Panel" parent="Battle/CostBadges"]
-offset_left = 1520
-offset_top = 63
-offset_right = 1557
-offset_bottom = 117
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R7")
-
-[node name="HUD" type="Control" parent="."]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
-mouse_filter = 2
-
-[node name="InfoPanel" type="Panel" parent="HUD"]
-offset_left = 30
+[node name="MainButton" type="Button" parent="Battle"]
+offset_left = 1490
 offset_top = 570
-offset_right = 430
-offset_bottom = 1040
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R8")
+offset_right = 1890
+offset_bottom = 670
+mouse_default_cursor_shape = 2
+theme_override_fonts/font = SubResource("R5")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+theme_override_styles/normal = SubResource("R6")
+theme_override_styles/hover = SubResource("R7")
+theme_override_styles/pressed = SubResource("R8")
+text = "主按钮"
 
-[node name="DetailBlock" type="Panel" parent="HUD"]
+[node name="MainButtonInnerLine" type="Panel" parent="Battle"]
+offset_left = 1492
+offset_top = 572
+offset_right = 1888
+offset_bottom = 668
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R9")
+
+[node name="MainButtonSeg" type="Panel" parent="Battle"]
+offset_left = 1752
+offset_top = 570
+offset_right = 1890
+offset_bottom = 670
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R10")
+
+[node name="Settings" type="Button" parent="Battle"]
+offset_left = 1540
+offset_top = 960
+offset_right = 1620
+offset_bottom = 1040
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("R11")
+theme_override_styles/hover = SubResource("R12")
+theme_override_styles/pressed = SubResource("R13")
+
+[node name="SettingsInnerLine" type="Panel" parent="Battle"]
+offset_left = 1542
+offset_top = 962
+offset_right = 1618
+offset_bottom = 1038
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R14")
+
+[node name="Emote" type="Button" parent="Battle"]
+offset_left = 1630
+offset_top = 960
+offset_right = 1710
+offset_bottom = 1040
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("R15")
+theme_override_styles/hover = SubResource("R16")
+theme_override_styles/pressed = SubResource("R17")
+
+[node name="EmoteInnerLine" type="Panel" parent="Battle"]
+offset_left = 1632
+offset_top = 962
+offset_right = 1708
+offset_bottom = 1038
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R18")
+
+[node name="Info" type="Button" parent="Battle"]
+offset_left = 1720
+offset_top = 960
+offset_right = 1800
+offset_bottom = 1040
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("R19")
+theme_override_styles/hover = SubResource("R20")
+theme_override_styles/pressed = SubResource("R21")
+
+[node name="InfoInnerLine" type="Panel" parent="Battle"]
+offset_left = 1722
+offset_top = 962
+offset_right = 1798
+offset_bottom = 1038
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R22")
+
+[node name="Back" type="Button" parent="Battle"]
+offset_left = 1810
+offset_top = 960
+offset_right = 1890
+offset_bottom = 1040
+mouse_default_cursor_shape = 2
+theme_override_styles/normal = SubResource("R23")
+theme_override_styles/hover = SubResource("R24")
+theme_override_styles/pressed = SubResource("R25")
+
+[node name="BackInnerLine" type="Panel" parent="Battle"]
+offset_left = 1812
+offset_top = 962
+offset_right = 1888
+offset_bottom = 1038
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R26")
+
+[node name="DetailBlock" type="Panel" parent="Battle"]
 offset_left = 30
 offset_top = 740
 offset_right = 330
 offset_bottom = 1040
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R9")
+theme_override_styles/panel = SubResource("R27")
 
-[node name="DetailOutline" type="Panel" parent="HUD"]
+[node name="DetailBlockLine" type="Panel" parent="Battle"]
 offset_left = 32
 offset_top = 742
 offset_right = 328
 offset_bottom = 1038
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R10")
+theme_override_styles/panel = SubResource("R28")
 
-[node name="AttrIcon1" type="TextureRect" parent="HUD"]
+[node name="AttrIcon1" type="TextureRect" parent="Battle"]
 offset_left = 340
 offset_top = 780
 offset_right = 380
@@ -347,28 +468,7 @@ texture = ExtResource("x2")
 expand_mode = 1
 stretch_mode = 0
 
-[node name="AttrValueCell1" type="Panel" parent="HUD"]
-offset_left = 300
-offset_top = 780
-offset_right = 340
-offset_bottom = 820
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R11")
-
-[node name="AttrValue1" type="Label" parent="HUD"]
-offset_left = 300
-offset_top = 783
-offset_right = 340
-offset_bottom = 817
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R12")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="AttrIcon2" type="TextureRect" parent="HUD"]
+[node name="AttrIcon2" type="TextureRect" parent="Battle"]
 offset_left = 340
 offset_top = 840
 offset_right = 380
@@ -378,28 +478,7 @@ texture = ExtResource("x3")
 expand_mode = 1
 stretch_mode = 0
 
-[node name="AttrValueCell2" type="Panel" parent="HUD"]
-offset_left = 300
-offset_top = 840
-offset_right = 340
-offset_bottom = 880
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R13")
-
-[node name="AttrValue2" type="Label" parent="HUD"]
-offset_left = 300
-offset_top = 843
-offset_right = 340
-offset_bottom = 877
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="AttrIcon3" type="TextureRect" parent="HUD"]
+[node name="AttrIcon3" type="TextureRect" parent="Battle"]
 offset_left = 340
 offset_top = 900
 offset_right = 380
@@ -409,28 +488,7 @@ texture = ExtResource("x4")
 expand_mode = 1
 stretch_mode = 0
 
-[node name="AttrValueCell3" type="Panel" parent="HUD"]
-offset_left = 300
-offset_top = 900
-offset_right = 340
-offset_bottom = 940
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R15")
-
-[node name="AttrValue3" type="Label" parent="HUD"]
-offset_left = 300
-offset_top = 903
-offset_right = 340
-offset_bottom = 937
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R16")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="AttrIcon4" type="TextureRect" parent="HUD"]
+[node name="AttrIcon4" type="TextureRect" parent="Battle"]
 offset_left = 340
 offset_top = 960
 offset_right = 380
@@ -440,245 +498,234 @@ texture = ExtResource("x5")
 expand_mode = 1
 stretch_mode = 0
 
-[node name="AttrValueCell4" type="Panel" parent="HUD"]
-offset_left = 300
-offset_top = 960
-offset_right = 340
-offset_bottom = 1000
+[node name="HandPanelLeft" type="Panel" parent="Battle"]
+offset_left = 30
+offset_top = 150
+offset_right = 430
+offset_bottom = 550
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R17")
+theme_override_styles/panel = SubResource("R29")
 
-[node name="AttrValue4" type="Label" parent="HUD"]
-offset_left = 300
-offset_top = 963
-offset_right = 340
-offset_bottom = 997
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R18")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="MainButton" type="Button" parent="HUD"]
-offset_left = 1490
-offset_top = 570
-offset_right = 1890
-offset_bottom = 670
-mouse_default_cursor_shape = 2
-theme_override_fonts/font = SubResource("R20")
-theme_override_font_sizes/font_size = 34
-theme_override_colors/font_color = Color(0.058824, 0.101961, 0.078431, 1.000000)
-theme_override_styles/normal = SubResource("R19")
-text = "主按钮"
-
-[node name="MainButtonSeg" type="Panel" parent="HUD"]
-offset_left = 1752
-offset_top = 570
-offset_right = 1890
-offset_bottom = 670
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R21")
-
-[node name="FuncButtons" type="Control" parent="HUD"]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
-mouse_filter = 2
-
-[node name="Settings" type="Panel" parent="HUD/FuncButtons"]
-offset_left = 1540
-offset_top = 960
-offset_right = 1620
-offset_bottom = 1040
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R22")
-
-[node name="设置" type="Label" parent="HUD/FuncButtons"]
-offset_left = 1540
-offset_top = 984
-offset_right = 1620
-offset_bottom = 1016
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R23")
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "设置"
-
-[node name="Emote" type="Panel" parent="HUD/FuncButtons"]
-offset_left = 1630
-offset_top = 960
-offset_right = 1710
-offset_bottom = 1040
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R24")
-
-[node name="表情" type="Label" parent="HUD/FuncButtons"]
-offset_left = 1630
-offset_top = 984
-offset_right = 1710
-offset_bottom = 1016
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R25")
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "表情"
-
-[node name="Info" type="Panel" parent="HUD/FuncButtons"]
-offset_left = 1720
-offset_top = 960
-offset_right = 1800
-offset_bottom = 1040
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R26")
-
-[node name="信息" type="Label" parent="HUD/FuncButtons"]
-offset_left = 1720
-offset_top = 984
-offset_right = 1800
-offset_bottom = 1016
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R27")
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "信息"
-
-[node name="Back" type="Panel" parent="HUD/FuncButtons"]
-offset_left = 1810
-offset_top = 960
-offset_right = 1890
-offset_bottom = 1040
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R28")
-
-[node name="退出" type="Label" parent="HUD/FuncButtons"]
-offset_left = 1810
-offset_top = 984
-offset_right = 1890
-offset_bottom = 1016
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R29")
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "退出"
-
-[node name="Text" type="Control" parent="."]
-offset_left = 0
-offset_top = 0
-offset_right = 1
-offset_bottom = 1
-mouse_filter = 2
-
-[node name="左侧_玩家名" type="Label" parent="Text"]
-offset_left = 136
-offset_top = 67.9
-offset_right = 355.6
-offset_bottom = 123.2
+[node name="TextCardName" type="Label" parent="Battle"]
+offset_left = 31.8
+offset_top = 574
+offset_right = 231.8
+offset_bottom = 620
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R30")
-theme_override_font_sizes/font_size = 35
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-horizontal_alignment = 0
-vertical_alignment = 1
-text = "玩家名称"
-
-[node name="右侧_玩家名" type="Label" parent="Text"]
-offset_left = 1596
-offset_top = 67.9
-offset_right = 1815.6
-offset_bottom = 123.2
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R31")
-theme_override_font_sizes/font_size = 35
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-horizontal_alignment = 0
-vertical_alignment = 1
-text = "玩家名称"
-
-[node name="左下_卡牌名" type="Label" parent="Text"]
-offset_left = 31.8
-offset_top = 579.3
-offset_right = 203
-offset_bottom = 623.2
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R32")
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 44
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
 text = "卡牌名称"
 
-[node name="主按钮_文字" type="Label" parent="Text"]
-offset_left = 1632.2
-offset_top = 600.9
-offset_right = 1778.8
-offset_bottom = 648.6
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R33")
-theme_override_font_sizes/font_size = 29
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "主按钮"
-
-[node name="左下_技能描述" type="Label" parent="Text"]
+[node name="TextSkillDesc" type="Label" parent="Battle"]
 offset_left = 30.9
-offset_top = 627.8
-offset_right = 201
-offset_bottom = 729.9
+offset_top = 626
+offset_right = 290.9
+offset_bottom = 726
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R34")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("R31")
+theme_override_font_sizes/font_size = 28
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
-text = "技能描述-行1\n技能描述-行2\n技能描述-行3"
+text = "技能描述-行1
+技能描述-行2
+技能描述-行3"
 
-[node name="右侧_回合信息" type="Label" parent="Text"]
-offset_left = 1494.7
-offset_top = 707.5
-offset_right = 1858.4
-offset_bottom = 778
+[node name="AttrValue1" type="Label" parent="Battle"]
+offset_left = 381.4
+offset_top = 784.9
+offset_right = 421.4
+offset_bottom = 819.9
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R32")
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 0
+vertical_alignment = 1
+text = "0"
+
+[node name="AttrValue2" type="Label" parent="Battle"]
+offset_left = 381.4
+offset_top = 844.9
+offset_right = 421.4
+offset_bottom = 879.9
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R33")
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 0
+vertical_alignment = 1
+text = "0"
+
+[node name="AttrValue3" type="Label" parent="Battle"]
+offset_left = 381.4
+offset_top = 904.9
+offset_right = 421.4
+offset_bottom = 939.9
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R34")
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 0
+vertical_alignment = 1
+text = "0"
+
+[node name="AttrValue4" type="Label" parent="Battle"]
+offset_left = 381.4
+offset_top = 964.9
+offset_right = 421.4
+offset_bottom = 999.9
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R35")
-theme_override_font_sizes/font_size = 47
+theme_override_font_sizes/font_size = 30
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 0
+vertical_alignment = 1
+text = "0"
+
+[node name="TextPlayerLeft" type="Label" parent="Battle"]
+offset_left = 136
+offset_top = 66
+offset_right = 356
+offset_bottom = 114
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R36")
+theme_override_font_sizes/font_size = 44
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 0
+vertical_alignment = 1
+text = "玩家名称"
+
+[node name="TextPlayerRight" type="Label" parent="Battle"]
+offset_left = 1596
+offset_top = 66
+offset_right = 1816
+offset_bottom = 114
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R37")
+theme_override_font_sizes/font_size = 44
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 0
+vertical_alignment = 1
+text = "玩家名称"
+
+[node name="TextTurnInfo" type="Label" parent="Battle"]
+offset_left = 1494.7
+offset_top = 706
+offset_right = 1854.7
+offset_bottom = 768
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R38")
+theme_override_font_sizes/font_size = 48
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
 text = "回合1--先手"
 
-[node name="右侧_地图名" type="Label" parent="Text"]
+[node name="TextMapName" type="Label" parent="Battle"]
 offset_left = 1491.2
-offset_top = 792.7
-offset_right = 1622.6
-offset_bottom = 835.8
+offset_top = 790
+offset_right = 1631.2
+offset_bottom = 830
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R36")
-theme_override_font_sizes/font_size = 25
+theme_override_fonts/font = SubResource("R39")
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
 text = "地图名"
 
-[node name="右侧_场地效果" type="Label" parent="Text"]
+[node name="TextSiteEffect" type="Label" parent="Battle"]
 offset_left = 1490.9
-offset_top = 840.8
-offset_right = 1709
-offset_bottom = 943
+offset_top = 840
+offset_right = 1710.9
+offset_bottom = 940
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R37")
-theme_override_font_sizes/font_size = 26
+theme_override_fonts/font = SubResource("R40")
+theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
-text = "场地效果描述-行1\n场地效果描述-行2\n场地效果描述-行3"
+text = "场地效果描述-行1
+场地效果描述-行2
+场地效果描述-行3"
+
+[node name="MainButtonLabel" type="Label" parent="Battle"]
+offset_left = 1492
+offset_top = 572
+offset_right = 1888
+offset_bottom = 668
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R41")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "主按钮"
+
+[node name="CostBadgeLeft" type="Polygon2D" parent="Battle"]
+polygon = PackedVector2Array(81.08, 40.7, 123.78, 65.35, 123.78, 114.65, 81.08, 139.3, 38.38, 114.65, 38.38, 65.35)
+color = Color(1.000000, 0.639216, 0.000000, 1.000000)
+
+[node name="CostBadgeLeftLine" type="Line2D" parent="Battle"]
+points = PackedVector2Array(81.08, 40.7, 123.78, 65.35, 123.78, 114.65, 81.08, 139.3, 38.38, 114.65, 38.38, 65.35, 81.08, 40.7)
+width = 4
+default_color = Color(0.000000, 0.000000, 0.000000, 0.501961)
+joint_mode = 2
+antialiased = true
+
+[node name="CostBadgeLeftNumber" type="Panel" parent="Battle"]
+offset_left = 61
+offset_top = 63
+offset_right = 98
+offset_bottom = 117
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R42")
+
+[node name="CostBadgeLeftValue" type="Label" parent="Battle"]
+offset_left = 61
+offset_top = 63
+offset_right = 98
+offset_bottom = 117
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R43")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="CostBadgeRight" type="Polygon2D" parent="Battle"]
+polygon = PackedVector2Array(1539.88, 40.7, 1582.58, 65.35, 1582.58, 114.65, 1539.88, 139.3, 1497.18, 114.65, 1497.18, 65.35)
+color = Color(1.000000, 0.639216, 0.000000, 1.000000)
+
+[node name="CostBadgeRightLine" type="Line2D" parent="Battle"]
+points = PackedVector2Array(1539.88, 40.7, 1582.58, 65.35, 1582.58, 114.65, 1539.88, 139.3, 1497.18, 114.65, 1497.18, 65.35, 1539.88, 40.7)
+width = 4
+default_color = Color(0.000000, 0.000000, 0.000000, 0.501961)
+joint_mode = 2
+antialiased = true
+
+[node name="CostBadgeRightNumber" type="Panel" parent="Battle"]
+offset_left = 1521
+offset_top = 63
+offset_right = 1558
+offset_bottom = 117
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R44")
+
+[node name="CostBadgeRightValue" type="Label" parent="Battle"]
+offset_left = 1521
+offset_top = 63
+offset_right = 1558
+offset_bottom = 117
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R45")
+theme_override_font_sizes/font_size = 34
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
