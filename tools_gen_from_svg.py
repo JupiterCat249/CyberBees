@@ -178,8 +178,10 @@ def build(svg_path, scene_name, out_path, img_prefix):
                     rel = [(x - ox, y - oy) for x, y in pts]
                     o.node("Poly%d" % counts["poly"], "Polygon2D", [
                         ("position", vs(ox, oy)),
+                        # ⚠️ 关键：.tscn 里 PackedVector2Array 必须用**扁平数值**（x, y, x, y ...），
+                        #    写成 Vector2(x, y) 列表会让 Godot 报 _parse_node_tag 语法错（实测根因）
                         ("polygon", "PackedVector2Array(%s)" %
-                         ", ".join(vs(x, y) for x, y in rel)),
+                         ", ".join("%s, %s" % (num(x), num(y)) for x, y in rel)),
                         ("color", col(fill_c, fop * al)),
                     ])
             elif sw > 0 and stroke_c:
@@ -187,7 +189,8 @@ def build(svg_path, scene_name, out_path, img_prefix):
                     pl = pts + [pts[0]] if cl else pts
                     counts["line"] += 1
                     o.node("Line%d" % counts["line"], "Line2D", [
-                        ("points", "PackedVector2Array(%s)" % ", ".join(vs(x, y) for x, y in pl)),
+                        ("points", "PackedVector2Array(%s)" %
+                         ", ".join("%s, %s" % (num(x), num(y)) for x, y in pl)),
                         ("width", num(sw)),
                         ("default_color", col(stroke_c, sop * al)),
                         ("begin_cap_mode", "1"), ("end_cap_mode", "1"), ("joint_mode", "2"),
