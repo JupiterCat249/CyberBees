@@ -1,0 +1,483 @@
+[gd_scene load_steps=29 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_attack_80.png" id="x1"]
+[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_health_80.png" id="x2"]
+[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_speed_80.png" id="x3"]
+[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_range_80.png" id="x4"]
+
+[sub_resource type="StyleBoxFlat" id="R1"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R2"]
+bg_color = Color(0.231373, 0.505882, 0.427451, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R3"]
+bg_color = Color(0.231373, 0.505882, 0.427451, 1.000000)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R4"]
+bg_color = Color(0.207843, 0.207843, 0.207843, 1.000000)
+
+[sub_resource type="SystemFont" id="R5"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R6"]
+bg_color = Color(0.227451, 0.227451, 0.227451, 1.000000)
+
+[sub_resource type="StyleBoxFlat" id="R7"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R8"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R9"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R10"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R11"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R12"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R13"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R14"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R15"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R16"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R17"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R18"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R19"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R20"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R21"]
+bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+
+[sub_resource type="SystemFont" id="R22"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R23"]
+draw_center = false
+bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
+
+[node name="UnitCard" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 250
+offset_bottom = 250
+
+[node name="Body" type="Panel" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 250
+offset_bottom = 250
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R1")
+
+[node name="SideLeft" type="Panel" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 250
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R2")
+
+[node name="SideRight" type="Panel" parent="."]
+offset_left = 210
+offset_top = 0
+offset_right = 250
+offset_bottom = 250
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R3")
+
+[node name="CostPlate" type="Panel" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R4")
+
+[node name="Cost" type="Label" parent="."]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R5")
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Artwork" type="Control" parent="."]
+offset_left = 47
+offset_top = 8
+offset_right = 202.83
+offset_bottom = 241
+mouse_filter = 2
+
+[node name="Art" type="Panel" parent="Artwork"]
+offset_left = 0
+offset_top = 0
+offset_right = 155.83
+offset_bottom = 233
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R6")
+
+[node name="AttrLA" type="Control" parent="."]
+offset_left = 0
+offset_top = 65
+offset_right = 40
+offset_bottom = 105
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrLA"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R7")
+
+[node name="Value" type="Label" parent="AttrLA"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R8")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrLA"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x1")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="AttrLB" type="Control" parent="."]
+offset_left = 0
+offset_top = 105
+offset_right = 40
+offset_bottom = 145
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrLB"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R9")
+
+[node name="Value" type="Label" parent="AttrLB"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R10")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrLB"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x2")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="AttrLC" type="Control" parent="."]
+offset_left = 0
+offset_top = 160
+offset_right = 40
+offset_bottom = 200
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrLC"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R11")
+
+[node name="Value" type="Label" parent="AttrLC"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R12")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrLC"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x3")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="AttrLD" type="Control" parent="."]
+offset_left = 0
+offset_top = 200
+offset_right = 40
+offset_bottom = 240
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrLD"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R13")
+
+[node name="Value" type="Label" parent="AttrLD"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R14")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrLD"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x4")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="AttrRA" type="Control" parent="."]
+offset_left = 210
+offset_top = 65
+offset_right = 250
+offset_bottom = 105
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrRA"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R15")
+
+[node name="Value" type="Label" parent="AttrRA"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R16")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrRA"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x1")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="AttrRB" type="Control" parent="."]
+offset_left = 210
+offset_top = 105
+offset_right = 250
+offset_bottom = 145
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrRB"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R17")
+
+[node name="Value" type="Label" parent="AttrRB"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R18")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrRB"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x2")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="AttrRC" type="Control" parent="."]
+offset_left = 210
+offset_top = 160
+offset_right = 250
+offset_bottom = 200
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrRC"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R19")
+
+[node name="Value" type="Label" parent="AttrRC"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R20")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrRC"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x3")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="AttrRD" type="Control" parent="."]
+offset_left = 210
+offset_top = 200
+offset_right = 250
+offset_bottom = 240
+mouse_filter = 2
+
+[node name="ValueCell" type="Panel" parent="AttrRD"]
+offset_left = 0
+offset_top = 0
+offset_right = 40
+offset_bottom = 40
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R21")
+
+[node name="Value" type="Label" parent="AttrRD"]
+offset_left = 0
+offset_top = 4
+offset_right = 40
+offset_bottom = 36
+mouse_filter = 2
+theme_override_fonts/font = SubResource("R22")
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "0"
+
+[node name="Icon" type="TextureRect" parent="AttrRD"]
+offset_left = 0
+offset_top = 40
+offset_right = 40
+offset_bottom = 80
+mouse_filter = 2
+texture = ExtResource("x4")
+expand_mode = 1
+stretch_mode = 0
+modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
+
+[node name="InnerLine" type="Panel" parent="."]
+offset_left = 1
+offset_top = 1
+offset_right = 249
+offset_bottom = 249
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R23")

@@ -1,15 +1,15 @@
-[gd_scene format=3 uid="uid://cshsj3lm7cew4"]
+[gd_scene format=3 uid="uid://b3v7c3uvojiot"]
 
-[ext_resource type="Texture2D" uid="uid://dbs88ehsfre23" path="res://assets/static_ui/icon-攻击.png" id="3_61epf"]
-[ext_resource type="Texture2D" uid="uid://co57vfk3immu5" path="res://assets/ui/func_icons/func_1_settings.png" id="7_bc32c"]
-[ext_resource type="Texture2D" uid="uid://jnfl8htqdka6" path="res://assets/ui/func_icons/func_2_emote.png" id="8_0gvsc"]
-[ext_resource type="Texture2D" uid="uid://2yudeoj6dh8o" path="res://assets/ui/func_icons/func_3_info.png" id="9_hecqg"]
-[ext_resource type="Texture2D" uid="uid://c4w4kld1sfx87" path="res://assets/ui/func_icons/func_4_back.png" id="10_awd7i"]
-[ext_resource type="Texture2D" uid="uid://fnqn8dx8hyf" path="res://assets/ui/zip_original/map_mask_2020.png" id="x1"]
-[ext_resource type="Texture2D" uid="uid://vm2sxam2sqst" path="res://assets/ui/zip_original/cost_badge_200.png" id="x2"]
-[ext_resource type="Texture2D" uid="uid://clq2fsbxy0vmy" path="res://assets/static_ui/icon-血量.png" id="x3"]
-[ext_resource type="Texture2D" uid="uid://cefg0ud73nrd3" path="res://assets/static_ui/icon-速度.png" id="x4"]
-[ext_resource type="Texture2D" uid="uid://d3rd85r8wvj3h" path="res://assets/static_ui/icon-射程.png" id="x5"]
+[ext_resource type="Texture2D" uid="uid://fnqn8dx8hyf" path="res://assets/ui/zip_original/map_mask_2020.png" id="1_cyhb0"]
+[ext_resource type="Texture2D" uid="uid://vm2sxam2sqst" path="res://assets/ui/zip_original/cost_badge_200.png" id="2_me8sd"]
+[ext_resource type="Texture2D" uid="uid://dbs88ehsfre23" path="res://assets/static_ui/icon-攻击.png" id="3_r2dp4"]
+[ext_resource type="Texture2D" uid="uid://clq2fsbxy0vmy" path="res://assets/static_ui/icon-血量.png" id="4_tvb1q"]
+[ext_resource type="Texture2D" uid="uid://cefg0ud73nrd3" path="res://assets/static_ui/icon-速度.png" id="5_jr2ln"]
+[ext_resource type="Texture2D" uid="uid://d3rd85r8wvj3h" path="res://assets/static_ui/icon-射程.png" id="6_3i30t"]
+[ext_resource type="Texture2D" uid="uid://co57vfk3immu5" path="res://assets/ui/func_icons/func_1_settings.png" id="7_pk40j"]
+[ext_resource type="Texture2D" uid="uid://jnfl8htqdka6" path="res://assets/ui/func_icons/func_2_emote.png" id="8_g4roj"]
+[ext_resource type="Texture2D" uid="uid://2yudeoj6dh8o" path="res://assets/ui/func_icons/func_3_info.png" id="9_raq2n"]
+[ext_resource type="Texture2D" uid="uid://c4w4kld1sfx87" path="res://assets/ui/func_icons/func_4_back.png" id="10_x1im3"]
 
 [sub_resource type="StyleBoxFlat" id="R1"]
 bg_color = Color(0.4, 0.4, 0.4, 1)
@@ -138,19 +138,6 @@ corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R19"]
 bg_color = Color(0, 0, 0, 0.2)
-
-[sub_resource type="StyleBoxFlat" id="R20"]
-bg_color = Color(0, 0, 0, 0)
-draw_center = false
-border_width_left = 4
-border_width_top = 4
-border_width_right = 4
-border_width_bottom = 4
-border_color = Color(1, 1, 1, 0.101961)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 
 [sub_resource type="SystemFont" id="R21"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
@@ -320,7 +307,7 @@ offset_top = -2.0
 offset_right = 1002.0
 offset_bottom = 1002.0
 mouse_filter = 2
-texture = ExtResource("x1")
+texture = ExtResource("1_cyhb0")
 expand_mode = 1
 
 [node name="MapFrame" type="Panel" parent="Battle/MapView" unique_id=1318114368]
@@ -367,7 +354,7 @@ mouse_filter = 2
 [node name="BadgeImage" type="TextureRect" parent="Battle/PlayerBesaInfoRight" unique_id=1920861006]
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("x2")
+texture = ExtResource("2_me8sd")
 expand_mode = 2
 
 [node name="Value" type="Label" parent="Battle/PlayerBesaInfoRight/BadgeImage" unique_id=790936648]
@@ -401,7 +388,7 @@ offset_bottom = 142.0
 [node name="BadgeImage" type="TextureRect" parent="Battle/PlayerBesaInfoLift" unique_id=214178393]
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("x2")
+texture = ExtResource("2_me8sd")
 expand_mode = 2
 
 [node name="Value" type="Label" parent="Battle/PlayerBesaInfoLift/BadgeImage" unique_id=402849053]
@@ -511,7 +498,7 @@ mouse_filter = 2
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row1" unique_id=2074367686]
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("3_61epf")
+texture = ExtResource("3_r2dp4")
 expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row1" unique_id=1277448839]
@@ -530,7 +517,7 @@ mouse_filter = 2
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row2" unique_id=2065809764]
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("x3")
+texture = ExtResource("4_tvb1q")
 expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row2" unique_id=623202510]
@@ -549,7 +536,7 @@ mouse_filter = 2
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row3" unique_id=2081540134]
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("x4")
+texture = ExtResource("5_jr2ln")
 expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row3" unique_id=915690393]
@@ -568,7 +555,7 @@ mouse_filter = 2
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row4" unique_id=386429402]
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("x5")
+texture = ExtResource("6_3i30t")
 expand_mode = 2
 
 [node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row4" unique_id=1723479802]
@@ -604,15 +591,6 @@ offset_bottom = 100.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R19")
 
-[node name="MainButtonText" type="Panel" parent="HUD/ActionBar" unique_id=1714251128]
-layout_mode = 0
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 398.0
-offset_bottom = 98.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R20")
-
 [node name="Label" type="Label" parent="HUD/ActionBar" unique_id=1206815651]
 layout_mode = 0
 offset_left = 80.0
@@ -641,9 +619,10 @@ offset_bottom = 80.0
 mouse_filter = 2
 
 [node name="Button" type="Button" parent="HUD/FuncButtonGroup/Settings" unique_id=930851595]
-layout_mode = 0
-offset_right = 80.0
-offset_bottom = 80.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 mouse_default_cursor_shape = 2
 theme_override_styles/normal = SubResource("R22")
 theme_override_styles/pressed = SubResource("R23")
@@ -658,15 +637,16 @@ offset_bottom = 78.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R24")
 
-[node name="TextureRect" type="TextureRect" parent="HUD/FuncButtonGroup/Settings/Frame" unique_id=1564484638]
+[node name="TextureRect" type="TextureRect" parent="HUD/FuncButtonGroup/Settings/Frame" unique_id=459786052]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("7_bc32c")
-expand_mode = 1
+anchors_preset = -1
+anchor_right = 0.95000005
+anchor_bottom = 0.95000005
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 5.7999954
+offset_bottom = 5.7999954
+texture = ExtResource("7_pk40j")
 
 [node name="Emote" type="Control" parent="HUD/FuncButtonGroup" unique_id=169187733]
 anchors_preset = 0
@@ -676,9 +656,10 @@ offset_bottom = 80.0
 mouse_filter = 2
 
 [node name="Button" type="Button" parent="HUD/FuncButtonGroup/Emote" unique_id=283917702]
-layout_mode = 0
-offset_right = 80.0
-offset_bottom = 80.0
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 mouse_default_cursor_shape = 2
 theme_override_styles/normal = SubResource("R25")
 theme_override_styles/pressed = SubResource("R26")
@@ -702,7 +683,7 @@ offset_left = -2.0
 offset_top = -2.0
 offset_right = 5.7999954
 offset_bottom = 5.7999954
-texture = ExtResource("8_0gvsc")
+texture = ExtResource("8_g4roj")
 
 [node name="Info" type="Control" parent="HUD/FuncButtonGroup" unique_id=1660162757]
 anchors_preset = 0
@@ -730,12 +711,15 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("R30")
 
 [node name="TextureRect" type="TextureRect" parent="HUD/FuncButtonGroup/Info/Frame" unique_id=571726291]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.026
+anchor_bottom = 1.026
 offset_left = -2.0
 offset_top = -2.0
-offset_right = 78.0
-offset_bottom = 78.0
-texture = ExtResource("9_hecqg")
+offset_right = 0.024002075
+offset_bottom = 0.024002075
+texture = ExtResource("9_raq2n")
 
 [node name="Back" type="Control" parent="HUD/FuncButtonGroup" unique_id=1034201977]
 anchors_preset = 0
@@ -763,12 +747,15 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("R33")
 
 [node name="TextureRect" type="TextureRect" parent="HUD/FuncButtonGroup/Back/Frame" unique_id=1724325050]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.026
+anchor_bottom = 1.026
 offset_left = -2.0
 offset_top = -2.0
-offset_right = 78.0
-offset_bottom = 78.0
-texture = ExtResource("10_awd7i")
+offset_right = 0.024002075
+offset_bottom = 0.024002075
+texture = ExtResource("10_x1im3")
 
 [node name="MatchInfo" type="Control" parent="HUD" unique_id=1388773231]
 anchors_preset = 0
