@@ -1,10 +1,14 @@
-[gd_scene load_steps=51 format=3]
+[gd_scene load_steps=53 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/static_ui/base-image0-2000x2000.png" id="x1"]
-[ext_resource type="Texture2D" path="res://assets/static_ui/base-image1-40x40.png" id="x2"]
-[ext_resource type="Texture2D" path="res://assets/static_ui/base-image2-40x40.png" id="x3"]
-[ext_resource type="Texture2D" path="res://assets/static_ui/base-image3-40x40.png" id="x4"]
-[ext_resource type="Texture2D" path="res://assets/static_ui/base-image4-40x40.png" id="x5"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/icon-攻击.png" id="x2"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/icon-血量.png" id="x3"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/icon-速度.png" id="x4"]
+[ext_resource type="Texture2D" path="res://assets/static_ui/icon-射程.png" id="x5"]
+[ext_resource type="Texture2D" path="res://assets/svg_extract/badge_hex_fill_L.png" id="x6"]
+[ext_resource type="Texture2D" path="res://assets/svg_extract/badge_hex_line_L.png" id="x7"]
+[ext_resource type="Texture2D" path="res://assets/svg_extract/badge_hex_fill_R.png" id="x8"]
+[ext_resource type="Texture2D" path="res://assets/svg_extract/badge_hex_line_R.png" id="x9"]
 
 [sub_resource type="StyleBoxFlat" id="R1"]
 bg_color = Color(0.400000, 0.400000, 0.400000, 1.000000)
@@ -241,6 +245,7 @@ corner_radius_bottom_left = 10
 
 [sub_resource type="SystemFont" id="R30"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
 [sub_resource type="SystemFont" id="R31"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
@@ -259,33 +264,34 @@ font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft 
 
 [sub_resource type="SystemFont" id="R36"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
 [sub_resource type="SystemFont" id="R37"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
 [sub_resource type="SystemFont" id="R38"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
 [sub_resource type="SystemFont" id="R39"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
 [sub_resource type="SystemFont" id="R40"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 
 [sub_resource type="SystemFont" id="R41"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
-[sub_resource type="StyleBoxFlat" id="R42"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+[sub_resource type="SystemFont" id="R42"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
 [sub_resource type="SystemFont" id="R43"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-
-[sub_resource type="StyleBoxFlat" id="R44"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
-
-[sub_resource type="SystemFont" id="R45"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 700
 
 [node name="BattleUI" type="Control"]
 layout_mode = 3
@@ -513,7 +519,7 @@ offset_right = 231.8
 offset_bottom = 620
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R30")
-theme_override_font_sizes/font_size = 44
+theme_override_font_sizes/font_size = 52
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -541,7 +547,7 @@ offset_right = 421.4
 offset_bottom = 819.9
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R32")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -554,7 +560,7 @@ offset_right = 421.4
 offset_bottom = 879.9
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R33")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -567,7 +573,7 @@ offset_right = 421.4
 offset_bottom = 939.9
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R34")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -580,7 +586,7 @@ offset_right = 421.4
 offset_bottom = 999.9
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R35")
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -593,7 +599,7 @@ offset_right = 356
 offset_bottom = 114
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R36")
-theme_override_font_sizes/font_size = 44
+theme_override_font_sizes/font_size = 48
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -606,7 +612,7 @@ offset_right = 1816
 offset_bottom = 114
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R37")
-theme_override_font_sizes/font_size = 44
+theme_override_font_sizes/font_size = 48
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -614,12 +620,12 @@ text = "玩家名称"
 
 [node name="TextTurnInfo" type="Label" parent="Battle"]
 offset_left = 1494.7
-offset_top = 706
+offset_top = 702
 offset_right = 1854.7
-offset_bottom = 768
+offset_bottom = 772
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R38")
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 60
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -627,12 +633,12 @@ text = "回合1--先手"
 
 [node name="TextMapName" type="Label" parent="Battle"]
 offset_left = 1491.2
-offset_top = 790
+offset_top = 788
 offset_right = 1631.2
-offset_bottom = 830
+offset_bottom = 832
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R39")
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 40
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 0
 vertical_alignment = 1
@@ -660,30 +666,31 @@ offset_right = 1888
 offset_bottom = 668
 mouse_filter = 2
 theme_override_fonts/font = SubResource("R41")
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 38
 theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "主按钮"
 
-[node name="CostBadgeLeft" type="Polygon2D" parent="Battle"]
-polygon = PackedVector2Array(81.08, 40.7, 123.78, 65.35, 123.78, 114.65, 81.08, 139.3, 38.38, 114.65, 38.38, 65.35)
-color = Color(1.000000, 0.639216, 0.000000, 1.000000)
-
-[node name="CostBadgeLeftLine" type="Line2D" parent="Battle"]
-points = PackedVector2Array(81.08, 40.7, 123.78, 65.35, 123.78, 114.65, 81.08, 139.3, 38.38, 114.65, 38.38, 65.35, 81.08, 40.7)
-width = 4
-default_color = Color(0.000000, 0.000000, 0.000000, 0.501961)
-joint_mode = 2
-antialiased = true
-
-[node name="CostBadgeLeftNumber" type="Panel" parent="Battle"]
-offset_left = 61
-offset_top = 63
-offset_right = 98
-offset_bottom = 117
+[node name="CostBadgeLeftHexFill" type="TextureRect" parent="Battle"]
+offset_left = 34.7
+offset_top = 39.7
+offset_right = 125.7
+offset_bottom = 140.7
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R42")
+texture = ExtResource("x6")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CostBadgeLeftHexLine" type="TextureRect" parent="Battle"]
+offset_left = 32.7
+offset_top = 37.5
+offset_right = 127.7
+offset_bottom = 142.5
+mouse_filter = 2
+texture = ExtResource("x7")
+expand_mode = 1
+stretch_mode = 0
 
 [node name="CostBadgeLeftValue" type="Label" parent="Battle"]
 offset_left = 61
@@ -691,31 +698,32 @@ offset_top = 63
 offset_right = 98
 offset_bottom = 117
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R43")
-theme_override_font_sizes/font_size = 34
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
+theme_override_fonts/font = SubResource("R42")
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "0"
 
-[node name="CostBadgeRight" type="Polygon2D" parent="Battle"]
-polygon = PackedVector2Array(1539.88, 40.7, 1582.58, 65.35, 1582.58, 114.65, 1539.88, 139.3, 1497.18, 114.65, 1497.18, 65.35)
-color = Color(1.000000, 0.639216, 0.000000, 1.000000)
-
-[node name="CostBadgeRightLine" type="Line2D" parent="Battle"]
-points = PackedVector2Array(1539.88, 40.7, 1582.58, 65.35, 1582.58, 114.65, 1539.88, 139.3, 1497.18, 114.65, 1497.18, 65.35, 1539.88, 40.7)
-width = 4
-default_color = Color(0.000000, 0.000000, 0.000000, 0.501961)
-joint_mode = 2
-antialiased = true
-
-[node name="CostBadgeRightNumber" type="Panel" parent="Battle"]
-offset_left = 1521
-offset_top = 63
-offset_right = 1558
-offset_bottom = 117
+[node name="CostBadgeRightHexFill" type="TextureRect" parent="Battle"]
+offset_left = 1494.7
+offset_top = 39.7
+offset_right = 1585.7
+offset_bottom = 140.7
 mouse_filter = 2
-theme_override_styles/panel = SubResource("R44")
+texture = ExtResource("x8")
+expand_mode = 1
+stretch_mode = 0
+
+[node name="CostBadgeRightHexLine" type="TextureRect" parent="Battle"]
+offset_left = 1492.7
+offset_top = 37.5
+offset_right = 1587.7
+offset_bottom = 142.5
+mouse_filter = 2
+texture = ExtResource("x9")
+expand_mode = 1
+stretch_mode = 0
 
 [node name="CostBadgeRightValue" type="Label" parent="Battle"]
 offset_left = 1521
@@ -723,9 +731,9 @@ offset_top = 63
 offset_right = 1558
 offset_bottom = 117
 mouse_filter = 2
-theme_override_fonts/font = SubResource("R45")
-theme_override_font_sizes/font_size = 34
-theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1.000000)
+theme_override_fonts/font = SubResource("R43")
+theme_override_font_sizes/font_size = 40
+theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "0"
