@@ -1,7 +1,7 @@
 extends Node2D
 ## 取证工具：把目标 UI 场景以整幅 1920×1080 取景并截图为 PNG（供视觉复核 / 像素比对）
 ## 用法：设置 target_scene（或在派生场景里改默认值）后，以 custom scene 运行本场景
-@export_file("*.tscn") var target_scene := "res://scenes/ui/level_battle.tscn"
+@export_file("*.tscn") var target_scene := "res://scenes/ui/battle_ui_alpha.tscn"
 @export var out_name := "ui_shot.png"
 
 func _ready() -> void:

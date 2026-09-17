@@ -1,7 +1,10 @@
 [gd_scene format=3 uid="uid://b3v7c3uvojiot"]
 
 [ext_resource type="Texture2D" uid="uid://fnqn8dx8hyf" path="res://assets/ui/zip_original/map_mask_2020.png" id="1_cyhb0"]
+[ext_resource type="Texture2D" uid="uid://dyffhibh3y4pl" path="res://assets/background/bg_blurred.png" id="1_tvb1q"]
+[ext_resource type="Texture2D" uid="uid://dmqbe4txap05g" path="res://assets/ui/fx/crt_scanline_tile.png" id="2_jr2ln"]
 [ext_resource type="Texture2D" uid="uid://vm2sxam2sqst" path="res://assets/ui/zip_original/cost_badge_200.png" id="2_me8sd"]
+[ext_resource type="Texture2D" uid="uid://cxtdn4f6xit17" path="res://assets/background/map_terrain.png" id="3_3i30t"]
 [ext_resource type="Texture2D" uid="uid://dbs88ehsfre23" path="res://assets/static_ui/icon-攻击.png" id="3_r2dp4"]
 [ext_resource type="Texture2D" uid="uid://clq2fsbxy0vmy" path="res://assets/static_ui/icon-血量.png" id="4_tvb1q"]
 [ext_resource type="Texture2D" uid="uid://cefg0ud73nrd3" path="res://assets/static_ui/icon-速度.png" id="5_jr2ln"]
@@ -279,6 +282,26 @@ offset_bottom = 1080.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R1")
 
+[node name="TextureRect" type="TextureRect" parent="Background" unique_id=635383099]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_tvb1q")
+
+[node name="CrtFilter" type="TextureRect" parent="Background" unique_id=1030141903]
+modulate = Color(1, 1, 1, 0.05)
+texture_repeat = 1
+layout_mode = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("2_jr2ln")
+expand_mode = 1
+stretch_mode = 1
+
 [node name="Battle" type="Control" parent="." unique_id=750457065]
 anchors_preset = 0
 offset_right = 1.0
@@ -299,6 +322,12 @@ offset_right = 1000.0
 offset_bottom = 1000.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R2")
+
+[node name="TextureRect" type="TextureRect" parent="Battle/MapView/MapPlate" unique_id=1556992826]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+texture = ExtResource("3_3i30t")
 
 [node name="MapMask" type="TextureRect" parent="Battle/MapView" unique_id=1796032471]
 layout_mode = 0

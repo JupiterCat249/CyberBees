@@ -1,0 +1,307 @@
+[gd_scene format=3 uid="uid://vlhlgj3ar7o"]
+
+[ext_resource type="Texture2D" uid="uid://cf50e5gfle2s4" path="res://assets/static_ui/fill-image12-306x463.png" id="x1"]
+[ext_resource type="Texture2D" uid="uid://dbs88ehsfre23" path="res://assets/static_ui/icon-攻击.png" id="x2"]
+[ext_resource type="Texture2D" uid="uid://clq2fsbxy0vmy" path="res://assets/static_ui/icon-血量.png" id="x3"]
+[ext_resource type="Texture2D" uid="uid://cefg0ud73nrd3" path="res://assets/static_ui/icon-速度.png" id="x4"]
+[ext_resource type="Texture2D" uid="uid://d3rd85r8wvj3h" path="res://assets/static_ui/icon-射程.png" id="x5"]
+
+[sub_resource type="StyleBoxFlat" id="R1"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R2"]
+bg_color = Color(0.231373, 0.505882, 0.427451, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R3"]
+bg_color = Color(0.231373, 0.505882, 0.427451, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R4"]
+bg_color = Color(0.207843, 0.207843, 0.207843, 1)
+
+[sub_resource type="SystemFont" id="R5"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R6"]
+bg_color = Color(1, 1, 1, 0.8)
+
+[sub_resource type="SystemFont" id="R7"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R8"]
+bg_color = Color(1, 1, 1, 0.901961)
+
+[sub_resource type="StyleBoxFlat" id="R9"]
+bg_color = Color(1, 1, 1, 0.8)
+
+[sub_resource type="SystemFont" id="R10"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R11"]
+bg_color = Color(1, 1, 1, 0.901961)
+
+[sub_resource type="StyleBoxFlat" id="R12"]
+bg_color = Color(1, 1, 1, 0.8)
+
+[sub_resource type="SystemFont" id="R13"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R14"]
+bg_color = Color(1, 1, 1, 0.901961)
+
+[sub_resource type="StyleBoxFlat" id="R15"]
+bg_color = Color(1, 1, 1, 0.8)
+
+[sub_resource type="SystemFont" id="R16"]
+font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+
+[sub_resource type="StyleBoxFlat" id="R17"]
+bg_color = Color(1, 1, 1, 0.901961)
+
+[sub_resource type="StyleBoxFlat" id="R18"]
+bg_color = Color(0, 0, 0, 0)
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0, 0, 0.2)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[node name="UnitCard" type="Control" unique_id=598439979]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 250.0
+offset_bottom = 250.0
+
+[node name="CardBg" type="Panel" parent="." unique_id=100707758]
+layout_mode = 0
+offset_right = 250.0
+offset_bottom = 250.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R1")
+
+[node name="RailLeft" type="Panel" parent="." unique_id=1358800586]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 250.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R2")
+
+[node name="RailRight" type="Panel" parent="." unique_id=243949604]
+layout_mode = 0
+offset_left = 210.0
+offset_right = 250.0
+offset_bottom = 250.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R3")
+
+[node name="CostPlate" type="Panel" parent="." unique_id=203413112]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R4")
+
+[node name="Cost" type="Label" parent="." unique_id=1812917566]
+layout_mode = 0
+offset_top = 2.0
+offset_right = 40.0
+offset_bottom = 38.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = SubResource("R5")
+theme_override_font_sizes/font_size = 26
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Art" type="TextureRect" parent="." unique_id=1185164436]
+layout_mode = 0
+offset_left = 47.0
+offset_top = 8.0
+offset_right = 202.83
+offset_bottom = 241.0
+mouse_filter = 2
+texture = ExtResource("x1")
+expand_mode = 1
+
+[node name="CellAttack" type="Panel" parent="." unique_id=227114368]
+layout_mode = 0
+offset_top = 65.0
+offset_right = 40.0
+offset_bottom = 105.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R6")
+
+[node name="ValueAttack" type="Label" parent="." unique_id=1217318319]
+layout_mode = 0
+offset_top = 68.0
+offset_right = 40.0
+offset_bottom = 102.0
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1)
+theme_override_fonts/font = SubResource("R7")
+theme_override_font_sizes/font_size = 22
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CellAttackIcon" type="Panel" parent="." unique_id=364023797]
+layout_mode = 0
+offset_top = 105.0
+offset_right = 40.0
+offset_bottom = 145.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R8")
+
+[node name="IconAttack" type="TextureRect" parent="." unique_id=2017494619]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 112.0
+offset_right = 33.0
+offset_bottom = 138.0
+mouse_filter = 2
+texture = ExtResource("x2")
+expand_mode = 1
+
+[node name="CellDefense" type="Panel" parent="." unique_id=728005180]
+layout_mode = 0
+offset_top = 105.0
+offset_right = 40.0
+offset_bottom = 145.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R9")
+
+[node name="ValueDefense" type="Label" parent="." unique_id=377993127]
+layout_mode = 0
+offset_top = 108.0
+offset_right = 40.0
+offset_bottom = 142.0
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1)
+theme_override_fonts/font = SubResource("R10")
+theme_override_font_sizes/font_size = 22
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CellDefenseIcon" type="Panel" parent="." unique_id=2066904192]
+layout_mode = 0
+offset_top = 145.0
+offset_right = 40.0
+offset_bottom = 185.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R11")
+
+[node name="IconDefense" type="TextureRect" parent="." unique_id=410521941]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 152.0
+offset_right = 33.0
+offset_bottom = 178.0
+mouse_filter = 2
+texture = ExtResource("x3")
+expand_mode = 1
+
+[node name="CellMove" type="Panel" parent="." unique_id=121882823]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 160.0
+offset_right = 250.0
+offset_bottom = 200.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R12")
+
+[node name="ValueMove" type="Label" parent="." unique_id=1786951750]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 163.0
+offset_right = 250.0
+offset_bottom = 197.0
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1)
+theme_override_fonts/font = SubResource("R13")
+theme_override_font_sizes/font_size = 22
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CellMoveIcon" type="Panel" parent="." unique_id=1464320958]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 200.0
+offset_right = 250.0
+offset_bottom = 240.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R14")
+
+[node name="IconMove" type="TextureRect" parent="." unique_id=1125608229]
+layout_mode = 0
+offset_left = 217.0
+offset_top = 207.0
+offset_right = 243.0
+offset_bottom = 233.0
+mouse_filter = 2
+texture = ExtResource("x4")
+expand_mode = 1
+
+[node name="CellRange" type="Panel" parent="." unique_id=398398681]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 200.0
+offset_right = 250.0
+offset_bottom = 240.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R15")
+
+[node name="ValueRange" type="Label" parent="." unique_id=761719954]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 203.0
+offset_right = 250.0
+offset_bottom = 237.0
+theme_override_colors/font_color = Color(0.066667, 0.066667, 0.066667, 1)
+theme_override_fonts/font = SubResource("R16")
+theme_override_font_sizes/font_size = 22
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CellRangeIcon" type="Panel" parent="." unique_id=526426843]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 240.0
+offset_right = 250.0
+offset_bottom = 280.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R17")
+
+[node name="IconRange" type="TextureRect" parent="." unique_id=75418466]
+layout_mode = 0
+offset_left = 217.0
+offset_top = 247.0
+offset_right = 243.0
+offset_bottom = 273.0
+mouse_filter = 2
+texture = ExtResource("x5")
+expand_mode = 1
+
+[node name="CardOutline" type="Panel" parent="." unique_id=1284565062]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 249.0
+offset_bottom = 249.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("R18")
