@@ -2,7 +2,7 @@ extends Node2D
 ## 动画取证：按约 0.5 秒间隔连续取帧，验证特效在动（并可用于任何 UI 动画复核）
 @export_file("*.tscn") var target_scene := "res://scenes/ui/battle_ui_alpha.tscn"
 @export var count := 6
-@export var interval := 0.5
+@export var interval := 0.25
 
 func _ready() -> void:
 	var ui: Node = (load(target_scene) as PackedScene).instantiate()
