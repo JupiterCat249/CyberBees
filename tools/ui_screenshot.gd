@@ -10,11 +10,18 @@ func _ready() -> void:
 		printerr("UI_SHOT load failed: " + target_scene); get_tree().quit(1); return
 	var ui: Node = packed.instantiate()
 	add_child(ui)
+	# 视口已是设计尺寸（project.godot: window/size/viewport_* = 1920×1080）→ 1:1 取景，
+	# 保证截图与设计稿可直接像素比对（此前写死 0.6 是配合 1152×648 视口，已过时）
+	var vp := get_viewport().get_visible_rect().size
+	var z := 1.0
+	if vp.x > 0.0 and vp.y > 0.0 and (vp.x != 1920.0 or vp.y != 1080.0):
+		z = minf(vp.x / 1920.0, vp.y / 1080.0)   # 视口非设计尺寸时按比例适配
 	var cam := Camera2D.new()
-	cam.position = Vector2(960.0, 540.0)      # 设计空间中心
-	cam.zoom = Vector2(0.6, 0.6)              # 1920×1080 → 1152×648
+	cam.position = Vector2(960.0, 540.0)
+	cam.zoom = Vector2(z, z)
 	add_child(cam)
 	cam.make_current()
+	printerr("UI_SHOT viewport=%s zoom=%.3f" % [str(vp), z])
 	for i in 4:
 		await RenderingServer.frame_post_draw
 	var img: Image = get_viewport().get_texture().get_image()
