@@ -2,16 +2,15 @@ extends Control
 ## BattleScene —— 战斗场景**接线控制器**（组合素材场景 + 驱动 GameState）
 ##
 ## 定位：本脚本**不是规则引擎**。它只做三件事，把"素材场景"与"游戏逻辑"接起来：
-##   ① 把逻辑层的数据绑到节点（set_hand / add_unit / set_* …）
+##   ① 把逻辑层的数据绑到节点（绑定字典 / CardData）
 ##   ② 把节点发出的交互信号**翻译**为规则调用，并转发给外层（emit）
 ##   ③ 把逻辑层下发的"可操作态"翻译成视图表现
 ##
-## 通信原则（D-1）：组件只 emit 自己的信号、**不认识**本类；规则层只发状态信号、**不引用 UI**；
-##   本类夹在中间做翻译。
+## 通信原则（D-1）：组件只 emit 自己的信号、**不认识**本类；规则层只发状态信号、**不引用 UI**。
 ##
 ## ⚠️ **场景内已有"烤好的"预览内容**（16 格 + 双方蜂王 + 双方各 4 张手牌）：
 ##   目的是"在编辑器里打开场景就能看到内容"（不必运行）。
-##   运行时本类会**接手**这些节点（按名字认领格子、清掉预览手牌后按真实数据重建），
+##   运行时本类会**接手**这些节点（按名字认领格子、清掉预览单位/手牌后按真实数据重建），
 ##   因此预览与运行时不会重复堆叠。
 ##
 ## 素材场景（勿改结构）：battle_ui_alpha.tscn（本场景继承）· card_hand.tscn · card_unit.tscn
@@ -164,32 +163,23 @@ func _on_log(t: String) -> void:
 #  棋盘格（点击命中区，无视觉 —— 棋盘视觉由地图素材自带）
 # ============================================================
 
+## 场景里已烤好 16 个格（Cell_x_y）→ **按名字认领**；缺失的才补建
 func _build_cells() -> void:
-	# 场景里**已烤好** 16 个格（Cell_x_y）→ 直接认领，避免重复
-	for ch in _cells_root.get_children():
-		if ch.get_script() != CELL_SCRIPT:
-			ch.set_script(CELL_SCRIPT)
-		if not ch.has_signal("cell_clicked"):
-			continue
-		if not ch.cell_clicked.is_connected(_on_cell_clicked):
-			ch.cell_clicked.connect(_on_cell_clicked)
-		_cells[ch.cell] = ch
-	if _cells.size() == 16:
-		return
-	# 兜底：场景里缺失的格按需补建
 	for x in 4:
 		for y in 4:
 			var c := Vector2i(x, y)
-			if _cells.has(c):
-				continue
-			var node: Control = Control.new()
-			node.set_script(CELL_SCRIPT)
-			node.name = "Cell_%d_%d" % [x, y]
-			node.position = _cell_pos_in_units(c)
-			node.size = Vector2(PITCH, PITCH)
-			node.cell = c
-			node.cell_clicked.connect(_on_cell_clicked)
-			_cells_root.add_child(node)
+			var node := _cells_root.get_node_or_null("Cell_%d_%d" % [x, y]) as Control
+			if node == null:
+				node = Control.new()
+				node.name = "Cell_%d_%d" % [x, y]
+				node.position = _cell_pos_in_units(c)
+				node.size = Vector2(PITCH, PITCH)
+				_cells_root.add_child(node)
+			node.set_script(CELL_SCRIPT)          ## 无脚本的烤节点 → 补脚本；已有则不动
+			node.set("cell", c)
+			node.set("mouse_filter", Control.MOUSE_FILTER_STOP)
+			if node.has_signal("cell_clicked") and not node.cell_clicked.is_connected(_on_cell_clicked):
+				node.cell_clicked.connect(_on_cell_clicked)
 			_cells[c] = node
 
 
@@ -251,10 +241,9 @@ func _spawn_unit_node(inst: UnitInstance) -> void:
 	if inst == null or _unit_nodes.has(inst.instance_id):
 		_refresh_unit(inst)
 		return
-	# 运行时以**真实数据**为准：清掉场景里烤的预览单位，避免与真实单位重复
-	if _units_root.get_child_count() > 0 and _unit_nodes.is_empty():
-		for ch in _units_root.get_children():
-			ch.queue_free()
+	# 运行时以**真实数据**为准：先清掉场景里烤的预览单位，避免与真实单位重复
+	for ch in _units_root.get_children():
+		ch.queue_free()
 	var node: Control = UNIT_CARD_SCENE.instantiate()
 	node.name = "Unit_" + inst.instance_id.substr(0, 8)
 	node.position = _cell_pos_in_units(inst.cell)
