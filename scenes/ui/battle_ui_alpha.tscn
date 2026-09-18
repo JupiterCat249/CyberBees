@@ -547,7 +547,7 @@ layout_mode = 0
 offset_left = 0.9
 offset_top = 56.0
 offset_right = 300.9
-offset_bottom = 156.0
+offset_bottom = 136.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R9")
 theme_override_font_sizes/font_size = 25
@@ -558,40 +558,40 @@ vertical_alignment = 1
 
 [node name="DetailBlock" type="Control" parent="HUD/InfoPanel" unique_id=120224723]
 anchors_preset = 0
-offset_top = 170.0
+offset_top = 190.0
 offset_right = 300.0
-offset_bottom = 470.0
+offset_bottom = 490.0
 mouse_filter = 2
 
 [node name="BlockBg" type="Panel" parent="HUD/InfoPanel/DetailBlock" unique_id=1856663289]
 layout_mode = 0
 offset_right = 300.0
-offset_bottom = 300.0
+offset_bottom = 320.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R10")
 
 [node name="BlockFrame" type="Panel" parent="HUD/InfoPanel/DetailBlock" unique_id=74546701]
 layout_mode = 0
 offset_left = 2.0
-offset_top = 2.0
+offset_top = 22.0
 offset_right = 298.0
-offset_bottom = 298.0
+offset_bottom = 318.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R11")
 
 [node name="Artwork" type="Panel" parent="HUD/InfoPanel/DetailBlock" unique_id=953288216]
 layout_mode = 0
 offset_right = 300.0
-offset_bottom = 300.0
+offset_bottom = 320.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R12")
 
 [node name="Attributes" type="VBoxContainer" parent="HUD/InfoPanel" unique_id=219494896]
 layout_mode = 0
 offset_left = 310.0
-offset_top = 210.0
+offset_top = 230.0
 offset_right = 406.0
-offset_bottom = 426.0
+offset_bottom = 446.0
 mouse_filter = 2
 
 [node name="Row1" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1654434942]

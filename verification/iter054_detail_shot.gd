@@ -10,7 +10,7 @@ func _ready() -> void:
 	var idx := 2 if st.hand[0].size() > 2 else 0
 	if st.hand[0].size() > idx:
 		var card: CardData = st.hand[0][idx]
-		scene._on_hand_clicked(card.id)
+		scene._on_hand_clicked(card.id, 0)
 		print("[DETAIL_SHOT] 展示：", card.display_name)
 	for i in 20:
 		await get_tree().process_frame
