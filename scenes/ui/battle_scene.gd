@@ -46,7 +46,6 @@ signal func_button_pressed(which: String)
 var _hand_nodes := {}                         ## instance_id/card_id → Node
 var _unit_nodes := {}                         ## instance_id → UnitCard
 var _hand_cards: Array[CardData] = []
-var _seed := 0
 
 @onready var _units: Control = $Battle/MapView/Units
 @onready var _hand_l: Control = $Battle/HandPanelLeft/HandLeft
@@ -81,7 +80,7 @@ func set_hand(cards: Array, ally: bool = true) -> void:
 			continue
 		var node: Control = HAND_CARD_SCENE.instantiate()
 		var col := i % 2
-		var row := i / 2
+		var row := i / 2          # 每行 2 张（整数除）
 		node.position = Vector2(col * (HAND_SLOT.x + HAND_GAP_X), row * (HAND_SLOT.y + HAND_GAP_Y))
 		node.bind(data)
 		parent.add_child(node)
@@ -228,9 +227,9 @@ func set_main_button(text: String, enabled: bool = true) -> void:
 func load_map(map_data: MapData) -> void:
 	if map_data == null:
 		return
-	var tr := $Battle/MapView/MapPlate/TextureRect
+	var plate := $Battle/MapView/MapPlate/TextureRect
 	if map_data.terrain_texture != null:
-		tr.texture = map_data.terrain_texture
+		plate.texture = map_data.terrain_texture
 	$HUD/MatchInfo/MapName.text = map_data.display_name
 	$HUD/MatchInfo/SiteEffect.text = map_data.description
 

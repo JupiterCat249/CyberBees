@@ -113,7 +113,6 @@ func _bind_sandbox() -> void:
 # ---------------- 校验 ----------------
 
 func _verify() -> void:
-	var ok := true
 	# ① 结构
 	var units_parent := _scene.get_node_or_null("Battle/MapView/Units")
 	var hand_parent := _scene.get_node_or_null("Battle/HandPanelRight/HandRight")

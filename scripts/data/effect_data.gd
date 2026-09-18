@@ -23,11 +23,6 @@ enum Stacking { NONE }
 @export var grants_field: bool = false               ## 力场：相邻授予
 
 
-func _validate_property(property: Dictionary) -> void:
-	if property.name == "id" and id != "" and not Uuid.is_valid(id):
-		property.usage = PROPERTY_USAGE_NO_EDITOR
-
-
 func validate() -> Array[String]:
 	var errs: Array[String] = []
 	if id == "" or not Uuid.is_valid(id):
