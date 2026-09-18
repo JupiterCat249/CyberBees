@@ -10,8 +10,11 @@ extends Control
 ##
 ## ⚠️ **场景内已有"烤好的"预览内容**（16 格 + 双方蜂王 + 双方各 4 张手牌）：
 ##   目的是"在编辑器里打开场景就能看到内容"（不必运行）。
-##   运行时本类会**接手**这些节点（按名字认领格子、清掉预览单位/手牌后按真实数据重建），
-##   因此预览与运行时不会重复堆叠。
+##   运行时本类会**接手**这些节点（按名字认领格子、清掉预览单位/手牌后按真实数据重建）。
+##
+## ⚠️ **节点引用必须每次校验**：清预览 / 退场时会 queue_free，字典里会留下已释放的引用；
+##   对 freed 实例调方法会直接报错并把调试运行打进断点（本轮实测）。
+##   故所有遍历一律走 `_live_unit_node()` / `is_instance_valid()` 守卫。
 ##
 ## 素材场景（勿改结构）：battle_ui_alpha.tscn（本场景继承）· card_hand.tscn · card_unit.tscn
 
@@ -48,6 +51,7 @@ var _unit_nodes := {}                       ## instance_id → UnitCard
 var _hand_nodes := {}                       ## card_id → HandCard
 var _hand_order: Array = []
 var _fading := {}                           ## 正在播退场动画的 instance_id
+var _preview_cleared := false               ## 预览单位是否已清（避免反复清）
 
 @onready var _cells_root: Control = $Battle/MapView/MapCells
 @onready var _units_root: Control = $Battle/MapView/Units
@@ -62,7 +66,7 @@ func _ready() -> void:
 	anim = AnimDriverScript.new()
 	anim.name = "AnimDriver"
 	add_child(anim)
-	anim.set_node_provider(func(id: String) -> Node: return _unit_nodes.get(id, null))
+	anim.set_node_provider(func(id: String) -> Node: return _live_unit_node(id))
 	anim.set_fx_parent(self)
 	anim.unit_fade_out_done.connect(_on_fade_out_done)
 	anim.reposition_needed.connect(_snap_units)
@@ -79,6 +83,16 @@ func _ready() -> void:
 func start_battle(decks: Dictionary, first_player_side: int = 0, names: Dictionary = {}) -> void:
 	state.setup(decks, first_player_side, names)
 	_refresh_all()
+
+
+## 取一个**仍有效**的单位节点（字典里可能是已释放的引用 → 返回 null 并顺手清理）
+func _live_unit_node(id: String) -> Node:
+	var n = _unit_nodes.get(id, null)
+	if n == null or not is_instance_valid(n):
+		if _unit_nodes.has(id):
+			_unit_nodes.erase(id)
+		return null
+	return n
 
 
 func _connect_static_ui() -> void:
@@ -237,13 +251,25 @@ func _on_unit_spawned(inst: UnitInstance) -> void:
 	_refresh_highlights()
 
 
+## 首帧清掉场景里烤的**预览单位**（只做一次）
+func _clear_preview_units() -> void:
+	if _preview_cleared:
+		return
+	_preview_cleared = true
+	for ch in _units_root.get_children():
+		if not ch.is_queued_for_deletion():
+			ch.queue_free()
+	# 字典里可能还留着这些预览节点的引用 → 一概清掉（真实单位会重建）
+	_unit_nodes.clear()
+
+
 func _spawn_unit_node(inst: UnitInstance) -> void:
-	if inst == null or _unit_nodes.has(inst.instance_id):
+	if inst == null:
+		return
+	if _live_unit_node(inst.instance_id) != null:
 		_refresh_unit(inst)
 		return
-	# 运行时以**真实数据**为准：先清掉场景里烤的预览单位，避免与真实单位重复
-	for ch in _units_root.get_children():
-		ch.queue_free()
+	_clear_preview_units()
 	var node: Control = UNIT_CARD_SCENE.instantiate()
 	node.name = "Unit_" + inst.instance_id.substr(0, 8)
 	node.position = _cell_pos_in_units(inst.cell)
@@ -308,24 +334,25 @@ func _on_unit_moved(inst: UnitInstance) -> void:
 
 func _on_unit_removed(inst: UnitInstance) -> void:
 	_fading[inst.instance_id] = true
-	if not _unit_nodes.has(inst.instance_id):
+	if _live_unit_node(inst.instance_id) == null:
 		_fading.erase(inst.instance_id)
 
 
 func _on_fade_out_done(instance_id: String) -> void:
 	_fading.erase(instance_id)
-	if _unit_nodes.has(instance_id) and is_instance_valid(_unit_nodes[instance_id]):
-		_unit_nodes[instance_id].queue_free()
+	var n := _live_unit_node(instance_id)
+	if n != null:
+		n.queue_free()
 	_unit_nodes.erase(instance_id)
 
 
 func _refresh_unit(inst: UnitInstance) -> void:
 	if inst == null:
 		return
-	if not _unit_nodes.has(inst.instance_id):
+	if _live_unit_node(inst.instance_id) == null:
 		_spawn_unit_node(inst)
-	if _unit_nodes.has(inst.instance_id):
-		var n: Control = _unit_nodes[inst.instance_id]
+	var n := _live_unit_node(inst.instance_id)
+	if n != null:
 		n.bind(unit_view_data(inst))
 		n.position = _cell_pos_in_units(inst.cell)
 
@@ -344,8 +371,9 @@ func _snap_units() -> void:
 	if state == null:
 		return
 	for u in state.board.all_units():
-		if _unit_nodes.has(u.instance_id) and is_instance_valid(_unit_nodes[u.instance_id]):
-			_unit_nodes[u.instance_id].position = _cell_pos_in_units(u.cell)
+		var n := _live_unit_node(u.instance_id)
+		if n != null:
+			n.position = _cell_pos_in_units(u.cell)
 
 
 # ============================================================
@@ -371,7 +399,8 @@ func _render_hand_side(side: int, interactive: bool) -> void:
 	if parent == null:
 		return
 	for c in parent.get_children():
-		c.queue_free()
+		if not c.is_queued_for_deletion():
+			c.queue_free()
 	if interactive:
 		_hand_nodes.clear()
 		_hand_order.clear()
@@ -418,7 +447,7 @@ func _on_hand_long_pressed(card_id: String) -> void:
 func _refresh_hand_playable() -> void:
 	for i in _hand_order.size():
 		var n: Control = _hand_nodes.get(_hand_order[i], null)
-		if n == null:
+		if n == null or not is_instance_valid(n):
 			continue
 		_call_opt(n, "set_playable", [state.active == 0 and state.can_play_hand(0, i)])
 		_call_opt(n, "set_selected", [state.sel_kind == state.SelKind.HAND and state.sel_hand_index == i])
@@ -434,9 +463,11 @@ func _refresh_highlights() -> void:
 	for c in _cells.keys():
 		_cells[c].set_highlight("")
 		_cells[c].set_selected(false)
-	for id in _unit_nodes.keys():
-		_call_opt(_unit_nodes[id], "set_selectable", [false])
-		_call_opt(_unit_nodes[id], "set_selected", [false])
+	for id in _unit_nodes.keys().duplicate():
+		var n := _live_unit_node(str(id))
+		if n != null:
+			_call_opt(n, "set_selectable", [false])
+			_call_opt(n, "set_selected", [false])
 	if state.sel_support != null:
 		for u in state.support_targets():
 			if _cells.has(u.cell):
@@ -462,17 +493,19 @@ func _refresh_highlights() -> void:
 		for t in state.selected_attack_targets():
 			if _cells.has(t.cell):
 				_cells[t.cell].set_highlight("attack")
-		if _unit_nodes.has(u.instance_id):
-			_call_opt(_unit_nodes[u.instance_id], "set_selected", [true])
+		var sn := _live_unit_node(u.instance_id)
+		if sn != null:
+			_call_opt(sn, "set_selected", [true])
 		return
 	for u in state.board.units_of(state.active):
-		if _unit_nodes.has(u.instance_id):
+		var n2 := _live_unit_node(u.instance_id)
+		if n2 != null:
 			var act: bool = state.can_unit_move(u) or state.can_unit_attack(u)
-			_call_opt(_unit_nodes[u.instance_id], "set_selectable", [act])
+			_call_opt(n2, "set_selectable", [act])
 
 
 func _call_opt(node: Object, method: String, args: Array) -> void:
-	if node != null and node.has_method(method):
+	if node != null and is_instance_valid(node) and node.has_method(method):
 		node.callv(method, args)
 
 
@@ -482,15 +515,17 @@ func _refresh_all() -> void:
 	_refresh_cost()
 	_refresh_hand()
 	for u in state.board.all_units():
-		if not _unit_nodes.has(u.instance_id):
+		if _live_unit_node(u.instance_id) == null:
 			_spawn_unit_node(u)
 		else:
 			_refresh_unit(u)
 	for id in _unit_nodes.keys().duplicate():
 		if _fading.has(id):
 			continue
-		if _find_unit(id) == null:
-			_unit_nodes[id].queue_free()
+		if _find_unit(str(id)) == null:
+			var n := _live_unit_node(str(id))
+			if n != null:
+				n.queue_free()
 			_unit_nodes.erase(id)
 	_refresh_highlights()
 
@@ -593,10 +628,12 @@ func rotate_hand() -> bool:
 
 func clear_all() -> void:
 	for n in _units_root.get_children():
-		n.queue_free()
+		if not n.is_queued_for_deletion():
+			n.queue_free()
 	for p in [_hand_l, _hand_r]:
 		for c in p.get_children():
-			c.queue_free()
+			if not c.is_queued_for_deletion():
+				c.queue_free()
 	_unit_nodes.clear()
 	_hand_nodes.clear()
 	_hand_order.clear()
