@@ -25,7 +25,7 @@ func _ready() -> void:
 	_make_dirs()
 	_generate_cards()
 	_generate_deck()
-	_generate_map_stub()
+	_generate_maps()
 	_verify()
 	print("\n===== 资源生成报告 =====")
 	print("  生成文件数：%d" % _saved)
@@ -71,17 +71,66 @@ func _generate_deck() -> void:
 	_save(dd, "%s/decks/样例卡组.tres" % ROOT)
 
 
-func _generate_map_stub() -> void:
-	# 地图：本轮只落 schema（场地效果细则仍缺 G-26）
-	var md := MapData.new()
-	md.id = Uuid.generate()
-	md.display_name = "丰饶"
-	md.description = "场地效果：第3、9回合玩家额外回复4点费用（细则待策划确认 · G-26）"
-	md.effect_rounds = PackedInt32Array([3, 9])
-	md.refund_bonus = 4
+## 生成 6 张地图资源 —— 名字与场地效果**逐条对照《电子蜂A5策划案.md》§场地效果表**
+##   · 默认 = 无特殊效果
+##   · 铁锈 = 位于特殊地形的单位获得 [1] 层 [力场]
+##   · 寒潮 = 第 3、6、9、12 回合场地阶段，所有己方单位 -2 生命（蜂王除外）
+##   · 禁区 = 障碍地形无法部署单位（但**不阻挡移动与攻击**）
+##   · 丰饶 = 第 3、9 回合额外回复 4 点费用
+##   · 水没 = 位于特殊地形的单位减少 2 点指令伤害（拦截效果）
+##
+## ⚠️ `terrain_cells`（特殊地形格坐标）：策划案 §一 明确「地形由地图**素材**自带」——
+##    坐标在制作地图时直接画好，故此处留空，**素材到位后回填**（与旧实现口径一致）。
+var MAP_SPECS := [
+	{
+		"name": "默认",
+		"desc": "场地效果：无特殊效果。",
+		"rounds": [], "refund": 0, "dmg": 0, "field": false,
+	},
+	{
+		"name": "铁锈",
+		"desc": "场地效果：位于特殊地形的单位获得 1 层[力场]效果。",
+		"rounds": [], "refund": 0, "dmg": 0, "field": true,
+	},
+	{
+		"name": "寒潮",
+		"desc": "场地效果：第 3、6、9、12 回合的场地阶段，所有己方单位减少 2 点生命值（蜂王除外）。",
+		"rounds": [3, 6, 9, 12], "refund": 0, "dmg": 2, "field": false,
+	},
+	{
+		"name": "禁区",
+		"desc": "场地效果：障碍地形无法部署单位，但不会阻挡移动与攻击。",
+		"rounds": [], "refund": 0, "dmg": 0, "field": false,
+	},
+	{
+		"name": "丰饶",
+		"desc": "场地效果：第 3、9 回合玩家额外回复 4 点费用。",
+		"rounds": [3, 9], "refund": 4, "dmg": 0, "field": false,
+	},
+	{
+		"name": "水没",
+		"desc": "场地效果：位于特殊地形的单位减少 2 点指令伤害（拦截效果）。",
+		"rounds": [], "refund": 0, "dmg": 0, "field": false,
+	},
+]
+
+
+func _generate_maps() -> void:
+	var tex: Texture2D = null
 	if ResourceLoader.exists("res://assets/background/map_terrain.png"):
-		md.terrain_texture = load("res://assets/background/map_terrain.png")
-	_save(md, "%s/maps/丰饶.tres" % ROOT)
+		tex = load("res://assets/background/map_terrain.png")
+	for spec in MAP_SPECS:
+		var md := MapData.new()
+		md.id = Uuid.generate()
+		md.display_name = String(spec["name"])
+		md.description = String(spec["desc"])
+		md.effect_rounds = PackedInt32Array(spec["rounds"])
+		md.refund_bonus = int(spec["refund"])
+		md.damage_per_round = int(spec["dmg"])
+		md.grant_field_on_terrain = bool(spec["field"])
+		if tex != null:
+			md.terrain_texture = tex
+		_save(md, "%s/maps/%s.tres" % [ROOT, _safe(String(spec["name"]))])
 
 
 func _save(res: Resource, path: String) -> void:
@@ -150,11 +199,23 @@ func _verify() -> void:
 				_errors.append("卡组引用的蜂王不是磁盘资源")
 	else:
 		_errors.append("卡组资源缺失")
-	# 地图
-	var mp := "%s/maps/丰饶.tres" % ROOT
-	if ResourceLoader.exists(mp):
+	# 地图（6 张）
+	var n_maps := 0
+	for spec in MAP_SPECS:
+		var mp := "%s/maps/%s.tres" % [ROOT, _safe(String(spec["name"]))]
+		if not ResourceLoader.exists(mp):
+			_errors.append("地图资源缺失：" + mp)
+			continue
 		var md: MapData = load(mp)
-		print("  地图回读：%s（回费 +%d @ 第 %s 回合）" % [
-			md.display_name, md.refund_bonus, str(md.effect_rounds)])
-	else:
-		_errors.append("地图资源缺失")
+		if md == null:
+			_errors.append("地图回读为 null：" + mp)
+			continue
+		n_maps += 1
+		if md.display_name != String(spec["name"]):
+			_errors.append("%s 地图名不符" % mp)
+		if md.effect_rounds != PackedInt32Array(spec["rounds"]) or md.refund_bonus != int(spec["refund"]) 				or md.damage_per_round != int(spec["dmg"]) 				or md.grant_field_on_terrain != bool(spec["field"]):
+			_errors.append("%s 场地效果字段不符" % mp)
+		print("  地图回读：%-4s 回费+%d 每回合伤害%d 力场=%s 回合=%s" % [
+			md.display_name, md.refund_bonus, md.damage_per_round,
+			str(md.grant_field_on_terrain), str(md.effect_rounds)])
+	print("  地图回读：%d / %d" % [n_maps, MAP_SPECS.size()])

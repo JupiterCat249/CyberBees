@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="MapData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="1_yxbho"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="2_o5tm3"]
+
+[resource]
+script = ExtResource("1_yxbho")
+id = "df3f5899-61ef-4bcd-893d-4e552d9a6404"
+display_name = "水没"
+terrain_texture = ExtResource("2_o5tm3")
+description = "场地效果：位于特殊地形的单位减少 2 点指令伤害（拦截效果）。"
+effect_rounds = PackedInt32Array()

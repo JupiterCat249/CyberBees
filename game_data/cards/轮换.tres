@@ -13,7 +13,7 @@ artwork = ExtResource("4_axuc3")
 [resource]
 script = ExtResource("2_putnk")
 self_to_graveyard = true
-id = "c625879c-21b7-45ce-b8dc-90dad9e195d7"
+id = "b7cdb42b-ce51-42b8-97e5-cbc2aa31a68f"
 display_name = "轮换"
 kind = 3
 cost = 1

@@ -1,4 +1,6 @@
 extends Node
+
+const SampleDeckLib := preload("res://scripts/data/sample_deck.gd")
 ## 【验证用 · 非生产】迭代054 UI 端到端：battle_scene + GameState 真实对局接线
 ## 状态：待封存（验证用，非生产文件）
 
@@ -28,6 +30,81 @@ func _ready() -> void:
 	await _test_select_and_move()
 	_test_back_button()
 	await _shoot()
+	# ---------------- 红方控制（本地双人·热座） ----------------
+	# 此前接线层写死 side 0 → 红方回合点红方手牌/单位无效。此处直接验证"按 active 判定"。
+	_scene.start_battle({0: _mk_deck("绿方"), 1: _mk_deck("红方")}, 0, {0: "绿方", 1: "红方"})
+	for _i in 3:
+		await get_tree().process_frame
+	_scene.state.advance_phase()      # 部署 → 行动
+	_scene.state.advance_phase()      # 行动 → 换手
+	for _i in 3:
+		await get_tree().process_frame
+	_chk("已轮到红方（active == 1）", _scene.state.active == 1)
+	var red_order: Array = _scene._hand_order[1]
+	_chk("红方手牌已渲染（%d 张）" % red_order.size(), red_order.size() > 0)
+	if red_order.size() > 0:
+		_scene._on_hand_clicked(String(red_order[0]), 1)
+		for _i in 2:
+			await get_tree().process_frame
+		_chk("**红方手牌可选中**（本地双人）",
+			_scene.state.sel_kind == _scene.state.SelKind.HAND and _scene.state.sel_hand_index == 0)
+	# 非行动方（绿方）手牌点不动
+	var green_order: Array = _scene._hand_order[0]
+	if green_order.size() > 0:
+		_scene.state.cancel_selection()
+		_scene._on_hand_clicked(String(green_order[0]), 0)
+		for _i in 2:
+			await get_tree().process_frame
+		_chk("非行动方（绿方）手牌点不动", _scene.state.sel_kind != _scene.state.SelKind.HAND)
+	# 红方单位可选中
+	var red_unit: UnitInstance = _scene.state.queen[1]
+	_scene._on_unit_clicked(red_unit.instance_id)
+	for _i in 2:
+		await get_tree().process_frame
+	_chk("**红方单位可选中**（active==1）", _scene.state.sel_unit == red_unit)
+	# 绿方单位在红方回合不可选中
+	var green_unit: UnitInstance = _scene.state.queen[0]
+	_scene._on_unit_clicked(green_unit.instance_id)
+	for _i in 2:
+		await get_tree().process_frame
+	_chk("非行动方单位点不动", _scene.state.sel_unit != green_unit)
+
+	# ---------------- 单位立绘同步 ----------------
+	_scene.state.cancel_selection()
+	var unode: Control = _scene._live_unit_node(red_unit.instance_id)
+	_chk("单位节点存在", unode != null)
+	if unode != null:
+		var tr := unode.get_node_or_null("Artwork/ArtPlane/TextureRect") as TextureRect
+		_chk("单位卡立绘节点存在", tr != null)
+		if tr != null:
+			var want = red_unit.data.visual.artwork if (red_unit.data != null and red_unit.data.visual != null) else null
+			if want == null:
+				# 该测试卡的卡数据本就没有立绘（代码构造的卡组）→ 断言"不会乱换图"
+				_chk("卡数据无立绘时不改图（绑定逻辑正确）", tr.texture != null)
+			else:
+				_chk("**立绘与卡数据同步**（非场景默认图）", tr.texture == want)
+	# 用**带立绘的卡**（样例卡组）验证立绘真的被绑定到单位卡上
+	var spec_deck: DeckData = SampleDeckLib.build("绿")
+	var art_card: UnitData = null
+	for c in spec_deck.cards:
+		if c is UnitData and c.visual != null and c.visual.artwork != null:
+			art_card = c
+			break
+	_chk("样例卡组里存在带立绘的卡", art_card != null)
+	if art_card != null and unode != null:
+		_scene._spawn_unit_node(UnitInstance.create(art_card, 1, Vector2i(0, 3)))
+		for _i in 3:
+			await get_tree().process_frame
+		# 找到该新节点（按立绘所在卡的名字找）
+		var found: Control = null
+		for ch in _scene._units_root.get_children():
+			var ctr := ch.get_node_or_null("Artwork/ArtPlane/TextureRect") as TextureRect
+			if ctr != null and ctr.texture == art_card.visual.artwork:
+				found = ch
+				break
+		_chk("**部署单位后立绘 = 该卡立绘**（%s）" % art_card.display_name, found != null)
+
+
 	_report()
 	get_tree().quit(0 if _fail == 0 else 1)
 
@@ -74,8 +151,8 @@ func _test_initial_render() -> void:
 	_chk("我方手牌 4 张已渲染", hand.get_child_count() == 4)
 	_chk("顶栏费用徽章 = 4（先手回费）",
 		(_scene.get_node("Battle/PlayerBesaInfoLift/BadgeImage/Value") as Label).text == "4")
-	_chk("回合文本 = 回合1--先手",
-		(_scene.get_node("HUD/MatchInfo/TurnInfo") as Label).text == "回合1--先手")
+	_chk("回合文本 = 回合1--绿方",
+		(_scene.get_node("HUD/MatchInfo/TurnInfo") as Label).text == "回合1--绿方")
 	_chk("主按钮文案 = 完成部署",
 		(_scene.get_node("HUD/ActionBar/Label") as Label).text == "完成部署")
 	var q = st.queen[0]
@@ -165,7 +242,6 @@ func _test_select_and_move() -> void:
 func _test_back_button() -> void:
 	(_scene.get_node("HUD/FuncButtonGroup/Back/Button") as Button).pressed.emit()
 	_chk("返回按钮信号已到达外层", _got["quit"] == 1)
-
 
 func _shoot() -> void:
 	await RenderingServer.frame_post_draw

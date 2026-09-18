@@ -5,9 +5,9 @@
 
 [resource]
 script = ExtResource("1_qbyur")
-id = "52c50661-4fc9-4557-be9a-afe95425b6af"
+id = "507b2004-c1d5-4df0-8a3c-54b7660a1db4"
 display_name = "丰饶"
 terrain_texture = ExtResource("2_8qvnb")
-description = "场地效果：第3、9回合玩家额外回复4点费用（细则待策划确认 · G-26）"
+description = "场地效果：第 3、9 回合玩家额外回复 4 点费用。"
 effect_rounds = PackedInt32Array(3, 9)
 refund_bonus = 4

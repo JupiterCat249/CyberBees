@@ -13,7 +13,7 @@ artwork = ExtResource("4_y0d0i")
 [resource]
 script = ExtResource("2_rjtsd")
 self_to_graveyard = true
-id = "4adb1d76-0b6d-4fa6-96ef-0affa0b3af7d"
+id = "46263e86-1314-4baf-913a-edf25697a8f9"
 display_name = "补给"
 kind = 3
 cost = 1
