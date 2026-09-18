@@ -110,8 +110,6 @@ static func support(state: GameState, inst: UnitInstance, skill: SkillData,
 	if state.board.manhattan(inst.cell, target.cell) > skill.target_range:
 		return false
 	var applied := 0
-	if skill.buff != null and Effects.grant(target, skill.buff):
-		applied += 1
 	for e in skill.effects:
 		if Effects.grant(target, e):
 			applied += 1

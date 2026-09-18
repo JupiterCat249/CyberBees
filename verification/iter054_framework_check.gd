@@ -8,6 +8,8 @@ extends Node
 ##   / 攻击力修正（乘优先于加）+ 伤害减免 / 效果不叠加(T14) / 蜂王免疫指令伤害
 ##   / 手牌补至4 / AI 化随机对局跑通 / 12回合判定
 
+const CommandLib := preload("res://scripts/game/battle_command.gd")
+
 var _pass := 0
 var _fail := 0
 var _failures: Array[String] = []
@@ -22,6 +24,11 @@ func _ready() -> void:
 	_test_effects()
 	_test_hand_refill()
 	_test_full_random_match()
+	_test_sample_deck()
+	_test_command_cards()
+	_test_hand_rotation()
+	_test_draw_and_reshuffle()
+	_test_support_skill()
 	_report()
 	get_tree().quit(0 if _fail == 0 else 1)
 
@@ -296,6 +303,175 @@ func _random_legal_cell(st: GameState, ud: UnitData) -> Variant:
 	if cells.is_empty():
 		return null
 	return cells[randi() % cells.size()]
+
+
+# ---------------- 完整战斗系统新增测试 ----------------
+
+func _test_sample_deck() -> void:
+	var dd: DeckData = load("res://scripts/data/sample_deck.gd").build("测试")
+	_chk("样例卡组：有蜂王", dd.queen != null and dd.queen.kind == CardData.CardKind.QUEEN)
+	_chk("样例卡组：12 张（1 蜂王 + 11 常规）", dd.cards.size() == 12)
+	var errs := dd.validate()
+	_chk("样例卡组：通过校验", errs.is_empty())
+	_chk("样例卡组：金刚蜂王回费 = 4", dd.queen.refund == 4)
+	_chk("样例卡组：金刚蜂王免疫指令", dd.queen.immune_command)
+	# 数值抽样（与旧 battle_defs.gd 逐字段一致）
+	var by := {}
+	for c in dd.cards:
+		by[c.display_name] = c
+	_chk("数值一致：叶蜂 2/2/1/3/1", by.has("叶蜂") and by["叶蜂"].cost == 2 and by["叶蜂"].atk == 2 and by["叶蜂"].hp == 3)
+	_chk("数值一致：蜂巢III cost 9 / hp 12 / 回费 2",
+		by.has("蜂巢III") and by["蜂巢III"].cost == 9 and by["蜂巢III"].hp == 12 and by["蜂巢III"].refund == 2)
+	_chk("指令卡：电击 dmg4 / range2", by.has("电击") and (by["电击"] as CommandData).dmg == 4)
+
+
+func _test_command_cards() -> void:
+	var st := _new_state()
+	st.phase = GameState.Phase.ACTION
+	st.cost[0] = 10
+	# 电击：对敌方单位造成 4 点指令伤害
+	var shock := _mk_cmd("电击", 3, 4, 0, 2)
+	var enemy := UnitInstance.create(_mk_unit("靶子", CardData.CardKind.SOLDIER, 1, 0, 9, 0, 0), 1, Vector2i(2, 2))
+	st.board.place(enemy)
+	st.hand[0] = [shock]
+	_chk("指令卡：可对敌方使用", st.can_use_command(0, 0, enemy))
+	_chk("指令卡：使用成功", st.use_command(0, 0, enemy))
+	_chk("指令伤害结算：9-4=5", enemy.current_hp == 5)
+	_chk("指令卡扣除费用（10-3=7）", st.cost[0] == 7)
+	_chk("指令卡用后进墓地", st.discard[0].size() == 1)
+
+	# 蜂王免疫指令伤害
+	var q: UnitInstance = st.queen[1]
+	var shock2 := _mk_cmd("电击", 3, 4, 0, 9)
+	st.hand[0] = [shock2]
+	_chk("蜂王：不可被指令指定（或结算为 0）",
+		not st.can_use_command(0, 0, q) or CommandLib.damage_to(shock2, q) == 0)
+
+	# 治疗：对己方单位
+	var heal := _mk_cmd("治疗", 3, 0, 4, 2)
+	var ally := UnitInstance.create(_mk_unit("伤员", CardData.CardKind.SOLDIER, 1, 0, 9, 0, 0), 0, Vector2i(2, 1))
+	ally.set_hp(3)
+	st.board.place(ally)
+	st.hand[0] = [heal]
+	st.cost[0] = 10
+	_chk("治疗：对己方可用、对敌方不可用",
+		st.can_use_command(0, 0, ally) and not st.can_use_command(0, 0, enemy))
+	st.use_command(0, 0, ally)
+	_chk("治疗结算：3+4=7", ally.current_hp == 7)
+
+	# X 费·毁灭：伤害 = 目标部署费 × 2，不可对蜂王
+	var xcmd := _mk_cmd("X费·毁灭", -1, 0, 0, 3, 2, CardData.CardKind.COMMAND_X)
+	var big := UnitInstance.create(_mk_unit("大件", CardData.CardKind.SOLDIER, 5, 0, 20, 0, 0), 1, Vector2i(3, 2))
+	st.board.place(big)
+	_chk("X 费：实际费用 = 目标部署费 5", st.command_cost(xcmd, big) == 5)
+	_chk("X 费：伤害 = 5×2 = 10", CommandLib.damage_to(xcmd, big) == 10)
+	st.hand[0] = [xcmd]
+	st.cost[0] = 10
+	st.use_command(0, 0, big)
+	_chk("X 费结算：20-10=10", big.current_hp == 10)
+
+	# 扩散：对目标周围也造成伤害
+	var aoe := _mk_cmd("扩散毒雾", 4, 2, 0, 2, 0, CardData.CardKind.COMMAND)
+	aoe.aoe_span = 1
+	var t1 := UnitInstance.create(_mk_unit("主目标", CardData.CardKind.SOLDIER, 1, 0, 9, 0, 0), 1, Vector2i(2, 2))
+	var t2 := UnitInstance.create(_mk_unit("邻接", CardData.CardKind.SOLDIER, 1, 0, 9, 0, 0), 1, Vector2i(2, 3))
+	st.board.place(t1); st.board.place(t2)
+	st.hand[0] = [aoe]
+	st.cost[0] = 10
+	st.use_command(0, 0, t1)
+	_chk("扩散：主目标受伤 9-2=7", t1.current_hp == 7)
+	_chk("扩散：相邻目标同样受伤 9-2=7", t2.current_hp == 7)
+	st.queue_free()
+
+
+func _mk_cmd(nm: String, cost: int, dmg: int, heal: int, rng: int, xmul: int = 0, kind: int = CardData.CardKind.COMMAND) -> CommandData:
+	var c := CommandData.new()
+	c.id = Uuid.generate()
+	c.display_name = nm
+	c.kind = kind
+	c.cost = cost
+	c.dmg = dmg
+	c.heal = heal
+	c.target_range = rng
+	c.x_cost_multiplier = xmul
+	return c
+
+
+func _total_cards(st: GameState, side: int) -> int:
+	return st.hand[side].size() + st.deck[side].size() + st.discard[side].size() + st.board.units_of(side).size()
+
+
+func _test_hand_rotation() -> void:
+	var st := _new_state()
+	var names_before: Array = []
+	for c in st.hand[0]:
+		names_before.append(c.display_name)
+	st.cost[0] = 10
+	_chk("轮换：可用（有手牌且费用够）", st.can_rotate(0))
+	var n_before: int = st.hand[0].size()
+	_chk("轮换：执行成功", st.rotate_hand(0))
+	_chk("轮换：手牌数量不变（%d 张）" % n_before, st.hand[0].size() == n_before)
+	_chk("轮换：扣除 1 费（10-1=9）", st.cost[0] == 9)
+	# 被换掉的卡不会凭空消失：卡片总数（手牌 + 牌库 + 墓地 + 场上）应守恒
+	var total: int = st.hand[0].size() + st.deck[0].size() + st.discard[0].size()
+	for u in st.board.units_of(0):
+		total += 1
+	_chk("轮换：卡片总数守恒（该测试卡组 = 蜂王 + 5 常规 = 6）", total == 6)
+	# 费用不足时不可轮换 —— **显式构造**"手牌非空 + 费用 0"，确保测的是费用条件（而非手牌为空）
+	st.cost[0] = 0
+	if st.hand[0].is_empty():
+		st.hand[0].append(_mk_unit("占位", CardData.CardKind.SOLDIER, 1, 1, 1, 1, 1))
+	_chk("轮换：费用不足不可用（手牌非空、费用 0）", st.hand[0].size() > 0 and not st.can_rotate(0))
+	# 手牌为空时同样不可轮换（另一条独立条件）
+	st.cost[0] = 5
+	st.hand[0] = []
+	_chk("轮换：手牌为空不可用", not st.can_rotate(0))
+	st.queue_free()
+
+
+func _test_draw_and_reshuffle() -> void:
+	var st := _new_state()
+	# 造牌库 + 墓地
+	st.deck[0] = []
+	st.discard[0] = []
+	for i in 6:
+		var c := _mk_unit("牌%d" % i, CardData.CardKind.SOLDIER, 1, 1, 1, 1, 1)
+		st.discard[0].append(c)
+	var hand_before: int = st.hand[0].size()
+	var got := st.draw_card(0, 2)
+	_chk("抽卡：从墓地洗回后抽到 2 张", got == 2 and st.hand[0].size() == hand_before + 2)
+	_chk("抽卡：墓地减少（原 6 张，取前 4 张洗回）", st.discard[0].size() == 2)
+	# 牌库与墓地皆空 → 抽不到（不崩）
+	st.deck[0] = []
+	st.discard[0] = []
+	_chk("抽卡：无牌可抽时安全返回 0", st.draw_card(0, 3) == 0)
+	st.queue_free()
+
+
+func _test_support_skill() -> void:
+	var st := _new_state()
+	st.phase = GameState.Phase.ACTION
+	# 带支援技能的兵蜂（a500：叶蜂 → 【支援】鼓舞：射程 2 内己方单位攻击力 +1）
+	var buff := _mk_effect("攻击提升", {"atk_add": 1})
+	var sk := SkillData.new()
+	sk.id = Uuid.generate()
+	sk.display_name = "鼓舞"
+	sk.kind = SkillData.Kind.SUPPORT
+	sk.target_range = 2
+	sk.effects = [buff]
+	var d := _mk_unit("鼓舞蜂", CardData.CardKind.SOLDIER, 2, 2, 4, 1, 1)
+	d.skills = [sk] as Array[SkillData]
+	var u := UnitInstance.create(d, 0, Vector2i(2, 1))
+	st.board.place(u)
+	var mate := UnitInstance.create(_mk_unit("被鼓舞", CardData.CardKind.SOLDIER, 1, 3, 5, 1, 1), 0, Vector2i(2, 2))
+	st.board.place(mate)
+	_chk("支援：识别到支援技能", st.unit_support_skills(u).size() == 1)
+	_chk("支援：可进入目标选择模式", st.begin_support(u, sk))
+	_chk("支援：范围内己方单位是合法目标", st.support_targets().has(mate))
+	_chk("支援：执行成功", st.confirm_support(mate))
+	_chk("支援：目标攻击力 3+1=4", mate.atk() == 4)
+	_chk("支援：使用后自动结束行动", u.has_acted)
+	st.queue_free()
 
 
 # ---------------- 报告 ----------------

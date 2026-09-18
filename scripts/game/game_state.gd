@@ -14,6 +14,7 @@ extends Node
 
 const Action := preload("res://scripts/game/battle_action.gd")
 const Effects := preload("res://scripts/game/battle_effects.gd")
+const Command := preload("res://scripts/game/battle_command.gd")
 
 signal state_changed()                        ## 粗粒度：任意状态变化
 signal phase_changed(active: int, phase: int, round_no: int)
@@ -40,6 +41,7 @@ const EXTRA_COST_FROM_ROUND := 7
 const MAX_ROUNDS := 12                ## a500：第 12 回合结束后比蜂王血量
 const SURRENDER_FROM_ROUND := 4       ## a500：第 4 回合起可投降
 const HAND_MAX := 4                   ## a500：手牌补至 4 张
+const ROTATE_COST := 1                ## 手牌轮换消耗（1 费）
 
 var board := Board.new()
 var round_no: int = 1
@@ -59,6 +61,7 @@ var player_names := {Board.ALLY: "玩家", Board.ENEMY: "对手"}
 var sel_kind: int = SelKind.NONE
 var sel_hand_index: int = -1
 var sel_unit: UnitInstance = null
+var sel_support: SkillData = null      ## 非空 = 正处于"选择支援目标"模式
 
 var _uid_seq := 0
 
@@ -356,8 +359,137 @@ func discard_card(side: int, idx: int) -> bool:
 
 
 # ============================================================
-#  选中 / 交互（输入层下语义，State 校验规则）
+#  抽卡 / 轮换（a500「抽卡」）
 # ============================================================
+
+## 抽 n 张（牌库空时把墓地前 4 张洗回 —— a500）
+## 返回实际抽到的张数
+func draw_card(side: int, n: int = 1) -> int:
+	var got := 0
+	for _i in n:
+		if hand[side].size() >= HAND_MAX + 4:      # 防止无限膨胀（手牌上限之外不再抽）
+			break
+		if deck[side].is_empty():
+			if discard[side].is_empty():
+				break
+			var take := mini(4, discard[side].size())
+			for k in take:
+				deck[side].append(discard[side].pop_front())
+			deck[side].shuffle()
+			log_added.emit("%s 牌库抽完，墓地前 %d 张洗回牌库" % [player_names[side], take])
+		if deck[side].is_empty():
+			break
+		hand[side].append(deck[side].pop_front())
+		got += 1
+	if got > 0:
+		hand_changed.emit(side)
+		state_changed.emit()
+	return got
+
+
+## 轮换（手牌轮换）：弃掉全部手牌并抽等量的新牌，消耗 1 费
+## 依据 a500「抽卡」：丢弃卡牌消耗费用；轮换 = 把手牌整体换掉
+func can_rotate(side: int) -> bool:
+	if side != active or result != Result.NONE:
+		return false
+	return cost[side] >= ROTATE_COST and not hand[side].is_empty()
+
+
+func rotate_hand(side: int) -> bool:
+	if not can_rotate(side):
+		return false
+	var n: int = hand[side].size()
+	cost[side] = maxi(0, cost[side] - ROTATE_COST)
+	for c in hand[side]:
+		discard[side].append(c)
+	hand[side] = []
+	var got := draw_card(side, n)
+	cost_changed.emit(side, cost[side])
+	hand_changed.emit(side)
+	log_added.emit("%s 轮换手牌：弃 %d 张、抽 %d 张（费 -%d）" % [player_names[side], n, got, ROTATE_COST])
+	# ⚠️ 不做"从墓地兜底补到手牌"——那会让刚弃掉的卡**同时**存在于墓地与手牌（同一张被引用两处，
+	#    总数守恒被破坏）。a500 的口径是"抽卡抽不出来就是抽不出来"，故本轮只按牌库抽。
+	state_changed.emit()
+	return true
+
+
+# ============================================================
+#  指令卡
+# ============================================================
+
+## 指令卡能否使用（阶段 / 费用 / 目标）
+func can_use_command(side: int, idx: int, target: UnitInstance) -> bool:
+	if side != active:
+		return false
+	if phase != Phase.DEPLOY and phase != Phase.ACTION:
+		return false
+	var cards: Array = hand[side]
+	if idx < 0 or idx >= cards.size():
+		return false
+	var cmd := cards[idx] as CommandData
+	if cmd == null:
+		return false
+	if not Command.target_legal(cmd, side, target):
+		return false
+	return cost[side] >= command_cost(cmd, target)
+
+
+## 指令卡的实际费用（X 费卡 = 目标单位的部署费用）
+func command_cost(cmd: CommandData, target: UnitInstance) -> int:
+	if cmd == null:
+		return 0
+	if cmd.kind == CardData.CardKind.COMMAND_X:
+		return Command.x_cost_of(target)
+	return maxi(0, cmd.cost)
+
+
+## 某张手牌（指令卡）的合法目标集合（供视图高亮）
+func command_targets(idx: int) -> Array[UnitInstance]:
+	var out: Array[UnitInstance] = []
+	var cards: Array = hand[active]
+	if idx < 0 or idx >= cards.size():
+		return out
+	var cmd := cards[idx] as CommandData
+	if cmd == null:
+		return out
+	for u in board.all_units():
+		if Command.target_legal(cmd, active, u) and cost[active] >= command_cost(cmd, u):
+			out.append(u)
+	return out
+
+
+## 使用指令卡（成功返回 true；卡进墓地）
+func use_command(side: int, idx: int, target: UnitInstance) -> bool:
+	if not can_use_command(side, idx, target):
+		return false
+	var cmd: CommandData = hand[side][idx]
+	var c := command_cost(cmd, target)
+	hand[side].remove_at(idx)
+	cost[side] = maxi(0, cost[side] - c)
+	# 先扣费再结算（结算里可能读费用，如补给）
+	var res := Command.execute(self, cmd, target)
+	discard[side].append(cmd)          # a500：指令用完后退场（进墓地）
+	cost_changed.emit(side, cost[side])
+	hand_changed.emit(side)
+	var detail := ""
+	if not res["damage"].is_empty():
+		var parts: Array[String] = []
+		for d in res["damage"]:
+			parts.append("%s -%d%s" % [d["unit"].card_name(), d["amount"], "（护盾抵挡）" if d["blocked"] else ""])
+		detail = "，".join(parts)
+	elif res["healed"] > 0:
+		detail = "治疗 %d" % res["healed"]
+	elif res["extra"] != "":
+		detail = res["extra"]
+	log_added.emit("%s 使用【指令】%s（费 -%d）%s" % [player_names[side], cmd.display_name, c,
+		"" if detail == "" else "：" + detail])
+	check_victory()
+	state_changed.emit()
+	return true
+
+
+# ============================================================
+#  选中 / 交互（输入层下语义，State 校验规则）
 
 func select_hand(idx: int) -> void:
 	if sel_kind == SelKind.HAND and sel_hand_index == idx:
@@ -465,6 +597,59 @@ func tick_effects(inst: UnitInstance) -> void:
 		board.remove(inst)
 		unit_removed.emit(inst)
 	check_victory()
+
+
+# ---------------- 支援技能（a500：1 移动 + 1 攻击/支援） ----------------
+
+## 选中单位可用支援技能列表
+func unit_support_skills(inst: UnitInstance) -> Array[SkillData]:
+	var out: Array[SkillData] = []
+	if inst == null or inst.data == null:
+		return out
+	for s in inst.data.skills:
+		if s != null and s.kind == SkillData.Kind.SUPPORT:
+			out.append(s)
+	return out
+
+
+## 进入"选择支援目标"模式（需已选中己方单位且该单位可支援）
+func begin_support(inst: UnitInstance, skill: SkillData) -> bool:
+	if not Action.can_support(self, inst) or skill == null:
+		return false
+	sel_unit = inst
+	sel_support = skill
+	selection_changed.emit("support", inst.instance_id)
+	return true
+
+
+func cancel_support() -> void:
+	if sel_support != null:
+		sel_support = null
+		selection_changed.emit("none", "")
+
+
+## 支援模式下的合法目标（己方、范围内、存活）
+func support_targets() -> Array[UnitInstance]:
+	var out: Array[UnitInstance] = []
+	if sel_unit == null or sel_support == null:
+		return out
+	for u in board.units_of(active):
+		if not u.is_alive():
+			continue
+		if board.manhattan(sel_unit.cell, u.cell) <= sel_support.target_range:
+			out.append(u)
+	return out
+
+
+## 执行支援（成功返回 true）
+func confirm_support(target: UnitInstance) -> bool:
+	if sel_unit == null or sel_support == null:
+		return false
+	var ok := Action.support(self, sel_unit, sel_support, target)
+	if ok:
+		sel_support = null
+		selection_changed.emit("none", "")
+	return ok
 
 
 ## 当前选中单位可攻击的目标（供视图高亮）

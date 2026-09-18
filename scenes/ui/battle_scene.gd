@@ -20,11 +20,17 @@ const HAND_CARD_SCENE := preload("res://scenes/ui/card_hand.tscn")
 const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 const GameStateScript := preload("res://scripts/game/game_state.gd")
+const SampleDeckLib := preload("res://scripts/data/sample_deck.gd")
 
 const PITCH := 250.0                        ## 格宽 = 单位卡尺寸
 const MAP_ORIGIN := Vector2(459.0, 40.0)    ## 棋盘左上角（与地图板对齐）
 const HAND_SLOT := Vector2(200.0, 200.0)
 const HAND_GAP := Vector2(30.0, 30.0)
+
+@export var auto_start := true                     ## 直接运行本场景时用样例卡组自动开局（便于在编辑器里看到单位卡）
+@export var first_player: int = 0                  ## 0 = 我方先手 / 1 = 敌方先手
+@export var ally_name: String = "玩家·绿"
+@export var enemy_name: String = "玩家·红"
 
 # ---------------- 对外信号（供更外层接入菜单/联网/存档） ----------------
 signal battle_ended(result: int, reason: String)
@@ -49,6 +55,11 @@ func _ready() -> void:
 	_connect_rules()
 	_connect_static_ui()
 	_build_cells()
+	set_player_names(ally_name, enemy_name)
+	if auto_start:
+		# 直接运行本场景 → 用样例卡组开局（否则编辑器里 Units 容器为空，看不到单位卡）
+		start_battle({0: SampleDeckLib.build("绿"), 1: SampleDeckLib.build("红")},
+			first_player, {0: ally_name, 1: enemy_name})
 
 
 ## 开局：传入双方卡组（DeckData）与先手方
@@ -155,7 +166,14 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 			if not state.deploy_unit(state.active, idx, cell):
 				print("[BATTLE] 该格不可部署")
 			return
-		_use_command_at(idx, cell)
+		var target: UnitInstance = state.board.unit_at(cell)
+		if target == null:
+			print("[BATTLE] 指令卡需要选择目标单位")
+			return
+		if state.use_command(state.active, idx, target):
+			state.cancel_selection()
+		else:
+			print("[BATTLE] 该目标对这张指令卡不合法")
 		return
 	# ② 正在选单位 → 移动 / 攻击
 	if state.sel_kind == state.SelKind.UNIT and state.sel_unit != null:
@@ -170,15 +188,6 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 	var here: UnitInstance = state.board.unit_at(cell)
 	if here != null and here.side == state.active:
 		state.select_unit(here)
-
-
-## 指令卡：对格子上的单位使用（各类指令的细分效果属后续检查点）
-func _use_command_at(idx: int, cell: Vector2i) -> void:
-	var target: UnitInstance = state.board.unit_at(cell)
-	if target == null:
-		print("[BATTLE] 指令卡需要选择目标单位")
-		return
-	print("[BATTLE] 指令卡结算尚未接线（待后续检查点）：目标 %s" % target.card_name())
 
 
 # ============================================================
@@ -203,9 +212,40 @@ func _spawn_unit_node(inst: UnitInstance) -> void:
 	var node: Control = UNIT_CARD_SCENE.instantiate()
 	node.position = _cell_pos_in_units(inst.cell)
 	_units_root.add_child(node)
-	node.bind(inst)
-	node.unit_clicked.connect(_on_unit_card_clicked)
+	node.bind(unit_view_data(inst))          # card_unit 的 bind(Dictionary)
+	if node.has_signal("unit_pressed"):
+		node.unit_pressed.connect(_on_unit_card_pressed)
+	elif node.has_signal("unit_clicked"):
+		node.unit_clicked.connect(_on_unit_card_clicked)
 	_unit_nodes[inst.instance_id] = node
+
+
+## 把 UnitInstance 摊成 card_unit.gd 期望的字典（**视觉层数据**，不含规则判断）
+func unit_view_data(inst: UnitInstance) -> Dictionary:
+	if inst == null:
+		return {}
+	var kind := "unit"
+	if inst.data != null:
+		match inst.data.kind:
+			CardData.CardKind.QUEEN: kind = "queen"
+			CardData.CardKind.BUILDING: kind = "building"
+			CardData.CardKind.COMMAND, CardData.CardKind.COMMAND_X: kind = "order"
+	# 取值：静态走 data、运行态走实例（血量为**当前血量**）
+	return {
+		"id": inst.instance_id,
+		"cost": inst.data.cost if inst.data != null else 0,
+		"atk": inst.atk(),
+		"hp": inst.current_hp,
+		"move": inst.move_range(),
+		"range": inst.attack_range(),
+		"mine": inst.side == 0,
+		"type": kind,
+	}
+
+
+## card_unit 的新信号 unit_pressed（人 2026-09-17 改名）
+func _on_unit_card_pressed(unit_id: String) -> void:
+	_on_unit_card_clicked(unit_id)
 
 
 func _on_unit_card_clicked(instance_id: String) -> void:
@@ -236,7 +276,7 @@ func _refresh_unit(inst: UnitInstance) -> void:
 	if not _unit_nodes.has(inst.instance_id):
 		return
 	var n: Control = _unit_nodes[inst.instance_id]
-	n.bind(inst)
+	n.bind(unit_view_data(inst))
 	n.position = _cell_pos_in_units(inst.cell)
 
 
@@ -289,8 +329,8 @@ func _refresh_hand_playable() -> void:
 		var n: Control = _hand_nodes.get(id, null)
 		if n == null:
 			continue
-		n.set_playable(state.can_play_hand(state.active, i))
-		n.set_selected(state.sel_kind == state.SelKind.HAND and state.sel_hand_index == i)
+		_call_opt(n, "set_playable", [state.can_play_hand(state.active, i)])
+		_call_opt(n, "set_selected", [state.sel_kind == state.SelKind.HAND and state.sel_hand_index == i])
 
 
 # ============================================================
@@ -302,13 +342,30 @@ func _refresh_highlights() -> void:
 		_cells[c].set_highlight("")
 		_cells[c].set_selected(false)
 	for id in _unit_nodes.keys():
-		_unit_nodes[id].set_selectable(false)
-		_unit_nodes[id].set_selected(false)
+		_call_opt(_unit_nodes[id], "set_selectable", [false])
+		_call_opt(_unit_nodes[id], "set_selected", [false])
 
 	if state.sel_kind == state.SelKind.HAND:
-		for c in state.selected_deploy_cells():
-			if _cells.has(c):
-				_cells[c].set_highlight("deploy")
+		var hand_cards: Array = state.current_hand()
+		var idx: int = state.sel_hand_index
+		if idx >= 0 and idx < hand_cards.size() and hand_cards[idx] is UnitData:
+			for c in state.selected_deploy_cells():
+				if _cells.has(c):
+					_cells[c].set_highlight("deploy")
+		else:
+			# 指令卡 → 标出合法目标格
+			for u in state.command_targets(idx):
+				if _cells.has(u.cell):
+					_cells[u.cell].set_highlight("attack")
+		return
+
+	if state.sel_support != null:
+		# 支援目标高亮
+		for u in state.support_targets():
+			if _cells.has(u.cell):
+				_cells[u.cell].set_highlight("deploy")
+		if _unit_nodes.has(state.sel_unit.instance_id):
+			_call_opt(_unit_nodes[state.sel_unit.instance_id], "set_selected", [true])
 		return
 
 	if state.sel_kind == state.SelKind.UNIT and state.sel_unit != null:
@@ -320,13 +377,13 @@ func _refresh_highlights() -> void:
 			if _cells.has(t.cell):
 				_cells[t.cell].set_highlight("attack")
 		if _unit_nodes.has(u.instance_id):
-			_unit_nodes[u.instance_id].set_selected(true)
+			_call_opt(_unit_nodes[u.instance_id], "set_selected", [true])
 		return
 
 	for u in state.board.units_of(state.active):
 		if _unit_nodes.has(u.instance_id):
 			var act: bool = state.can_unit_move(u) or state.can_unit_attack(u)
-			_unit_nodes[u.instance_id].set_selectable(act)
+			_call_opt(_unit_nodes[u.instance_id], "set_selectable", [act])
 
 
 # ============================================================
@@ -348,13 +405,41 @@ func _on_main_pressed() -> void:
 
 
 func _on_func_pressed(which: String) -> void:
-	if which == "Back":
-		request_quit.emit()
+	match which:
+		"Back":
+			request_quit.emit()
+		"Info":
+			# Info 键承载两个尚未实现系统的入口（帮助系统未做）：
+			#   ① 已选中可支援单位 → 进入「选择支援目标」模式
+			#   ② 否则 → 轮换手牌（a500 的手牌管理机制）
+			var u: UnitInstance = state.sel_unit
+			if u != null and state.can_unit_support(u):
+				var sk: Array = state.unit_support_skills(u)
+				if not sk.is_empty():
+					state.begin_support(u, sk[0])
+					print("[BATTLE] 进入支援目标选择：%s" % sk[0].display_name)
+					return
+			if state.can_rotate(state.active):
+				state.rotate_hand(state.active)
+			else:
+				print("[BATTLE] 轮换不可用（费用不足或手牌为空）")
+
+
+## 手牌轮换（供外部/菜单调用）
+func rotate_hand() -> bool:
+	return state.rotate_hand(state.active)
 
 
 # ============================================================
 #  详情区 / 地图 / 全量刷新
 # ============================================================
+
+## 可选调用：组件**可以**实现这些表现方法；没实现就跳过（视图是可选增强，不强制）
+## —— 这样手牌/单位卡的脚本可以各自独立演进，接线层不会因缺方法而崩
+func _call_opt(node: Object, method: String, args: Array) -> void:
+	if node != null and node.has_method(method):
+		node.callv(method, args)
+
 
 func _refresh_all() -> void:
 	_refresh_cost()
