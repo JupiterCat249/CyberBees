@@ -12,11 +12,15 @@ extends Control
 ##   故：两方手牌都渲染且都接信号；是否可选中由 `side == state.active` 判断。
 ##
 ## ⚠️ **场景内已有"烤好的"预览内容**（16 格 + 双方蜂王 + 双方各 4 张手牌）：
-##   目的是"在编辑器里打开场景就能看到内容"。运行时本类会**接手**（按名字认领格子、
-##   清掉预览单位/手牌后按真实数据重建）。
+##   目的是"在编辑器里打开场景就能看到内容"。运行时本类会**接手**。
 ##
 ## ⚠️ **节点引用必须每次校验**：清预览/退场会 queue_free，字典里会留下已释放引用；
 ##   对 freed 实例调方法会报错并把调试运行打进断点（本轮实测）。一切走 `_live_unit_node()`。
+##
+## 详情区结构：
+##   HUD/InfoPanel/CardName（卡名 38px）· SkillDesc（技能/描述 25px）
+##   DetailBlock/Artwork/Portrait（**卡面立绘槽** 300×300，需与卡数据同步）
+##   Attributes/Row1..4/Value（攻击·生命·移动·射程 / 指令：伤害·治疗·射程）
 ##
 ## 素材场景（勿改结构）：battle_ui_alpha.tscn（本场景继承）· card_hand.tscn · card_unit.tscn
 
@@ -34,6 +38,11 @@ const HAND_GAP := Vector2(30.0, 30.0)
 
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1
+
+## 详情区 UI 参数（集中定义，便于调参 —— 只调这几个数即可）
+const DETAIL_NAME_FS := 38                  ## 卡名字号（与素材一致）
+const DETAIL_DESC_FS := 25                  ## 描述字号（与素材一致）
+const DETAIL_ART_SIZE := Vector2(300, 300)  ## 立绘槽尺寸（与 DetailBlock 一致）
 
 @export var auto_start := true              ## 直接运行本场景时自动开局
 @export var use_resources := true           ## 开局优先从 game_data/ 的 .tres 读卡组
@@ -80,9 +89,26 @@ func _ready() -> void:
 	_connect_rules()
 	_connect_static_ui()
 	_build_cells()
+	_apply_detail_params()
 	set_player_names(ally_name, enemy_name)
 	if auto_start:
 		start_battle(_starting_decks(), first_player, {0: ally_name, 1: enemy_name})
+
+
+## 详情区 UI 参数落地（在编辑器里改的场景值以本处常量为准；只碰字号/尺寸，不动布局位置）
+func _apply_detail_params() -> void:
+	var nm := $HUD/InfoPanel/CardName as Label
+	if nm != null:
+		nm.add_theme_font_size_override("font_size", DETAIL_NAME_FS)
+		nm.clip_text = false
+		nm.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	var ds := $HUD/InfoPanel/SkillDesc as Label
+	if ds != null:
+		ds.add_theme_font_size_override("font_size", DETAIL_DESC_FS)
+		ds.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var art := $HUD/InfoPanel/DetailBlock/Artwork as Control
+	if art != null:
+		art.custom_minimum_size = DETAIL_ART_SIZE
 
 
 ## 开局卡组：优先读**资源**（game_data/）；资源不可用（缺卡）则回退样例卡组
@@ -585,6 +611,10 @@ func show_card_detail(data: CardData) -> void:
 	if data.glossary != "" or data.skill_name != "":
 		head = "[%s] %s\n" % [data.glossary, data.skill_name]
 	$HUD/InfoPanel/SkillDesc.text = head + data.description
+	# **卡面立绘同步**（DetailBlock/Artwork/Portrait —— 此前是空占位）
+	var portrait := $HUD/InfoPanel/DetailBlock/Artwork/Portrait as TextureRect
+	if portrait != null:
+		portrait.texture = data.visual.artwork if data.visual != null else null
 	var u := data as UnitData
 	if u != null:
 		_set_attr_rows(str(u.atk), str(u.hp), str(u.move), str(u.attack_range))
@@ -678,6 +708,11 @@ func load_map_resource(path: String) -> bool:
 		return false
 	load_map(md)
 	return true
+
+
+## 按地图名换图（对应 game_data/maps 下的 6 张）
+func load_map_by_name(map_name: String) -> bool:
+	return load_map_resource("res://game_data/maps/%s.tres" % map_name)
 
 
 func clear_all() -> void:
