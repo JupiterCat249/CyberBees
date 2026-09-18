@@ -291,12 +291,24 @@ func _find_unit(instance_id: String) -> UnitInstance:
 #  手牌（我方在右）
 # ============================================================
 
+## 刷新**双方**手牌（此前只渲染了我方 → 敌方手牌区一直空着）
 func _refresh_hand() -> void:
-	for c in _hand_r.get_children():
+	_render_hand_side(0, true)      ## 我方：可交互
+	_render_hand_side(1, false)     ## 敌方：只展示
+	_refresh_hand_playable()
+
+
+## 渲染一侧手牌；ally_side = true 的那一侧才接信号（可交互）
+func _render_hand_side(side: int, interactive: bool) -> void:
+	var parent := _hand_parent(side == 0)
+	if parent == null:
+		return
+	for c in parent.get_children():
 		c.queue_free()
-	_hand_nodes.clear()
-	_hand_order.clear()
-	var cards: Array = state.current_hand()
+	if interactive:
+		_hand_nodes.clear()
+		_hand_order.clear()
+	var cards: Array = state.hand[side]
 	for i in cards.size():
 		var data: CardData = cards[i]
 		if data == null:
@@ -305,12 +317,24 @@ func _refresh_hand() -> void:
 		var col := i % 2
 		var row := i / 2
 		node.position = Vector2(col * (HAND_SLOT.x + HAND_GAP.x), row * (HAND_SLOT.y + HAND_GAP.y))
-		_hand_r.add_child(node)
-		node.bind(data)
-		node.hand_clicked.connect(_on_hand_clicked)
-		_hand_nodes[data.id] = node
-		_hand_order.append(data.id)
-	_refresh_hand_playable()
+		parent.add_child(node)
+		_bind_hand_card(node, data)
+		if interactive:
+			if node.has_signal("hand_clicked"):
+				node.hand_clicked.connect(_on_hand_clicked)
+			if node.has_signal("hand_long_pressed"):
+				node.hand_long_pressed.connect(_on_hand_long_pressed)
+			_hand_nodes[data.id] = node
+			_hand_order.append(data.id)
+		else:
+			# 对手手牌：只展示、不可操作（本地 AI 暂不做）
+			node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## 手牌卡绑定（当前签名 bind(CardData)；组件没实现 bind 则跳过）
+func _bind_hand_card(node: Control, data: CardData) -> void:
+	if node != null and node.has_method("bind"):
+		node.call("bind", data)
 
 
 func _on_hand_clicked(card_id: String) -> void:

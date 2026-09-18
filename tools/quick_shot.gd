@@ -7,8 +7,8 @@ func _ready() -> void:
 	if ps == null:
 		printerr("[QUICK_SHOT] 加载失败: ", target_scene); get_tree().quit(1); return
 	add_child(ps.instantiate())
-	await get_tree().process_frame
-	await get_tree().process_frame
+	for i in 60:
+		await get_tree().process_frame
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://verification/quick_shot.png")
