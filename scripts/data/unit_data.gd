@@ -15,6 +15,7 @@ extends CardData
 @export_group("规则标记")
 @export var immune_command: bool = false       ## 蜂王：免疫指令卡伤害与减益
 @export var deploy_adjacent: bool = false      ## 蜂王巢口：只能在自身相邻格部署兵蜂
+@export var grants_aura_id: String = ""        ## 本单位的"可赋予"效果 UUID（技能授予/光环授予）
 
 
 func validate() -> Array[String]:

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://verification/iter054_framework_check.gd" id="1_fc"]
+
+[node name="Iter054FrameworkCheck" type="Node"]
+script = ExtResource("1_fc")

@@ -21,6 +21,21 @@ enum Stacking { NONE }
 @export_group("标记")
 @export var is_debuff: bool = false                  ## true=减益（上侧） / false=增益（下侧）
 @export var grants_field: bool = false               ## 力场：相邻授予
+@export var blocks_command: bool = false             ## 护盾/力场：抵挡指令卡伤害（T14 人明确）
+
+@export_group("可赋予的单位类型（a500：单位类型不匹配则无法赋予效果）")
+@export var allow_queen: bool = true
+@export var allow_soldier: bool = true
+@export var allow_building: bool = true
+
+
+## 单位类型是否可被赋予本效果（a500：单位类型不匹配则无法赋予效果）
+func allows_kind(k: CardData.CardKind) -> bool:
+	match k:
+		CardData.CardKind.QUEEN:    return allow_queen
+		CardData.CardKind.SOLDIER:  return allow_soldier
+		CardData.CardKind.BUILDING: return allow_building
+		_:                          return false
 
 
 func validate() -> Array[String]:
