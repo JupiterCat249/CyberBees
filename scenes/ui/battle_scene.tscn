@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://ck70qp7017fdn"]
 
 [ext_resource type="PackedScene" uid="uid://b3v7c3uvojiot" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]
-[ext_resource type="Script" uid="uid://rfmpdjkq8dqs" path="res://scenes/ui/battle_scene.gd" id="2_ctrl"]
+[ext_resource type="Script" uid="uid://rfmpdjkq8dqs" path="res://scenes/ui/battle_arena.gd" id="2_ctrl"]
 [ext_resource type="PackedScene" uid="uid://cftew331eyj7" path="res://scenes/ui/card_unit.tscn" id="3_unit"]
 [ext_resource type="PackedScene" uid="uid://csycanfke7qpq" path="res://scenes/ui/card_hand.tscn" id="4_hand"]
 
