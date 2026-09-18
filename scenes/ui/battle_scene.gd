@@ -66,6 +66,7 @@ func _ready() -> void:
 	anim.set_node_provider(func(id: String) -> Node: return _unit_nodes.get(id, null))
 	anim.set_fx_parent(self)                     ## 飘字挂场景根（最上层，避免被遮挡）
 	anim.unit_fade_out_done.connect(_on_fade_out_done)
+	anim.reposition_needed.connect(_snap_units)      ## 位移类动画播完 → 收位（防像素残差累积）
 	_connect_rules()
 	_connect_static_ui()
 	_build_cells()
@@ -285,6 +286,18 @@ func _on_unit_card_clicked(instance_id: String) -> void:
 func _on_unit_moved(inst: UnitInstance) -> void:
 	_refresh_unit(inst)
 	_refresh_highlights()
+
+
+## 把全部单位节点吸附回**格子基准位置**（位移类动画的收位）
+func _snap_units() -> void:
+	if state == null:
+		return
+	for u in state.board.all_units():
+		if _unit_nodes.has(u.instance_id) and is_instance_valid(_unit_nodes[u.instance_id]):
+			_unit_nodes[u.instance_id].position = _cell_pos_in_units(u.cell)
+	for id in _fading.keys():
+		if _unit_nodes.has(id) and is_instance_valid(_unit_nodes[id]):
+			pass      ## 退场中的节点不再收位（它要淡出）
 
 
 ## `单位退场` 动画播完 → 这时才真正销毁节点（迭代030/031 的时序要求）

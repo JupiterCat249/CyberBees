@@ -28,6 +28,9 @@ extends Node
 
 enum U { MOVE_BY, MOVE_TO, ROT_TRACK, TINT, SPAWN_FX }
 
+## 某个实例播完（自然结束或 stop）时发出 —— 供接线层做"收位/收尾"
+signal instance_finished(pattern_name: String, target: Node)
+
 const FPS := 60                     ## 帧率基准（T2：帧数计时）
 
 var _patterns := {}                 ## Pattern 名 → 定义
@@ -163,6 +166,7 @@ func _stop_instance(key: String) -> void:
 	# 一次性特效（飘字等）：播完自释放
 	if tgt != null and is_instance_valid(tgt) and tgt.has_meta("fx_once"):
 		tgt.queue_free()
+	instance_finished.emit(pname, tgt)
 	var p: Dictionary = _patterns.get(pname, {})
 	if bool(p.get("block_ui", false)) and not any_running_blocking():
 		ui_locked = false

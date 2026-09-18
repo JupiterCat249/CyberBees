@@ -13,6 +13,8 @@ extends Node
 ##   · 运行时遍历运行表时**先复制键快照**（引擎内部已做）；本类的回调里也只做挂起登记
 
 signal unit_fade_out_done(instance_id: String)
+## 位移类动画播完 → 接线层应收位（把节点吸附回格子基准位置）
+signal reposition_needed
 
 const AU := preload("res://scripts/game/action_unit.gd")
 const Presets := preload("res://scripts/game/anim_presets.gd")
@@ -32,6 +34,17 @@ func _ready() -> void:
 	add_child(engine)
 	Presets.register_all(engine)
 	engine.owner_node = self        ## 结束回调兜底：pattern 的 trigger_on_stop_call 转发给本驱动
+	engine.instance_finished.connect(_on_instance_finished)
+
+
+## 位移类动画（MOVE_BY）结束后**必须收位**：最后一次 step 是"回到原位"，
+## 但四舍五入会留下 1~2px 残差 → 由接线层把节点吸附回格子基准位置，避免累积漂移。
+const _POS_PATTERNS := ["移动落位", "部署落位", "受击抖动", "地图抖动"]
+
+
+func _on_instance_finished(pname: String, _target: Node) -> void:
+	if _POS_PATTERNS.has(pname):
+		reposition_needed.emit()
 	engine.node_provider = func(id: String) -> Node:
 		return node_provider.call(id) if node_provider.is_valid() else null
 
