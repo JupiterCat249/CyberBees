@@ -1,9 +1,11 @@
+@tool
 extends Control
 ## 地图单位卡（250×250）：节点负责外观，脚本只做**数据绑定**与点击信号
 ##
+## `@tool` = 在**编辑器里**也能绑定内容 → 打开战斗场景即可直接看到卡面（不必运行）
+##
 ## ⚠️ 节点路径以 **card_unit.tscn 的真实层级**为准：
 ##    费用 = `CostPlate/Cost`（不是 `$Cost`）· 四维 = `Attr_Attack|Attr_Speed|Attr_Health|Attr_Range/Value`
-##    （曾误写 `$Cost` / `$AttrLA..LD` → 运行时 "Node not found: Cost"）
 ##    统一用 `_set_text(path, …)` 取节点并**判空**，缺节点只跳过、不崩。
 ##
 ## 绑定数据（视觉层字典，不含规则判断）：
@@ -58,5 +60,8 @@ func _tint(path: String, color: Color) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	# 编辑器里不响应点击（避免误操作）
+	if Engine.is_editor_hint():
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		unit_pressed.emit(unit_id)

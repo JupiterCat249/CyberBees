@@ -1,5 +1,8 @@
+@tool
 extends Control
 ## HandCard —— 手牌卡控制器（素材场景 card_hand.tscn）
+##
+## `@tool` = 在**编辑器里**也能绑定内容 → 打开战斗场景即可直接看到手牌（不必运行）
 ##
 ## 结构（勿改）：Body(200×200 类型色底) · Artwork/ArtPlane(200×200 clip_contents) · ArtPlane/Image(立绘)
 ##                InnerLine(内描边) · BadgeImage/Value(费用数字)
@@ -129,6 +132,8 @@ func set_selected(sel: bool) -> void:
 # ---------------- 输入 → 信号 ----------------
 
 func _gui_input(event: InputEvent) -> void:
+	if Engine.is_editor_hint():
+		return                      # 编辑器里不响应点击（避免误操作）
 	if card_data == null:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -140,6 +145,8 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _process(_delta: float) -> void:
+	if Engine.is_editor_hint():     # 编辑器里不跑输入逻辑
+		return
 	if card_data == null or _long_fired:
 		return
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) \
