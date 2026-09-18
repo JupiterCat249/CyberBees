@@ -30,11 +30,14 @@ const HAND_GAP := Vector2(30.0, 30.0)
 @export var auto_start := true                     ## 直接运行本场景时用样例卡组自动开局（便于在编辑器里看到单位卡）
 @export var first_player: int = 0                  ## 0 = 我方先手 / 1 = 敌方先手
 @export var ally_name: String = "玩家·绿"
+@export var ally_hand_side: String = "right"      ## 我方手牌面板（右）
 @export var enemy_name: String = "玩家·红"
 
 # ---------------- 对外信号（供更外层接入菜单/联网/存档） ----------------
 signal battle_ended(result: int, reason: String)
 signal request_quit()
+signal hand_card_clicked(card_id: String)
+signal hand_card_long_pressed(card_id: String)
 
 # ---------------- 内部引用 ----------------
 var state: Node = null               ## GameState（规则层）
@@ -46,6 +49,7 @@ var _hand_order: Array = []          ## 手牌顺序（保 index 对齐）
 @onready var _cells_root: Control = $Battle/MapView/MapCells
 @onready var _units_root: Control = $Battle/MapView/Units
 @onready var _hand_r: Control = $Battle/HandPanelRight/HandRight
+@onready var _hand_l: Control = $Battle/HandPanelLeft/HandLeft
 
 
 func _ready() -> void:
@@ -329,6 +333,18 @@ func _render_hand_side(side: int, interactive: bool) -> void:
 		else:
 			# 对手手牌：只展示、不可操作（本地 AI 暂不做）
 			node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## 侧 → 手牌容器（ally_hand_side 决定我方在哪一侧）
+func _hand_parent(ally: bool) -> Control:
+	if ally:
+		return _hand_r if ally_hand_side == "right" else _hand_l
+	return _hand_l if ally_hand_side == "right" else _hand_r
+
+
+## 手牌长按（查看详情）—— 转发给外层
+func _on_hand_long_pressed(card_id: String) -> void:
+	hand_card_long_pressed.emit(card_id)
 
 
 ## 手牌卡绑定（当前签名 bind(CardData)；组件没实现 bind 则跳过）
