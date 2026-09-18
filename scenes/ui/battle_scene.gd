@@ -21,6 +21,7 @@ const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 const GameStateScript := preload("res://scripts/game/game_state.gd")
 const SampleDeckLib := preload("res://scripts/data/sample_deck.gd")
+const AnimDriverScript := preload("res://scripts/game/battle_anim_driver.gd")
 
 const PITCH := 250.0                        ## 格宽 = 单位卡尺寸
 const MAP_ORIGIN := Vector2(459.0, 40.0)    ## 棋盘左上角（与地图板对齐）
@@ -41,6 +42,8 @@ signal hand_card_long_pressed(card_id: String)
 
 # ---------------- 内部引用 ----------------
 var state: Node = null               ## GameState（规则层）
+var anim: Node = null                ## BattleAnimDriver（表现层 · Action Unit）
+var _fading := {}                    ## 正在播退场动画的 instance_id（数据已离场、节点待销毁）
 var _cells := {}                     ## Vector2i → BoardCell
 var _unit_nodes := {}                ## instance_id → UnitCard
 var _hand_nodes := {}                ## card_id → HandCard
@@ -56,6 +59,13 @@ func _ready() -> void:
 	state = GameStateScript.new()
 	state.name = "GameState"
 	add_child(state)
+	# 动画驱动（Action Unit · T3 自写；不用 AnimationPlayer/Tween）
+	anim = AnimDriverScript.new()
+	anim.name = "AnimDriver"
+	add_child(anim)
+	anim.set_node_provider(func(id: String) -> Node: return _unit_nodes.get(id, null))
+	anim.set_fx_parent(self)                     ## 飘字挂场景根（最上层，避免被遮挡）
+	anim.unit_fade_out_done.connect(_on_fade_out_done)
 	_connect_rules()
 	_connect_static_ui()
 	_build_cells()
@@ -90,6 +100,13 @@ func _connect_rules() -> void:
 	state.log_added.connect(_on_log)
 	state.main_button_state.connect(_set_main)
 	state.battle_ended.connect(_on_battle_ended)
+	# 规则事件 → 动画（表现层；不改规则）
+	state.unit_spawned.connect(func(i: UnitInstance) -> void: anim.on_unit_spawned(i))
+	state.unit_moved.connect(func(i: UnitInstance) -> void: anim.on_unit_moved(i))
+	state.unit_damaged.connect(func(i: UnitInstance, v: int) -> void: anim.on_unit_damaged(i, v))
+	state.effect_changed.connect(func(i: UnitInstance) -> void: anim.on_effect_changed(i))
+	state.unit_removed.connect(func(i: UnitInstance) -> void: anim.on_unit_removed(i))
+	state.log_added.connect(_on_log_for_fx)
 
 
 func _on_battle_ended(r: int, why: String) -> void:
@@ -258,7 +275,7 @@ func _on_unit_card_clicked(instance_id: String) -> void:
 		return
 	if inst.side == state.active:
 		state.select_unit(inst)
-		state.show_card_detail(inst.data)
+		show_card_detail(inst.data)
 	else:
 		var u: UnitInstance = state.sel_unit
 		if u != null:
@@ -270,10 +287,43 @@ func _on_unit_moved(inst: UnitInstance) -> void:
 	_refresh_highlights()
 
 
+## `单位退场` 动画播完 → 这时才真正销毁节点（迭代030/031 的时序要求）
+func _on_fade_out_done(instance_id: String) -> void:
+	_fading.erase(instance_id)
+	if _unit_nodes.has(instance_id) and is_instance_valid(_unit_nodes[instance_id]):
+		_unit_nodes[instance_id].queue_free()
+	_unit_nodes.erase(instance_id)
+
+
+## 从日志里捞"回费"事件做飘字（GameState 未单列该信号）
+func _on_log_for_fx(text: String) -> void:
+	var m := text.find(" 回费 +")
+	if m < 0:
+		return
+	# 解析 "… 回费 +N（现 M）"
+	var rest := text.substr(m + 5)
+	var num := ""
+	for ch in rest:
+		if ch >= "0" and ch <= "9":
+			num += ch
+		elif num != "":
+			break
+	if num == "":
+		return
+	# 飘在哪一侧：文本开头是玩家名（我方 = 0 / 敌方 = 1）
+	var mine: bool = text.begins_with(str(state.player_names.get(0, "?")))
+	var anchor: Control = $Battle/PlayerBesaInfoLift/BadgeImage if mine else $Battle/PlayerBesaInfoRight/BadgeImage
+	anim.float_text_raw(int(num), "refund", anchor.global_position + Vector2(0, 40))
+
+
 func _on_unit_removed(inst: UnitInstance) -> void:
-	if _unit_nodes.has(inst.instance_id):
-		_unit_nodes[inst.instance_id].queue_free()
-		_unit_nodes.erase(inst.instance_id)
+	# ⚠️ **不在这里销毁节点**：退场动画（「单位退场」淡出 20 帧）要先播完 —— 迭代030/031 的时序要求。
+	#    做法：把该 id 记入 _fading（数据已离场、节点保留），动画播完由 _on_fade_out_done 真正销毁。
+	#    节点**保留在 _unit_nodes 里**，动画驱动才能按 id 解析到它。
+	_fading[inst.instance_id] = true
+	if not _unit_nodes.has(inst.instance_id):
+		# 没有节点（例如从未渲染过）→ 无需动画，直接收尾
+		_fading.erase(inst.instance_id)
 
 
 func _refresh_unit(inst: UnitInstance) -> void:
