@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://bkur2by022fvr"]
+
+[ext_resource type="Texture2D" uid="uid://dmqbe4txap05g" path="res://assets/ui/fx/crt_scanline_tile.png" id="1_61qc0"]
+
+[sub_resource type="Animation" id="Animation_tvb1q"]
+length = 20.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Mover:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 20),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(0, 1080)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_jr2ln"]
+_data = {
+&"scan": SubResource("Animation_tvb1q")
+}
+
+[node name="CrtFx" type="Control" unique_id=956340755]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+
+[node name="CrtAnim" type="AnimationPlayer" parent="." unique_id=1281255564]
+libraries/ = SubResource("AnimationLibrary_jr2ln")
+autoplay = &"scan"
+
+[node name="Mover" type="Control" parent="." unique_id=959550007]
+modulate = Color(1, 1, 1, 0.039215688)
+anchors_preset = 0
+
+[node name="Sheet1" type="TextureRect" parent="Mover" unique_id=238556656]
+texture_repeat = 1
+layout_mode = 0
+offset_top = -1080.0
+offset_right = 2020.0
+mouse_filter = 2
+texture = ExtResource("1_61qc0")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Sheet2" type="TextureRect" parent="Mover" unique_id=1878158003]
+texture_repeat = 1
+layout_mode = 0
+offset_right = 2020.0
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("1_61qc0")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Sheet3" type="TextureRect" parent="Mover" unique_id=131961531]
+texture_repeat = 1
+layout_mode = 0
+offset_top = 1080.0
+offset_right = 2020.0
+offset_bottom = 2160.0
+mouse_filter = 2
+texture = ExtResource("1_61qc0")
+expand_mode = 1
+stretch_mode = 1

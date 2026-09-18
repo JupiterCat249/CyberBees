@@ -1,483 +1,435 @@
-[gd_scene load_steps=29 format=3]
+[gd_scene format=3 uid="uid://cftew331eyj7"]
 
-[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_attack_80.png" id="x1"]
-[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_health_80.png" id="x2"]
-[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_speed_80.png" id="x3"]
-[ext_resource type="Texture2D" path="res://assets/ui/zip_original/attr_range_80.png" id="x4"]
+[ext_resource type="Texture2D" uid="uid://cerkmlayin8js" path="res://card-system/card_system/icons/soldier.png" id="1_1n0xe"]
+[ext_resource type="Script" path="res://scenes/ui/card_unit.gd" id="1_hg6cp"]
+[ext_resource type="Texture2D" uid="uid://cs6chlhy7qtqr" path="res://card-system/card_system/art/卡牌c2-熊蜂.png" id="2_k5t5m"]
+[ext_resource type="Texture2D" uid="uid://dmqbe4txap05g" path="res://assets/ui/fx/crt_scanline_tile.png" id="3_k5t5m"]
+[ext_resource type="Texture2D" uid="uid://c8gvpynuh5m8j" path="res://assets/ui/icon_attr_2.png" id="5_hg6cp"]
+[ext_resource type="Texture2D" uid="uid://nw7jcc05qese" path="res://assets/ui/icon_attr_4.png" id="6_bk7yx"]
+[ext_resource type="Texture2D" uid="uid://cwoa6ag47ggaw" path="res://assets/ui/zip_original/attr_attack_80.png" id="x1"]
+[ext_resource type="Texture2D" uid="uid://cbqn217470hnj" path="res://assets/ui/zip_original/attr_speed_80.png" id="x3"]
 
 [sub_resource type="StyleBoxFlat" id="R1"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+bg_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R2"]
-bg_color = Color(0.231373, 0.505882, 0.427451, 1.000000)
+bg_color = Color(0.231373, 0.505882, 0.427451, 1)
 corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R3"]
-bg_color = Color(0.231373, 0.505882, 0.427451, 1.000000)
-corner_radius_top_left = 10
+bg_color = Color(0.231373, 0.505882, 0.427451, 1)
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R4"]
-bg_color = Color(0.207843, 0.207843, 0.207843, 1.000000)
+bg_color = Color(0.207843, 0.207843, 0.207843, 1)
+corner_radius_top_left = 10
 
 [sub_resource type="SystemFont" id="R5"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 900
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xfbsg"]
+bg_color = Color(0.20784314, 0.20784314, 0.20784314, 0)
+corner_radius_top_right = 10
 
 [sub_resource type="StyleBoxFlat" id="R6"]
-bg_color = Color(0.227451, 0.227451, 0.227451, 1.000000)
+bg_color = Color(1, 1, 1, 1)
+
+[sub_resource type="Animation" id="Animation_tvb1q"]
+length = 20.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Mover:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 20),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(0, 1080)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_jr2ln"]
+_data = {
+&"scan": SubResource("Animation_tvb1q")
+}
 
 [sub_resource type="StyleBoxFlat" id="R7"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+bg_color = Color(1, 1, 1, 0.8)
 
 [sub_resource type="SystemFont" id="R8"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 900
 
-[sub_resource type="StyleBoxFlat" id="R9"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R10"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_idb3a"]
+bg_color = Color(1, 1, 1, 0.88235295)
 
 [sub_resource type="StyleBoxFlat" id="R11"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+bg_color = Color(1, 1, 1, 0.78431374)
 
 [sub_resource type="SystemFont" id="R12"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 900
 
-[sub_resource type="StyleBoxFlat" id="R13"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R14"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uidc7"]
+bg_color = Color(1, 1, 1, 0.88235295)
 
 [sub_resource type="StyleBoxFlat" id="R15"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+bg_color = Color(1, 1, 1, 0.78431374)
 
 [sub_resource type="SystemFont" id="R16"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 900
 
-[sub_resource type="StyleBoxFlat" id="R17"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R18"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tnetp"]
+bg_color = Color(1, 1, 1, 0.88235295)
 
 [sub_resource type="StyleBoxFlat" id="R19"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
+bg_color = Color(1, 1, 1, 0.78431374)
 
 [sub_resource type="SystemFont" id="R20"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+font_weight = 900
 
-[sub_resource type="StyleBoxFlat" id="R21"]
-bg_color = Color(1.000000, 1.000000, 1.000000, 0.800000)
-
-[sub_resource type="SystemFont" id="R22"]
-font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j56he"]
+bg_color = Color(1, 1, 1, 0.88235295)
 
 [sub_resource type="StyleBoxFlat" id="R23"]
+bg_color = Color(0, 0, 0, 0)
 draw_center = false
-bg_color = Color(0.000000, 0.000000, 0.000000, 0.000000)
-corner_radius_top_left = 9
-corner_radius_top_right = 9
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.000000, 0.000000, 0.000000, 0.200000)
+border_color = Color(0, 0, 0, 0.2)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
 
-[node name="UnitCard" type="Control"]
+[node name="UnitCard" type="Control" unique_id=1089760922]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 250
-offset_bottom = 250
+offset_right = 250.0
+offset_bottom = 250.0
+script = ExtResource("1_hg6cp")
 
-[node name="Body" type="Panel" parent="."]
-offset_left = 0
-offset_top = 0
-offset_right = 250
-offset_bottom = 250
+[node name="Body" type="Panel" parent="." unique_id=871252763]
+layout_mode = 0
+offset_right = 250.0
+offset_bottom = 250.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R1")
 
-[node name="SideLeft" type="Panel" parent="."]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 250
+[node name="SideLeft" type="Panel" parent="." unique_id=658575170]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 250.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R2")
 
-[node name="SideRight" type="Panel" parent="."]
-offset_left = 210
-offset_top = 0
-offset_right = 250
-offset_bottom = 250
+[node name="SideRight" type="Panel" parent="." unique_id=80311760]
+layout_mode = 0
+offset_left = 210.0
+offset_right = 250.0
+offset_bottom = 250.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R3")
 
-[node name="CostPlate" type="Panel" parent="."]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
+[node name="CostPlate" type="Panel" parent="." unique_id=1688412968]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R4")
 
-[node name="Cost" type="Label" parent="."]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
-mouse_filter = 2
+[node name="Cost" type="Label" parent="CostPlate" unique_id=1109983518]
+layout_mode = 0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 43.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R5")
-theme_override_font_sizes/font_size = 26
-theme_override_colors/font_color = Color(1.000000, 1.000000, 1.000000, 1.000000)
+theme_override_font_sizes/font_size = 36
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "0"
 
-[node name="Artwork" type="Control" parent="."]
-offset_left = 47
-offset_top = 8
-offset_right = 202.83
-offset_bottom = 241
+[node name="UnitType" type="Panel" parent="." unique_id=2016135501]
+layout_mode = 0
+offset_left = 211.0
+offset_right = 250.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_xfbsg")
+
+[node name="TextureRect" type="TextureRect" parent="UnitType" unique_id=977117199]
+layout_mode = 0
+offset_right = 39.0
+offset_bottom = 40.0
+texture = ExtResource("1_1n0xe")
+expand_mode = 4
+
+[node name="Artwork" type="Control" parent="." unique_id=1671546105]
+anchors_preset = 0
+offset_left = 40.0
+offset_right = 210.0
+offset_bottom = 250.0
 mouse_filter = 2
 
-[node name="Art" type="Panel" parent="Artwork"]
-offset_left = 0
-offset_top = 0
-offset_right = 155.83
-offset_bottom = 233
+[node name="ArtPlane" type="Panel" parent="Artwork" unique_id=355035369]
+clip_contents = true
+layout_mode = 0
+offset_right = 171.0
+offset_bottom = 250.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R6")
 
-[node name="AttrLA" type="Control" parent="."]
-offset_left = 0
-offset_top = 65
-offset_right = 40
-offset_bottom = 105
+[node name="TextureRect" type="TextureRect" parent="Artwork/ArtPlane" unique_id=435124517]
+z_index = 1
+layout_mode = 0
+offset_left = -40.0
+offset_right = 460.0
+offset_bottom = 500.0
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_k5t5m")
+
+[node name="CrtFx" type="Control" parent="Artwork/ArtPlane" unique_id=956340755]
+clip_contents = true
+anchors_preset = 0
+offset_right = 1920.0
+offset_bottom = 1080.0
+
+[node name="CrtAnim" type="AnimationPlayer" parent="Artwork/ArtPlane/CrtFx" unique_id=1281255564]
+libraries/ = SubResource("AnimationLibrary_jr2ln")
+autoplay = &"scan"
+
+[node name="Mover" type="Control" parent="Artwork/ArtPlane/CrtFx" unique_id=959550007]
+self_modulate = Color(0, 0, 0, 1)
+anchors_preset = 0
+
+[node name="Sheet1" type="TextureRect" parent="Artwork/ArtPlane/CrtFx/Mover" unique_id=238556656]
+texture_repeat = 1
+layout_mode = 0
+offset_top = -1080.0
+offset_right = 2020.0
+mouse_filter = 2
+texture = ExtResource("3_k5t5m")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Sheet2" type="TextureRect" parent="Artwork/ArtPlane/CrtFx/Mover" unique_id=1878158003]
+texture_repeat = 1
+layout_mode = 0
+offset_right = 2020.0
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("3_k5t5m")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Sheet3" type="TextureRect" parent="Artwork/ArtPlane/CrtFx/Mover" unique_id=131961531]
+texture_repeat = 1
+layout_mode = 0
+offset_top = 1080.0
+offset_right = 2020.0
+offset_bottom = 2160.0
+mouse_filter = 2
+texture = ExtResource("3_k5t5m")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="Attr_Attack" type="Control" parent="." unique_id=1914181847]
+anchors_preset = 0
+offset_top = 65.0
+offset_right = 40.0
+offset_bottom = 145.0
 mouse_filter = 2
 
-[node name="ValueCell" type="Panel" parent="AttrLA"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
+[node name="ValueCell" type="Panel" parent="Attr_Attack" unique_id=500021810]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R7")
 
-[node name="Value" type="Label" parent="AttrLA"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
+[node name="Value" type="Label" parent="Attr_Attack" unique_id=283179695]
+layout_mode = 0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 43.0
+theme_override_colors/font_color = Color(0.31925523, 0.31925526, 0.31925526, 1)
 theme_override_fonts/font = SubResource("R8")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+theme_override_font_sizes/font_size = 36
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "0"
 
-[node name="Icon" type="TextureRect" parent="AttrLA"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
+[node name="AttrCell" type="Panel" parent="Attr_Attack" unique_id=2123566806]
+layout_mode = 0
+offset_top = 40.0
+offset_right = 40.0
+offset_bottom = 80.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_idb3a")
+
+[node name="Icon" type="TextureRect" parent="Attr_Attack/AttrCell" unique_id=2018951609]
+modulate = Color(0.133333, 0.133333, 0.133333, 1)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 mouse_filter = 2
 texture = ExtResource("x1")
 expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
 
-[node name="AttrLB" type="Control" parent="."]
-offset_left = 0
-offset_top = 105
-offset_right = 40
-offset_bottom = 145
+[node name="Attr_Speed" type="Control" parent="." unique_id=1539347439]
+anchors_preset = 0
+offset_top = 160.0
+offset_right = 40.0
+offset_bottom = 200.0
 mouse_filter = 2
 
-[node name="ValueCell" type="Panel" parent="AttrLB"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R9")
-
-[node name="Value" type="Label" parent="AttrLB"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R10")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="Icon" type="TextureRect" parent="AttrLB"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
-mouse_filter = 2
-texture = ExtResource("x2")
-expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
-
-[node name="AttrLC" type="Control" parent="."]
-offset_left = 0
-offset_top = 160
-offset_right = 40
-offset_bottom = 200
-mouse_filter = 2
-
-[node name="ValueCell" type="Panel" parent="AttrLC"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
+[node name="ValueCell" type="Panel" parent="Attr_Speed" unique_id=812625035]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R11")
 
-[node name="Value" type="Label" parent="AttrLC"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
+[node name="Value" type="Label" parent="Attr_Speed" unique_id=303573971]
+layout_mode = 0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 43.0
+theme_override_colors/font_color = Color(0.31925523, 0.31925526, 0.31925526, 1)
 theme_override_fonts/font = SubResource("R12")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+theme_override_font_sizes/font_size = 36
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "0"
 
-[node name="Icon" type="TextureRect" parent="AttrLC"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
+[node name="AttrCell" type="Panel" parent="Attr_Speed" unique_id=847686164]
+layout_mode = 0
+offset_top = 40.0
+offset_right = 40.0
+offset_bottom = 80.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_uidc7")
+
+[node name="Icon" type="TextureRect" parent="Attr_Speed/AttrCell" unique_id=1004248847]
+modulate = Color(0.133333, 0.133333, 0.133333, 1)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 mouse_filter = 2
 texture = ExtResource("x3")
 expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
 
-[node name="AttrLD" type="Control" parent="."]
-offset_left = 0
-offset_top = 200
-offset_right = 40
-offset_bottom = 240
+[node name="Attr_Health" type="Control" parent="." unique_id=214863889]
+anchors_preset = 0
+offset_left = 210.0
+offset_top = 65.0
+offset_right = 250.0
+offset_bottom = 145.0
 mouse_filter = 2
 
-[node name="ValueCell" type="Panel" parent="AttrLD"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R13")
-
-[node name="Value" type="Label" parent="AttrLD"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="Icon" type="TextureRect" parent="AttrLD"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
-mouse_filter = 2
-texture = ExtResource("x4")
-expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
-
-[node name="AttrRA" type="Control" parent="."]
-offset_left = 210
-offset_top = 65
-offset_right = 250
-offset_bottom = 105
-mouse_filter = 2
-
-[node name="ValueCell" type="Panel" parent="AttrRA"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
+[node name="ValueCell" type="Panel" parent="Attr_Health" unique_id=884680617]
+layout_mode = 0
+offset_left = 1.0
+offset_right = 40.0
+offset_bottom = 40.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R15")
 
-[node name="Value" type="Label" parent="AttrRA"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
+[node name="Value" type="Label" parent="Attr_Health" unique_id=959918937]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 43.0
+theme_override_colors/font_color = Color(0.31925523, 0.31925526, 0.31925526, 1)
 theme_override_fonts/font = SubResource("R16")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+theme_override_font_sizes/font_size = 36
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "0"
 
-[node name="Icon" type="TextureRect" parent="AttrRA"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
+[node name="AttrCell" type="Panel" parent="Attr_Health" unique_id=1018829895]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 40.0
+offset_right = 40.0
+offset_bottom = 80.0
 mouse_filter = 2
-texture = ExtResource("x1")
+theme_override_styles/panel = SubResource("StyleBoxFlat_tnetp")
+
+[node name="Icon" type="TextureRect" parent="Attr_Health/AttrCell" unique_id=1210845468]
+modulate = Color(0.133333, 0.133333, 0.133333, 1)
+layout_mode = 0
+offset_right = 39.0
+offset_bottom = 40.0
+mouse_filter = 2
+texture = ExtResource("5_hg6cp")
 expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
 
-[node name="AttrRB" type="Control" parent="."]
-offset_left = 210
-offset_top = 105
-offset_right = 250
-offset_bottom = 145
+[node name="Attr_Range" type="Control" parent="." unique_id=1430213219]
+anchors_preset = 0
+offset_left = 210.0
+offset_top = 160.0
+offset_right = 250.0
+offset_bottom = 240.0
 mouse_filter = 2
 
-[node name="ValueCell" type="Panel" parent="AttrRB"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R17")
-
-[node name="Value" type="Label" parent="AttrRB"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R18")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="Icon" type="TextureRect" parent="AttrRB"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
-mouse_filter = 2
-texture = ExtResource("x2")
-expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
-
-[node name="AttrRC" type="Control" parent="."]
-offset_left = 210
-offset_top = 160
-offset_right = 250
-offset_bottom = 200
-mouse_filter = 2
-
-[node name="ValueCell" type="Panel" parent="AttrRC"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
+[node name="ValueCell" type="Panel" parent="Attr_Range" unique_id=16444293]
+layout_mode = 0
+offset_left = 1.0
+offset_right = 40.0
+offset_bottom = 40.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R19")
 
-[node name="Value" type="Label" parent="AttrRC"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
+[node name="Value" type="Label" parent="Attr_Range" unique_id=264132295]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 43.0
+theme_override_colors/font_color = Color(0.3167847, 0.31678474, 0.3167847, 1)
 theme_override_fonts/font = SubResource("R20")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
+theme_override_font_sizes/font_size = 36
+text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
-text = "0"
 
-[node name="Icon" type="TextureRect" parent="AttrRC"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
+[node name="AttrCell" type="Panel" parent="Attr_Range" unique_id=621867045]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 40.0
+offset_right = 40.0
+offset_bottom = 80.0
 mouse_filter = 2
-texture = ExtResource("x3")
+theme_override_styles/panel = SubResource("StyleBoxFlat_j56he")
+
+[node name="Icon" type="TextureRect" parent="Attr_Range/AttrCell" unique_id=1521460380]
+modulate = Color(0.133333, 0.133333, 0.133333, 1)
+layout_mode = 0
+offset_right = 39.0
+offset_bottom = 40.0
+mouse_filter = 2
+texture = ExtResource("6_bk7yx")
 expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
 
-[node name="AttrRD" type="Control" parent="."]
-offset_left = 210
-offset_top = 200
-offset_right = 250
-offset_bottom = 240
-mouse_filter = 2
-
-[node name="ValueCell" type="Panel" parent="AttrRD"]
-offset_left = 0
-offset_top = 0
-offset_right = 40
-offset_bottom = 40
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R21")
-
-[node name="Value" type="Label" parent="AttrRD"]
-offset_left = 0
-offset_top = 4
-offset_right = 40
-offset_bottom = 36
-mouse_filter = 2
-theme_override_fonts/font = SubResource("R22")
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.133333, 0.133333, 0.133333, 1.000000)
-horizontal_alignment = 1
-vertical_alignment = 1
-text = "0"
-
-[node name="Icon" type="TextureRect" parent="AttrRD"]
-offset_left = 0
-offset_top = 40
-offset_right = 40
-offset_bottom = 80
-mouse_filter = 2
-texture = ExtResource("x4")
-expand_mode = 1
-stretch_mode = 0
-modulate = Color(0.133333, 0.133333, 0.133333, 1.000000)
-
-[node name="InnerLine" type="Panel" parent="."]
-offset_left = 1
-offset_top = 1
-offset_right = 249
-offset_bottom = 249
+[node name="InnerLine" type="Panel" parent="." unique_id=1680271903]
+layout_mode = 0
+offset_right = 250.0
+offset_bottom = 250.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R23")

@@ -14,7 +14,7 @@ color = Color(1, 0.639216, 0, 1)
 polygon = PackedVector2Array(50, 0.7, 92.7, 25.35, 92.7, 74.65, 50, 99.3, 7.3, 74.65, 7.3, 25.35)
 
 [node name="HexOutline" type="Line2D" parent="." unique_id=1246564258]
-points = PackedVector2Array(50, 0.7, 92.7, 25.35, 92.7, 74.65, 50, 99.3, 7.3, 74.65, 7.3, 25.35, 50, 0.7)
+points = PackedVector2Array(50, 1, 92.7, 25.35, 92.7, 74.65, 50, 99.3, 7.3, 74.65, 7.3, 25.35, 50, 1)
 width = 4.0
 default_color = Color(0, 0, 0, 0.501961)
 joint_mode = 2
