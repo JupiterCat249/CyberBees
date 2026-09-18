@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_dkpdm"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_5tybm"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌a-金刚蜂王.png" id="3_t05sb"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_b07ur"]
+
+[sub_resource type="Resource" id="Resource_3v5yk"]
+script = ExtResource("4_b07ur")
+artwork = ExtResource("3_t05sb")
+
+[resource]
+script = ExtResource("1_dkpdm")
+atk = 7
+hp = 8
+move = 1
+attack_range = 2
+refund = 4
+immune_command = true
+id = "0a0c24dd-5c76-442d-9aee-021e3b518e94"
+display_name = "金刚蜂王"
+kind = 0
+cost = 8
+glossary = "机场"
+skill_name = "【机场】蜂王巢口"
+description = "部署阶段可在自身相邻格部署兵蜂；蜂王免疫指令卡伤害与减益。"
+tags = "被动 · 部署 · 蜂王"
+visual = SubResource("Resource_3v5yk")

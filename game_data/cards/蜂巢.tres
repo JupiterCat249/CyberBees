@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_yrn6t"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_ur62j"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌b1-蜂巢.png" id="3_dk8u6"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_ohyqe"]
+
+[sub_resource type="Resource" id="Resource_tmeav"]
+script = ExtResource("4_ohyqe")
+artwork = ExtResource("3_dk8u6")
+
+[resource]
+script = ExtResource("1_yrn6t")
+hp = 5
+refund = 1
+id = "02d3373e-8b7e-45f1-a796-144a6f627abf"
+display_name = "蜂巢"
+kind = 2
+cost = 4
+glossary = "回费"
+skill_name = "【回费】采集"
+description = "每个己方回费阶段，额外回复 1 点费用。部署在己方领地任意格。"
+tags = "回费 · 资源建筑"
+visual = SubResource("Resource_tmeav")

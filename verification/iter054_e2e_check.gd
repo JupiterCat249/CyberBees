@@ -152,8 +152,14 @@ func _test_select_and_move() -> void:
 	_scene._cells[to].cell_clicked.emit(to)      # 点格子 → 移动
 	await get_tree().process_frame
 	_chk("点击格子成功移动", deployed.cell == to and before != to)
+	# ⚠️ 移动会触发「移动落位」动画（±3px 下沉回弹）→ 要等它播完再核对最终位置；
+	#    否则拿到的是动画中途值（这不是缺陷，是时序）
 	var n: Control = _scene._unit_nodes[deployed.instance_id]
-	_chk("移动后节点位置已同步",
+	var guard := 0
+	while _scene.anim != null and _scene.anim.engine.is_running("移动落位") and guard < 60:
+		await get_tree().process_frame
+		guard += 1
+	_chk("移动后节点位置已同步（动画播完后 %d 帧）" % guard,
 		n.position == Vector2(_scene._cell_pos_in_units(to)))
 
 

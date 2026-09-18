@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_s7pgp"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_52ang"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d2-治疗.png" id="3_fjd18"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_ahmpo"]
+
+[sub_resource type="Resource" id="Resource_a6c0q"]
+script = ExtResource("4_ahmpo")
+artwork = ExtResource("3_fjd18")
+
+[resource]
+script = ExtResource("1_s7pgp")
+hp = 2
+refund = 1
+id = "23ff1259-454c-448c-ae04-62c377a22b0a"
+display_name = "护盾单元"
+kind = 2
+cost = 2
+glossary = "支援"
+skill_name = "【支援】护盾"
+description = "选择 2 格内的 1 个己方兵蜂，赋予「护盾」：抵挡一次攻击（参与防御计算或己方回费阶段消失）。"
+tags = "支援 · 单位效果 · 增益 · 套盾"
+visual = SubResource("Resource_a6c0q")

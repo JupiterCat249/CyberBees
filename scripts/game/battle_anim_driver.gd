@@ -31,6 +31,7 @@ func _ready() -> void:
 	engine.name = "ActionUnit"
 	add_child(engine)
 	Presets.register_all(engine)
+	engine.owner_node = self        ## 结束回调兜底：pattern 的 trigger_on_stop_call 转发给本驱动
 	engine.node_provider = func(id: String) -> Node:
 		return node_provider.call(id) if node_provider.is_valid() else null
 

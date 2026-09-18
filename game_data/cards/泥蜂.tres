@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_5a5f4"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_cea5b"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌c1-泥蜂.png" id="3_jide4"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_wjlf0"]
+
+[sub_resource type="Resource" id="Resource_ln5l5"]
+script = ExtResource("4_wjlf0")
+artwork = ExtResource("3_jide4")
+
+[resource]
+script = ExtResource("1_5a5f4")
+atk = 3
+hp = 4
+move = 1
+attack_range = 2
+id = "ff137999-6694-4f64-9f4c-17cc4cd5efb6"
+display_name = "泥蜂"
+cost = 2
+skill_name = "（无技能）"
+description = "纯战斗兵蜂：攻击 3 / 速度 1 / 生命 4 / 射程 2。"
+tags = "兵蜂"
+visual = SubResource("Resource_ln5l5")

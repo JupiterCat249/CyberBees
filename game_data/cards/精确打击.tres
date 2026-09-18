@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_q4ss3"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_a6yo4"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_378ai"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d1-电击III.png" id="4_0416s"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_tdtpv"]
+
+[sub_resource type="Resource" id="Resource_05yj3"]
+script = ExtResource("5_tdtpv")
+artwork = ExtResource("4_0416s")
+
+[resource]
+script = ExtResource("2_a6yo4")
+dmg = 5
+target_range = 3
+self_to_graveyard = true
+id = "46e602b5-1dc3-4361-b852-d57b7b136a6a"
+display_name = "精确打击"
+kind = 3
+cost = 5
+glossary = "指令"
+skill_name = "【指令】精确打击"
+description = "仅对敌方兵蜂造成 5 点伤害（1 格溅射），不会误伤己方。"
+tags = "指令 · 攻击指令 · 过滤"
+visual = SubResource("Resource_05yj3")

@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_oqr0r"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_eug1e"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_nv3op"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d1-巡航导弹.png" id="4_yf80y"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_eyotj"]
+
+[sub_resource type="Resource" id="Resource_0d0m8"]
+script = ExtResource("5_eyotj")
+artwork = ExtResource("4_yf80y")
+
+[resource]
+script = ExtResource("2_eug1e")
+dmg = 5
+target_range = 3
+self_to_graveyard = true
+id = "cceca505-a262-4901-b67b-ae01887c7b33"
+display_name = "巡航导弹"
+kind = 3
+cost = 6
+glossary = "指令"
+skill_name = "【指令】巡航导弹"
+description = "对射程 3 内的 1 个单位造成 5 点指令伤害，并赋予「灼烧」：其回合结束时 -1 生命。蜂王免疫。"
+tags = "指令 · 攻击指令 · 减益"
+visual = SubResource("Resource_0d0m8")

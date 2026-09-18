@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_isga0"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_1rkvx"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_8jakk"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d2-治疗.png" id="4_awkfo"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_ptc4u"]
+
+[sub_resource type="Resource" id="Resource_reulq"]
+script = ExtResource("5_ptc4u")
+artwork = ExtResource("4_awkfo")
+
+[resource]
+script = ExtResource("2_1rkvx")
+target_range = 1
+self_to_graveyard = true
+id = "d6a7894d-6426-41d1-a235-892381785b6e"
+display_name = "回收"
+kind = 3
+cost = 2
+glossary = "指令"
+skill_name = "【指令】回收"
+description = "使射程 1 内的 1 个己方兵蜂退场，并返还 2 点费用。"
+tags = "指令 · 辅助指令 · 回收"
+visual = SubResource("Resource_reulq")

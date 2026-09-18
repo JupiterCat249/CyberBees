@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_48vfd"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_b7ayu"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌b1-蜂巢III.png" id="3_08kgg"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_j723s"]
+
+[sub_resource type="Resource" id="Resource_ok80d"]
+script = ExtResource("4_j723s")
+artwork = ExtResource("3_08kgg")
+
+[resource]
+script = ExtResource("1_48vfd")
+atk = 4
+hp = 2
+attack_range = 2
+id = "3612b426-b0a0-4772-be6c-eb468e99b424"
+display_name = "力场炮台"
+kind = 2
+cost = 2
+glossary = "被动"
+skill_name = "【被动】力场"
+description = "相邻己方单位获得 1 层「力场」：每层减少 2 点非指令伤害。"
+tags = "被动 · 地域效果 · 增益 · 力场"
+visual = SubResource("Resource_ok80d")

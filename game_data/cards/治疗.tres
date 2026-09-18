@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_54ww8"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_p6s0u"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_ieydu"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d2-治疗.png" id="4_27wmu"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_m7ht0"]
+
+[sub_resource type="Resource" id="Resource_laaib"]
+script = ExtResource("5_m7ht0")
+artwork = ExtResource("4_27wmu")
+
+[resource]
+script = ExtResource("2_p6s0u")
+heal = 4
+target_range = 2
+self_to_graveyard = true
+id = "260a4478-57fc-47fd-a53d-2fc075746a83"
+display_name = "治疗"
+kind = 3
+cost = 3
+glossary = "指令"
+skill_name = "【指令】治疗"
+description = "为射程 2 内的 1 个己方单位回复 4 点生命值（不超过上限）。使用后返回墓地。"
+tags = "指令 · 辅助指令"
+visual = SubResource("Resource_laaib")

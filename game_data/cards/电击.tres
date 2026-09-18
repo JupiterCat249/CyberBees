@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_dyemb"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_3o5g0"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_n2b1v"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d1-电击.png" id="4_hate6"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_v8wtn"]
+
+[sub_resource type="Resource" id="Resource_hb0xh"]
+script = ExtResource("5_v8wtn")
+artwork = ExtResource("4_hate6")
+
+[resource]
+script = ExtResource("2_3o5g0")
+dmg = 4
+target_range = 2
+self_to_graveyard = true
+id = "a02e7b08-db44-4507-80a9-47036ac42eb6"
+display_name = "电击"
+kind = 3
+cost = 3
+glossary = "指令"
+skill_name = "【指令】电击"
+description = "对射程 2 内的 1 个单位造成 4 点指令伤害。蜂王免疫。使用后返回墓地。"
+tags = "指令 · 攻击指令"
+visual = SubResource("Resource_hb0xh")

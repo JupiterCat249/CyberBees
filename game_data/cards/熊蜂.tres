@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="UnitData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_mxcg8"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_fixxl"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌c2-熊蜂.png" id="3_tg2la"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_q0a15"]
+
+[sub_resource type="Resource" id="Resource_e0qdl"]
+script = ExtResource("4_q0a15")
+artwork = ExtResource("3_tg2la")
+
+[resource]
+script = ExtResource("1_mxcg8")
+atk = 5
+hp = 8
+move = 1
+attack_range = 1
+id = "074c4880-fbeb-4fc3-be11-02cad5a0c603"
+display_name = "熊蜂"
+cost = 5
+glossary = "支援"
+skill_name = "【支援】护卫"
+description = "选择 1 格内的 1 个己方单位，赋予「护甲」：受到的每次伤害 -1。使用后结束该单位行动。"
+tags = "支援 · 单位效果 · 增益"
+visual = SubResource("Resource_e0qdl")

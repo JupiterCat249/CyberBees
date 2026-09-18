@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_0popc"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_7cer5"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_c85vq"]
+[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌d1-巡航导弹.png" id="4_3m8sg"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_0r6wq"]
+
+[sub_resource type="Resource" id="Resource_751py"]
+script = ExtResource("5_0r6wq")
+artwork = ExtResource("4_3m8sg")
+
+[resource]
+script = ExtResource("2_7cer5")
+dmg = 2
+target_range = 2
+aoe_span = 1
+self_to_graveyard = true
+id = "3f176394-820d-46af-a62f-e187c545e4ef"
+display_name = "扩散毒雾"
+kind = 3
+cost = 4
+glossary = "指令"
+skill_name = "【指令】扩散毒雾"
+description = "对目标单位造成 2 点伤害，并链式传播给其上下左右相邻单位各 2 点。"
+tags = "指令 · 攻击指令 · 链式传播"
+visual = SubResource("Resource_751py")

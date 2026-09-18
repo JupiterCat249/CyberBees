@@ -44,6 +44,11 @@ var fx_parent: Node = null
 ## 节点解析：外部可注入「单位实例 id → 节点」的映射函数，便于按 id 播放
 var node_provider: Callable = Callable()
 
+## 结束回调的**兜底宿主**：pattern 的 `trigger_on_stop_call` 若本引擎没有该方法，
+##   就转发给本节点（通常是接线层）。⚠️ 旧实现用 `_state` 做这层兜底，移植时曾漏掉 →
+##   表现为"退场动画播完了但回调从不触发、单位永不消失"（本迭代实测）。
+var owner_node: Node = null
+
 
 # ============================================================
 # 注册与查询
@@ -167,8 +172,11 @@ func _stop_instance(key: String) -> void:
 	# ⚠️ 结束回调钩子**必须在本函数**（"动画自然播完"的唯一出口）——
 	#    旧实现曾误插到 action() 开头 → 表现为"动画播完了但单位不消失"（V-005-8 实测）
 	var cb := str(p.get("trigger_on_stop_call", ""))
-	if cb != "" and has_method(cb):
-		call(cb, tgt)
+	if cb != "":
+		if has_method(cb):
+			call(cb, tgt)
+		elif owner_node != null and is_instance_valid(owner_node) and owner_node.has_method(cb):
+			owner_node.call(cb, tgt)
 
 
 func _run_key(pname: String, target: Node) -> String:
