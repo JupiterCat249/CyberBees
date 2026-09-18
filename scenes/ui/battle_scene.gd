@@ -1,20 +1,22 @@
 extends Control
 ## BattleScene —— 战斗场景**接线控制器**（组合素材场景 + 驱动 GameState）
 ##
-## 定位：本脚本**不是规则引擎**。它只做三件事，把"素材场景"与"游戏逻辑"接起来：
-##   ① 把逻辑层的数据绑到节点（绑定字典 / CardData）
-##   ② 把节点发出的交互信号**翻译**为规则调用，并转发给外层（emit）
+## 定位：本脚本**不是规则引擎**。它只做三件事：
+##   ① 把逻辑层数据绑到节点（绑定字典 / CardData）
+##   ② 把节点信号**翻译**为规则调用（并转发给外层）
 ##   ③ 把逻辑层下发的"可操作态"翻译成视图表现
 ##
 ## 通信原则（D-1）：组件只 emit 自己的信号、**不认识**本类；规则层只发状态信号、**不引用 UI**。
 ##
-## ⚠️ **场景内已有"烤好的"预览内容**（16 格 + 双方蜂王 + 双方各 4 张手牌）：
-##   目的是"在编辑器里打开场景就能看到内容"（不必运行）。
-##   运行时本类会**接手**这些节点（按名字认领格子、清掉预览单位/手牌后按真实数据重建）。
+## ⚠️ **本地双人对战（热座）**：两方**都由人操作**，但**只有轮到的那一方可操作**。
+##   故：两方手牌都渲染且都接信号；是否可选中由 `side == state.active` 判断。
 ##
-## ⚠️ **节点引用必须每次校验**：清预览 / 退场时会 queue_free，字典里会留下已释放的引用；
-##   对 freed 实例调方法会直接报错并把调试运行打进断点（本轮实测）。
-##   故所有遍历一律走 `_live_unit_node()` / `is_instance_valid()` 守卫。
+## ⚠️ **场景内已有"烤好的"预览内容**（16 格 + 双方蜂王 + 双方各 4 张手牌）：
+##   目的是"在编辑器里打开场景就能看到内容"。运行时本类会**接手**（按名字认领格子、
+##   清掉预览单位/手牌后按真实数据重建）。
+##
+## ⚠️ **节点引用必须每次校验**：清预览/退场会 queue_free，字典里会留下已释放引用；
+##   对 freed 实例调方法会报错并把调试运行打进断点（本轮实测）。一切走 `_live_unit_node()`。
 ##
 ## 素材场景（勿改结构）：battle_ui_alpha.tscn（本场景继承）· card_hand.tscn · card_unit.tscn
 
@@ -24,12 +26,17 @@ const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 const GameStateScript := preload("res://scripts/game/game_state.gd")
 const SampleDeckLib := preload("res://scripts/data/sample_deck.gd")
 const AnimDriverScript := preload("res://scripts/game/battle_anim_driver.gd")
+const DeckResPath := "res://game_data/decks/样例卡组.tres"
 
 const PITCH := 250.0                        ## 格宽 = 单位卡尺寸
 const HAND_SLOT := Vector2(200.0, 200.0)
 const HAND_GAP := Vector2(30.0, 30.0)
 
-@export var auto_start := true              ## 直接运行本场景时用样例卡组自动开局
+const SIDE_ALLY := 0
+const SIDE_ENEMY := 1
+
+@export var auto_start := true              ## 直接运行本场景时自动开局
+@export var use_resources := true           ## 开局优先从 game_data/ 的 .tres 读卡组
 @export var first_player: int = 0           ## 0 = 我方先手
 @export var ally_name: String = "玩家·绿"
 @export var enemy_name: String = "玩家·红"
@@ -48,10 +55,10 @@ var state: Node = null                      ## GameState（规则层）
 var anim: Node = null                       ## BattleAnimDriver（表现层）
 var _cells := {}                            ## Vector2i → BoardCell
 var _unit_nodes := {}                       ## instance_id → UnitCard
-var _hand_nodes := {}                       ## card_id → HandCard
-var _hand_order: Array = []
+var _hand_nodes := {SIDE_ALLY: {}, SIDE_ENEMY: {}}   ## side → {card_id: HandCard}
+var _hand_order := {SIDE_ALLY: [], SIDE_ENEMY: []}   ## side → [card_id]（与 state.hand 下标对齐）
 var _fading := {}                           ## 正在播退场动画的 instance_id
-var _preview_cleared := false               ## 预览单位是否已清（避免反复清）
+var _preview_cleared := false
 
 @onready var _cells_root: Control = $Battle/MapView/MapCells
 @onready var _units_root: Control = $Battle/MapView/Units
@@ -75,8 +82,28 @@ func _ready() -> void:
 	_build_cells()
 	set_player_names(ally_name, enemy_name)
 	if auto_start:
-		start_battle({0: SampleDeckLib.build("绿"), 1: SampleDeckLib.build("红")},
-			first_player, {0: ally_name, 1: enemy_name})
+		start_battle(_starting_decks(), first_player, {0: ally_name, 1: enemy_name})
+
+
+## 开局卡组：优先读**资源**（game_data/）；资源不可用（缺卡）则回退样例卡组
+## ⚠️ 卡组资源引用的卡牌资源必须都已存在，否则加载后会"蜂王为空" → 必须校验后回退
+func _starting_decks() -> Dictionary:
+	if use_resources:
+		var res_deck: DeckData = _load_deck_resource(DeckResPath)
+		if res_deck != null and res_deck.queen != null and res_deck.cards.size() > 0:
+			print("[BATTLE] 开局卡组来自资源：%s（%d 张，蜂王=%s）" % [
+				res_deck.resource_path, res_deck.cards.size(), res_deck.queen.display_name])
+			var d2: DeckData = res_deck.duplicate(true)
+			return {SIDE_ALLY: res_deck, SIDE_ENEMY: d2}
+		push_warning("[BATTLE] 卡组资源不可用 → 回退样例卡组（代码构造）")
+	return {SIDE_ALLY: SampleDeckLib.build("绿"), SIDE_ENEMY: SampleDeckLib.build("红")}
+
+
+func _load_deck_resource(path: String) -> DeckData:
+	if not ResourceLoader.exists(path):
+		return null
+	var r = load(path)
+	return r as DeckData
 
 
 ## 开局：传入双方卡组（DeckData）与先手方
@@ -85,7 +112,7 @@ func start_battle(decks: Dictionary, first_player_side: int = 0, names: Dictiona
 	_refresh_all()
 
 
-## 取一个**仍有效**的单位节点（字典里可能是已释放的引用 → 返回 null 并顺手清理）
+## 取一个**仍有效**的单位节点（字典里可能是已释放引用 → 返回 null 并顺手清理）
 func _live_unit_node(id: String) -> Node:
 	var n = _unit_nodes.get(id, null)
 	if n == null or not is_instance_valid(n):
@@ -106,7 +133,7 @@ func _connect_static_ui() -> void:
 
 
 # ============================================================
-#  规则层 → 视图（信号翻译）
+#  规则层 → 视图
 # ============================================================
 
 func _connect_rules() -> void:
@@ -122,9 +149,9 @@ func _connect_rules() -> void:
 	state.unit_moved.connect(_on_unit_moved)
 	state.unit_removed.connect(_on_unit_removed)
 	state.effect_changed.connect(_refresh_unit)
-	state.phase_changed.connect(func(_a: int, _p: int, _r: int) -> void: _refresh_highlights())
-	state.selection_changed.connect(func(_k: String, _id: String) -> void: _refresh_highlights())
+	state.phase_changed.connect(func(_a: int, _p: int, _r: int) -> void: _refresh_hand_playable())
 	state.turn_started.connect(_on_turn_started)
+	state.selection_changed.connect(func(_k: String, _id: String) -> void: _refresh_highlights())
 	state.log_added.connect(_on_log)
 	state.main_button_state.connect(_set_main)
 	state.battle_ended.connect(_on_battle_ended)
@@ -142,13 +169,14 @@ func _set_main(text: String, enabled: bool) -> void:
 
 
 func _on_turn_started(active: int, round_no: int) -> void:
-	$HUD/MatchInfo/TurnInfo.text = "回合%d--%s" % [round_no, "先手" if active == 0 else "后手"]
+	$HUD/MatchInfo/TurnInfo.text = "回合%d--%s" % [round_no, "绿方" if active == SIDE_ALLY else "红方"]
 	_refresh_cost()
+	_refresh_hand_playable()
 
 
 func _refresh_cost() -> void:
-	for side in [0, 1]:
-		var node := $Battle/PlayerBesaInfoLift if side == 0 else $Battle/PlayerBesaInfoRight
+	for side in [SIDE_ALLY, SIDE_ENEMY]:
+		var node := $Battle/PlayerBesaInfoLift if side == SIDE_ALLY else $Battle/PlayerBesaInfoRight
 		var lb: Label = node.get_node_or_null("BadgeImage/Value")
 		if lb:
 			lb.text = str(int(state.cost[side]))
@@ -168,16 +196,15 @@ func _on_log(t: String) -> void:
 			break
 	if num == "":
 		return
-	var mine: bool = t.begins_with(str(state.player_names.get(0, "?")))
-	var anchor: Control = $Battle/PlayerBesaInfoLift/BadgeImage if mine else $Battle/PlayerBesaInfoRight/BadgeImage
+	var is_ally: bool = t.begins_with(str(state.player_names.get(SIDE_ALLY, "?")))
+	var anchor: Control = $Battle/PlayerBesaInfoLift/BadgeImage if is_ally else $Battle/PlayerBesaInfoRight/BadgeImage
 	anim.float_text_raw(int(num), "refund", anchor.global_position + Vector2(0, 40))
 
 
 # ============================================================
-#  棋盘格（点击命中区，无视觉 —— 棋盘视觉由地图素材自带）
+#  棋盘格
 # ============================================================
 
-## 场景里已烤好 16 个格（Cell_x_y）→ **按名字认领**；缺失的才补建
 func _build_cells() -> void:
 	for x in 4:
 		for y in 4:
@@ -189,7 +216,7 @@ func _build_cells() -> void:
 				node.position = _cell_pos_in_units(c)
 				node.size = Vector2(PITCH, PITCH)
 				_cells_root.add_child(node)
-			node.set_script(CELL_SCRIPT)          ## 无脚本的烤节点 → 补脚本；已有则不动
+			node.set_script(CELL_SCRIPT)
 			node.set("cell", c)
 			node.set("mouse_filter", Control.MOUSE_FILTER_STOP)
 			if node.has_signal("cell_clicked") and not node.cell_clicked.is_connected(_on_cell_clicked):
@@ -200,6 +227,7 @@ func _build_cells() -> void:
 func _on_cell_clicked(cell: Vector2i) -> void:
 	if state == null:
 		return
+	var side: int = state.active          ## 本地双人：操作方 = 当前行动方
 	if state.sel_support != null:
 		var tgt: UnitInstance = state.board.unit_at(cell)
 		if tgt != null and state.confirm_support(tgt):
@@ -208,16 +236,16 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 		return
 	if state.sel_kind == state.SelKind.HAND:
 		var idx: int = state.sel_hand_index
-		var hand_cards: Array = state.hand[0]
+		var hand_cards: Array = state.hand[side]
 		if idx < 0 or idx >= hand_cards.size():
 			state.cancel_selection()
 			return
 		var card: CardData = hand_cards[idx]
 		if card is UnitData:
-			state.deploy_unit(0, idx, cell)
+			state.deploy_unit(side, idx, cell)
 		else:
 			var target: UnitInstance = state.board.unit_at(cell)
-			if target != null and state.use_command(0, idx, target):
+			if target != null and state.use_command(side, idx, target):
 				state.cancel_selection()
 		_refresh_highlights()
 		return
@@ -231,7 +259,7 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 		_refresh_highlights()
 		return
 	var here: UnitInstance = state.board.unit_at(cell)
-	if here != null and here.side == 0:
+	if here != null and here.side == side:
 		state.select_unit(here)
 		show_card_detail(here.data)
 		_refresh_highlights()
@@ -251,7 +279,6 @@ func _on_unit_spawned(inst: UnitInstance) -> void:
 	_refresh_highlights()
 
 
-## 首帧清掉场景里烤的**预览单位**（只做一次）
 func _clear_preview_units() -> void:
 	if _preview_cleared:
 		return
@@ -259,7 +286,6 @@ func _clear_preview_units() -> void:
 	for ch in _units_root.get_children():
 		if not ch.is_queued_for_deletion():
 			ch.queue_free()
-	# 字典里可能还留着这些预览节点的引用 → 一概清掉（真实单位会重建）
 	_unit_nodes.clear()
 
 
@@ -285,24 +311,32 @@ func _spawn_unit_node(inst: UnitInstance) -> void:
 
 
 ## UnitInstance → 单位卡绑定字典（视觉层数据；静态走 data、运行态走实例）
+## ⚠️ **art**：把卡自己的立绘传下去（否则单位卡的立绘永远是场景默认图）
 func unit_view_data(inst: UnitInstance) -> Dictionary:
 	if inst == null:
 		return {}
 	var kind := "unit"
+	var art = null
+	var nm := ""
 	if inst.data != null:
+		nm = inst.data.display_name
 		match inst.data.kind:
 			CardData.CardKind.QUEEN: kind = "queen"
 			CardData.CardKind.BUILDING: kind = "building"
 			CardData.CardKind.COMMAND, CardData.CardKind.COMMAND_X: kind = "order"
+		if inst.data.visual != null:
+			art = inst.data.visual.artwork
 	return {
 		"id": inst.instance_id,
+		"name": nm,
 		"cost": inst.data.cost if inst.data != null else 0,
 		"atk": inst.atk(),
 		"hp": inst.current_hp,
 		"move": inst.move_range(),
 		"range": inst.attack_range(),
-		"mine": inst.side == 0,
+		"mine": inst.side == SIDE_ALLY,
 		"type": kind,
+		"art": art,
 	}
 
 
@@ -313,12 +347,13 @@ func _on_unit_clicked(instance_id: String) -> void:
 	var inst := _find_unit(instance_id)
 	if inst == null:
 		return
-	if inst.side == 0:
+	var side: int = state.active
+	if inst.side == side:
 		state.select_unit(inst)
 		show_card_detail(inst.data)
 	else:
 		var u: UnitInstance = state.sel_unit
-		if u != null:
+		if u != null and u.side == side:
 			state.attack(u, inst)
 	_refresh_highlights()
 
@@ -366,7 +401,6 @@ func _find_unit(instance_id: String) -> UnitInstance:
 	return null
 
 
-## 把全部单位节点吸附回**格子基准位置**（位移类动画的收位）
 func _snap_units() -> void:
 	if state == null:
 		return
@@ -377,33 +411,31 @@ func _snap_units() -> void:
 
 
 # ============================================================
-#  手牌（双方都渲染）
+#  手牌（**双方都渲染、都接信号**；只有行动方可选中）
 # ============================================================
 
 func _refresh_hand() -> void:
-	_render_hand_side(0, true)
-	_render_hand_side(1, false)
+	for side in [SIDE_ALLY, SIDE_ENEMY]:
+		_render_hand_side(side)
 	_refresh_hand_playable()
 
 
 func _hand_parent(side: int) -> Control:
-	var is_ally := side == 0
+	var is_ally := side == SIDE_ALLY
 	if ally_hand_side == "right":
 		return _hand_r if is_ally else _hand_l
 	return _hand_l if is_ally else _hand_r
 
 
-## 渲染一侧手牌（重建；我方那侧接信号可交互）
-func _render_hand_side(side: int, interactive: bool) -> void:
+func _render_hand_side(side: int) -> void:
 	var parent := _hand_parent(side)
 	if parent == null:
 		return
 	for c in parent.get_children():
 		if not c.is_queued_for_deletion():
 			c.queue_free()
-	if interactive:
-		_hand_nodes.clear()
-		_hand_order.clear()
+	_hand_nodes[side].clear()
+	_hand_order[side].clear()
 	var cards: Array = state.hand[side]
 	for i in cards.size():
 		var data: CardData = cards[i]
@@ -416,25 +448,24 @@ func _render_hand_side(side: int, interactive: bool) -> void:
 		parent.add_child(node)
 		if node.has_method("bind"):
 			node.call("bind", data)
-		if interactive:
-			if node.has_signal("hand_clicked"):
-				node.hand_clicked.connect(_on_hand_clicked)
-			if node.has_signal("hand_long_pressed"):
-				node.hand_long_pressed.connect(_on_hand_long_pressed)
-			_hand_nodes[data.id] = node
-			_hand_order.append(data.id)
-		else:
-			node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# 两方都接信号（热座双人）；能否选中由 _refresh_hand_playable 判定
+		if node.has_signal("hand_clicked"):
+			node.hand_clicked.connect(_on_hand_clicked.bind(side))
+		if node.has_signal("hand_long_pressed"):
+			node.hand_long_pressed.connect(_on_hand_long_pressed)
+		_hand_nodes[side][data.id] = node
+		_hand_order[side].append(data.id)
 
 
-func _on_hand_clicked(card_id: String) -> void:
+## 手牌被点：**只有行动方**的手牌能选中
+func _on_hand_clicked(card_id: String, side: int) -> void:
 	hand_card_clicked.emit(card_id)
-	if state == null:
+	if state == null or side != state.active:
 		return
-	var idx := _hand_order.find(card_id)
+	var idx: int = _hand_order[side].find(card_id)
 	if idx >= 0:
 		state.select_hand(idx)
-		var cards: Array = state.hand[0]
+		var cards: Array = state.hand[side]
 		if idx < cards.size():
 			show_card_detail(cards[idx])
 	_refresh_highlights()
@@ -444,17 +475,28 @@ func _on_hand_long_pressed(card_id: String) -> void:
 	hand_card_long_pressed.emit(card_id)
 
 
+## 每张手牌的可操作态 + **透明归一**（非行动方压暗，行动方必须还原，否则会留下暗）
 func _refresh_hand_playable() -> void:
-	for i in _hand_order.size():
-		var n: Control = _hand_nodes.get(_hand_order[i], null)
-		if n == null or not is_instance_valid(n):
-			continue
-		_call_opt(n, "set_playable", [state.active == 0 and state.can_play_hand(0, i)])
-		_call_opt(n, "set_selected", [state.sel_kind == state.SelKind.HAND and state.sel_hand_index == i])
+	if state == null:
+		return
+	for side in [SIDE_ALLY, SIDE_ENEMY]:
+		var is_active: bool = side == state.active
+		for i in _hand_order[side].size():
+			var n: Control = _hand_nodes[side].get(_hand_order[side][i], null)
+			if n == null or not is_instance_valid(n):
+				continue
+			var can: bool = is_active and state.can_play_hand(side, i)
+			_call_opt(n, "set_playable", [can])
+			_call_opt(n, "set_selected",
+				[is_active and state.sel_kind == state.SelKind.HAND and state.sel_hand_index == i])
+			# 透明归一：非行动方压暗；行动方恢复（set_playable 可能已设过，这里以透明通道只调 a）
+			var c: Color = n.modulate
+			c.a = 0.55 if not is_active else 1.0
+			n.modulate = c
 
 
 # ============================================================
-#  高亮（把规则层的可操作集合翻译为表现）
+#  高亮
 # ============================================================
 
 func _refresh_highlights() -> void:
@@ -468,13 +510,14 @@ func _refresh_highlights() -> void:
 		if n != null:
 			_call_opt(n, "set_selectable", [false])
 			_call_opt(n, "set_selected", [false])
+	var side: int = state.active
 	if state.sel_support != null:
 		for u in state.support_targets():
 			if _cells.has(u.cell):
 				_cells[u.cell].set_highlight("deploy")
 		return
 	if state.sel_kind == state.SelKind.HAND:
-		var hand_cards: Array = state.hand[0]
+		var hand_cards: Array = state.hand[side]
 		var idx: int = state.sel_hand_index
 		if idx >= 0 and idx < hand_cards.size() and hand_cards[idx] is UnitData:
 			for c in state.selected_deploy_cells():
@@ -497,7 +540,7 @@ func _refresh_highlights() -> void:
 		if sn != null:
 			_call_opt(sn, "set_selected", [true])
 		return
-	for u in state.board.units_of(state.active):
+	for u in state.board.units_of(side):
 		var n2 := _live_unit_node(u.instance_id)
 		if n2 != null:
 			var act: bool = state.can_unit_move(u) or state.can_unit_attack(u)
@@ -531,7 +574,7 @@ func _refresh_all() -> void:
 
 
 # ============================================================
-#  静态 UI 接口
+#  详情区
 # ============================================================
 
 func show_card_detail(data: CardData) -> void:
@@ -570,7 +613,7 @@ func set_match_info(turn_text: String, map_name: String, site_effect: String) ->
 
 
 func set_cost(side: int, value: String) -> void:
-	var node := $Battle/PlayerBesaInfoLift if side == 0 else $Battle/PlayerBesaInfoRight
+	var node := $Battle/PlayerBesaInfoLift if side == SIDE_ALLY else $Battle/PlayerBesaInfoRight
 	var lb: Label = node.get_node_or_null("BadgeImage/Value")
 	if lb:
 		lb.text = value
@@ -580,7 +623,7 @@ func set_player_names(ally: String, enemy: String) -> void:
 	$Battle/PlayerBesaInfoLift/PlayerNamesLeft.text = ally
 	$Battle/PlayerBesaInfoRight/PlayerNamesRight.text = enemy
 	if state != null:
-		state.player_names = {0: ally, 1: enemy}
+		state.player_names = {SIDE_ALLY: ally, SIDE_ENEMY: enemy}
 
 
 func set_main_button(text: String, enabled: bool = true) -> void:
@@ -626,6 +669,17 @@ func rotate_hand() -> bool:
 	return state.rotate_hand(state.active) if state != null else false
 
 
+## 换地图（从资源加载：名字 + 地形贴图 + 场地效果文案）
+func load_map_resource(path: String) -> bool:
+	if not ResourceLoader.exists(path):
+		return false
+	var md := load(path) as MapData
+	if md == null:
+		return false
+	load_map(md)
+	return true
+
+
 func clear_all() -> void:
 	for n in _units_root.get_children():
 		if not n.is_queued_for_deletion():
@@ -635,5 +689,7 @@ func clear_all() -> void:
 			if not c.is_queued_for_deletion():
 				c.queue_free()
 	_unit_nodes.clear()
-	_hand_nodes.clear()
-	_hand_order.clear()
+	_hand_nodes[SIDE_ALLY].clear()
+	_hand_nodes[SIDE_ENEMY].clear()
+	_hand_order[SIDE_ALLY].clear()
+	_hand_order[SIDE_ENEMY].clear()

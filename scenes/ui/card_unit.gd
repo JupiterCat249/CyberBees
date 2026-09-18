@@ -5,11 +5,13 @@ extends Control
 ## `@tool` = 在**编辑器里**也能绑定内容 → 打开战斗场景即可直接看到卡面（不必运行）
 ##
 ## ⚠️ 节点路径以 **card_unit.tscn 的真实层级**为准：
-##    费用 = `CostPlate/Cost`（不是 `$Cost`）· 四维 = `Attr_Attack|Attr_Speed|Attr_Health|Attr_Range/Value`
-##    统一用 `_set_text(path, …)` 取节点并**判空**，缺节点只跳过、不崩。
+##    · 费用 = CostPlate/Cost
+##    · 四维 = Attr_Attack / Attr_Health / Attr_Speed / Attr_Range 下的 Value
+##    · **立绘 = Artwork/ArtPlane/TextureRect**（此前漏绑 → 单位放出后立绘永远是默认图）
+##    统一用 _set_prop(path, prop, value) 取节点并**判空**，缺节点只跳过、不崩。
 ##
 ## 绑定数据（视觉层字典，不含规则判断）：
-##   id / cost / atk / hp / move / range / mine / type
+##   id / cost / atk / hp / move / range / mine / type / art(Texture2D)
 ##   mine = true → 我方绿(#3B816D) / false → 敌方红(#A84331)（策划案 §五 卡牌侧边）
 ##   type → 卡牌类型底色：unit #FFFFFF / queen #FFD07E / building #DDC29B / order #D9D9D9
 
@@ -37,13 +39,21 @@ func bind(data: Dictionary) -> void:
 	_tint("SideRight", side_color)
 	# 卡牌类型底色（本体）
 	_tint("Body", Color(TYPE_COLOR.get(String(data.get("type", "unit")), "#FFFFFF")))
+	# **立绘同步**：按实际卡数据的立绘刷新
+	var tex = data.get("art", null)
+	if tex is Texture2D:
+		_set_prop("Artwork/ArtPlane/TextureRect", "texture", tex)
 
 
-## 给节点设文本（缺节点则跳过，不崩）
-func _set_text(path: String, value: String) -> void:
+## 设节点属性（缺节点则跳过，不崩）
+func _set_prop(path: String, prop: String, value) -> void:
 	var node := get_node_or_null(path)
 	if node != null:
-		node.set("text", value)
+		node.set(prop, value)
+
+
+func _set_text(path: String, value: String) -> void:
+	_set_prop(path, "text", value)
 
 
 ## 给 Panel 换底色（复制 StyleBoxFlat，避免改到共享资源）

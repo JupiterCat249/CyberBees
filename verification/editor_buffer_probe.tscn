@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cyha5f3nxemlv"]
+
+[ext_resource type="Script" path="res://verification/editor_buffer_probe.gd" id="1_ebp"]
+
+[node name="EditorBufferProbe" type="Node" unique_id=651920057]
+script = ExtResource("1_ebp")
