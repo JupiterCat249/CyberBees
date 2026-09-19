@@ -31,6 +31,10 @@ var config: BattleConfig = null
 
 ## 当前选中（**只保存索引/id，不保存 UI 引用**）
 var sel_kind: int = 0            ## 0=无 1=手牌 2=单位 3=支援
+## 支援：**待确认目标**（迭代059 步3：人要求「做回原有设计 —— 双击确认」）
+##   第一次点击友方 → 进入待确认；**再次点击同一目标**或按主按钮「确认」→ 执行
+##   改选其它单位 / 取消选中 → 待确认失效
+var support_pending: UnitInstance = null
 var sel_support: SkillData = null   ## 支援技能（sel_kind==3 时有效）
 var sel_hand_index: int = -1
 var sel_unit: UnitInstance = null
@@ -417,7 +421,11 @@ func request_use_command(side: int, hand_index: int, target: UnitInstance) -> bo
 	return true
 
 
-## 支援技能（a500 行动机会 5：技能没有支援条件无法使用支援技能）
+## 支援：**双击确认**（迭代059 步3 —— 恢复原设计，不需要额外 UI 入口）
+##   第一次点击友方 → 进入待确认（按钮变「确认」）
+##   **再次点击同一目标** 或 按主按钮「确认」 → 真正执行支援
+##   改选/取消/执行后 → 待确认失效
+## 返回：true = 已执行；false = 未执行（待确认中 / 不合法）
 func request_support(side: int, unit: UnitInstance, skill: SkillData,
 		target: UnitInstance) -> bool:
 	if not _can_act_with(side, unit) or skill == null or target == null:
@@ -428,6 +436,17 @@ func request_support(side: int, unit: UnitInstance, skill: SkillData,
 		return false
 	if state.board.manhattan(unit.cell, target.cell) > skill.target_range:
 		return false
+	# ── 双击确认：第一次点击只进入待确认，不执行 ──
+	##  ⚠️ 顺序：**先判合法，再设待确认**。
+	##    若先设待确认，非法目标也会把按钮变成「确认」→ 误导玩家。
+	if support_pending != target:
+		support_pending = target
+		_log("待确认：再次点击 %s 执行【支援】%s" % [target.card_name(), skill.display_name])
+		_emit_button()
+		_emit_selection()
+		return false
+	# ── 第二次点击同一目标 → 执行 ──
+	support_pending = null
 	var applied := 0
 	for e in skill.effects:
 		if Effects.grant(target, e):
@@ -455,7 +474,19 @@ func request_support(side: int, unit: UnitInstance, skill: SkillData,
 	_cancel_selection()
 	_emit_selection()
 	_emit_action_availability()
+	_emit_button()
 	return true
+
+
+## 主按钮「确认」：对待确认的支援目标执行支援
+func confirm_pending() -> bool:
+	if support_pending == null:
+		return false
+	if sel_unit == null or sel_support == null:
+		support_pending = null
+		_emit_button()
+		return false
+	return request_support(sel_unit.side, sel_unit, sel_support, support_pending)
 
 
 func _can_act_with(side: int, unit: UnitInstance) -> bool:
@@ -484,14 +515,34 @@ func select_hand(side: int, index: int) -> void:
 	_emit_button()          ## 选卡后按钮变「弃牌」（G-6 Q-3）
 
 
+## 选中单位（迭代059 步3：自动带上该单位的支援技能 —— 不需要额外 UI 入口）
 func select_unit(side: int, unit: UnitInstance) -> void:
 	if state == null or unit == null or unit.side != state.active:
 		return
+	support_pending = null        ## 改选单位 → 旧的待确认失效（原设计口径）
 	sel_kind = 2
 	sel_unit = unit
 	sel_hand_index = -1
+	sel_support = find_support_skill(unit)   ## 自动带上支援技能（有则可直接点友方）
+	if sel_support != null:
+		sel_kind = 3
 	_emit_selection()
 	_emit_button()          ## 选中单位 → 按钮退出「弃牌」态，恢复阶段文案（G-6）
+
+
+## 取该单位的支援技能（无则 null）—— 视图/引擎共用，避免UI为支援单独做入口
+func find_support_skill(unit: UnitInstance) -> SkillData:
+	if unit == null or unit.data == null:
+		return null
+	for sk in unit.data.skills:
+		if sk != null and sk.kind == SkillData.Kind.SUPPORT:
+			return sk
+	return null
+
+
+## 该单位是否有支援技能（视图可据此提示，但不需要额外入口）
+func has_support_skill(unit: UnitInstance) -> bool:
+	return find_support_skill(unit) != null
 
 
 ## 选中支援技能（视图点"支援"按钮时调用）→ 会下发支援目标预览
@@ -506,6 +557,7 @@ func select_support(side: int, unit: UnitInstance, skill: SkillData) -> void:
 
 
 func _cancel_selection() -> void:
+	support_pending = null
 	sel_kind = 0
 	sel_hand_index = -1
 	sel_unit = null
@@ -634,6 +686,15 @@ func _emit_button() -> void:
 	var text := ""
 	var hint := ""
 	var enabled := true
+	## 待确认支援 → 按钮变「确认」（迭代059 步3：恢复原设计的待确认态）
+	if support_pending != null:
+		text = "确认"
+		enabled = true
+		hint = "再次点击 %s 或点本按钮执行【支援】%s" % [
+			support_pending.card_name(),
+			sel_support.display_name if sel_support != null else ""]
+		bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled, hint)
+		return
 	## 选中手牌 → 按钮变弃牌（a500 抽卡 6：丢弃消耗 = 部署费用；X 费卡 = 10）
 	var sel_card: CardData = _selected_hand_card()
 	if sel_card != null:

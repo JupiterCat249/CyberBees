@@ -14,6 +14,13 @@ var cell: Vector2i = Vector2i.ZERO
 var highlight: String = ""      ## "" | "move" | "attack" | "deploy" | "deny"
 var selected: bool = false
 
+## ⭐ 特殊地形（迭代059 步3）：视图把地形效果/渲染参数**灌进来**，格子只负责画
+##    —— 格子不自己去查地图，规则数据由 arena_view 下发（保持单向分层）
+var terrain_tint: Color = Color(0, 0, 0, 0)      ## a=0 表示无地形
+var terrain_icon: Texture2D = null
+var terrain_params: TerrainParams = null
+var terrain_name: String = ""
+
 const _COL_MOVE := Color(0.25, 0.85, 0.45, 0.28)
 const _COL_ATTACK := Color(0.95, 0.30, 0.25, 0.30)
 const _COL_DEPLOY := Color(0.30, 0.70, 0.95, 0.28)
@@ -46,7 +53,47 @@ func set_selected(v: bool) -> void:
 		queue_redraw()
 
 
+func set_terrain(effect: TerrainEffect, params: TerrainParams) -> void:
+	terrain_params = params
+	if effect == null:
+		terrain_tint = Color(0, 0, 0, 0)
+		terrain_icon = null
+		terrain_name = ""
+	else:
+		terrain_tint = effect.tint
+		terrain_icon = effect.icon
+		terrain_name = effect.display_name
+		if terrain_tint.a <= 0.0:
+			terrain_tint = Color(1, 1, 1, 0.25)
+	queue_redraw()
+
+
+## 该格是否有可见地形
+func has_terrain() -> bool:
+	return terrain_tint.a > 0.0
+
+
 func _draw() -> void:
+	## ① 地形底（**画在最下层** —— 高亮与选中叠在它上面）
+	if has_terrain():
+		var p := terrain_params
+		var fill := terrain_tint
+		if p != null:
+			fill = p.fill_color_from(terrain_tint)
+		draw_rect(Rect2(Vector2.ZERO, size), fill, true)
+		if p == null or p.outline:
+			var w: float = p.outline_width if p != null else 3.0
+			var oc: Color = p.outline_color if p != null else Color(1, 1, 1, 0.45)
+			var r: Rect2 = p.outline_rect(size.x) if p != null \
+				else Rect2(Vector2(4, 4), Vector2(size.x - 8.0, size.y - 8.0))
+			draw_rect(r, oc, false, w)
+		if terrain_icon != null:
+			var isz: Vector2 = p.icon_size if p != null else Vector2(64, 64)
+			var ipos: Vector2 = p.icon_offset(size.x) if p != null \
+				else Vector2((size.x - isz.x) * 0.5, (size.y - isz.y) * 0.5)
+			var alpha: float = p.icon_alpha if p != null else 0.85
+			draw_texture_rect(terrain_icon, Rect2(ipos, isz), false, Color(1, 1, 1, alpha))
+	## ② 选中/高亮
 	if selected:
 		draw_rect(Rect2(Vector2.ZERO, size), _COL_SEL, true)
 	match highlight:

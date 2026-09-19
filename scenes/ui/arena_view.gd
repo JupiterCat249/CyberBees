@@ -20,6 +20,7 @@ const K := preload("res://scripts/battle/preview_kind.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
 const DetailP := preload("res://scripts/data/detail_params.gd")
 const HandP := preload("res://scripts/data/hand_card_params.gd")
+const TerrainP := preload("res://scripts/data/terrain_params.gd")
 const HAND_CARD_SCENE := preload("res://scenes/ui/card_hand.tscn")
 const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
@@ -53,23 +54,25 @@ var _preview_cleared := false
 ## 运行时可替换（如换皮肤/调参）——替换后调 apply_params() 重施即可
 var detail_params: Resource = DetailP.new()
 var hand_params: Resource = HandP.new()
+## 地形格渲染参数（迭代059 步3：UI 资源化 —— 地形格视觉走本资源）
+var terrain_params: Resource = TerrainP.new()
 
-## 操作反馈标签（**运行时新建**，不改素材场景）
-## 用途：请求失败/规则拦截时给出**可读原因**（迭代058 G4：不再"点了没反应"）
-var _msg: Label = null
-var _flash_frames := 0
-const FLASH_FRAMES := 180      ## 反馈显示 3 秒 @60fps（T2：帧数计时，非 DeltaTime）
+## 操作反馈：**人 2026-09-19 明确省略 HUD 橙色提示文本**（可省设计）
+## 所有反馈走控制台输出（`_flash_msg` → print("[VIEW] ...")）
+const FLASH_FRAMES := 180      ## 保留常量占位（若日后要恢复 HUD 提示可用）
 
 
 func _ready() -> void:
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
-	apply_params()                       ## 两套 UI 参数各施其位（详情区 / 手牌卡）
 	engine = EngLib.new()
 	if auto_start and not engine.start(_config()):
 		push_warning("BattleEngine 启动失败（看上面的配置错误日志）")
-	apply_params()                       ## 开局后手牌已渲染 → 再施一次手牌参数
+	## 引擎就绪后才下发：UI 参数（含地表）
+	##   （手牌/费用的开局同步由 `_on_battle_started` → `_sync_all()` 负责）
+	apply_params()
+	_apply_terrain_to_cells()
 
 
 func _exit_tree() -> void:
@@ -90,8 +93,9 @@ func _config() -> BattleConfig:
 			c.deck_ally = d
 			c.deck_enemy = d.duplicate(true) as DeckData
 	## 默认地图（让地图板/背景有内容可用）——6 张里的「默认」；换图调 engine.load_map()
-	if use_resources and ResourceLoader.exists("res://game_data/maps/默认.tres"):
-		var md := load("res://game_data/maps/默认.tres") as MapData
+	##   演示地形格视觉时可直接改成「禁区」/「铁锈」/「水没」
+	if use_resources and ResourceLoader.exists("res://game_data/maps/禁区.tres"):
+		var md := load("res://game_data/maps/禁区.tres") as MapData
 		if md != null:
 			c.map_data = md
 	return c
@@ -101,7 +105,6 @@ func _connect_static_ui() -> void:
 	var b: Button = $HUD/ActionBar/MainButton
 	if b != null and not b.pressed.is_connected(_on_main_pressed):
 		b.pressed.connect(_on_main_pressed)
-	_make_feedback_label()
 	_fit_text_labels()
 	_make_overlays_click_through()
 
@@ -143,40 +146,14 @@ func _fit_text_labels() -> void:
 		se.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 
-## 建操作反馈标签（挂在 ActionBar 下、主按钮上方）
-## ⚠️ **运行时新建**而不是改素材场景 —— 保持 battle_ui_alpha.tscn 的人工内容不被改动
-func _make_feedback_label() -> void:
-	if _msg != null and is_instance_valid(_msg):
-		return
-	var bar := $HUD/ActionBar as Control
-	if bar == null:
-		return
-	_msg = Label.new()
-	_msg.name = "OperationMsg"
-	_msg.text = ""
-	_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_msg.add_theme_font_size_override("font_size", int(detail_params.msg_font_size))
-	_msg.add_theme_color_override("font_color", Color(1.0, 0.82, 0.35, 1.0))
-	bar.add_child(_msg)
-	# 摆到主按钮正上方（主按钮在 ActionBar 内的 offset 约 400x100）
-	_msg.position = Vector2(-40.0, -60.0)
-	_msg.size = Vector2(480.0, 52.0)
-
-
-## 显示一条操作反馈（3 秒后自动清空 —— 帧数计时，符合 T2）
+## ⚠️ 人 2026-09-19 明确：**橙色提示文本省略**（可省设计），需要时作为**控制台输出**存在。
+## 故这里不再新建/维护任何 HUD 提示标签；所有操作反馈走 `print("[VIEW] ...")`。
 func _flash_msg(text: String) -> void:
-	if _msg == null or not is_instance_valid(_msg):
-		return
-	_msg.text = text
-	_flash_frames = FLASH_FRAMES
+	print("[VIEW] ", text)
 
 
-func _process(_delta: float) -> void:
-	if _flash_frames > 0:
-		_flash_frames -= 1
-		if _flash_frames == 0 and _msg != null and is_instance_valid(_msg):
-			_msg.text = ""
+## （HUD 提示已按人要求省略 —— 反馈走控制台）
+
 
 
 # ============================================================
@@ -226,12 +203,37 @@ func _on_map_assets(assets: Resource) -> void:
 		var se := $HUD/MatchInfo/SiteEffect
 		if se != null:
 			se.text = assets.map_desc
+	## 换图后地形格视觉同步（地形效果随地图变化）
+	_apply_terrain_to_cells()
+
+
+## 把地形效果/参数下发给各格（格子自己不查地图 —— 单向分层）
+func _apply_terrain_to_cells() -> void:
+	var md: MapData = null
+	if engine != null and engine.state != null:
+		md = engine.state.map_data
+	for c in _cells.keys():
+		var cell: Control = _cells[c]
+		if cell == null or not is_instance_valid(cell):
+			continue
+		var te = md.effect_at(c) if md != null else null
+		if cell.has_method("set_terrain"):
+			cell.set_terrain(te, terrain_params)
+
+
+## 看该格是否地形格（供详情/提示用，视图只读）
+func terrain_name_at(cell: Vector2i) -> String:
+	if engine == null or engine.state == null or engine.state.map_data == null:
+		return ""
+	var te = engine.state.map_data.effect_at(cell)
+	return te.display_name if te != null else ""
 
 
 ## 应用两套 UI 参数（**分开应用**，不混用）
 func apply_params() -> void:
 	_apply_detail_params()
 	_apply_hand_params()
+	_apply_terrain_to_cells()
 
 
 func _apply_detail_params() -> void:
@@ -652,6 +654,11 @@ func _on_unit_clicked(instance_id: String) -> void:
 		return
 	var side: int = engine.state.active
 	if inst.side == side:
+		# ── 支援双击确认（原设计）：已选中带支援技能的单位时，点友方 → 待确认 → 再点执行 ──
+		if int(engine.sel_kind) == 3 and engine.sel_unit != null and engine.sel_support != null \
+				and engine.sel_unit.instance_id != inst.instance_id:
+			engine.request_support(side, engine.sel_unit, engine.sel_support, inst)
+			return
 		engine.select_unit(side, inst)
 		show_detail(inst.data)
 		_explain_actions(inst)
@@ -740,6 +747,10 @@ func _call_opt(node: Object, method: String, args: Array) -> void:
 ## 主按钮 → 按当前选中分流（G-6 Q-3：选中手牌时按钮兼顾弃牌）
 func _on_main_pressed() -> void:
 	if engine == null or engine.state == null:
+		return
+	## 待确认支援 → 按钮「确认」执行（迭代059 步3：恢复原设计）
+	if engine.support_pending != null:
+		engine.confirm_pending()
 		return
 	## 选中了手牌 → 弃牌
 	if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:

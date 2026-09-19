@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://verification/iter059_step3_check.gd" id="1_s"]
+
+[node name="Iter059Step3Check" type="Node"]
+script = ExtResource("1_s")
