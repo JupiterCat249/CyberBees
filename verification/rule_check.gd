@@ -54,15 +54,34 @@ var _failures: Array[String] = []
 
 
 func _initialize() -> void:
-	print("\n===== 规则守卫自检（协议 v2.2 + 容器契约）=====")
+	print("\n===== 规则守卫自检（协议 v2.2 + 容器契约 + 鼠标穿透）=====")
 	_check_min_lines()
 	_check_markers()
 	_check_autoload()
 	_check_scene_baked()
 	_check_hand_container_contract()
 	_check_forbidden_files()
+	_check_overlay_clickthrough()
 	_report()
 	quit(0 if _fail == 0 else 1)
+
+
+## ⑦ 扫描线特效层必须鼠标穿透（迭代058 定案 —— 曾导致「单位完全无法操控」）
+##
+## 现场：`card_unit.tscn` 的 `Artwork/ArtPlane/CrtFx` 是 1920×1080 的 STOP 层，
+##   盖住整个棋盘 → 吞掉所有点击。`gui_get_hovered_control()` 在蜂王格中心返回的正是它。
+## 依据：D8「扫描线只作背景纹理，**不得覆盖 UI 节点**；战斗地图上不得出现扫描线」。
+## 契约：**素材场景内的 CrtFx 保持不动**（人工内容），由视图在运行时统一设为 MOUSE_FILTER_IGNORE；
+##   本检查确认「素材场景里 CrtFx 仍是默认/STOP（即依赖视图兜底）」**且视图确有兜底代码**。
+func _check_overlay_clickthrough() -> void:
+	var view := FileAccess.get_file_as_string("scenes/ui/arena_view.gd")
+	_chk("视图含 CrtFx 鼠标穿透兜底（_make_overlays_click_through）",
+		view.contains("_make_overlays_click_through"))
+	_chk("视图对**运行时新建的单位卡**也做了穿透（_set_ignore_recursive(node)）",
+		view.contains("_set_ignore_recursive(node)"))
+	# 素材场景里 CrtFx 只要存在，就必须依赖上面的兜底 → 告警式确认其存在
+	var cu := FileAccess.get_file_as_string("scenes/ui/card_unit.tscn")
+	_chk("card_unit.tscn 内确实有 CrtFx（故必须靠视图兜底）", cu.contains("CrtFx"))
 
 
 ## ① 行数不得骤减

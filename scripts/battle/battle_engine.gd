@@ -615,11 +615,11 @@ func _emit_button() -> void:
 			hint = "回费/场地阶段自动结算，无需操作"
 			enabled = false
 		state.Phase.DEPLOY:
-			## 文案明确目标阶段（迭代058：可发现性）
-			text = "完成部署 → 进入行动"
+			## 文案保持原设计（人 2026-09-19 明确：不要改动按钮文案）
+			text = "完成部署"
 			hint = "点手牌部署单位/使用指令；准备好后点右侧按钮进入行动阶段"
 		state.Phase.ACTION:
-			text = "结束回合 → 交给对方"
+			text = "结束回合"
 			hint = "点自己的单位可移动/攻击/支援；每个单位每回合 1 次行动"
 	bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled, hint)
 

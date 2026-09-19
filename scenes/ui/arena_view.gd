@@ -103,6 +103,34 @@ func _connect_static_ui() -> void:
 		b.pressed.connect(_on_main_pressed)
 	_make_feedback_label()
 	_fit_text_labels()
+	_make_overlays_click_through()
+
+
+## ⭐ 把所有扫描线特效层（`CrtFx`）设为**鼠标透明**
+##
+## 为什么必须做（迭代058 实测定案）：
+##   `card_unit.tscn` / `card_hand.tscn` 的 `Artwork/ArtPlane/CrtFx` 是**扫描线叠加层**，
+##   它在场景里被撑成 **1920×1080**（单位卡本身只有 250×250），且 `mouse_filter` 为默认 **STOP**。
+##   于是它**盖住整个棋盘区**，把单位卡与格子的点击**全部吞掉** ——
+##   这就是\"单位无法选中/移动\"的真正原因。
+##
+## 依据：D8「扫描线只作背景纹理，**不得覆盖 UI 节点**；战斗地图上不得出现扫描线」。
+## 实证：`gui_get_hovered_control()` 在蜂王格中心返回的正是 `.../Artwork/ArtPlane/CrtFx`。
+##
+## 修法：递归找出所有名为 `CrtFx` 的 Control（含运行时新建的单位卡）→ 设 `MOUSE_FILTER_IGNORE`。
+##   **只改鼠标穿透，不动视觉**（扫描线照常显示）。
+func _make_overlays_click_through() -> void:
+	_set_ignore_recursive(self)
+
+
+func _set_ignore_recursive(n: Node) -> void:
+	for ch in n.get_children():
+		if ch is Control:
+			var c := ch as Control
+			## 扫描线特效层一律鼠标穿透（按节点名识别，含卡内叠加层）
+			if String(c.name) == "CrtFx" or String(c.name).begins_with("CrtFx"):
+				c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_set_ignore_recursive(ch)
 
 
 ## 适配长文案（迭代058：按钮文案写明目标阶段后变长，原字号会溢出面板）
@@ -565,6 +593,9 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	node.name = "Unit_" + inst.instance_id.substr(0, 8)
 	node.position = _cell_pos(cell)
 	_units_root.add_child(node)
+	## ⭐ 运行时新建的单位卡也会带 CrtFx 叠加层 → 必须单独设鼠标穿透，
+	##    否则新部署的单位会**盖住整块棋盘**、吞掉所有点击（迭代058 实测教训）
+	_set_ignore_recursive(node)
 	node.bind(_unit_view(inst, cell))
 	if node.has_signal("unit_pressed"):
 		node.unit_pressed.connect(_on_unit_clicked)
