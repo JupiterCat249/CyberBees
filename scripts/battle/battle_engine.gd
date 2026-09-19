@@ -376,15 +376,43 @@ func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -
 		return false
 	if state.board.manhattan(attacker.cell, defender.cell) > attacker.attack_range():
 		return false
+	## ⚠️ 结算必须先做（迭代059 曾因 patch 误删这两行 → 攻击"命中"却不掉血）
 	Combat.resolve_attack(attacker, defender, state.board)
 	attacker.mark_acted()                      ## 行动机会 4：攻击后自动结束行动
+	var killed_queen: int = -1
+	var _is_q: bool = defender.data != null and defender.data.kind == CardData.CardKind.QUEEN
+	## ⭐ 迭代059 修缺陷：**必须在 _cleanup_dead 之前判定胜负** ——
+	##   死掉的蜂王会被移出棋盘，之后 state.queen() 查不到 → 胜负永远判不出来
+	if defender.data != null and defender.data.kind == CardData.CardKind.QUEEN \
+			and not defender.is_alive():
+		killed_queen = defender.side
 	_cleanup_dead()
 	_log("%s 攻击 %s" % [attacker.card_name(), defender.card_name()])
 	_cancel_selection()
 	_emit_selection()
 	_emit_action_availability()
-	_check_win()
+	if killed_queen >= 0:
+		_declare_queen_killed(killed_queen)
+	else:
+		_check_win()
 	return true
+
+
+## ⭐ 迭代059 修缺陷：**side 与 Result 是两套语义，不能混用**
+##   `enum Result { NONE=0, ALLY_WIN=1, ENEMY_WIN=2, DRAW=3 }` 而 `SIDE_ALLY=0 / SIDE_ENEMY=1`
+##   直接把 side 赋给 result → 胜者是绿方时恰好等于 `Result.NONE` → 对局看起来"没结束"。
+##   （与本日早前修的 `PreviewKind vs BattleState.Phase` 是同一类枚举撞车问题）
+static func result_of_winner(winner_side: int) -> int:
+	return StateLib.Result.ALLY_WIN if winner_side == StateLib.SIDE_ALLY else StateLib.Result.ENEMY_WIN
+
+
+## 蜂王被击杀 → 对局结束（a500 胜利条件 1）
+func _declare_queen_killed(side_of_killed: int) -> void:
+	var winner_side: int = state.SIDE_ENEMY if side_of_killed == state.SIDE_ALLY else state.SIDE_ALLY
+	state.result = result_of_winner(winner_side)
+	state.result_reason = "%s 蜂王被击败" % config.name_of(side_of_killed)
+	_log("%s 蜂王被击败 —— %s 获胜" % [config.name_of(side_of_killed), config.name_of(winner_side)])
+	bus().emit_signal(Bus.SIG_BATTLE_ENDED, state.result, state.result_reason)
 
 
 func request_use_command(side: int, hand_index: int, target: UnitInstance) -> bool:
@@ -576,7 +604,7 @@ func request_surrender(side: int) -> bool:
 	if state.round_no < state.SURRENDER_FROM_ROUND:
 		_log("第 %d 回合起才可投降" % state.SURRENDER_FROM_ROUND, 1)
 		return false
-	state.result = state.SIDE_ENEMY if side == state.SIDE_ALLY else state.SIDE_ALLY
+	state.result = result_of_winner(state.SIDE_ENEMY if side == state.SIDE_ALLY else state.SIDE_ALLY)
 	state.result_reason = "%s 投降" % config.name_of(side)
 	bus().emit_signal(Bus.SIG_BATTLE_ENDED, state.result, state.result_reason)
 	return true
@@ -587,7 +615,7 @@ func _check_win() -> void:
 	for side in [state.SIDE_ALLY, state.SIDE_ENEMY]:
 		var q: UnitInstance = state.queen(side)
 		if q != null and not q.is_alive():
-			state.result = state.SIDE_ENEMY if side == state.SIDE_ALLY else state.SIDE_ALLY
+			state.result = result_of_winner(state.SIDE_ENEMY if side == state.SIDE_ALLY else state.SIDE_ALLY)
 			state.result_reason = "%s 蜂王被击败" % config.name_of(side)
 			bus().emit_signal(Bus.SIG_BATTLE_ENDED, state.result, state.result_reason)
 			return

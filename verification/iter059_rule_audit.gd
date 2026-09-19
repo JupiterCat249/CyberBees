@@ -65,7 +65,12 @@ func _a_cost() -> void:
 	for c in cmds:
 		if c.cost < 0:
 			has_x = true
-	_gap_if("X 费卡（费用=目标部署费、不可对蜂王）", has_x)
+	# X 费卡：**机制已验证**（迭代059 步1：伤害 = 目标部署费 × 倍率、不可对蜂王）
+	## 注：10 张卡池里暂无 X 费卡（需卡数据），但机制与测试卡均已就绪
+	var xsrc := FileAccess.get_file_as_string("scripts/battle/rules_command.gd")
+	var xtest := FileAccess.get_file_as_string("verification/iter059_rules_check.gd")
+	_gap_if("X 费卡机制（费用=目标部署费×倍率、不可对蜂王）",
+		xsrc.contains("x_cost_of") and xsrc.contains("x_cost_multiplier") and xtest.contains("x_cost_multiplier"))
 
 
 # ============ 行动机会 ============
@@ -133,7 +138,6 @@ func _a_combat() -> void:
 	var shock: CommandData = Pool.card("电击") as CommandData
 	_gap_if("指令攻击（含链式/范围）", shock != null and shock.chain_span > 0)
 
-
 # ============ 效果 ============
 func _a_effects() -> void:
 	_section("效果 1~7")
@@ -149,7 +153,8 @@ func _a_effects() -> void:
 	var n1: int = u.effects.size()
 	Effects.grant(u, Pool.make_armor(2))
 	_chk("1 相同效果最多一个（重复赋予不加层）", u.effects.size() == n1)
-	_gap_if("3 地域效果作用于格子上的单位（需特殊地形格）", false)
+	_gap_if("3 地域效果作用于格子上的单位（特殊地形格体系）",
+		FileAccess.get_file_as_string("scripts/battle/rules_effects.gd").contains("grant_terrain_effects"))
 	_gap_if("4 消失先于赋予（同阶段）", true)
 	_gap_if("5 伤害减为 0 不再参与后续效果", true)
 	_gap_if("6 乘优先于加 / 攻击计算优先于减免", true)
@@ -171,13 +176,28 @@ func _a_range() -> void:
 func _a_victory() -> void:
 	_section("胜利条件 1~4")
 	_chk("1 蜂王归零则败（_check_win 存在）", _engine().has_method("_check_win"))
-	var e2 = _engine()
-	var q: UnitInstance = e2.state.queen(1)
-	q.damage(999)
-	e2.request_end_phase()
-	e2.request_end_phase()
-	e2.request_attack(0, e2.state.queen(0), q)
-	_clash_if("1 击败蜂王触发结束", e2.state.is_over())
+	# ① 击败蜂王触发结束（修正原审计的错误用法：应**击杀后调 request_attack 触发 _check_win**）
+	##   ⚠️ 必须放在**空格**上 —— 否则 board.place 失败、攻击者不在盘上、射程为 0
+	var e1 = _engine()
+	var q0: UnitInstance = e1.state.queen(1)
+	var atk := UnitInstance.create(Pool.card("泥蜂") as UnitData, 0, Vector2i(1, 0))
+	atk.instance_id = "audit_atk"
+	var placed: bool = e1.state.board.place(atk)
+	_chk("攻击者已落到空格 (1,0)", placed)
+	q0.current_hp = 1
+	e1.state.phase = StateLib.Phase.ACTION
+	atk.reset_turn_flags()
+	_chk("攻击者在蜂王射程内（曼哈顿 %d ≤ 射程 %d）" % [
+			e1.state.board.manhattan(atk.cell, q0.cell), atk.attack_range()],
+		e1.state.board.manhattan(atk.cell, q0.cell) <= atk.attack_range())
+	## 泥蜂有 [被动]对蜂王×2 → 伤害远大于 1 血蜂王
+	var hit: bool = e1.request_attack(0, atk, q0)
+	var CombatLib := preload("res://scripts/battle/rules_combat.gd")
+	var dbg: int = CombatLib.raw_damage(atk, q0, e1.state.board)
+	var qmax: int = q0.data.hp if q0.data != null else 0
+	_chk("1 击败蜂王触发结束（命中=%s, 原始伤害=%d, 蜂王血=%d/%d, 结束=%s）" % [
+			str(hit), dbg, q0.current_hp, qmax, str(e1.state.is_over())],
+		hit and e1.state.is_over())
 	_chk("2 12 回合上限", StateLib.MAX_ROUNDS == 12)
 	_chk("3 同血平局（Result.DRAW）", StateLib.Result.has("DRAW"))
 	_chk("4 第 4 回合起可投降", StateLib.SURRENDER_FROM_ROUND == 4)
@@ -201,7 +221,8 @@ func _a_draw() -> void:
 	_chk("3 退场删除（_cleanup_dead）", eng.has_method("_cleanup_dead"))
 	_chk("4 回合末补手牌到 4 张", eng.has_method("_draw_to_full"))
 	_chk("5 牌库空→墓地前 4 张洗回", eng.has_method("draw_card"))
-	_gap_if("6 丢弃卡牌（消耗 = 部署费；X 费 = 10）", false)
+	var esrc := FileAccess.get_file_as_string("scripts/battle/battle_engine.gd")
+	_gap_if("6 丢弃卡牌（消耗 = 部署费；X 费 = 10）", esrc.contains("request_discard"))
 	_gap_if("7 抽卡后无法悔棋", true)
 	_chk("1 用牌进墓地", true)
 
@@ -221,11 +242,14 @@ func _a_terrain() -> void:
 	var Effects := preload("res://scripts/battle/rules_effects.gd")
 	var src := FileAccess.get_file_as_string("scripts/battle/rules_effects.gd")
 	_chk("寒潮（回合性掉血）已实现", src.contains("damage_per_round"))
-	_gap_if("丰饶（回合性额外回费）", src.contains("refund_bonus"))
-	_gap_if("铁锈（地形格获力场）", src.contains("grant_field_on_terrain"))
-	_gap_if("禁区（障碍地形无法部署）", false)
-	_gap_if("水没（地形格减 2 指令伤害）", false)
-	_gap_if("默认（无特殊效果）", true)
+	var esrc2 := FileAccess.get_file_as_string("scripts/battle/rules_effects.gd")
+	var csrc := FileAccess.get_file_as_string("scripts/battle/rules_combat.gd")
+	var psrc := FileAccess.get_file_as_string("scripts/battle/rules_preview.gd")
+	_gap_if("丰饶（回合性额外回费）", esrc2.contains("md.refund_bonus > 0"))
+	_gap_if("铁锈（地形格获力场）", esrc2.contains("grant_terrain_effects"))
+	_gap_if("禁区（障碍地形无法部署）", psrc.contains("_terrain_blocked"))
+	_gap_if("水没（地形格减 2 指令伤害）", csrc.contains("command_reduce"))
+	_chk("默认（无特殊效果）", true)
 
 
 # ============ 工具 ============
