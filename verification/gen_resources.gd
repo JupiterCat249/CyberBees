@@ -1,5 +1,5 @@
 extends Node
-## 【验证用 · 生产工具（一次性）】从 `scripts/data/sample_deck.gd` 生成 `.tres` 资源文件
+## 【验证用 · 生产工具（一次性）】从 `scripts/data/card_pool.gd` 生成 `.tres` 资源文件
 ##
 ## 为什么用脚本生成而不是手写 .tres：手写极易出错（sub_resource 引用、uid、format 版本），
 ## 交给 Godot 的 `ResourceSaver.save()` 生成才是权威格式。

@@ -7,9 +7,17 @@ extends Node
 ## 用法：`project_run(mode="custom", scene="res://verification/build_scene.tscn")`
 ## 产出：覆盖写 `res://scenes/ui/battle_scene.tscn`
 ##
+## ⚠️ **容器子节点不写布局（迭代057 C1 修正）**
+##   手牌卡是 `GridContainer`（`HandLeft`/`HandRight`）的子节点 ——
+##   对容器子节点写 `layout_mode = 0` + `offset_*` 等于把它们从容器布局里强行摘出来，
+##   与容器排布**互相打架**（人反馈"列数总变成一列"的根因之一）。
+##   容器的 `columns` / `separation` 契约由 `verification/apply_hand_container.gd` 写入。
+##   非容器位置（`MapView/Units`、`MapView/MapCells`、`Artwork`）是普通 Control →
+##   手动坐标**正确**，保留。
+##
 ## 设计约定（勿破坏）：
-##   · 根节点名 `BattleScene`，继承 `battle_ui_alpha.tscn`，script = `battle_arena.gd`
-##   · 格节点名必须是 `Cell_<行>_<列>`（控制器按名字认领）
+##   · 根节点名 `BattleScene`，继承 `battle_ui_alpha.tscn`（**不挂脚本** —— 视图由新战斗系统接入）
+##   · 格节点名必须是 `Cell_<行>_<列>`
 ##   · 手牌容器：`Battle/HandPanelLeft/HandLeft`（敌）· `Battle/HandPanelRight/HandRight`（我）
 ##   · 单位容器：`Battle/MapView/Units`（预览单位，运行时会清掉重建）
 ##   · 详情区立绘槽：`HUD/InfoPanel/DetailBlock/Artwork/Portrait`
@@ -22,13 +30,12 @@ const PREVIEW_UNITS := [
 	{"node": "Unit_ally", "name": "金刚蜂王", "cell": Vector2i(3, 1), "index": 0},
 	{"node": "Unit_enemy", "name": "金刚蜂王", "cell": Vector2i(0, 1), "index": 1},
 ]
-## 手牌位置（2×2；与控制器的 HAND_SLOT=200 / HAND_GAP=30 一致）
-const HAND_POS := [Vector2i(0, 0), Vector2i(230, 0), Vector2i(0, 230), Vector2i(230, 230)]
 const PITCH := 250
 
 
 ## 收集本次要烤进去的立绘（卡名 → 资源 id）
 var _art_ids := {}
+var _art_paths := {}
 
 
 func _collect_art() -> void:
@@ -51,26 +58,21 @@ func _art_of(card_name: String) -> String:
 	return id
 
 
-var _art_paths := {}
-
-
 func _ready() -> void:
 	_collect_art()
 	var lines: PackedStringArray = []
-	# ① 头部
-	lines.append("[gd_scene load_steps=%d format=3]" % (5 + _art_paths.size()))
+	# ① 头部（不再引用旧控制器：迭代057 Q-3 已移除，避免文件混淆）
+	lines.append("[gd_scene load_steps=%d format=3]" % (4 + _art_paths.size()))
 	lines.append("")
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]')
-	lines.append('[ext_resource type="Script" path="res://scenes/ui/arena_controller.gd" id="2_ctrl"]')
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/card_unit.tscn" id="3_unit"]')
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/card_hand.tscn" id="4_hand"]')
 	for id in _art_paths.keys():
 		lines.append('[ext_resource type="Texture2D" path="%s" id="%s"]' % [_art_paths[id], id])
 	lines.append("")
 	lines.append('[node name="BattleScene" instance=ExtResource("1_base")]')
-	lines.append('script = ExtResource("2_ctrl")')
 
-	# ② 16 个格点击区
+	# ② 16 个格点击区（`MapCells` 是**普通 Control** → 手动坐标正确）
 	for x in 4:
 		for y in 4:
 			lines.append("")
@@ -83,11 +85,11 @@ func _ready() -> void:
 			lines.append("offset_bottom = %d.0" % (x * PITCH + PITCH))
 			lines.append("mouse_filter = 2")
 
-	# ③ 预览单位（数值与立绘都烤进去）
+	# ③ 预览单位（`Units` 是**普通 Control** → 手动坐标正确；数值与立绘都烤进去）
 	for pu in PREVIEW_UNITS:
 		_append_unit(lines, pu)
 
-	# ④ 手牌（左右各 4 张 = 示范卡组前 4 张；费用 + 立绘烤进去）
+	# ④ 手牌（左右各 4 张；**只烤数据与立绘，不烤布局** —— 布局归 GridContainer）
 	var demo: Array = Pool.DECK_NAMES
 	for side in ["Enemy", "Ally"]:
 		var parent := "Battle/HandPanelLeft/HandLeft" if side == "Enemy" \
@@ -95,7 +97,7 @@ func _ready() -> void:
 		for i in mini(4, demo.size()):
 			_append_hand(lines, "%sHand_%d" % [side, i], parent, i, String(demo[i]))
 
-	# ⑤ 详情区立绘槽
+	# ⑤ 详情区立绘槽（`Artwork` 是**普通 Panel** → 手动坐标正确）
 	lines.append("")
 	lines.append('[node name="Portrait" type="TextureRect" parent="HUD/InfoPanel/DetailBlock/Artwork" index="0"]')
 	lines.append("layout_mode = 0")
@@ -151,22 +153,16 @@ func _append_attr(lines: PackedStringArray, base: String, node: String, v: int) 
 	lines.append('text = "%d"' % v)
 
 
+## 手牌：**只写数据与立绘**，不写任何布局（`layout_mode` / `offset_*`）——
+## 布局完全交给 `GridContainer`（`columns` / `separation`）与卡自身的 `size_flags`。
 func _append_hand(lines: PackedStringArray, node: String, parent: String, idx: int, card_name: String) -> void:
 	var c: CardData = Pool.card(card_name)
 	if c == null:
 		printerr("预览手牌卡不存在：", card_name)
 		return
-	var pos: Vector2i = HAND_POS[idx]
 	lines.append("")
 	lines.append('[node name="%s" parent="%s" index="%d" instance=ExtResource("4_hand")]'
 		% [node, parent, idx])
-	lines.append("layout_mode = 0")
-	if pos.x > 0:
-		lines.append("offset_left = %d.0" % pos.x)
-	if pos.y > 0:
-		lines.append("offset_top = %d.0" % pos.y)
-	lines.append("offset_right = %d.0" % (pos.x + 200))
-	lines.append("offset_bottom = %d.0" % (pos.y + 200))
 	lines.append("mouse_filter = 2")
 	lines.append("")
 	lines.append('[node name="Value" parent="%s/%s/BadgeImage" index="0"]' % [parent, node])

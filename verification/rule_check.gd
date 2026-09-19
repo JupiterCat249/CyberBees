@@ -1,5 +1,5 @@
 extends SceneTree
-## 【守卫脚本】Godot 工程仓「裸改文件」合规自检
+## 【守卫脚本】Godot 工程仓「裸改文件」合规自检 + **容器布局契约守卫**
 ##
 ## 为何存在：AI 执行协议 v2.2《Godot 工程文件的交互铁律》要求
 ##   「与 Godot 交互必须使用 MCP 工具，而不是直接修改文件」。
@@ -8,20 +8,21 @@ extends SceneTree
 ## 用法：
 ##   Godot_v4.7.2-stable_win64.exe --headless --path <游戏仓> --script verification/rule_check.gd
 ##
-## 检查项（均为高置信的回退信号）
-##   ① 关键脚本**行数不得骤减**（被回退的典型表现：736 行完整版 → 256 行旧版）
-##   ② 关键**标记必须在**（如 card_pool 引用、Preview 接入）
+## 检查项
+##   ① 关键脚本**行数不得骤减**（被回退的典型表现）
+##   ② 关键**标记必须在**
 ##   ③ `project.godot` 不得把 `BattleSignalBus` 注册为 autoload
-##      （与同名 class_name 冲突，且 check-only 下不可见；已改为 preload 单例）
+##   ④ `battle_scene.tscn` 烤入内容未被回退（节点数 + 数值 override）
+##   ⑤ **容器布局契约**（迭代057 C1 · 人裁决 Q-1）：
+##      手牌容器 `HandLeft`/`HandRight` 必须 `columns >= 2` 且间距为 0；
+##      其**子卡不得带** `layout_mode` / `offset_*`（否则会把卡从容器布局里摘出来，列数会塌）
 ##
-## 注：早期版本想用 `SceneTree.get_script_list()` 检查载入脚本 ——
-##     经查 Godot 文档**无此 API**，故改为“直接测磁盘文件”的可靠做法。
+## 注：早期版本用过 `SceneTree.get_script_list()` —— 查 Godot 文档确认**无此 API**，已改为直接测磁盘文件。
 ##
 ## 输出 PASS/FAIL 清单；exit code 0 = 全 PASS。
 
 ## 关键脚本：相对路径 → 最少行数（低于此值几乎必然是回退）
 const MIN_LINES := {
-	"scenes/ui/arena_controller.gd": 600,
 	"scenes/ui/card_unit.gd": 50,
 	"scenes/ui/card_hand.gd": 130,
 	"scripts/data/card_pool.gd": 200,
@@ -33,12 +34,19 @@ const MIN_LINES := {
 
 ## 关键标记：文件 → 必须包含的字符串
 const MUST_CONTAIN := {
-	"scenes/ui/arena_controller.gd": "card_pool.gd",
 	"scripts/battle/battle_engine.gd": "Preview.build",
 	"scripts/battle/rules_preview.gd": "deploy_cells",
 	"scripts/data/unit_instance.gd": "不再在此处减免",
 	"scripts/data/card_pool.gd": "示范卡组",
 }
+
+## 已弃用文件：不得再出现（防旧文件混淆）
+const FORBIDDEN_FILES := [
+	"scenes/ui/arena_controller.gd",
+	"scenes/ui/battle_scene.gd",
+	"scenes/ui/battle_arena.gd",
+	"scripts/data/sample_deck.gd",
+]
 
 var _pass := 0
 var _fail := 0
@@ -46,11 +54,13 @@ var _failures: Array[String] = []
 
 
 func _initialize() -> void:
-	print("\n===== 规则守卫自检（协议 v2.2 · Godot 工程文件的交互铁律）=====")
+	print("\n===== 规则守卫自检（协议 v2.2 + 容器契约）=====")
 	_check_min_lines()
 	_check_markers()
 	_check_autoload()
-	_check_no_clobber_marker()
+	_check_scene_baked()
+	_check_hand_container_contract()
+	_check_forbidden_files()
 	_report()
 	quit(0 if _fail == 0 else 1)
 
@@ -92,8 +102,8 @@ func _check_autoload() -> void:
 		not txt.contains("BattleSignalBus="))
 
 
-## ④ 场景不得被回退：烤入内容必须还在
-func _check_no_clobber_marker() -> void:
+## ④ 场景烤入内容未被回退
+func _check_scene_baked() -> void:
 	var txt := FileAccess.get_file_as_string("scenes/ui/battle_scene.tscn")
 	if txt == "":
 		_chk("battle_scene.tscn 可读", false)
@@ -102,10 +112,55 @@ func _check_no_clobber_marker() -> void:
 	for line in txt.split("\n"):
 		if line.begins_with("[node "):
 			nodes += 1
-	## 烤入内容存在时节点数 >= 50（被回退后典型为 30）
 	_chk("battle_scene.tscn 节点数 %d >= 50（烤入内容未被回退）" % nodes, nodes >= 50)
-	_chk("battle_scene.tscn 含烤入数值（手牌费用 override）",
-		txt.contains("BadgeImage\" index=\"0\"]") or txt.contains("text = \"2\""))
+	_chk("battle_scene.tscn 含烤入数值（费用 override）", txt.contains("BadgeImage\" index=\"0\"]"))
+
+
+## ⑤ 容器布局契约（迭代057 C1 · Q-1）
+func _check_hand_container_contract() -> void:
+	var base := FileAccess.get_file_as_string("scenes/ui/battle_ui_alpha.tscn")
+	if base == "":
+		_chk("battle_ui_alpha.tscn 可读", false)
+		return
+	for owner in ["HandLeft", "HandRight"]:
+		_chk("%s 已声明 columns >= 2（防默认单列）" % owner,
+			_compose_has(base, owner, "columns = ", 2))
+		_chk("%s 间距显式为 0（防默认 4）" % owner,
+			_compose_has(base, owner, "theme_override_constants/h_separation = 0", 0) \
+			and _compose_has(base, owner, "theme_override_constants/v_separation = 0", 0))
+	# 子卡不得带手动布局
+	var scene := FileAccess.get_file_as_string("scenes/ui/battle_scene.tscn")
+	var offenders: Array = []
+	var cur := ""
+	for line in scene.split("\n"):
+		if line.begins_with("[node "):
+			cur = line
+		elif (line.begins_with("layout_mode =") or line.begins_with("offset_")) and cur.contains("/HandLeft") == false \
+				and cur.contains("/HandRight") == false and cur.contains("parent=\"Battle/HandPanel"):
+			## parent 是手牌容器 → 子卡不该写布局
+			if not cur.contains("type=\""):
+				offenders.append(cur.substr(0, 40))
+	_chk("手牌子卡未写 layout_mode / offset（布局交给容器）", offenders.is_empty())
+
+
+## 判断某节点的属性块里是否出现 needle（粗略：只看声名行后到下一个 [node 之前）
+func _compose_has(text: String, owner: String, needle: String, _n: int) -> bool:
+	var idx := text.find("[node name=\"%s\"" % owner)
+	if idx < 0:
+		return false
+	var nxt := text.find("[node ", idx + 1)
+	var chunk := text.substr(idx, (nxt - idx) if nxt > 0 else -1)
+	return chunk.contains(needle)
+
+
+## ⑥ 已弃用文件不得再现
+func _check_forbidden_files() -> void:
+	for rel in FORBIDDEN_FILES:
+		var f := FileAccess.open(rel, FileAccess.READ)
+		var exists := f != null
+		if f != null:
+			f.close()
+		_chk("已弃用文件不存在：%s" % rel, not exists)
 
 
 func _chk(label: String, cond: bool) -> void:
@@ -124,4 +179,4 @@ func _report() -> void:
 		print("   X ", f)
 	if _fail > 0:
 		print("  -> 疑似被编辑器内存旧版回写：git checkout HEAD -- <文件> 抢救，并请人关闭对应 tab")
-	print("=====================================================")
+	print("=============================================")

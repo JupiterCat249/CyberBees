@@ -1,7 +1,6 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]
-[ext_resource type="Script" path="res://scenes/ui/arena_controller.gd" id="2_ctrl"]
 [ext_resource type="PackedScene" path="res://scenes/ui/card_unit.tscn" id="3_unit"]
 [ext_resource type="PackedScene" path="res://scenes/ui/card_hand.tscn" id="4_hand"]
 [ext_resource type="Texture2D" path="res://assets/card_art/金刚蜂王.png" id="art_0"]
@@ -11,7 +10,6 @@
 [ext_resource type="Texture2D" path="res://assets/card_art/电击.png" id="art_4"]
 
 [node name="BattleScene" instance=ExtResource("1_base")]
-script = ExtResource("2_ctrl")
 
 [node name="Cell_0_0" type="Control" parent="Battle/MapView/MapCells" index="0"]
 layout_mode = 0
@@ -184,9 +182,6 @@ text = "1"
 texture = ExtResource("art_0")
 
 [node name="EnemyHand_0" parent="Battle/HandPanelLeft/HandLeft" index="0" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_right = 200.0
-offset_bottom = 200.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_0/BadgeImage" index="0"]
@@ -195,10 +190,6 @@ text = "2"
 texture = ExtResource("art_1")
 
 [node name="EnemyHand_1" parent="Battle/HandPanelLeft/HandLeft" index="1" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_left = 230.0
-offset_right = 430.0
-offset_bottom = 200.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_1/BadgeImage" index="0"]
@@ -207,10 +198,6 @@ text = "4"
 texture = ExtResource("art_2")
 
 [node name="EnemyHand_2" parent="Battle/HandPanelLeft/HandLeft" index="2" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_top = 230.0
-offset_right = 200.0
-offset_bottom = 430.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_2/BadgeImage" index="0"]
@@ -219,11 +206,6 @@ text = "8"
 texture = ExtResource("art_3")
 
 [node name="EnemyHand_3" parent="Battle/HandPanelLeft/HandLeft" index="3" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_left = 230.0
-offset_top = 230.0
-offset_right = 430.0
-offset_bottom = 430.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_3/BadgeImage" index="0"]
@@ -232,9 +214,6 @@ text = "2"
 texture = ExtResource("art_4")
 
 [node name="AllyHand_0" parent="Battle/HandPanelRight/HandRight" index="0" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_right = 200.0
-offset_bottom = 200.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_0/BadgeImage" index="0"]
@@ -243,10 +222,6 @@ text = "2"
 texture = ExtResource("art_1")
 
 [node name="AllyHand_1" parent="Battle/HandPanelRight/HandRight" index="1" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_left = 230.0
-offset_right = 430.0
-offset_bottom = 200.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_1/BadgeImage" index="0"]
@@ -255,10 +230,6 @@ text = "4"
 texture = ExtResource("art_2")
 
 [node name="AllyHand_2" parent="Battle/HandPanelRight/HandRight" index="2" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_top = 230.0
-offset_right = 200.0
-offset_bottom = 430.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_2/BadgeImage" index="0"]
@@ -267,11 +238,6 @@ text = "8"
 texture = ExtResource("art_3")
 
 [node name="AllyHand_3" parent="Battle/HandPanelRight/HandRight" index="3" instance=ExtResource("4_hand")]
-layout_mode = 0
-offset_left = 230.0
-offset_top = 230.0
-offset_right = 430.0
-offset_bottom = 430.0
 mouse_filter = 2
 
 [node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_3/BadgeImage" index="0"]
