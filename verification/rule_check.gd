@@ -91,6 +91,16 @@ func _check_res_schema_sync() -> void:
 	var idx_set := esrc.find("state.active = other")
 	var idx_emit := esrc.find("_emit_hand(side)", idx_set)
 	_chk("_end_turn 里 _emit_hand 位于 active 切换**之后**", idx_set > 0 and idx_emit > idx_set)
+	## ⭐ 手牌亮/灰 = **只考虑部署费用**（人 2026-09-19 明确 + 要求稳定）
+	_chk("引擎有 can_afford_card（费用口径）", esrc.contains("func can_afford_card("))
+	_chk("引擎有 hand_affordable（显示口径 / 只看费用）", esrc.contains("func hand_affordable("))
+	var idx_aff := esrc.find("mask.append(hand_affordable(side, i))")
+	_chk("_emit_hand 用**费用口径**作为 mask", idx_aff > 0)
+	var vsrc := FileAccess.get_file_as_string("scenes/ui/arena_view.gd")
+	_chk("视图有 refresh_hand_affordability（可随时重算 · 幂等）",
+		vsrc.contains("func refresh_hand_affordability()"))
+	_chk("费用变化会刷新手牌亮/灰", vsrc.contains("refresh_hand_affordability()"))
+	_chk("回合/阶段切换也会刷新", vsrc.count("refresh_hand_affordability()") >= 3)
 
 
 ## ⑧ 效果**不叠加**（人 2026-09-19：「所有效果都不能叠加了，只有一层」）

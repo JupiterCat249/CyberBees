@@ -360,6 +360,9 @@ func _on_round_started(round_no: int) -> void:
 
 
 func _set_turn(side: int, round_no: int) -> void:
+	## ⭐ 回合切换也刷新手牌亮/灰（人要求「轮换等情况下依然稳定显示是否可用」）
+	##   与费用变化 / 手牌变化三条路径**互相幂等**（都只读当前 state），不会打架。
+	refresh_hand_affordability()
 	$HUD/MatchInfo/TurnInfo.text = "回合%d--%s" % [round_no, "绿方" if side == SIDE_ALLY else "红方"]
 
 
@@ -375,6 +378,8 @@ func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
 	$HUD/MatchInfo/SiteEffect.text = "%s阶段（%s）｜%s" % [
 		str(names.get(phase, "?")), "绿" if side == SIDE_ALLY else "红",
 		str(tips.get(phase, ""))]
+	## ⭐ 阶段切换也刷新手牌亮/灰（幂等；保证任何时刻显示都跟当前费用一致）
+	refresh_hand_affordability()
 
 
 func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
@@ -385,6 +390,8 @@ func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
 	var lb: Label = node.get_node_or_null("BadgeImage/Value")
 	if lb != null:
 		lb.text = str(cost)
+	## ⭐ 费用一变，双方手牌的亮/灰立刻按**费用口径**重算（幂等）
+	refresh_hand_affordability()
 
 
 func _on_hand_changed(side: int, hand: Array, playable: Array) -> void:
@@ -611,14 +618,34 @@ func _render_hand(side: int, hand: Array, playable: Array) -> void:
 			node.hand_clicked.connect(_on_hand_clicked.bind(side))
 		_hand_nodes[side][data.id] = node
 		_hand_order[side].append(data.id)
+		## ⭐ 手牌亮/灰：**按当前状态自算**（费用口径），不依赖外部传入的瞬时 mask
+		##   人明确：「只考虑部署费用，其他不用考虑」+ 要求「稳定显示」
+		var aff: bool = engine.hand_affordable(side, i) if engine != null else false
 		if i < playable.size():
-			_call_opt(node, "set_playable", [bool(playable[i])])
-		## 手牌卡内部元素参数（**与详情区参数分开**）
+			aff = bool(playable[i])
 		if hand_params != null:
 			_apply_one_hand_params(node, hand_params)
+		_call_opt(node, "set_playable", [aff])
 	## ⭐ 每次渲染后都把子卡内部节点设为鼠标透明（**保留卡根节点可点**）
 	##   （`_ready` 里那次跑在首次渲染之前 → 容器还是空的，等于没跑）
 	_ignore_descendants(parent)
+
+
+## ⭐ 稳定刷新手牌亮/灰（费用口径）——人要求「轮换等情况下依然稳定显示是否可用」
+##   调用时机：费用变化 / 阶段变化 / 回合切换 / 卡入牌库墓地 之后
+##   它是**幂等**的：只读当前 state.cost 与手牌费用，因此不会与其它刷新互相打架。
+func refresh_hand_affordability() -> void:
+	if engine == null:
+		return
+	for side in [SIDE_ALLY, SIDE_ENEMY]:
+		var hand: Array = engine.state.sides[side]["hand"]
+		## 按渲染顺序（_hand_order）取节点，避免字典顺序错配
+		for i in _hand_order[side].size():
+			var cid: String = _hand_order[side][i]
+			var node: Control = _hand_nodes[side].get(cid)
+			if node == null or not is_instance_valid(node):
+				continue
+			_call_opt(node, "set_playable", [engine.hand_affordable(side, i)])
 
 
 func _on_hand_clicked(card_id: String, side: int) -> void:

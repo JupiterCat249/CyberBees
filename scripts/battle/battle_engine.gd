@@ -718,25 +718,42 @@ func _emit_hand(side: int) -> void:
 	var hand: Array = state.sides[side]["hand"]
 	var mask: Array = []
 	for i in hand.size():
-		mask.append(can_play_hand(side, i))
+		## ⭐ 手牌亮/灰用**费用口径**（人明确：只考虑部署费用）——不掺阶段与回合
+		mask.append(hand_affordable(side, i))
 	bus().emit_signal(Bus.SIG_HAND_CHANGED, side, hand.duplicate(), mask)
 	var playable := hand.size() > 0
 	bus().emit_signal(Bus.SIG_ACTION_AVAIL, side, true, false, playable, true)
 
 
 ## 手牌 i 当前是否可打出（费用 + 阶段）
+## ⭐ 手牌「亮/灰」的唯一口径（人 2026-09-19 明确：**只考虑部署费用，其他不用考虑**）
+##   · 单位卡 / 指令卡 = 部署费用（`CardData.cost`）；X 费卡（cost < 0）视为**随时可负担**
+##   · **不看阶段、不看是否当前行动方** —— 这样轮换/阶段切换时显示不会跳动
+##   · 该口径**只用于显示**；真正能否执行仍由 request_deploy / request_use_command 校验
+func can_afford_card(side: int, card: CardData) -> bool:
+	if state == null or card == null:
+		return false
+	if side < 0 or side >= state.sides.size():
+		return false
+	if card.cost < 0:
+		return true                              ## X 费卡：费用不固定
+	return card.cost <= state.cost(side)
+
+
+## 手牌 index 当前是否可负担（**显示口径**；与实际可执行性分开）
+func hand_affordable(side: int, index: int) -> bool:
+	var hand: Array = state.sides[side]["hand"] if state != null else []
+	if index < 0 or index >= hand.size():
+		return false
+	return can_afford_card(side, hand[index])
+
+
+## 手牌 i 当前是否可打出（**执行口径**：费用 + 阶段 + 当前行动方）
+##   ⚠️ 与显示口径 `hand_affordable` 区分：显示只看费用，执行才看阶段/回合
 func can_play_hand(side: int, index: int) -> bool:
 	if state == null or side != state.active:
 		return false
-	var hand: Array = state.sides[side]["hand"]
-	if index < 0 or index >= hand.size():
-		return false
-	var c: CardData = hand[index]
-	if c == null:
-		return false
-	if c.cost < 0:                              ## X 费卡：费用不固定，按可负担判断
-		return state.phase == state.Phase.DEPLOY or state.phase == state.Phase.ACTION
-	if c.cost > state.cost(side):
+	if not hand_affordable(side, index):
 		return false
 	return state.phase == state.Phase.DEPLOY or state.phase == state.Phase.ACTION
 
