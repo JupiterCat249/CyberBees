@@ -493,11 +493,15 @@ func _cell_pos(cell: Vector2i) -> Vector2:
 func _on_cell_clicked(cell: Vector2i) -> void:
 	if engine == null or engine.state == null:
 		return
-	## ⭐ 人 2026-09-19：「只要下一次点击的位置不是己方手牌里的卡，就应该默认切换状态」
-	##   → 点棋盘任何位置都先退出「弃牌」态（取消手牌选中），再按预览处理本次点击。
-	##     否则主按钮会一直停在「弃牌」，玩家无法回到阶段推进。
-	if int(engine.sel_kind) == 1:
-		engine.cancel_selection()
+	## ⭐ 手牌状态机（人 2026-09-19）：
+	##   在交互范围内 → 执行该卡的交互（部署 / 指定指令目标）
+	##   脱离交互范围 → **自动切换状态**（退出选中），再按普通流程处理本次点击
+	##   ⚠️ 不能无条件取消：否则点部署格时选中被清掉 → **手牌选中后无法部署**（曾引入的回归）
+	if engine.sel_kind == 1:
+		if engine.hand_range_has_cell(cell):
+			_execute_hand_on_cell(cell)
+			return
+		engine.hand_range_leave()
 	var spec = engine.current_preview()
 	var kind: int = int(spec.kind) if spec != null else 0
 	var side: int = engine.state.active
@@ -539,6 +543,21 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 			engine.select_unit(side, here)
 			show_detail(here.data)
 			_explain_actions(here)
+
+
+## 手牌状态机：在交互范围内点击格 → 按卡种执行
+func _execute_hand_on_cell(cell: Vector2i) -> void:
+	var side: int = engine.state.active
+	match int(engine.hand_mode):
+		int(EngLib.HandMode.DEPLOY):
+			if not engine.request_deploy(side, engine.sel_hand_index, cell):
+				_flash_msg("该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）")
+		int(EngLib.HandMode.TARGET):
+			var u: UnitInstance = engine.state.board.unit_at(cell)
+			if u == null or not engine.request_use_command(side, engine.sel_hand_index, u):
+				_flash_msg("该单位不是该指令的合法目标")
+		_:
+			pass
 
 
 ## 选中单位后，把"现在能做什么 / 为什么不能做"说清楚（迭代058 G3/G7）
@@ -708,14 +727,16 @@ func _update_unit(inst: UnitInstance, hp_after: int) -> void:
 func _on_unit_clicked(instance_id: String) -> void:
 	if engine == null or engine.state == null:
 		return
-	## ⭐ 人 2026-09-19：点**非手牌**位置即切换状态（退出弃牌态）
-	##   注意：此时不能再用「选中指令卡 + 点单位」来出指令（人已明确该交互应让位给"点高亮格"）
-	if int(engine.sel_kind) == 1:
-		engine.cancel_selection()
 	var inst := _find_unit(instance_id)
 	if inst == null:
 		return
 	var side: int = engine.state.active
+	## ⭐ 手牌状态机：若该单位是当前指令卡的合法目标 → 就地执行指令
+	if engine.sel_kind == 1:
+		if engine.hand_range_has_cell(inst.cell):
+			_execute_hand_on_cell(inst.cell)
+			return
+		engine.hand_range_leave()
 	if inst.side == side:
 		# ── 支援双击确认（原设计）：已选中带支援技能的单位时，点友方 → 待确认 → 再点执行 ──
 		if int(engine.sel_kind) == 3 and engine.sel_unit != null and engine.sel_support != null \

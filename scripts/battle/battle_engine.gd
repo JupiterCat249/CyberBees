@@ -31,6 +31,19 @@ var config: BattleConfig = null
 
 ## 当前选中（**只保存索引/id，不保存 UI 引用**）
 var sel_kind: int = 0            ## 0=无 1=手牌 2=单位 3=支援
+## ⭐ 迭代059：**手牌交互状态机**（人 2026-09-19 明确要求）
+##   > 「针对手牌做针对性的状态机（**选中不同手牌将启动不同交互逻辑**，
+##   >   并在**脱离交互范围时自动切换状态**）」
+##   意义：选中不同**卡种**进入不同交互模式；点击落在**交互范围之外**时自动退出该状态，
+##        而不是让按钮/选中态卡死（曾出现"选中后无法部署"与"弃牌态锁死"两个反向缺陷）。
+enum HandMode {
+	IDLE,      ## 无手牌交互
+	DEPLOY,    ## 单位卡·待部署 —— 交互范围 = 该卡的合法部署格
+	TARGET,    ## 指令卡·待指定目标 —— 交互范围 = 合法目标单位
+	DISCARD,   ## 单位卡·弃牌态（主按钮「弃牌」）—— 交互范围 = 手牌区以外任意处
+}
+var hand_mode: int = HandMode.IDLE
+var sel_hand_card: CardData = null   ## 当前选中的手牌（记录卡种，供状态机判定）
 ## 支援：**待确认目标**（迭代059 步3：人要求「做回原有设计 —— 双击确认」）
 ##   第一次点击友方 → 进入待确认；**再次点击同一目标**或按主按钮「确认」→ 执行
 ##   改选其它单位 / 取消选中 → 待确认失效
@@ -534,8 +547,48 @@ func select_hand(side: int, index: int) -> void:
 	sel_kind = 1
 	sel_hand_index = index
 	sel_unit = null
+	## ⭐ 状态机：按**卡种**进入不同交互模式（人要求「选中不同手牌将启动不同交互逻辑」）
+	var hand: Array = state.sides[side]["hand"]
+	sel_hand_card = hand[index] if index >= 0 and index < hand.size() else null
+	if sel_hand_card is UnitData:
+		hand_mode = HandMode.DEPLOY
+	elif sel_hand_card is CommandData:
+		hand_mode = HandMode.TARGET
+	else:
+		hand_mode = HandMode.IDLE
 	_emit_selection()
 	_emit_button()          ## 选卡后按钮变「弃牌」（G-6 Q-3）
+
+
+## 状态机：**该格是否在当前手牌交互范围内**
+##   DEPLOY  → 该卡可部署的格（带 a500 限定：兵蜂需蜂王相邻 / 建筑需己方领地 / 禁区不可）
+##   TARGET  → 该指令卡的合法目标单位所在格
+##   非手牌态 → false（由调用方另作处理）
+func hand_range_has_cell(cell: Vector2i) -> bool:
+	if state == null or sel_hand_card == null:
+		return false
+	if hand_mode == HandMode.DEPLOY:
+		var ud := sel_hand_card as UnitData
+		if ud == null:
+			return false
+		return Preview.deploy_cells(state, state.active, ud).has(cell)
+	if hand_mode == HandMode.TARGET:
+		var cd := sel_hand_card as CommandData
+		if cd == null:
+			return false
+		var u: UnitInstance = state.board.unit_at(cell)
+		if u == null:
+			return false
+		return RulesCommand.target_legal(cd, u, state.active)
+	return false
+
+
+## 状态机：手牌交互模式下，点击**交互范围之外** → 自动退出该状态（人要求）
+func hand_range_leave() -> void:
+	if sel_kind == 1 or hand_mode != HandMode.IDLE:
+		_cancel_selection()
+		_emit_selection()
+		_emit_action_availability()
 
 
 ## 选中单位（迭代059 步3：自动带上该单位的支援技能 —— 不需要额外 UI 入口）
@@ -590,6 +643,8 @@ func _cancel_selection() -> void:
 	support_pending = null
 	sel_kind = 0
 	sel_hand_index = -1
+	sel_hand_card = null
+	hand_mode = HandMode.IDLE
 	sel_unit = null
 	sel_support = null
 	## 取消选中 → 按钮恢复原文案（G-6 Q-3：弃牌态只在选中手牌时存在）

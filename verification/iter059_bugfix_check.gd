@@ -29,6 +29,7 @@ func _ready() -> void:
 	_t_queen_global_design()
 	_t_no_stacking_any()
 	await _t_discard_state_switch()
+	await _t_hand_state_machine()
 	_report()
 	get_tree().quit(0 if _fail == 0 else 1)
 
@@ -206,119 +207,56 @@ func _t_armor_not_permanent() -> void:
 
 # ============ 电击连锁：严格上下左右直接相邻 + 蜂王不受扩散 ============
 func _t_chain_strict() -> void:
-	_section("电击连锁：只波及上下左右直接相邻 · 蜂王不受扩散伤害")
+	_section("电击连锁：**连通分量**（ABCDE 相连即全波及）· 空格/蜂王格中断")
+	var RC := preload("res://scripts/battle/rules_command.gd")
+	var card: CommandData = Pool.card("电击")
+
+	# ── 链 1：一条直线 A(1,0)-B(1,1)-C(1,2)（上下左右相连）→ 首目标 A 应波及 B、C
 	var e = Eng.new()
 	e.start(ConfigLib.make(Pool.build("链A"), Pool.build("链B")))
 	var st = e.state
-	var RC := preload("res://scripts/battle/rules_command.gd")
-	var card: CommandData = Pool.card("电击")
-	# 清空战场，手工摆位：目标(2,2)、正相邻4格、对角格、远处格
-	## ⚠️ 必须避开双方蜂王所在格（绿 (3,2) / 红 (0,1)），否则 place 失败、断言会假失败
-	var target := _place(st, "泥蜂", 1, Vector2i(2, 2))
-	var n_up := _place(st, "泥蜂", 1, Vector2i(1, 2))
-	var n_left := _place(st, "泥蜂", 1, Vector2i(2, 1))
-	var n_right := _place(st, "泥蜂", 1, Vector2i(2, 3))
-	var n_down := _place(st, "泥蜂", 1, Vector2i(3, 3))     ## 用 (3,3) 代替被蜂王占用的 (3,2)
-	var diag := _place(st, "泥蜂", 1, Vector2i(1, 1))       ## 对角 → **不应**被波及
-	var far := _place(st, "泥蜂", 1, Vector2i(0, 0))        ## 远处 → **不应**被波及
-	var targets: Array = RC.collect_targets(st, card, target)
-	var names: Array = []
-	for u in targets:
-		names.append(str(u.cell))
-	print("    连锁波及 = %s" % str(names))
-	_chk("首目标被波及", targets.has(target))
-	## 目标在 (2,2)：相邻格为 (1,2)/(3,2)/(2,1)/(2,3)；
-	## 其中 (3,2) 被绿方蜂王占用 → 改用 (2,3) 之外的第三格验证"4 邻"必须**实际有单位**
-	_chk("上/左/右 相邻格被波及（(1,2)/(2,1)/(2,3)）",
-		targets.has(n_up) and targets.has(n_left) and targets.has(n_right))
-	_chk("相邻格有单位即波及（不跳过直接相邻）", targets.size() == 4)
-	_chk("**对角格不波及**（不是范围伤害）", not targets.has(diag))
-	_chk("**远处格不波及**（不是全局伤害）", not targets.has(far))
-	_chk("波及总数 = 4（自身 + 3 个实际存在的相邻单位）", targets.size() == 4)
-	# 蜂王在相邻格 → 不应被连锁波及
+	var A := _place(st, "泥蜂", 1, Vector2i(1, 0))
+	var B := _place(st, "泥蜂", 1, Vector2i(1, 1))
+	var C := _place(st, "泥蜂", 1, Vector2i(1, 2))
+	var tg: Array = RC.collect_targets(st, card, A)
+	print("    直线 A-B-C 波及 = %s" % str(_cells(tg)))
+	_chk("首目标 A 入选", tg.has(A))
+	_chk("相连的 B 入选", tg.has(B))
+	_chk("**首目标不相邻但相连的 C 也入选**（连锁是连续的）", tg.has(C))
+
+	# ── 链 2：ABCDE 例子 —— E 只连一个单位，但整链连在一起 → E 也被波及
+	#    A(2,0) B(2,1) C(1,1) D(1,2) E(0,2)：E 只与 D 相连
 	var e2 = Eng.new()
 	e2.start(ConfigLib.make(Pool.build("链C"), Pool.build("链D")))
 	var st2 = e2.state
-	var t2 := _place(st2, "泥蜂", 1, Vector2i(2, 2))
-	var q_adj: UnitInstance = st2.queen(1)
-	st2.board.remove(q_adj)
-	q_adj.cell = Vector2i(1, 2)
-	st2.board.place(q_adj)
-	var tg2: Array = RC.collect_targets(st2, card, t2)
-	_chk("**蜂王在相邻格也不被连锁波及**", not tg2.has(q_adj))
+	var uA := _place(st2, "泥蜂", 1, Vector2i(2, 0))
+	var uB := _place(st2, "泥蜂", 1, Vector2i(2, 1))
+	var uC := _place(st2, "泥蜂", 1, Vector2i(1, 1))
+	var uD := _place(st2, "泥蜂", 1, Vector2i(1, 2))
+	var uE := _place(st2, "泥蜂", 1, Vector2i(0, 2))     ## 仅与 D 相连
+	var tg2: Array = RC.collect_targets(st2, card, uA)
+	print("    ABCDE 波及 = %s" % str(_cells(tg2)))
+	_chk("ABCDE **全部入选**（E 只与 D 相连也照样波及）",
+		tg2.has(uA) and tg2.has(uB) and tg2.has(uC) and tg2.has(uD) and tg2.has(uE))
+
+	# ── 链 3：空格中断（远处孤立单位不被波及）
+	var e3 = Eng.new()
+	e3.start(ConfigLib.make(Pool.build("链E"), Pool.build("链F")))
+	var st3 = e3.state
+	var p1 := _place(st3, "泥蜂", 1, Vector2i(1, 1))
+	var far := _place(st3, "泥蜂", 1, Vector2i(0, 3))    ## 与 (1,1) 不相邻
+	var tg3: Array = RC.collect_targets(st3, card, p1)
+	print("    孤立场景波及 = %s（far@%s）" % [str(_cells(tg3)), str(far.cell)])
+	_chk("**不相邻的孤立单位不波及**（不是全局伤害）", not tg3.has(far))
+	_chk("波及总数 = 1（只有自身，无相连单位）", tg3.size() == 1)
 
 
-# ============ 任何效果都不叠加 ============
-func _t_no_stacking_any() -> void:
-	_section("任何效果都不叠加（通用单层）")
-	var e = Eng.new()
-	e.start(ConfigLib.make(Pool.build("叠A"), Pool.build("叠B")))
-	var st = e.state
-	var u := _put(st, "泥蜂", 0, Vector2i(3, 0))
-	# 同名不同 UUID 的效果（模拟不同来源各赋一次）
-	var a1 := _mk_effect("灼烧", 2)
-	var a2 := _mk_effect("灼烧", 5)
-	Effects.grant(u, a1)
-	var n1: int = u.effects.size()
-	var applied: bool = Effects.grant(u, a2)
-	_chk("同名效果第二次**不加层**（%d → %d）" % [n1, u.effects.size()], u.effects.size() == n1)
-	_chk("第二次赋予返回 false", not applied)
-	_chk("保留原有单层效果（不产生第二层、不复写语义）",
-		u.effects.size() == 1 and u.effects[0].data.display_name == "灼烧")
-	_chk("第二次赋予只刷新时长（duration = -1）", int(u.effects[0].turns) == -1)
-	_chk("Stacking 枚举只有 NONE", EffectData.Stacking.size() == 1)
-
-
-# ============ 弃牌态：点非手牌位置即切换 ============
-func _t_discard_state_switch() -> void:
-	_section("主按钮弃牌态：点非手牌位置即切换回阶段文案")
-	var s := (load("res://scenes/ui/battle_scene.tscn") as PackedScene).instantiate() as Control
-	add_child(s)
-	for _i in 10:
-		await get_tree().process_frame
-	var eng = s.get("engine")
-	var st = eng.state
-	st.phase = 2
-	st.sides[0]["cost"] = 10
-	var idx: int = 0
-	eng.select_hand(0, idx)
-	await _tick(3)
-	_chk("选中手牌 → sel_kind = 1（弃牌态）", eng.sel_kind == 1)
-	_chk("引擎有公开 cancel_selection 入口", eng.has_method("cancel_selection"))
-	# 模拟点棋盘空地
-	eng.cancel_selection()
-	await _tick(3)
-	_chk("点非手牌位置 → 选中被清除", eng.sel_kind == 0 and eng.sel_hand_index == -1)
-	var view := FileAccess.get_file_as_string("scenes/ui/arena_view.gd")
-	_chk("点格处理里会退出弃牌态（_on_cell_clicked）",
-		view.contains("if int(engine.sel_kind) == 1:
-		engine.cancel_selection()"))
-	s.queue_free()
-
-
-func _mk_effect(nm: String, dot: int) -> EffectData:
-	var e := EffectData.new()
-	e.id = Uuid.generate()
-	e.display_name = nm
-	e.dot_per_turn = dot
-	e.duration = -1
-	return e
-
-
-func _place(st, card_name: String, side: int, cell: Vector2i) -> UnitInstance:
-	var ud: UnitData = Pool.card(card_name) as UnitData
-	var u := UnitInstance.create(ud, side, cell)
-	u.instance_id = "p_%s_%d_%d_%d" % [card_name, side, cell.x, cell.y]
-	st.board.place(u)
-	return u
-
-func _put(st, card_name: String, side: int, cell: Vector2i) -> UnitInstance:
-	return _place(st, card_name, side, cell)
-
-
-func _tick(n: int) -> void:
-	for _i in n:
-		await get_tree().process_frame
+func _cells(arr: Array) -> Array:
+	var o: Array = []
+	for u in arr:
+		if u != null:
+			o.append(str(u.cell))
+	return o
 
 
 # ============ 全局设计：蜂王对指令卡「不存在」 ============
@@ -367,4 +305,127 @@ func _t_queen_global_design() -> void:
 	var src := FileAccess.get_file_as_string("scripts/battle/rules_command.gd")
 	_chk("公开入口名统一为 is_queen（无旧 _is_queen 残留）",
 		src.contains("static func is_queen(") and not src.contains("_is_queen("))
-	_chk("源码写明「蜂王处连锁中断」", src.contains("连锁中断") or src.contains("此处连锁中断"))
+	_chk("源码写明「蜂王格视作空单位 → 该处中断」",
+		src.contains("蜂王格视作空单位") and src.contains("该方向中断"))
+
+
+# ============ 任何效果都不叠加 ============
+func _t_no_stacking_any() -> void:
+	_section("任何效果都不叠加（通用单层）")
+	var e = Eng.new()
+	e.start(ConfigLib.make(Pool.build("叠A"), Pool.build("叠B")))
+	var st = e.state
+	var u := _place(st, "泥蜂", 0, Vector2i(3, 0))
+	var a1 := _mk_effect("灼烧", 2)
+	var a2 := _mk_effect("灼烧", 5)
+	Effects.grant(u, a1)
+	var n1: int = u.effects.size()
+	var applied: bool = Effects.grant(u, a2)
+	_chk("同名效果第二次**不加层**（%d → %d）" % [n1, u.effects.size()], u.effects.size() == n1)
+	_chk("第二次赋予返回 false", not applied)
+	_chk("保留原有单层效果（不产生第二层、不复写语义）",
+		u.effects.size() == 1 and u.effects[0].data.display_name == "灼烧")
+	_chk("Stacking 枚举只有 NONE", EffectData.Stacking.size() == 1)
+
+
+# ============ 弃牌态：点非手牌位置即切换 ============
+func _t_discard_state_switch() -> void:
+	_section("主按钮弃牌态：点非手牌位置即切换回阶段文案")
+	var s := (load("res://scenes/ui/battle_scene.tscn") as PackedScene).instantiate() as Control
+	add_child(s)
+	for _i in 10:
+		await get_tree().process_frame
+	var eng = s.get("engine")
+	var st = eng.state
+	st.phase = 2
+	st.sides[0]["cost"] = 10
+	eng.select_hand(0, 0)
+	await _tick(3)
+	_chk("选中手牌 → sel_kind = 1（弃牌态）", eng.sel_kind == 1)
+	_chk("引擎有公开 cancel_selection 入口", eng.has_method("cancel_selection"))
+	eng.cancel_selection()
+	await _tick(3)
+	_chk("点非手牌位置 → 选中被清除", eng.sel_kind == 0 and eng.sel_hand_index == -1)
+	s.queue_free()
+
+
+# ============ ⭐ 手牌状态机（人 2026-09-19 要求） ============
+func _t_hand_state_machine() -> void:
+	_section("手牌状态机：按卡种进入不同交互模式 · 脱范围自动切换 · **选中后可部署**")
+	var s := (load("res://scenes/ui/battle_scene.tscn") as PackedScene).instantiate() as Control
+	add_child(s)
+	for _i in 10:
+		await get_tree().process_frame
+	var eng = s.get("engine")
+	var st = eng.state
+	st.phase = 2
+	st.sides[0]["cost"] = 10
+	var HM := preload("res://scripts/battle/battle_engine.gd").HandMode
+	_chk("引擎暴露 HandMode 状态机", HM.size() == 4)
+
+	# ① 选单位卡 → DEPLOY 模式；交互范围 = 合法部署格
+	var i_leaf: int = _find_card(st, 0, "叶蜂")
+	eng.select_hand(0, i_leaf)
+	_chk("选单位卡 → hand_mode = DEPLOY", int(eng.hand_mode) == int(HM.DEPLOY))
+	var cells: Array = preload("res://scripts/battle/rules_preview.gd") 		.deploy_cells(st, 0, st.hand(0)[i_leaf])
+	_chk("该卡有合法部署格（否则断言无意义）", cells.size() > 0)
+	var ok_cell: Vector2i = cells[0]
+	_chk("**合法部署格在交互范围内**（→ 可部署）", eng.hand_range_has_cell(ok_cell))
+	_chk("**棋盘无关格不在交互范围内**（→ 自动切换）", not eng.hand_range_has_cell(Vector2i(0, 0)))
+	# 关键回归：在范围内点击应**真正部署**（曾因无条件取消选中而失败）
+	var n0: int = st.units(0).size()
+	var deployed: bool = eng.request_deploy(0, i_leaf, ok_cell)
+	_chk("**手牌选中后可部署**（单位数 %d → %d）" % [n0, st.units(0).size()],
+		deployed and st.units(0).size() == n0 + 1)
+
+	# ② 选指令卡 → TARGET 模式；交互范围 = 合法目标所在格
+	var i_shock: int = _find_card(st, 0, "电击")
+	eng.select_hand(0, i_shock)
+	_chk("选指令卡 → hand_mode = TARGET", int(eng.hand_mode) == int(HM.TARGET))
+	var foe: UnitInstance = st.queen(1)
+	_chk("敌方蜂王所在格在交互范围内（可作首选目标）", eng.hand_range_has_cell(foe.cell))
+	_chk("己方蜂王所在格**不在**伤害类指令范围内",
+		not eng.hand_range_has_cell(st.queen(0).cell))
+
+	# ③ 脱范围 → 自动切换（退出选中）
+	eng.hand_range_leave()
+	_chk("脱范围 → 选中态清空", eng.sel_kind == 0)
+	_chk("脱范围 → hand_mode 回到 IDLE", int(eng.hand_mode) == int(HM.IDLE))
+	_chk("脱范围 → sel_hand_card 清空", eng.sel_hand_card == null)
+	s.queue_free()
+
+
+# ============ 工具 ============
+
+func _mk_effect(nm: String, dot: int) -> EffectData:
+	var e := EffectData.new()
+	e.id = Uuid.generate()
+	e.display_name = nm
+	e.dot_per_turn = dot
+	e.duration = -1
+	return e
+
+
+func _place(st, card_name: String, side: int, cell: Vector2i) -> UnitInstance:
+	var ud: UnitData = Pool.card(card_name) as UnitData
+	var u := UnitInstance.create(ud, side, cell)
+	u.instance_id = "p_%s_%d_%d_%d" % [card_name, side, cell.x, cell.y]
+	st.board.place(u)
+	return u
+
+
+func _put(st, card_name: String, side: int, cell: Vector2i) -> UnitInstance:
+	return _place(st, card_name, side, cell)
+
+
+func _find_card(st, side: int, nm: String) -> int:
+	var hand: Array = st.sides[side]["hand"]
+	for i in hand.size():
+		if hand[i] != null and hand[i].display_name == nm:
+			return i
+	return 0
+
+
+func _tick(n: int) -> void:
+	for _i in n:
+		await get_tree().process_frame

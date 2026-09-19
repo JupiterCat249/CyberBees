@@ -121,19 +121,29 @@ static func collect_targets(state, card: CommandData, primary: UnitInstance) -> 
 				out.append(u)
 		return out
 	# ② 链式（chain_span > 0）：设计原文「与目标**接触及间接接触**的单位都会受到相同伤害」
-	#    人 2026-09-19 严格定义：
-	#      · 「**只有单位在上下左右格直接相邻时**这些单位才会被伤害共享」
-	#        → **只取首选目标的直接相邻 4 格**（不经过中间格绕连，避免又变成"范围/全局伤害"）
-	#      ·「蜂王**哪里=没有单位**，连锁在蜂王处**中断**」
-	#        → 蜂王格与空格一律**不作为传播通路**（该侧终止）
-	#      · 对角相邻**不传播**
+	#    人 2026-09-19 精确定义（**连通分量**，不是只取直接相邻）：
+	#      「连锁的判定是**连续的**：ABCDE，哪怕 E 只和一个单位相连，
+	#       只要 ABCD 都连在一起且其中一个和 E 连接，**ABCDE 就会都被连锁判定并都受到伤害/作用**」
+	#      · 传播条件 = **上下左右直接相邻**
+	#      · **蜂王格视作空单位 → 该处中断**（人明确保留："蜂王在判定中不存在"）
+	#      · 空格同样终止该方向；对角不传播
 	if card.chain_span > 0:
-		for n in state.board.neighbors_cardinal(primary.cell):
-			var u2: UnitInstance = state.board.unit_at(n)
-			## 空格 / 蜂王格 → 该方向**不共享伤害**（蜂王处连锁中断）
-			if u2 == null or is_queen(u2):
-				continue
-			out.append(u2)
+		var seen := {primary.cell: true}
+		var frontier: Array = [primary.cell]
+		while not frontier.is_empty():
+			var nxt: Array = []
+			for c in frontier:
+				for n in state.board.neighbors_cardinal(c):
+					if seen.has(n):
+						continue
+					seen[n] = true
+					var u2: UnitInstance = state.board.unit_at(n)
+					## 空格 / 蜂王格 → **该方向中断**（蜂王在判定中不存在）
+					if u2 == null or is_queen(u2):
+						continue
+					out.append(u2)
+					nxt.append(n)
+			frontier = nxt
 		return out
 	# ③ 单体
 	return out
