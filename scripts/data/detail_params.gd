@@ -21,17 +21,22 @@ extends Resource
 @export var crop_offset: Vector2 = Vector2.ZERO
 @export var crop_scale: float = 0.0            ## <=0 = 用 base_scale
 
-## ============ 文字 ============
-@export var name_font_size: int = 38           ## 卡名
-@export var desc_font_size: int = 25           ## 描述
-@export var desc_line_spacing: int = 6
+## ============ 文字（**默认 0 = 沿用素材场景原值，不覆盖字号**）============
+## ⚠️ 人 2026-09-19 明确：不要改字号。故默认全 0（不改），
+##    只有显式设成正数时才覆盖 —— 便于日后按实测反馈单独调整某处。
+@export var name_font_size: int = 0            ## 0 = 沿用素材（当前 38）
+@export var desc_font_size: int = 0            ## 0 = 沿用素材（当前 25）
+@export var desc_line_spacing: int = 0
 @export var name_color: Color = Color(1, 1, 1, 1)
 @export var desc_color: Color = Color(0.86, 0.88, 0.9, 1)
 
 ## ============ 四维行 ============
 @export var attr_rows: int = 4
-@export var attr_value_font_size: int = 24
+@export var attr_value_font_size: int = 0      ## 0 = 沿用素材（当前 42；曾被误覆盖成 24）
 @export var attr_icon_size: Vector2 = Vector2(24, 24)
+
+## 操作反馈提示标签（**运行时新建的节点**，非既有素材节点）
+@export var msg_font_size: int = 24
 
 
 func final_art_scale(vis: CardVisual) -> Vector2:

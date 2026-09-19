@@ -133,18 +133,14 @@ func _set_ignore_recursive(n: Node) -> void:
 		_set_ignore_recursive(ch)
 
 
-## 适配长文案（迭代058：按钮文案写明目标阶段后变长，原字号会溢出面板）
-## ⚠️ 只调字号/换行，**不改素材场景的布局**（D-2 不动人工处理）
+## 适配长文案与地形提示
+## ⚠️ **人 2026-09-19 明确要求：不要改字号。**
+##   之前这里把主按钮 60→30、阶段提示 24→20，导致字号变小（尤其手牌/详情区属性区）。
+##   现只保留**自动换行**（不改字号），字号一律沿用素材场景原值。
 func _fit_text_labels() -> void:
-	## 主按钮 400px 宽；11 个汉字 ×38px ≈ 418 → 溢出，缩到 30
-	var bar_label := $HUD/ActionBar/Label as Label
-	if bar_label != null:
-		bar_label.add_theme_font_size_override("font_size", 30)
-	## 阶段提示区只有 300×100 → 开自动换行 + 缩字号，容纳「阶段 + 操作提示」
 	var se := $HUD/MatchInfo/SiteEffect as Label
 	if se != null:
 		se.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		se.add_theme_font_size_override("font_size", 20)
 
 
 ## 建操作反馈标签（挂在 ActionBar 下、主按钮上方）
@@ -160,7 +156,7 @@ func _make_feedback_label() -> void:
 	_msg.text = ""
 	_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_msg.add_theme_font_size_override("font_size", 20)
+	_msg.add_theme_font_size_override("font_size", int(detail_params.msg_font_size))
 	_msg.add_theme_color_override("font_color", Color(1.0, 0.82, 0.35, 1.0))
 	bar.add_child(_msg)
 	# 摆到主按钮正上方（主按钮在 ActionBar 内的 offset 约 400x100）
@@ -243,13 +239,11 @@ func _apply_detail_params() -> void:
 	if p == null:
 		return
 	var nm := $HUD/InfoPanel/CardName as Label
-	if nm != null:
+	if nm != null and int(p.name_font_size) > 0:
 		nm.add_theme_font_size_override("font_size", int(p.name_font_size))
-		nm.add_theme_color_override("font_color", p.name_color)
 	var ds := $HUD/InfoPanel/SkillDesc as Label
-	if ds != null:
+	if ds != null and int(p.desc_font_size) > 0:
 		ds.add_theme_font_size_override("font_size", int(p.desc_font_size))
-		ds.add_theme_color_override("font_color", p.desc_color)
 		ds.add_theme_constant_override("line_spacing", int(p.desc_line_spacing))
 	var portrait := $HUD/InfoPanel/DetailBlock/Artwork/Portrait as TextureRect
 	if portrait != null:
@@ -261,7 +255,9 @@ func _apply_detail_params() -> void:
 			if row == null:
 				continue
 			var v: Label = row.get_node_or_null("Value")
-			if v != null:
+			## ⚠️ 只在**显式给了正数**时才覆盖字号（0/负数 = 沿用素材场景原值）
+			##   人 2026-09-19：不要改字号 —— 之前这里把 42 覆盖成 24 导致属性区字号变小
+			if v != null and int(p.attr_value_font_size) > 0:
 				v.add_theme_font_size_override("font_size", int(p.attr_value_font_size))
 			var ic: TextureRect = row.get_node_or_null("Icon")
 			if ic != null:
@@ -285,9 +281,10 @@ func _apply_one_hand_params(node, p) -> void:
 	if badge != null:
 		badge.size = p.badge_size
 		var bv: Label = badge.get_node_or_null("Value")
-		if bv != null:
+		## ⚠️ 只在显式给正数时覆盖字号（人 2026-09-19：不要改字号）
+		##    素材原值 48；之前这里覆盖成 26 → 变小
+		if bv != null and int(p.badge_font_size) > 0:
 			bv.add_theme_font_size_override("font_size", int(p.badge_font_size))
-			bv.add_theme_color_override("font_color", p.badge_color)
 	var line: Panel = node.get_node_or_null("InnerLine")
 	if line != null:
 		line.size = p.inner_line_size

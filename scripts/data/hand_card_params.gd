@@ -26,7 +26,8 @@ extends Resource
 ## ============ 徽章（费用数字）============
 @export var badge_size: Vector2 = Vector2(60, 65)
 @export var badge_pos: Vector2 = Vector2(0, 0)
-@export var badge_font_size: int = 26
+## ⚠️ 0 = 沿用素材场景原值（当前 48）。人 2026-09-19：不要改字号（曾被覆盖成 26 → 变小）
+@export var badge_font_size: int = 0
 @export var badge_color: Color = Color(1, 1, 1, 1)
 
 ## ============ 描边 ============
