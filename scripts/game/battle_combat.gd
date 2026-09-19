@@ -124,3 +124,20 @@ static func preview_attack(attacker: UnitInstance, defender: UnitInstance,
 	res["defender_dies"] = res["defender_hp_after"] <= 0
 	res["attacker_dies"] = res["attacker_hp_after"] <= 0
 	return res
+
+## 指令伤害的**减免后**数值（a500 效果 6：攻击计算优先于伤害减免）
+## ⚠️ 迭代056：`UnitInstance.damage()` 已不再自行减免 → 减免必须在此处算一次。
+## 返回 -1 表示"不可造成伤害"（蜂王免疫指令 / 被护盾抵挡），此时不应扣血。
+static func command_damage_after_reduce(target: UnitInstance, amount: int) -> int:
+	if target == null or amount <= 0:
+		return -1
+	if target.data != null and target.data.immune_command:
+		return -1
+	for e in target.effects:
+		if e.data != null and e.data.blocks_command:
+			return -1
+	var reduce := 0
+	for e in target.effects:
+		if e.data != null:
+			reduce += e.data.dmg_reduce
+	return maxi(0, amount - reduce)

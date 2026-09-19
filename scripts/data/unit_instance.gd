@@ -81,11 +81,12 @@ func set_hp(v: int) -> void:
 		hp_changed.emit(self, old, current_hp)
 
 
+## 直接扣血（**不再在此处减免**）
+## ⚠️ 迭代056 修正：原先这里也做 `dmg_reduce` 减免，而规则层的 `raw_damage()` 同样减过一次
+##    → **伤害被双重减免**（装甲 2 + 攻击 4 会算成 0 伤害）。a500「攻击计算优先于伤害减免」
+##    要求减免只算一次，故减免职责**统一收归规则层**（RulesCombat.raw_damage）。
 func damage(amount: int) -> int:
-	var reduce := 0
-	for e in effects:
-		reduce += e.data.dmg_reduce
-	var real := maxi(0, amount - reduce)
+	var real := maxi(0, amount)          # 入参已由规则层扣完减免
 	set_hp(current_hp - real)
 	return real
 

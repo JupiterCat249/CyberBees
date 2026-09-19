@@ -19,7 +19,6 @@ config/icon="res://icon.svg"
 [autoload]
 
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
-BattleSignalBus="*res://scripts/battle/battle_signal_bus.gd"
 
 [display]
 

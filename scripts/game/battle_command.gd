@@ -67,15 +67,13 @@ static func execute(state: GameState, card: CommandData, target: UnitInstance) -
 			var amt := damage_to(card, u)
 			if amt <= 0:
 				continue
-			# 护盾抵挡（T14）
-			var blocked := false
-			for e in u.effects:
-				if e.data != null and e.data.blocks_command:
-					blocked = true
-					break
-			var real := 0 if blocked else amt
+			# 减免 / 免疫 / 护盾抵挡（a500 效果 6 + T14）—— 统一走 Combat 的判定
+			var real := Combat.command_damage_after_reduce(u, amt)
+			var blocked := real < 0
 			if real > 0:
 				u.damage(real)
+			else:
+				real = 0
 			out["damage"].append({"unit": u, "amount": real, "blocked": blocked})
 			state.unit_damaged.emit(u, real)
 			if not u.is_alive():
