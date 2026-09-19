@@ -313,10 +313,13 @@ func request_deploy(side: int, hand_index: int, cell: Vector2i) -> bool:
 
 
 ## 部署格合法性（a500 卡牌类型：兵蜂→蜂王相邻格；建筑→己方领地任意格）
+## ⭐ 迭代059 G-4：特殊地形「禁区」不可部署（a500：障碍地形无法部署，**但不阻挡移动与攻击**）
 func _deploy_cell_ok(side: int, ud: UnitData, cell: Vector2i) -> bool:
 	if state.board == null or not state.board.in_bounds(cell):
 		return false
 	if not state.board.is_empty(cell):
+		return false
+	if _terrain_blocks_deploy(cell):
 		return false
 	if ud.kind == CardData.CardKind.BUILDING:
 		return state.board.is_own_territory(cell, side)
@@ -324,6 +327,21 @@ func _deploy_cell_ok(side: int, ud: UnitData, cell: Vector2i) -> bool:
 	if q == null:
 		return false
 	return state.board.manhattan(q.cell, cell) == 1
+
+
+## 该格是否因地形禁止部署（禁区）
+func _terrain_blocks_deploy(cell: Vector2i) -> bool:
+	if state == null or state.map_data == null:
+		return false
+	var te: TerrainEffect = state.map_data.effect_at(cell)
+	if te == null:
+		return false
+	return te.blocks_deploy
+
+
+## 供预览/UI 查询：某格是否因地形不可部署（视图只读，不自行判定）
+func terrain_blocks_deploy(cell: Vector2i) -> bool:
+	return _terrain_blocks_deploy(cell)
 
 
 # ============================================================

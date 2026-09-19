@@ -1,14 +1,17 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_o5tm3"]
-[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_jwd8x"]
-[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="3_tdip8"]
+[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_jwd8x"]
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_tdip8"]
+[ext_resource type="Resource" path="res://game_data/maps/水没_地形效果.tres" id="3_3ay7e"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="4_00cos"]
 
 [resource]
-script = ExtResource("2_jwd8x")
-id = "cd514865-3209-49d5-8210-461fc6d21b2f"
+script = ExtResource("2_tdip8")
+id = "9f7953c7-6624-48df-84cb-0d8fa5f4d78d"
 display_name = "水没"
-terrain_texture = ExtResource("3_tdip8")
-background_texture = ExtResource("1_o5tm3")
+terrain_texture = ExtResource("4_00cos")
+background_texture = ExtResource("1_jwd8x")
 description = "场地效果：位于特殊地形的单位减少 2 点指令伤害（拦截效果）。"
 effect_rounds = PackedInt32Array()
+terrain_cells = Array[Vector2i]([Vector2i(0, 3), Vector2i(3, 0)])
+terrain_effect = ExtResource("3_3ay7e")

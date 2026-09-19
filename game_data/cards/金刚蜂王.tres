@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="Resource_t7ryj"]
 script = ExtResource("1_5tybm")
-id = "7e88c181-9101-4ee7-adde-6300057c92ac"
+id = "d23057ab-d1da-46b3-b01d-f328e47cb766"
 display_name = "装甲"
 dmg_reduce = 2
 
 [sub_resource type="Resource" id="Resource_i2mb2"]
 script = ExtResource("3_b07ur")
-id = "9a7ba714-4d02-4dc8-8927-e8c26257d76e"
+id = "c78e285f-e959-442f-8f21-7e3810bcd492"
 display_name = "装甲"
 kind = 2
 glossary = "部署"
@@ -33,7 +33,7 @@ move = 1
 attack_range = 1
 refund = 4
 immune_command = true
-id = "4ed1193c-1bb5-443c-b933-f476616c4b11"
+id = "dadaa44b-f823-40b5-bbd7-a43ba4aa1520"
 display_name = "金刚蜂王"
 kind = 0
 glossary = "[回费]"

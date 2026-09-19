@@ -88,31 +88,43 @@ var MAP_SPECS := [
 		"name": "默认",
 		"desc": "场地效果：无特殊效果。",
 		"rounds": [], "refund": 0, "dmg": 0, "field": false,
+		"terrain": [],
 	},
 	{
 		"name": "铁锈",
 		"desc": "场地效果：位于特殊地形的单位获得 1 层[力场]效果。",
 		"rounds": [], "refund": 0, "dmg": 0, "field": true,
+		## 人给的坐标（1-based (行,列)，整张地图左上角为原点）→ 减 1 转内部 0-based
+		## (2,4) (3,1) → (1,3) (2,0)
+		"terrain": [Vector2i(1, 3), Vector2i(2, 0)],
 	},
 	{
 		"name": "寒潮",
 		"desc": "场地效果：第 3、6、9、12 回合的场地阶段，所有己方单位减少 2 点生命值（蜂王除外）。",
 		"rounds": [3, 6, 9, 12], "refund": 0, "dmg": 2, "field": false,
+		## 人：寒潮**全图生效，无特殊格**
+		"terrain": [],
 	},
 	{
 		"name": "禁区",
 		"desc": "场地效果：障碍地形无法部署单位，但不会阻挡移动与攻击。",
 		"rounds": [], "refund": 0, "dmg": 0, "field": false,
+		## (2,3) (3,2) → (1,2) (2,1)
+		"terrain": [Vector2i(1, 2), Vector2i(2, 1)],
 	},
 	{
 		"name": "丰饶",
 		"desc": "场地效果：第 3、9 回合玩家额外回复 4 点费用。",
 		"rounds": [3, 9], "refund": 4, "dmg": 0, "field": false,
+		## 人：丰饶机制与具体地图格无关，无特殊格
+		"terrain": [],
 	},
 	{
 		"name": "水没",
 		"desc": "场地效果：位于特殊地形的单位减少 2 点指令伤害（拦截效果）。",
 		"rounds": [], "refund": 0, "dmg": 0, "field": false,
+		## (1,4) (4,1) → (0,3) (3,0)
+		"terrain": [Vector2i(0, 3), Vector2i(3, 0)],
 	},
 ]
 
@@ -141,7 +153,37 @@ func _generate_maps() -> void:
 			md.terrain_texture = tex
 		if bg != null:
 			md.background_texture = bg
+		# ---- 迭代059：特殊地形格 + 地形效果（人给坐标）----
+		var cells: Array[Vector2i] = []
+		for c in spec["terrain"]:
+			cells.append(c)
+		md.terrain_cells = cells
+		## ⚠️ 地形效果必须**先存为独立 .tres** 再挂到 MapData，
+		##    否则 ResourceSaver.save(地图) 只会写「子资源引用」，重新 load 回来是 null。
+		var te = _terrain_effect_for(String(spec["name"]), bool(spec["field"]))
+		if te != null:
+			var te_path := "%s/maps/%s_地形效果.tres" % [ROOT, _safe(String(spec["name"]))]
+			_save(te, te_path)
+			md.terrain_effect = load(te_path)
 		_save(md, "%s/maps/%s.tres" % [ROOT, _safe(String(spec["name"]))])
+
+
+## 按地图名生成地形效果资源（a500 场地效果表逐张对照）
+func _terrain_effect_for(map_name: String, field_flag: bool):
+	var T := preload("res://scripts/data/terrain_effect.gd")
+	match map_name:
+		"铁锈":
+			## 位于特殊地形的单位获得 1 层[力场]
+			return T.make_grant_field(CardPoolLib.field_effect(), "锈蚀地形")
+		"禁区":
+			## 障碍地形无法部署单位，但**不会阻挡移动与攻击**（a500 明确）
+			return T.make_block_deploy("障碍地形", "无法部署单位（不阻挡移动与攻击）")
+		"水没":
+			## 位于特殊地形的单位减少 2 点指令伤害
+			return T.make_command_reduce(2, "水下地形")
+		_:
+			## 默认 / 寒潮 / 丰饶：无地形格效果（寒潮走回合性伤害、丰饶走回合性回费）
+			return T.make_none()
 
 
 ## 删除目录下的旧资源（含 .import/.uid 边车）
@@ -236,7 +278,7 @@ func _verify() -> void:
 		n_maps += 1
 		if md.display_name != String(spec["name"]):
 			_errors.append("%s 地图名不符" % mp)
-		if md.effect_rounds != PackedInt32Array(spec["rounds"]) or md.refund_bonus != int(spec["refund"]) 				or md.damage_per_round != int(spec["dmg"]) 				or md.grant_field_on_terrain != bool(spec["field"]):
+		if md.effect_rounds != PackedInt32Array(spec["rounds"]) or md.refund_bonus != int(spec["refund"]) 			or md.terrain_cells.size() != int((spec["terrain"] as Array).size()) 				or md.damage_per_round != int(spec["dmg"]) 				or md.grant_field_on_terrain != bool(spec["field"]):
 			_errors.append("%s 场地效果字段不符" % mp)
 		print("  地图回读：%-4s 回费+%d 每回合伤害%d 力场=%s 回合=%s" % [
 			md.display_name, md.refund_bonus, md.damage_per_round,

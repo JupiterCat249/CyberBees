@@ -1,14 +1,16 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_vt67u"]
-[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_84lsi"]
-[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="3_ghh4h"]
+[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_84lsi"]
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_ghh4h"]
+[ext_resource type="Resource" path="res://game_data/maps/默认_地形效果.tres" id="3_qni5n"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="4_y146m"]
 
 [resource]
-script = ExtResource("2_84lsi")
-id = "bb46bf41-8d34-4886-992c-2e2f43b0a3a5"
+script = ExtResource("2_ghh4h")
+id = "369f8040-c503-47e6-87f0-3c62170dc117"
 display_name = "默认"
-terrain_texture = ExtResource("3_ghh4h")
-background_texture = ExtResource("1_vt67u")
+terrain_texture = ExtResource("4_y146m")
+background_texture = ExtResource("1_84lsi")
 description = "场地效果：无特殊效果。"
 effect_rounds = PackedInt32Array()
+terrain_effect = ExtResource("3_qni5n")

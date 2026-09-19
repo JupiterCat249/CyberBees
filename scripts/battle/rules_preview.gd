@@ -75,12 +75,16 @@ static func deploy_cells(state, side: int, ud: UnitData) -> Array:
 	var out: Array = []
 	if state == null or state.board == null or ud == null:
 		return out
+	## ⭐ 迭代059 G-4：地形「禁区」的格子不可部署 → 预览里也排除
+	##    （预览与实际可执行集合**同源**，避免“高亮了却放不下”）
+	var md: MapData = state.map_data
 	if ud.kind == CardData.CardKind.BUILDING:
 		# 建筑：己方领地任意空格
 		for x in Board.ROWS:
 			for y in Board.COLS:
 				var c := Vector2i(x, y)
-				if state.board.is_empty(c) and state.board.is_own_territory(c, side):
+				if state.board.is_empty(c) and state.board.is_own_territory(c, side) \
+						and not _terrain_blocked(md, c):
 					out.append(c)
 		return out
 	if ud.kind == CardData.CardKind.SOLDIER:
@@ -89,9 +93,17 @@ static func deploy_cells(state, side: int, ud: UnitData) -> Array:
 		if q == null:
 			return out
 		for n in state.board.neighbors_cardinal(q.cell):
-			if state.board.is_empty(n):
+			if state.board.is_empty(n) and not _terrain_blocked(md, n):
 				out.append(n)
 	return out
+
+
+## 该格是否因地形禁止部署（禁区）
+static func _terrain_blocked(md: MapData, cell: Vector2i) -> bool:
+	if md == null:
+		return false
+	var te = md.effect_at(cell)
+	return te != null and bool(te.blocks_deploy)
 
 
 ## 指令卡可作用目标（治疗→己方；伤害→敌方）

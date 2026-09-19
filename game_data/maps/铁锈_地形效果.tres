@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TerrainEffect" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_vrowq"]
+[ext_resource type="Script" path="res://scripts/data/terrain_effect.gd" id="2_qs7mq"]
+
+[sub_resource type="Resource" id="Resource_2rnuj"]
+script = ExtResource("1_vrowq")
+id = "eed8f984-09c3-4fcb-9e8c-cad8d934eb5a"
+display_name = "力场"
+grants_field = true
+blocks_command = true
+
+[resource]
+script = ExtResource("2_qs7mq")
+kind = 1
+display_name = "锈蚀地形"
+grant_effect = SubResource("Resource_2rnuj")

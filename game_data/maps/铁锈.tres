@@ -1,15 +1,18 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_8ovrn"]
-[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_msukd"]
-[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="3_cfmgm"]
+[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_msukd"]
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_cfmgm"]
+[ext_resource type="Resource" path="res://game_data/maps/铁锈_地形效果.tres" id="3_qiu45"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="4_6gyt8"]
 
 [resource]
-script = ExtResource("2_msukd")
-id = "c1aeeaf6-c0fa-458e-a7fd-b459350ddac6"
+script = ExtResource("2_cfmgm")
+id = "165ef1d1-01d8-4332-8710-93d2e9675032"
 display_name = "铁锈"
-terrain_texture = ExtResource("3_cfmgm")
-background_texture = ExtResource("1_8ovrn")
+terrain_texture = ExtResource("4_6gyt8")
+background_texture = ExtResource("1_msukd")
 description = "场地效果：位于特殊地形的单位获得 1 层[力场]效果。"
 effect_rounds = PackedInt32Array()
 grant_field_on_terrain = true
+terrain_cells = Array[Vector2i]([Vector2i(1, 3), Vector2i(2, 0)])
+terrain_effect = ExtResource("3_qiu45")

@@ -146,6 +146,23 @@ static func make_armor(n: int) -> EffectData:
 	return e
 
 
+## 力场（a500 效果：相邻授予；T14 人明确：**护盾/力场同样抵挡指令伤害**）
+## 用途：地图「铁锈」的特殊地形格——位于其上的单位获得 1 层[力场]
+## ⚠️ 去重按 display_name（见 RulesEffects._same_effect），故同名多次生成仍是「同一效果」
+static func field_effect() -> EffectData:
+	var e := EffectData.new()
+	e.id = Uuid.generate()
+	e.display_name = "力场"
+	e.duration = -1
+	e.is_debuff = false
+	e.grants_field = true          ## 力场：相邻授予
+	e.blocks_command = true        ## T14：抵挡指令伤害
+	e.allow_queen = true
+	e.allow_soldier = true
+	e.allow_building = true
+	return e
+
+
 ## ============================================================
 ## 卡池（**10 张**，逐行对照 `单位表格-测试用.xlsx`）
 ##   cost      = 部署费用

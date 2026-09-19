@@ -14,7 +14,7 @@
 
 [resource]
 script = ExtResource("11_qi4l4")
-id = "75babf11-04d2-41c1-9a62-ca91db91ac01"
+id = "6e411893-5617-474b-9f8a-547f8cd19c35"
 display_name = "示范卡组"
 cards = Array[ExtResource("1_yrs8o")]([ExtResource("2_6qoyc"), ExtResource("3_16ddq"), ExtResource("4_et1ha"), ExtResource("5_pixm8"), ExtResource("6_e01op"), ExtResource("7_nke6f"), ExtResource("8_1p0ik"), ExtResource("9_7jbp1")])
 queen = ExtResource("10_xp202")

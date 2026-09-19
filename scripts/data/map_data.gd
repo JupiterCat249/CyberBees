@@ -11,9 +11,31 @@ extends Resource
 
 @export_group("场地效果（细则待策划 · G-26）")
 @export var effect_rounds: PackedInt32Array = PackedInt32Array()   ## 生效回合，如 [3, 9]
-@export var refund_bonus: int = 0                 ## 这些回合额外的回费量
-@export var damage_per_round: int = 0             ## 这些回合的掉血（蜂王除外）
-@export var grant_field_on_terrain: bool = false  ## 地形格获得「力场」
+@export var refund_bonus: int = 0                 ## 这些回合额外的回费量（丰饶）
+@export var damage_per_round: int = 0             ## 这些回合的掉血（蜂王除外）（寒潮）
+@export var grant_field_on_terrain: bool = false  ## 兼容旧字段（新的走 terrain_effect）
+
+@export_group("特殊地形（迭代059 新增 · 人给坐标）")
+## 特殊地形格坐标（a500：场地效果作用于**格子上的单位**）
+## ⚠️ 内部约定 `Vector2i(行, 列)` 0-based；人给的是 1-based（行,列）→ **减 1**
+## 依据：策划案「地形由地图**素材**自带」→ 坐标在制作地图时画好
+@export var terrain_cells: Array[Vector2i] = []
+## 地形效果资源（语义 + 表现）；为 null 或 kind=NONE 时地形格不产生效果
+@export var terrain_effect: TerrainEffect = null
+
+
+## 该格是否属于特殊地形
+func is_terrain_cell(cell: Vector2i) -> bool:
+	return terrain_cells.has(cell)
+
+
+## 取该格的地形效果（无则返回 null）
+func effect_at(cell: Vector2i) -> TerrainEffect:
+	if terrain_effect == null or not terrain_effect.is_meaningful():
+		return null
+	if not terrain_cells.has(cell):
+		return null
+	return terrain_effect
 
 
 func validate() -> Array[String]:

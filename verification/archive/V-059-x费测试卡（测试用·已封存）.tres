@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_eeqrm"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_xadef"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_xwxs1"]
+
+[resource]
+script = ExtResource("2_xadef")
+target_range = 9
+x_cost_multiplier = 2
+id = "478abd8e-2b10-4758-9feb-51e89ccc8278"
+display_name = "测试·X费打击"
+cost = -1
+description = "【测试卡·非生产】X 费指令：伤害 = 目标部署费 × 2"

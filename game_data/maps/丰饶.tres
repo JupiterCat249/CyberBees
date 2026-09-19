@@ -1,15 +1,17 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_8qvnb"]
-[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_wxota"]
-[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="3_w7tk5"]
+[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_wxota"]
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_w7tk5"]
+[ext_resource type="Resource" path="res://game_data/maps/丰饶_地形效果.tres" id="3_73o4e"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="4_dxqqt"]
 
 [resource]
-script = ExtResource("2_wxota")
-id = "20020689-3354-4c9c-af58-864db765f657"
+script = ExtResource("2_w7tk5")
+id = "b0a64760-0c67-4275-b753-e04e719da00b"
 display_name = "丰饶"
-terrain_texture = ExtResource("3_w7tk5")
-background_texture = ExtResource("1_8qvnb")
+terrain_texture = ExtResource("4_dxqqt")
+background_texture = ExtResource("1_wxota")
 description = "场地效果：第 3、9 回合玩家额外回复 4 点费用。"
 effect_rounds = PackedInt32Array(3, 9)
 refund_bonus = 4
+terrain_effect = ExtResource("3_73o4e")

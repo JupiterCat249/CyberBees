@@ -67,7 +67,8 @@ static func execute(state, card: CommandData, caster_side: int, target: UnitInst
 
 	var targets := collect_targets(state, card, target)
 	for u in targets:
-		var real := Combat.command_damage_after_reduce(u, amount)
+		## 传入地图数据 → 应用地形减免（迭代059 G-5：水没地形格 -2 指令伤害）
+		var real := Combat.command_damage_after_reduce(u, amount, state.map_data)
 		var blocked := real < 0
 		if real > 0:
 			u.damage(real)

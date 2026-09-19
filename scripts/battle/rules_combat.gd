@@ -93,7 +93,13 @@ static func resolve_attack(attacker: UnitInstance, defender: UnitInstance,
 
 ## 指令伤害的最终数值（a500 效果 6 + 蜂王免疫 + 护盾抵挡）
 ## 返回 -1 = 完全不可造成伤害（免疫 / 被抵挡）
-static func command_damage_after_reduce(target: UnitInstance, amount: int) -> int:
+## 指令伤害的最终值（核心规则）
+##   ・护盾/力场抵挡 → -1（免疫）
+##   ・蜂王免疫指令 → -1
+##   ・减免 = 效果减免 + **地形减免（迭代059 G-5：水没地形格 -2）**
+## 返回 -1 表示免疫/完全抵挡
+static func command_damage_after_reduce(target: UnitInstance, amount: int,
+		map_data: MapData = null) -> int:
 	if target == null or amount <= 0:
 		return -1
 	if target.data != null and target.data.immune_command:
@@ -105,6 +111,11 @@ static func command_damage_after_reduce(target: UnitInstance, amount: int) -> in
 	for e in target.effects:
 		if e.data != null:
 			reduce += e.data.dmg_reduce
+	## 地形减免（水没：位于特殊地形的单位减少 2 点指令伤害）
+	if map_data != null:
+		var te = map_data.effect_at(target.cell)
+		if te != null and int(te.command_reduce) > 0:
+			reduce += int(te.command_reduce)
 	return maxi(0, amount - reduce)
 
 
