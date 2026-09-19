@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="1_42x24"]
-[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="2_vt67u"]
+[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_vt67u"]
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_84lsi"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="3_ghh4h"]
 
 [resource]
-script = ExtResource("1_42x24")
-id = "6bf116af-22aa-4474-a1b7-4dfa3b58b4e7"
+script = ExtResource("2_84lsi")
+id = "bb46bf41-8d34-4886-992c-2e2f43b0a3a5"
 display_name = "默认"
-terrain_texture = ExtResource("2_vt67u")
+terrain_texture = ExtResource("3_ghh4h")
+background_texture = ExtResource("1_vt67u")
 description = "场地效果：无特殊效果。"
 effect_rounds = PackedInt32Array()

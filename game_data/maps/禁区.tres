@@ -1,12 +1,14 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="1_4213y"]
-[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="2_f257o"]
+[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_f257o"]
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_cewtq"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="3_yinok"]
 
 [resource]
-script = ExtResource("1_4213y")
-id = "c3f61a7d-8de9-446a-8929-c9da9fef091e"
+script = ExtResource("2_cewtq")
+id = "5eaa9b8f-ba3d-4dd4-909b-0f982344db38"
 display_name = "禁区"
-terrain_texture = ExtResource("2_f257o")
+terrain_texture = ExtResource("3_yinok")
+background_texture = ExtResource("1_f257o")
 description = "场地效果：障碍地形无法部署单位，但不会阻挡移动与攻击。"
 effect_rounds = PackedInt32Array()

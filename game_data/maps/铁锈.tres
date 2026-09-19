@@ -1,13 +1,15 @@
 [gd_resource type="Resource" script_class="MapData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="1_s2qgu"]
-[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="2_8ovrn"]
+[ext_resource type="Texture2D" path="res://assets/background/bg_blurred.png" id="1_8ovrn"]
+[ext_resource type="Script" path="res://scripts/data/map_data.gd" id="2_msukd"]
+[ext_resource type="Texture2D" path="res://assets/background/map_terrain.png" id="3_cfmgm"]
 
 [resource]
-script = ExtResource("1_s2qgu")
-id = "15ce398e-fceb-45d0-b349-e6182b825801"
+script = ExtResource("2_msukd")
+id = "c1aeeaf6-c0fa-458e-a7fd-b459350ddac6"
 display_name = "铁锈"
-terrain_texture = ExtResource("2_8ovrn")
+terrain_texture = ExtResource("3_cfmgm")
+background_texture = ExtResource("1_8ovrn")
 description = "场地效果：位于特殊地形的单位获得 1 层[力场]效果。"
 effect_rounds = PackedInt32Array()
 grant_field_on_terrain = true

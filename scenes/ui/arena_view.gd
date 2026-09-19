@@ -83,6 +83,11 @@ func _config() -> BattleConfig:
 		if d != null and d.queen != null and d.cards.size() > 0:
 			c.deck_ally = d
 			c.deck_enemy = d.duplicate(true) as DeckData
+	## 默认地图（让地图板/背景有内容可用）——6 张里的「默认」；换图调 engine.load_map()
+	if use_resources and ResourceLoader.exists("res://game_data/maps/默认.tres"):
+		var md := load("res://game_data/maps/默认.tres") as MapData
+		if md != null:
+			c.map_data = md
 	return c
 
 

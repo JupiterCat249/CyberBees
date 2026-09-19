@@ -56,7 +56,7 @@ func _generate_deck() -> void:
 	# 卡组：引用上面生成出来的卡牌资源（而不是代码对象）—— 这才叫"数据驱动资源"
 	var dd := DeckData.new()
 	dd.id = Uuid.generate()
-	dd.display_name = "样例卡组"
+	dd.display_name = "示范卡组"
 	var by_name := {}
 	var specs_by_name := {}
 	for spec in CardPoolLib.CARDS:
@@ -118,9 +118,16 @@ var MAP_SPECS := [
 
 
 func _generate_maps() -> void:
+	## 地图板贴图（terrain）：棋盘底图 1000×1000
 	var tex: Texture2D = null
 	if ResourceLoader.exists("res://assets/background/map_terrain.png"):
 		tex = load("res://assets/background/map_terrain.png")
+	## 全屏背景（background）：1920×1080 —— 迭代057 新增
+	##   人已建好 `Background/TextureRect` 并要求「解耦调用」，故资源里必须真有这张图，
+	##   否则该节点永远为空。当前 6 张图共用同一张模糊底（分地图素材到位后逐张换）。
+	var bg: Texture2D = null
+	if ResourceLoader.exists("res://assets/background/bg_blurred.png"):
+		bg = load("res://assets/background/bg_blurred.png")
 	for spec in MAP_SPECS:
 		var md := MapData.new()
 		md.id = Uuid.generate()
@@ -132,6 +139,8 @@ func _generate_maps() -> void:
 		md.grant_field_on_terrain = bool(spec["field"])
 		if tex != null:
 			md.terrain_texture = tex
+		if bg != null:
+			md.background_texture = bg
 		_save(md, "%s/maps/%s.tres" % [ROOT, _safe(String(spec["name"]))])
 
 
@@ -199,7 +208,7 @@ func _verify() -> void:
 	var dp := "%s/decks/示范卡组.tres" % ROOT
 	if ResourceLoader.exists(dp):
 		var dd: DeckData = load(dp)
-		var ok: bool = dd != null and dd.cards.size() == 12 and dd.queen != null
+		var ok: bool = dd != null and dd.cards.size() == 8 and dd.queen != null
 		print("  卡组回读：%d 张，蜂王=%s → %s" % [
 			dd.cards.size() if dd != null else -1,
 			dd.queen.display_name if (dd != null and dd.queen != null) else "null",
