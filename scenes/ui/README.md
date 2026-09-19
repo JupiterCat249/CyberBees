@@ -1,36 +1,34 @@
-# UI 场景结构（迭代048：内容填充）
+# UI 场景结构（电子蜂 A5 · Godot 版）
 
-> 最后更新：2026-09-17
+> 最后更新：2026-09-20
 > 依据：`电子蜂A5策划案/Figma设计/电子蜂对战空间 (1)/横版UI填充.svg`（**最高标准**）
 >      + `电子蜂A5策划案/电子蜂A5策划案.md` §六 UI（补充）
+> **2026-09-20 修订**：场景清单按真实文件重列（旧清单列的 `menu_main.tscn` / `level_battle.tscn` **已不存在**）；补充现行战斗入口与旧实现废弃说明。
 
-## 场景清单
+## 现行入口（重要）
 
-| 场景 | 用途 | 尺寸/节点 |
+| 入口 | 场景 | 说明 |
 |---|---|---|
-| `menu_main.tscn` | **主菜单**（开始对战 / 卡组 / 设置 / 退出） | 1920×1080 · 8 节点 |
-| `level_battle.tscn` | **战斗关卡**（自包含单元：背景/棋盘/双方手牌/单位层/卡牌信息/HUD） | 1920×1080 · 58 节点 |
-| `card_unit.tscn` | **地图单位卡**（可复用组件） | 250×250 · 41 节点 |
-| `card_hand.tscn` | **手牌卡**（可复用组件） | 200×200 · 7 节点 |
+| **战斗（现行）** | `scenes/ui/battle_scene.tscn` | 继承 `battle_ui_alpha.tscn` + 挂 `arena_view.gd`（视图适配器）；用 **F6「运行当前场景」** 启动 |
+| ⚠️ 旧入口（已废弃） | `scenes/unuseful_battle_card.tscn` | 仍被 `project.godot` 的 `run/main_scene` 指向（**人 2026-09-20 指示暂不动**）；其依赖的 `scenes/battle/*` 已移入 `archive/legacy/scenes_battle/`，**动态加载已断开** |
 
-## 页面流转（策划案 §六.1 简化落地）
-```
-menu_main ──开始对战──▶ level_battle
-                              │
-                              └─ Esc / 返回键 ──▶ menu_main
-```
-`level_battle.gd` 暴露 `back_to_menu()`；`menu_main.gd` 只做跳转。
+## 场景清单（真实文件）
 
-## 为「未来适配」预留的接口（最简、节点优先）
-| 需求 | 接口 | 说明 |
+| 场景 | 用途 | 脚本 |
 |---|---|---|
-| **地图切换** | `level_battle.load_map(name, terrain)` + `@export map_name` | 只换贴图与名字，不动结构 |
-| **挂单位** | `level_battle.spawn_unit(scene, cx, cy, data)` | 复用 `card_unit.tscn`，按格位摆放 |
-| **改文案/名** | `@export turn_text / site_effect / enemy_name / player_name` | 编辑器里直接改，无需动代码 |
-| **返回主菜单** | `back_to_menu()` | 战斗界面 → 主菜单 |
-| **卡数据绑定** | `card_unit.gd` 的 `bind(data)` + `signal unit_pressed(id)` | 节点表达外观，脚本只绑数据 |
+| `battle_scene.tscn` | **现行组合战斗场景**（继承底座 + 视图适配） | `arena_view.gd` |
+| `battle_ui_alpha.tscn` | **战斗 UI 底座**（人手工版 · 59+ 节点 · 编辑器可直改） | — |
+| `card_unit.tscn` | 地图单位卡（可复用素材场景 · 250×250） | `card_unit.gd` |
+| `card_hand.tscn` | 手牌卡（可复用素材场景 · 200×200） | `card_hand.gd` |
+| `cost_badge.tscn` | 费用徽章 | — |
+| `crt_fx_general.tscn` | 显像管特效（通用） | — |
+| `board_cell.gd` | 棋盘格（非场景：运行时由 `arena_view.gd` 挂到格子） | `board_cell.gd` |
 
-## 组件构成（取自填充稿实测）
+> 现行运行时结构：`arena_view.gd` 订阅 `BattleSignalBus` 的 15 类信号驱动上述场景；点击事件按预览资源的 `kind`
+> 翻译成 `BattleEngine.request_*` 请求（**视图不自行判定规则**）。
+
+## 组件构成（取自填充稿实测 · 仍有效）
+
 **地图单位卡 250×250**
 - 本体 `rx10`（底色=卡牌类型：单位 `#FFFFFF` / 蜂王 `#FFD07E` / 建筑 `#DDC29B` / 指令 `#D9D9D9`）
 - 左右侧边栏 `40×250`（阵营色：我方 `#3B816D` / 敌方 `#A84331`）
@@ -43,13 +41,16 @@ menu_main ──开始对战──▶ level_battle
 - 费用块 `23×33` 白 @(+2,+18) · 内描边 `196×196 rx8` @(2,2) `#333333` 4px
 - 卡槽位置：左 (30,150)(230,150)(30,350)(230,350)；右 (1490,150)(1690,150)(1490,350)(1690,350)
 
-## 待接素材（占位已就绪，替换即可）
-- **立绘/插画**：`card_unit.tscn` 的 `Artwork/Art`、`card_hand.tscn` 的 `Artwork/Art`
-  当前是纯色占位 `#3A3A3A` → 换成 `TextureRect` + 对应贴图
-- **地图格状态**（高亮/选中/落子）：`level_battle.tscn` 的 `Board/Cells`（运行时容器，底座不铺）
-- 素材库可用：`电子蜂A5策划案/素材/zip原图/`（卡牌a-金刚蜂王 / 卡牌c1-泥蜂 / 卡牌c2-熊蜂 / 卡牌d1-电击 …）
+## 待接素材
 
-## 工具
-- `tools/build_ui_content.py`：本套场景的生成脚本（改数值后重跑即可再生成）
-- `tools/ui_probe.tscn`：组件实例化取证（单位卡 ×2 + 手牌 ×4）
-- `tools/ui_screenshot.tscn`：整幅 1:1 取景截图（供视觉复核/像素比对）
+- **地形格图标**：`TerrainEffect.icon` 现为空（地形格只画叠加色 + 描边）—— 素材到位后按资源挂载即可，无需改代码。
+- **地图贴图**：6 张图现共用同一张贴图；分图素材到位后经 `ArenaAssets.map_texture` + `SIG_MAP_ASSETS` 下发。
+- 素材库参考：`电子蜂A5策划案/素材/zip原图/`（卡牌a-金刚蜂王 / 卡牌c1-泥蜂 / 卡牌c2-熊蜂 / 卡牌d1-电击 …）
+
+## ⚠️ 已知失效引用（勿照抄）
+
+| 位置 | 情况 |
+|---|---|
+| 本文件旧版列的 `menu_main.tscn` / `level_battle.tscn` | **已不存在**（页面流转方案未落地，现行战斗为单场景） |
+| `tools/*.tscn`（`ui_probe` / `ui_screenshot` / `fx_only` / `perf_probe` 等） | 取证工具链，部分仍引用旧场景/旧路径 —— 属工具，不属生产路径；复跑前需先核对路径 |
+| 旧组件规格文档中提到的 `level_battle.load_map()/spawn_unit()` | 属旧入口 API，现行接口为 `arena_view.gd` + `BattleEngine.request_*` |
