@@ -132,18 +132,24 @@ func _t_pending_cleared() -> void:
 
 # ============ 地形格渲染参数下发 ============
 func _t_terrain_render() -> void:
-	_section("地形格渲染（读 TerrainParams，非硬编码）")
+	_section("地形格渲染（人 2026-09-19：代码不再画标记，地形由地图素材自带）")
 	var base := FileAccess.get_file_as_string("scenes/ui/board_cell.gd")
 	_chk("board_cell 有 set_terrain()", base.contains("func set_terrain"))
 	_chk("board_cell 读 TerrainParams（不硬编码）", base.contains("TerrainParams"))
-	_chk("board_cell 绘制地形图标", base.contains("draw_texture_rect"))
+	_chk("**默认不画地形标记**（draw_marker 开关守卫）",
+		base.contains("terrain_params.draw_marker"))
+	var tpsrc := FileAccess.get_file_as_string("scripts/data/terrain_params.gd")
+	_chk("TerrainParams.draw_marker 默认 false（素材自带地形）",
+		tpsrc.contains("draw_marker: bool = false"))
 	var view := FileAccess.get_file_as_string("scenes/ui/arena_view.gd")
 	_chk("视图下发地形给格子（_apply_terrain_to_cells）", view.contains("_apply_terrain_to_cells"))
 	_chk("视图持有 terrain_params 资源", view.contains("terrain_params"))
+	_chk("默认地图 = 丰饶（无特殊地形格）", view.contains("maps/丰饶.tres"))
 	# 参数资源可用
 	var p = TerrainP.new()
 	_chk("TerrainParams 可实例化", p != null)
 	_chk("fill_color_from 控制透明度", p.fill_color_from(Color(1, 1, 1, 0.9)).a == p.fill_alpha)
+	_chk("draw_marker 默认关闭", not p.draw_marker)
 
 
 # ============ 提示文本已省略 ============

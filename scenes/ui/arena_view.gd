@@ -92,10 +92,10 @@ func _config() -> BattleConfig:
 		if d != null and d.queen != null and d.cards.size() > 0:
 			c.deck_ally = d
 			c.deck_enemy = d.duplicate(true) as DeckData
-	## 默认地图（让地图板/背景有内容可用）——6 张里的「默认」；换图调 engine.load_map()
-	##   演示地形格视觉时可直接改成「禁区」/「铁锈」/「水没」
-	if use_resources and ResourceLoader.exists("res://game_data/maps/禁区.tres"):
-		var md := load("res://game_data/maps/禁区.tres") as MapData
+	## 默认地图：**「丰饶」（无特殊地形格，符合"地图素材自带地形"的口径）**
+	##   6 张图里 丰饶/寒潮/默认 均无地形格；要演示地形改用 load_map()
+	if use_resources and ResourceLoader.exists("res://game_data/maps/丰饶.tres"):
+		var md := load("res://game_data/maps/丰饶.tres") as MapData
 		if md != null:
 			c.map_data = md
 	return c
@@ -336,7 +336,10 @@ func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
 
 
 func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
-	var node := $Battle/PlayerBesaInfoLift if side == SIDE_ALLY else $Battle/PlayerBesaInfoRight
+	## ⚠️ 左右与阵营的对应（迭代059 小修补：原实现左右反了）
+	##   左侧面板 `PlayerBesaInfoLift` = **敌方**（与 `HandPanelLeft`/`EnemyHand_*` 同侧）
+	##   右侧面板 `PlayerBesaInfoRight` = **我方**（与 `HandPanelRight`/`AllyHand_*` 同侧）
+	var node := $Battle/PlayerBesaInfoRight if side == SIDE_ALLY else $Battle/PlayerBesaInfoLift
 	var lb: Label = node.get_node_or_null("BadgeImage/Value")
 	if lb != null:
 		lb.text = str(cost)
@@ -731,12 +734,13 @@ func _rows(a: String, b: String, c: String, d: String) -> void:
 
 
 func _set_names(ally: String, enemy: String) -> void:
+	## ⚠️ 左侧 = 敌方（与敌方手牌 `HandPanelLeft` 同侧）；右侧 = 我方（迭代059 小修补）
 	var l := $Battle/PlayerBesaInfoLift.get_node_or_null("PlayerNamesLeft")
 	if l != null:
-		l.text = ally
+		l.text = enemy
 	var r := $Battle/PlayerBesaInfoRight.get_node_or_null("PlayerNamesRight")
 	if r != null:
-		r.text = enemy
+		r.text = ally
 
 
 func _call_opt(node: Object, method: String, args: Array) -> void:

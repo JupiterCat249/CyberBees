@@ -74,25 +74,16 @@ func has_terrain() -> bool:
 
 
 func _draw() -> void:
-	## ① 地形底（**画在最下层** —— 高亮与选中叠在它上面）
-	if has_terrain():
+	## ① 地形底（**仅在 draw_marker 打开时画** —— 人明确：地图素材自带地形，代码不画标记）
+	if has_terrain() and terrain_params != null and terrain_params.draw_marker:
 		var p := terrain_params
-		var fill := terrain_tint
-		if p != null:
-			fill = p.fill_color_from(terrain_tint)
-		draw_rect(Rect2(Vector2.ZERO, size), fill, true)
-		if p == null or p.outline:
-			var w: float = p.outline_width if p != null else 3.0
-			var oc: Color = p.outline_color if p != null else Color(1, 1, 1, 0.45)
-			var r: Rect2 = p.outline_rect(size.x) if p != null \
-				else Rect2(Vector2(4, 4), Vector2(size.x - 8.0, size.y - 8.0))
-			draw_rect(r, oc, false, w)
+		draw_rect(Rect2(Vector2.ZERO, size), p.fill_color_from(terrain_tint), true)
+		if p.outline:
+			draw_rect(p.outline_rect(size.x), p.outline_color, false, p.outline_width)
 		if terrain_icon != null:
-			var isz: Vector2 = p.icon_size if p != null else Vector2(64, 64)
-			var ipos: Vector2 = p.icon_offset(size.x) if p != null \
-				else Vector2((size.x - isz.x) * 0.5, (size.y - isz.y) * 0.5)
-			var alpha: float = p.icon_alpha if p != null else 0.85
-			draw_texture_rect(terrain_icon, Rect2(ipos, isz), false, Color(1, 1, 1, alpha))
+			var isz: Vector2 = p.icon_size
+			draw_texture_rect(terrain_icon, Rect2(p.icon_offset(size.x), isz), false,
+				Color(1, 1, 1, p.icon_alpha))
 	## ② 选中/高亮
 	if selected:
 		draw_rect(Rect2(Vector2.ZERO, size), _COL_SEL, true)
