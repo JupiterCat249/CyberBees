@@ -7,7 +7,7 @@
 
 [resource]
 script = ExtResource("2_tdip8")
-id = "9f7953c7-6624-48df-84cb-0d8fa5f4d78d"
+id = "1c021844-a570-4cb3-a40a-e2a8837be936"
 display_name = "水没"
 terrain_texture = ExtResource("4_00cos")
 background_texture = ExtResource("1_jwd8x")

@@ -8,13 +8,13 @@
 
 [sub_resource type="Resource" id="Resource_cwf00"]
 script = ExtResource("1_fixxl")
-id = "0be6aca1-f911-47e6-8900-96e4c9b0fa42"
+id = "e49c89dc-bef0-4d79-b9ec-c4e944cfb78d"
 display_name = "对蜂王倍伤"
 atk_mul_vs_queen = 2.0
 
 [sub_resource type="Resource" id="Resource_cu33m"]
 script = ExtResource("3_q0a15")
-id = "f0e4bf2e-b199-4a16-97cd-a26914355237"
+id = "9988d026-8721-41f5-a9be-05ebcfd2d99f"
 display_name = "补给"
 kind = 1
 glossary = "支援"
@@ -33,7 +33,7 @@ hp = 10
 move = 1
 attack_range = 2
 passives = Array[ExtResource("1_fixxl")]([SubResource("Resource_cwf00")])
-id = "1f86bb24-6f6a-4a1d-847c-8d89ff198bcc"
+id = "ea6a02d9-f033-4c8f-80e5-b892fb99b731"
 display_name = "熊蜂"
 cost = 8
 glossary = "[被动]"

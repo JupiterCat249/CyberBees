@@ -63,7 +63,34 @@ func _initialize() -> void:
 	_check_forbidden_files()
 	_check_overlay_clickthrough()
 	_check_effect_no_stacking()
+	_check_res_schema_sync()
 	_report()
+
+
+## ⑨ 资源 schema 同步（迭代059 实测缺陷：代码改了但 .tres 还是旧 schema → 改动不生效）
+##   人实测：装甲"又变 -2 且永久"—— 真因是 `game_data/cards/金刚蜂王.tres` 里烤着旧值。
+func _check_res_schema_sync() -> void:
+	var p := "res://game_data/cards/金刚蜂王.tres"
+	var txt := FileAccess.get_file_as_string(p)
+	_chk("金刚蜂王.tres 存在", txt.length() > 0)
+	_chk("装甲资源已写 blocks_attack（旧 schema 无此字段）", txt.contains("blocks_attack = true"))
+	_chk("装甲资源无旧值 dmg_reduce = 2", not txt.contains("dmg_reduce = 2"))
+	## 卡资源里不得残留非 0 的 dmg_reduce（装甲已改为抵挡语义）
+	var bad: Array = []
+	var da := DirAccess.open("res://game_data/cards")
+	if da != null:
+		for f in da.get_files():
+			if not f.ends_with(".tres"):
+				continue
+			var t := FileAccess.get_file_as_string("res://game_data/cards/" + f)
+			if t.contains("dmg_reduce = ") and not t.contains("dmg_reduce = 0"):
+				bad.append(f)
+	_chk("无卡资源残留非零 dmg_reduce（%s）" % str(bad), bad.is_empty())
+	## 回合轮换后手牌可出性必须在 active 切换之后计算（否则整手残留灰）
+	var esrc := FileAccess.get_file_as_string("scripts/battle/battle_engine.gd")
+	var idx_set := esrc.find("state.active = other")
+	var idx_emit := esrc.find("_emit_hand(side)", idx_set)
+	_chk("_end_turn 里 _emit_hand 位于 active 切换**之后**", idx_set > 0 and idx_emit > idx_set)
 
 
 ## ⑧ 效果**不叠加**（人 2026-09-19：「所有效果都不能叠加了，只有一层」）

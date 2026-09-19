@@ -8,17 +8,18 @@
 
 [sub_resource type="Resource" id="Resource_t7ryj"]
 script = ExtResource("1_5tybm")
-id = "d23057ab-d1da-46b3-b01d-f328e47cb766"
+id = "7a1b1b23-13bf-4980-a690-87eeeff221cd"
 display_name = "装甲"
-dmg_reduce = 2
+blocks_attack = true
+metadata/armor_layers = 2
 
 [sub_resource type="Resource" id="Resource_i2mb2"]
 script = ExtResource("3_b07ur")
-id = "c78e285f-e959-442f-8f21-7e3810bcd492"
+id = "1d61b78f-5f0a-433c-b51d-349f6a4f3324"
 display_name = "装甲"
 kind = 2
 glossary = "部署"
-description = "[部署]获得 [2] 层装甲效果（受到的每次伤害 -1）"
+description = "[部署]获得 [2] 层装甲效果（**参与防御计算后消失**）"
 effects = Array[ExtResource("1_5tybm")]([SubResource("Resource_t7ryj")])
 
 [sub_resource type="Resource" id="Resource_wluop"]
@@ -33,7 +34,7 @@ move = 1
 attack_range = 1
 refund = 4
 immune_command = true
-id = "dadaa44b-f823-40b5-bbd7-a43ba4aa1520"
+id = "36a37ae4-6195-4ac0-bd81-1bbc23099a0d"
 display_name = "金刚蜂王"
 kind = 0
 glossary = "[回费]"

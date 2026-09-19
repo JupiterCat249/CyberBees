@@ -5,10 +5,11 @@
 
 [sub_resource type="Resource" id="Resource_2rnuj"]
 script = ExtResource("1_vrowq")
-id = "eed8f984-09c3-4fcb-9e8c-cad8d934eb5a"
+id = "f5e246a2-c92b-43f5-9dff-76150ee2b591"
 display_name = "力场"
 grants_field = true
 blocks_command = true
+blocks_attack = true
 
 [resource]
 script = ExtResource("2_qs7mq")

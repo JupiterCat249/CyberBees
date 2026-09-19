@@ -230,7 +230,6 @@ func _end_turn() -> void:
 	var side := state.active
 	bus().emit_signal(Bus.SIG_TURN_ENDED, side, state.round_no)
 	_draw_to_full(side)                        ## 抽卡 4：回合结束后补至 4 张
-	_emit_hand(side)
 	if state.is_over():
 		return
 	var other := state.opponent(side)
@@ -242,6 +241,12 @@ func _end_turn() -> void:
 		if state.is_over():
 			return
 	state.active = other
+	## ⭐ 迭代059 修缺陷：**必须在 `state.active` 切换之后**才刷手牌
+	##   原因：`can_play_hand()` 依赖 `state.active`；若在切换前把**即将离场一方**的手牌
+	##   刷出去，新抽到的牌会按"旧 active"算成不可出 → **整手牌残留灰色**
+	##   （人实测：回合轮换后手牌默认灰，哪怕可部署）。
+	_emit_hand(side)
+	_emit_hand(other)
 	bus().emit_signal(Bus.SIG_TURN_STARTED, state.active, state.round_no)
 	_log("%s 回合开始（第 %d 回合）" % [config.name_of(state.active), state.round_no])
 	_enter_phase(state.Phase.RECOVER)

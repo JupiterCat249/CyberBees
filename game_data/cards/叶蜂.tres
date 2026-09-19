@@ -8,7 +8,7 @@
 
 [sub_resource type="Resource" id="Resource_out7l"]
 script = ExtResource("1_ylq06")
-id = "216eedaf-552a-4e71-8245-00c15af6dae3"
+id = "abe79611-bc93-4d04-8dbb-a2efb94ae0a3"
 display_name = "领地倍伤"
 atk_mul_in_foe_territory = 2.0
 
@@ -23,7 +23,7 @@ hp = 2
 move = 2
 attack_range = 1
 passives = Array[ExtResource("1_ylq06")]([SubResource("Resource_out7l")])
-id = "15c3e3e4-1f48-4332-8fbb-f130bb02dc5c"
+id = "d9229286-8fad-4aa2-8938-d84ea58e967b"
 display_name = "叶蜂"
 cost = 2
 glossary = "[被动]"

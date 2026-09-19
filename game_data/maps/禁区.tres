@@ -7,7 +7,7 @@
 
 [resource]
 script = ExtResource("2_yinok")
-id = "dd9f54d7-05de-4bb4-b256-d35be57e6206"
+id = "60c6a80a-99bd-4bc4-b339-56349b75b623"
 display_name = "禁区"
 terrain_texture = ExtResource("4_tuox3")
 background_texture = ExtResource("1_cewtq")
