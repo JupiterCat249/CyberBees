@@ -1,134 +1,123 @@
-[gd_scene format=3 uid="uid://hgfolb44dc6f"]
+[gd_scene load_steps=10 format=3]
 
-[ext_resource type="PackedScene" uid="uid://b3v7c3uvojiot" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]
-[ext_resource type="Script" uid="uid://b3choc0gdq76h" path="res://scenes/ui/arena_controller.gd" id="2_ctrl"]
-[ext_resource type="PackedScene" uid="uid://cftew331eyj7" path="res://scenes/ui/card_unit.tscn" id="3_unit"]
-[ext_resource type="PackedScene" uid="uid://csycanfke7qpq" path="res://scenes/ui/card_hand.tscn" id="4_hand"]
+[ext_resource type="PackedScene" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scenes/ui/arena_controller.gd" id="2_ctrl"]
+[ext_resource type="PackedScene" path="res://scenes/ui/card_unit.tscn" id="3_unit"]
+[ext_resource type="PackedScene" path="res://scenes/ui/card_hand.tscn" id="4_hand"]
+[ext_resource type="Texture2D" path="res://assets/card_art/金刚蜂王.png" id="art_0"]
+[ext_resource type="Texture2D" path="res://assets/card_art/叶蜂.png" id="art_1"]
+[ext_resource type="Texture2D" path="res://assets/card_art/泥蜂.png" id="art_2"]
+[ext_resource type="Texture2D" path="res://assets/card_art/熊蜂.png" id="art_3"]
+[ext_resource type="Texture2D" path="res://assets/card_art/电击.png" id="art_4"]
 
-[node name="BattleScene" unique_id=1274145536 instance=ExtResource("1_base")]
+[node name="BattleScene" instance=ExtResource("1_base")]
 script = ExtResource("2_ctrl")
 
-[node name="Cell_0_0" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="0" unique_id=1365533625]
-anchors_preset = 0
+[node name="Cell_0_0" type="Control" parent="Battle/MapView/MapCells" index="0"]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
 offset_right = 250.0
 offset_bottom = 250.0
 mouse_filter = 2
 
-[node name="Cell_0_1" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="1" unique_id=235976521]
-anchors_preset = 0
+[node name="Cell_0_1" type="Control" parent="Battle/MapView/MapCells" index="1"]
+layout_mode = 0
 offset_left = 250.0
+offset_top = 0.0
 offset_right = 500.0
 offset_bottom = 250.0
 mouse_filter = 2
 
-[node name="Cell_0_2" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="2" unique_id=1623467407]
-anchors_preset = 0
+[node name="Cell_0_2" type="Control" parent="Battle/MapView/MapCells" index="2"]
+layout_mode = 0
 offset_left = 500.0
+offset_top = 0.0
 offset_right = 750.0
 offset_bottom = 250.0
 mouse_filter = 2
 
-[node name="Cell_0_3" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="3" unique_id=145718331]
-anchors_preset = 0
+[node name="Cell_0_3" type="Control" parent="Battle/MapView/MapCells" index="3"]
+layout_mode = 0
 offset_left = 750.0
+offset_top = 0.0
 offset_right = 1000.0
 offset_bottom = 250.0
 mouse_filter = 2
 
-[node name="Cell_1_0" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="4" unique_id=164726296]
-anchors_preset = 0
+[node name="Cell_1_0" type="Control" parent="Battle/MapView/MapCells" index="4"]
+layout_mode = 0
+offset_left = 0.0
 offset_top = 250.0
 offset_right = 250.0
 offset_bottom = 500.0
 mouse_filter = 2
 
-[node name="Cell_1_1" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="5" unique_id=1543287209]
-anchors_preset = 0
+[node name="Cell_1_1" type="Control" parent="Battle/MapView/MapCells" index="5"]
+layout_mode = 0
 offset_left = 250.0
 offset_top = 250.0
 offset_right = 500.0
 offset_bottom = 500.0
 mouse_filter = 2
 
-[node name="Cell_1_2" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="6" unique_id=1457259514]
-anchors_preset = 0
+[node name="Cell_1_2" type="Control" parent="Battle/MapView/MapCells" index="6"]
+layout_mode = 0
 offset_left = 500.0
 offset_top = 250.0
 offset_right = 750.0
 offset_bottom = 500.0
 mouse_filter = 2
 
-[node name="Cell_1_3" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="7" unique_id=71120191]
-anchors_preset = 0
+[node name="Cell_1_3" type="Control" parent="Battle/MapView/MapCells" index="7"]
+layout_mode = 0
 offset_left = 750.0
 offset_top = 250.0
 offset_right = 1000.0
 offset_bottom = 500.0
 mouse_filter = 2
 
-[node name="Cell_2_0" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="8" unique_id=1421884961]
-anchors_preset = 0
+[node name="Cell_2_0" type="Control" parent="Battle/MapView/MapCells" index="8"]
+layout_mode = 0
+offset_left = 0.0
 offset_top = 500.0
 offset_right = 250.0
 offset_bottom = 750.0
 mouse_filter = 2
 
-[node name="Cell_2_1" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="9" unique_id=579323461]
-anchors_preset = 0
+[node name="Cell_2_1" type="Control" parent="Battle/MapView/MapCells" index="9"]
+layout_mode = 0
 offset_left = 250.0
 offset_top = 500.0
 offset_right = 500.0
 offset_bottom = 750.0
 mouse_filter = 2
 
-[node name="Cell_2_2" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="10" unique_id=577913416]
-anchors_preset = 0
+[node name="Cell_2_2" type="Control" parent="Battle/MapView/MapCells" index="10"]
+layout_mode = 0
 offset_left = 500.0
 offset_top = 500.0
 offset_right = 750.0
 offset_bottom = 750.0
 mouse_filter = 2
 
-[node name="Cell_2_3" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="11" unique_id=154256274]
-anchors_preset = 0
+[node name="Cell_2_3" type="Control" parent="Battle/MapView/MapCells" index="11"]
+layout_mode = 0
 offset_left = 750.0
 offset_top = 500.0
 offset_right = 1000.0
 offset_bottom = 750.0
 mouse_filter = 2
 
-[node name="Cell_3_0" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="12" unique_id=1517679287]
-anchors_preset = 0
+[node name="Cell_3_0" type="Control" parent="Battle/MapView/MapCells" index="12"]
+layout_mode = 0
+offset_left = 0.0
 offset_top = 750.0
 offset_right = 250.0
 offset_bottom = 1000.0
 mouse_filter = 2
 
-[node name="Cell_3_1" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="13" unique_id=2105439202]
-anchors_preset = 0
-offset_left = 250.0
-offset_top = 750.0
-offset_right = 500.0
-offset_bottom = 1000.0
-mouse_filter = 2
-
-[node name="Cell_3_2" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="14" unique_id=1113318928]
-anchors_preset = 0
-offset_left = 500.0
-offset_top = 750.0
-offset_right = 750.0
-offset_bottom = 1000.0
-mouse_filter = 2
-
-[node name="Cell_3_3" type="Control" parent="Battle/MapView/MapCells" parent_id_path=PackedInt32Array(1100902195) index="15" unique_id=762375408]
-anchors_preset = 0
-offset_left = 750.0
-offset_top = 750.0
-offset_right = 1000.0
-offset_bottom = 1000.0
-mouse_filter = 2
-
-[node name="Unit_ally" parent="Battle/MapView/Units" parent_id_path=PackedInt32Array(276830332) index="0" unique_id=1500322224 instance=ExtResource("3_unit")]
+[node name="Cell_3_1" type="Control" parent="Battle/MapView/MapCells" index="13"]
 layout_mode = 0
 offset_left = 250.0
 offset_top = 750.0
@@ -136,45 +125,161 @@ offset_right = 500.0
 offset_bottom = 1000.0
 mouse_filter = 2
 
-[node name="Unit_enemy" parent="Battle/MapView/Units" parent_id_path=PackedInt32Array(276830332) index="1" unique_id=454091734 instance=ExtResource("3_unit")]
+[node name="Cell_3_2" type="Control" parent="Battle/MapView/MapCells" index="14"]
 layout_mode = 0
 offset_left = 500.0
+offset_top = 750.0
 offset_right = 750.0
+offset_bottom = 1000.0
 mouse_filter = 2
 
-[node name="EnemyHand_0" parent="Battle/HandPanelLeft/HandLeft" parent_id_path=PackedInt32Array(1568755482) index="0" unique_id=58009476 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Cell_3_3" type="Control" parent="Battle/MapView/MapCells" index="15"]
+layout_mode = 0
+offset_left = 750.0
+offset_top = 750.0
+offset_right = 1000.0
+offset_bottom = 1000.0
 mouse_filter = 2
 
-[node name="EnemyHand_1" parent="Battle/HandPanelLeft/HandLeft" parent_id_path=PackedInt32Array(1568755482) index="1" unique_id=546150666 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Unit_ally" parent="Battle/MapView/Units" index="0" instance=ExtResource("3_unit")]
+layout_mode = 0
+offset_left = 250.0
+offset_top = 750.0
+offset_right = 500.0
+offset_bottom = 1000.0
 mouse_filter = 2
 
-[node name="EnemyHand_2" parent="Battle/HandPanelLeft/HandLeft" parent_id_path=PackedInt32Array(1568755482) index="2" unique_id=2074409696 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Cost" parent="Battle/MapView/Units/Unit_ally/CostPlate" index="0"]
+text = "4"
+[node name="Value" parent="Battle/MapView/Units/Unit_ally/Attr_Attack" index="1"]
+text = "2"
+[node name="Value" parent="Battle/MapView/Units/Unit_ally/Attr_Health" index="1"]
+text = "12"
+[node name="Value" parent="Battle/MapView/Units/Unit_ally/Attr_Speed" index="1"]
+text = "1"
+[node name="Value" parent="Battle/MapView/Units/Unit_ally/Attr_Range" index="1"]
+text = "1"
+[node name="TextureRect" parent="Battle/MapView/Units/Unit_ally/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_0")
+
+[node name="Unit_enemy" parent="Battle/MapView/Units" index="1" instance=ExtResource("3_unit")]
+layout_mode = 0
+offset_left = 250.0
+offset_top = 0.0
+offset_right = 500.0
+offset_bottom = 250.0
 mouse_filter = 2
 
-[node name="EnemyHand_3" parent="Battle/HandPanelLeft/HandLeft" parent_id_path=PackedInt32Array(1568755482) index="3" unique_id=1961184388 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Cost" parent="Battle/MapView/Units/Unit_enemy/CostPlate" index="0"]
+text = "4"
+[node name="Value" parent="Battle/MapView/Units/Unit_enemy/Attr_Attack" index="1"]
+text = "2"
+[node name="Value" parent="Battle/MapView/Units/Unit_enemy/Attr_Health" index="1"]
+text = "12"
+[node name="Value" parent="Battle/MapView/Units/Unit_enemy/Attr_Speed" index="1"]
+text = "1"
+[node name="Value" parent="Battle/MapView/Units/Unit_enemy/Attr_Range" index="1"]
+text = "1"
+[node name="TextureRect" parent="Battle/MapView/Units/Unit_enemy/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_0")
+
+[node name="EnemyHand_0" parent="Battle/HandPanelLeft/HandLeft" index="0" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_right = 200.0
+offset_bottom = 200.0
 mouse_filter = 2
 
-[node name="AllyHand_0" parent="Battle/HandPanelRight/HandRight" parent_id_path=PackedInt32Array(1622828235) index="0" unique_id=962028026 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_0/BadgeImage" index="0"]
+text = "2"
+[node name="Image" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_0/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_1")
+
+[node name="EnemyHand_1" parent="Battle/HandPanelLeft/HandLeft" index="1" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_left = 230.0
+offset_right = 430.0
+offset_bottom = 200.0
 mouse_filter = 2
 
-[node name="AllyHand_1" parent="Battle/HandPanelRight/HandRight" parent_id_path=PackedInt32Array(1622828235) index="1" unique_id=266273723 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_1/BadgeImage" index="0"]
+text = "4"
+[node name="Image" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_1/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_2")
+
+[node name="EnemyHand_2" parent="Battle/HandPanelLeft/HandLeft" index="2" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_top = 230.0
+offset_right = 200.0
+offset_bottom = 430.0
 mouse_filter = 2
 
-[node name="AllyHand_2" parent="Battle/HandPanelRight/HandRight" parent_id_path=PackedInt32Array(1622828235) index="2" unique_id=321929736 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_2/BadgeImage" index="0"]
+text = "8"
+[node name="Image" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_2/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_3")
+
+[node name="EnemyHand_3" parent="Battle/HandPanelLeft/HandLeft" index="3" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_left = 230.0
+offset_top = 230.0
+offset_right = 430.0
+offset_bottom = 430.0
 mouse_filter = 2
 
-[node name="AllyHand_3" parent="Battle/HandPanelRight/HandRight" parent_id_path=PackedInt32Array(1622828235) index="3" unique_id=1409508266 instance=ExtResource("4_hand")]
-layout_mode = 2
+[node name="Value" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_3/BadgeImage" index="0"]
+text = "2"
+[node name="Image" parent="Battle/HandPanelLeft/HandLeft/EnemyHand_3/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_4")
+
+[node name="AllyHand_0" parent="Battle/HandPanelRight/HandRight" index="0" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_right = 200.0
+offset_bottom = 200.0
 mouse_filter = 2
 
-[node name="Portrait" type="TextureRect" parent="HUD/InfoPanel/DetailBlock/Artwork" parent_id_path=PackedInt32Array(953288216) index="0" unique_id=425491634]
+[node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_0/BadgeImage" index="0"]
+text = "2"
+[node name="Image" parent="Battle/HandPanelRight/HandRight/AllyHand_0/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_1")
+
+[node name="AllyHand_1" parent="Battle/HandPanelRight/HandRight" index="1" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_left = 230.0
+offset_right = 430.0
+offset_bottom = 200.0
+mouse_filter = 2
+
+[node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_1/BadgeImage" index="0"]
+text = "4"
+[node name="Image" parent="Battle/HandPanelRight/HandRight/AllyHand_1/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_2")
+
+[node name="AllyHand_2" parent="Battle/HandPanelRight/HandRight" index="2" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_top = 230.0
+offset_right = 200.0
+offset_bottom = 430.0
+mouse_filter = 2
+
+[node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_2/BadgeImage" index="0"]
+text = "8"
+[node name="Image" parent="Battle/HandPanelRight/HandRight/AllyHand_2/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_3")
+
+[node name="AllyHand_3" parent="Battle/HandPanelRight/HandRight" index="3" instance=ExtResource("4_hand")]
+layout_mode = 0
+offset_left = 230.0
+offset_top = 230.0
+offset_right = 430.0
+offset_bottom = 430.0
+mouse_filter = 2
+
+[node name="Value" parent="Battle/HandPanelRight/HandRight/AllyHand_3/BadgeImage" index="0"]
+text = "2"
+[node name="Image" parent="Battle/HandPanelRight/HandRight/AllyHand_3/Artwork/ArtPlane" index="0"]
+texture = ExtResource("art_4")
+
+[node name="Portrait" type="TextureRect" parent="HUD/InfoPanel/DetailBlock/Artwork" index="0"]
 layout_mode = 0
 offset_right = 300.0
 offset_bottom = 300.0
