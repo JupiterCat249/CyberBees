@@ -113,10 +113,29 @@ static func support(state: GameState, inst: UnitInstance, skill: SkillData,
 	for e in skill.effects:
 		if Effects.grant(target, e):
 			applied += 1
+	# 迭代055：**支援回费**（熊蜂 `[支援]回复[3]点费用`）—— 给施放者一方加费
+	var refunded := 0
+	if skill.refund > 0:
+		var st: GameState = state
+		var before: int = int(st.cost[inst.side])
+		st.cost[inst.side] = mini(st.MAX_COST, before + skill.refund)
+		refunded = int(st.cost[inst.side]) - before
+		st.cost_changed.emit(inst.side, st.cost[inst.side])
+	# 迭代055：**支援治疗**（支持 heal 字段的技能）
+	var healed := 0
+	if skill.heal > 0:
+		var hp_before: int = target.current_hp
+		target.heal(skill.heal)                 ## heal() 内部直接改血（返回 void）
+		healed = target.current_hp - hp_before
 	inst.mark_acted()
 	state.effect_changed.emit(target)
-	state.log_added.emit("%s 对 %s 使用【支援】%s（生效 %d 个效果）" % [
-		inst.card_name(), target.card_name(), skill.display_name, applied])
+	var extra := ""
+	if refunded > 0:
+		extra += "，回费 +%d" % refunded
+	if healed > 0:
+		extra += "，回血 +%d" % healed
+	state.log_added.emit("%s 对 %s 使用【支援】%s（生效 %d 个效果%s）" % [
+		inst.card_name(), target.card_name(), skill.display_name, applied, extra])
 	state.state_changed.emit()
 	return true
 

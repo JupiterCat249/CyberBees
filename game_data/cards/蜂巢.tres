@@ -1,24 +1,25 @@
 [gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_yrn6t"]
-[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_ur62j"]
-[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌b1-蜂巢.png" id="3_dk8u6"]
-[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_ohyqe"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_ur62j"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_dk8u6"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_ohyqe"]
+[ext_resource type="Texture2D" path="res://assets/card_art/蜂巢.png" id="4_tmeav"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_bvs61"]
 
-[sub_resource type="Resource" id="Resource_tmeav"]
-script = ExtResource("4_ohyqe")
-artwork = ExtResource("3_dk8u6")
+[sub_resource type="Resource" id="Resource_ejeaq"]
+script = ExtResource("5_bvs61")
+artwork = ExtResource("4_tmeav")
 
 [resource]
-script = ExtResource("1_yrn6t")
+script = ExtResource("2_dk8u6")
 hp = 5
 refund = 1
-id = "e1a47c5f-caa7-4be1-a3ac-516d376fed43"
+id = "9c015992-0080-4877-b663-794800e36841"
 display_name = "蜂巢"
 kind = 2
-cost = 4
-glossary = "回费"
-skill_name = "【回费】采集"
-description = "每个己方回费阶段，额外回复 1 点费用。部署在己方领地任意格。"
-tags = "回费 · 资源建筑"
-visual = SubResource("Resource_tmeav")
+cost = 3
+glossary = "[回费]"
+skill_name = "回费"
+description = "[回费]回复[1]点费用"
+tags = "建筑 · 回费"
+visual = SubResource("Resource_ejeaq")

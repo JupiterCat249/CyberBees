@@ -1,28 +1,45 @@
 [gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_dkpdm"]
-[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_5tybm"]
-[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌a-金刚蜂王.png" id="3_t05sb"]
-[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_b07ur"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_5tybm"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_t05sb"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_b07ur"]
+[ext_resource type="Texture2D" path="res://assets/card_art/金刚蜂王.png" id="4_3v5yk"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_7om1r"]
 
-[sub_resource type="Resource" id="Resource_3v5yk"]
-script = ExtResource("4_b07ur")
-artwork = ExtResource("3_t05sb")
+[sub_resource type="Resource" id="Resource_t7ryj"]
+script = ExtResource("1_5tybm")
+id = "58041e00-f344-4675-b73f-cfd0b88f7e32"
+display_name = "装甲"
+dmg_reduce = 2
+
+[sub_resource type="Resource" id="Resource_i2mb2"]
+script = ExtResource("3_b07ur")
+id = "0536d28a-9fcd-4073-8e7a-2196cea9cd77"
+display_name = "装甲"
+kind = 2
+glossary = "部署"
+description = "[部署]获得 [2] 层装甲效果（受到的每次伤害 -1）"
+effects = Array[ExtResource("1_5tybm")]([SubResource("Resource_t7ryj")])
+
+[sub_resource type="Resource" id="Resource_wluop"]
+script = ExtResource("5_7om1r")
+artwork = ExtResource("4_3v5yk")
 
 [resource]
-script = ExtResource("1_dkpdm")
-atk = 7
-hp = 8
+script = ExtResource("2_t05sb")
+atk = 2
+hp = 12
 move = 1
-attack_range = 2
+attack_range = 1
 refund = 4
 immune_command = true
-id = "ae45708f-7461-4c39-a016-cb74440d5ec7"
+id = "f261c93e-16d6-486b-9d51-847cb59ff69d"
 display_name = "金刚蜂王"
 kind = 0
-cost = 8
-glossary = "机场"
-skill_name = "【机场】蜂王巢口"
-description = "部署阶段可在自身相邻格部署兵蜂；蜂王免疫指令卡伤害与减益。"
-tags = "被动 · 部署 · 蜂王"
-visual = SubResource("Resource_3v5yk")
+glossary = "[回费]"
+skill_name = "回费 / 装甲"
+description = "[回费]回复四点费用
+[部署]获得[装甲]效果"
+tags = "蜂王 · 回费 · 装甲"
+visual = SubResource("Resource_wluop")
+skills = Array[ExtResource("3_b07ur")]([SubResource("Resource_i2mb2")])

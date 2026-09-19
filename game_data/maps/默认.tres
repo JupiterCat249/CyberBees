@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_42x24")
-id = "13283a71-0a51-4673-81dd-7746700c5f56"
+id = "6bf116af-22aa-4474-a1b7-4dfa3b58b4e7"
 display_name = "默认"
 terrain_texture = ExtResource("2_vt67u")
 description = "场地效果：无特殊效果。"

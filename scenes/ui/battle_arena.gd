@@ -34,9 +34,9 @@ const HAND_CARD_SCENE := preload("res://scenes/ui/card_hand.tscn")
 const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 const GameStateScript := preload("res://scripts/game/game_state.gd")
-const SampleDeckLib := preload("res://scripts/data/sample_deck.gd")
+const CardPoolLib := preload("res://scripts/data/card_pool.gd")
 const AnimDriverScript := preload("res://scripts/game/battle_anim_driver.gd")
-const DeckResPath := "res://game_data/decks/样例卡组.tres"
+const DeckResPath := "res://game_data/decks/示范卡组.tres"
 
 const PITCH := 250.0                        ## 格宽 = 单位卡尺寸
 const HAND_SLOT := Vector2(200.0, 200.0)
@@ -128,7 +128,7 @@ func _starting_decks() -> Dictionary:
 			var d2: DeckData = res_deck.duplicate(true)
 			return {SIDE_ALLY: res_deck, SIDE_ENEMY: d2}
 		push_warning("[BATTLE] 卡组资源不可用 → 回退样例卡组（代码构造）")
-	return {SIDE_ALLY: SampleDeckLib.build("绿"), SIDE_ENEMY: SampleDeckLib.build("红")}
+	return {SIDE_ALLY: CardPoolLib.build("绿方"), SIDE_ENEMY: CardPoolLib.build("红方")}
 
 
 func _load_deck_resource(path: String) -> DeckData:

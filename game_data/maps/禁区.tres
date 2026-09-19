@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_4213y")
-id = "340c63e3-34a3-4367-94e3-52520dd00971"
+id = "c3f61a7d-8de9-446a-8929-c9da9fef091e"
 display_name = "禁区"
 terrain_texture = ExtResource("2_f257o")
 description = "场地效果：障碍地形无法部署单位，但不会阻挡移动与攻击。"

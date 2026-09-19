@@ -13,7 +13,7 @@ extends Node
 ##
 ## 生成后立刻**回读校验**：逐个 load 回来，核对字段与源数据一致。
 
-const SampleDeckLib := preload("res://scripts/data/sample_deck.gd")
+const CardPoolLib := preload("res://scripts/data/card_pool.gd")
 const ROOT := "res://game_data"
 const DIRS := ["cards", "effects", "skills", "decks", "maps"]
 
@@ -43,8 +43,10 @@ func _make_dirs() -> void:
 
 
 func _generate_cards() -> void:
-	for spec in SampleDeckLib.CARD_SPECS:
-		var card: CardData = SampleDeckLib._make(spec)
+	## ⚠️ 迭代055：**先清空旧卡资源**（人指示：删除旧资源并创建新资源）
+	_clear_dir("%s/cards" % ROOT)
+	for spec in CardPoolLib.CARDS:
+		var card: CardData = CardPoolLib.make(spec)
 		var sub := "cards"
 		var path := "%s/%s/%s.tres" % [ROOT, sub, _safe(card.display_name)]
 		_save(card, path)
@@ -57,18 +59,18 @@ func _generate_deck() -> void:
 	dd.display_name = "样例卡组"
 	var by_name := {}
 	var specs_by_name := {}
-	for spec in SampleDeckLib.CARD_SPECS:
+	for spec in CardPoolLib.CARDS:
 		specs_by_name[spec["name"]] = spec
 	# 先把卡牌资源按名字加载进来
-	for spec in SampleDeckLib.CARD_SPECS:
+	for spec in CardPoolLib.CARDS:
 		var p := "%s/cards/%s.tres" % [ROOT, _safe(spec["name"])]
 		if ResourceLoader.exists(p):
 			by_name[spec["name"]] = load(p)
-	for nm in SampleDeckLib.DECK_NAMES:
+	for nm in CardPoolLib.DECK_NAMES:
 		if by_name.has(nm):
 			dd.cards.append(by_name[nm])
 	dd.queen = by_name.get("金刚蜂王", null)
-	_save(dd, "%s/decks/样例卡组.tres" % ROOT)
+	_save(dd, "%s/decks/示范卡组.tres" % ROOT)
 
 
 ## 生成 6 张地图资源 —— 名字与场地效果**逐条对照《电子蜂A5策划案.md》§场地效果表**
@@ -133,6 +135,18 @@ func _generate_maps() -> void:
 		_save(md, "%s/maps/%s.tres" % [ROOT, _safe(String(spec["name"]))])
 
 
+## 删除目录下的旧资源（含 .import/.uid 边车）
+func _clear_dir(dir_path: String) -> void:
+	var d := DirAccess.open(dir_path)
+	if d == null:
+		return
+	var removed := 0
+	for f in d.get_files():
+		if d.remove(f) == OK:
+			removed += 1
+	print("  已清空旧资源：%s（%d 个文件）" % [dir_path, removed])
+
+
 func _save(res: Resource, path: String) -> void:
 	var err := ResourceSaver.save(res, path)
 	if err == OK:
@@ -152,7 +166,7 @@ func _safe(nm: String) -> String:
 func _verify() -> void:
 	print("===== 回读校验 =====")
 	var n_cards := 0
-	for spec in SampleDeckLib.CARD_SPECS:
+	for spec in CardPoolLib.CARDS:
 		var path := "%s/cards/%s.tres" % [ROOT, _safe(spec["name"])]
 		if not ResourceLoader.exists(path):
 			_errors.append("回读缺失：" + path)
@@ -163,7 +177,7 @@ func _verify() -> void:
 			continue
 		n_cards += 1
 		# 逐字段核对
-		var src: CardData = SampleDeckLib._make(spec)
+		var src: CardData = CardPoolLib.make(spec)
 		if r.display_name != src.display_name:
 			_errors.append("%s 卡名不符" % path)
 		if int(r.get("cost")) != int(src.get("cost")):
@@ -180,9 +194,9 @@ func _verify() -> void:
 		if cs != null and cr != null:
 			if cr.dmg != cs.dmg or cr.heal != cs.heal or cr.target_range != cs.target_range:
 				_errors.append("%s 指令数值不符" % path)
-	print("  卡牌回读：%d / %d" % [n_cards, SampleDeckLib.CARD_SPECS.size()])
+	print("  卡牌回读：%d / %d" % [n_cards, CardPoolLib.CARDS.size()])
 	# 卡组
-	var dp := "%s/decks/样例卡组.tres" % ROOT
+	var dp := "%s/decks/示范卡组.tres" % ROOT
 	if ResourceLoader.exists(dp):
 		var dd: DeckData = load(dp)
 		var ok: bool = dd != null and dd.cards.size() == 12 and dd.queen != null

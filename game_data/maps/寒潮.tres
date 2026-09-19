@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_2avcg")
-id = "c6c1325f-c697-45e6-9417-c8e8165a6d3f"
+id = "7611daa4-94b1-4c2e-89d7-1d96f75b4761"
 display_name = "寒潮"
 terrain_texture = ExtResource("2_60br0")
 description = "场地效果：第 3、6、9、12 回合的场地阶段，所有己方单位减少 2 点生命值（蜂王除外）。"

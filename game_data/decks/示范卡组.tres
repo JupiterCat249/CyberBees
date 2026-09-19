@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="DeckData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/card_data.gd" id="1_yrs8o"]
+[ext_resource type="Resource" path="res://game_data/cards/叶蜂.tres" id="2_6qoyc"]
+[ext_resource type="Resource" path="res://game_data/cards/泥蜂.tres" id="3_16ddq"]
+[ext_resource type="Resource" path="res://game_data/cards/熊蜂.tres" id="4_et1ha"]
+[ext_resource type="Resource" path="res://game_data/cards/电击.tres" id="5_pixm8"]
+[ext_resource type="Resource" path="res://game_data/cards/电击III.tres" id="6_e01op"]
+[ext_resource type="Resource" path="res://game_data/cards/巡航导弹.tres" id="7_nke6f"]
+[ext_resource type="Resource" path="res://game_data/cards/蜂巢.tres" id="8_1p0ik"]
+[ext_resource type="Resource" path="res://game_data/cards/蜂巢III.tres" id="9_7jbp1"]
+[ext_resource type="Resource" path="res://game_data/cards/金刚蜂王.tres" id="10_xp202"]
+[ext_resource type="Script" path="res://scripts/data/deck_data.gd" id="11_qi4l4"]
+
+[resource]
+script = ExtResource("11_qi4l4")
+id = "75f56ce5-fd49-4f89-ab07-1f792b64a077"
+display_name = "样例卡组"
+cards = Array[ExtResource("1_yrs8o")]([ExtResource("2_6qoyc"), ExtResource("3_16ddq"), ExtResource("4_et1ha"), ExtResource("5_pixm8"), ExtResource("6_e01op"), ExtResource("7_nke6f"), ExtResource("8_1p0ik"), ExtResource("9_7jbp1")])
+queen = ExtResource("10_xp202")

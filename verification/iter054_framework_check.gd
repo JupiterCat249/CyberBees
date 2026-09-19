@@ -308,7 +308,7 @@ func _random_legal_cell(st: GameState, ud: UnitData) -> Variant:
 # ---------------- 完整战斗系统新增测试 ----------------
 
 func _test_sample_deck() -> void:
-	var dd: DeckData = load("res://scripts/data/sample_deck.gd").build("测试")
+	var dd: DeckData = load("res://scripts/data/card_pool.gd").build("测试")
 	_chk("样例卡组：有蜂王", dd.queen != null and dd.queen.kind == CardData.CardKind.QUEEN)
 	_chk("样例卡组：12 张（1 蜂王 + 11 常规）", dd.cards.size() == 12)
 	var errs := dd.validate()

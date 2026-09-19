@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="CommandData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_nrxq2"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_e8iu8"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_cnq85"]
+[ext_resource type="Texture2D" path="res://assets/card_art/电击III.png" id="4_jgg0b"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_hq67u"]
+
+[sub_resource type="Resource" id="Resource_q40rh"]
+script = ExtResource("5_hq67u")
+artwork = ExtResource("4_jgg0b")
+
+[resource]
+script = ExtResource("2_e8iu8")
+dmg = 8
+chain_span = 99
+self_to_graveyard = true
+id = "b4d9517e-d54b-49ea-9a8e-b42994955a00"
+display_name = "电击III"
+kind = 3
+cost = 6
+glossary = "[指令]"
+skill_name = "接触传导"
+description = "[指令]与目标接触及间接接触的单位都会受到相同伤害"
+tags = "指令 · 攻击"
+visual = SubResource("Resource_q40rh")

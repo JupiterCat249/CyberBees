@@ -1,24 +1,25 @@
 [gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_2qpra"]
-[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_pffji"]
-[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌b1-蜂巢III.png" id="3_6476a"]
-[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_8wufc"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_pffji"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_6476a"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_8wufc"]
+[ext_resource type="Texture2D" path="res://assets/card_art/蜂巢III.png" id="4_f1n2n"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_yun1j"]
 
-[sub_resource type="Resource" id="Resource_f1n2n"]
-script = ExtResource("4_8wufc")
-artwork = ExtResource("3_6476a")
+[sub_resource type="Resource" id="Resource_boqu2"]
+script = ExtResource("5_yun1j")
+artwork = ExtResource("4_f1n2n")
 
 [resource]
-script = ExtResource("1_2qpra")
-hp = 12
-refund = 2
-id = "82781a88-fd71-4df6-9ce5-54f95b2cf6c6"
+script = ExtResource("2_6476a")
+hp = 9
+refund = 3
+id = "925fb2b4-388a-484c-a836-1259b5e2516e"
 display_name = "蜂巢III"
 kind = 2
-cost = 9
-glossary = "回费"
-skill_name = "【回费】集群采集"
-description = "每个己方回费阶段，额外回复 2 点费用。生命值 12，可作前场肉盾。"
-tags = "回费 · 资源建筑"
-visual = SubResource("Resource_f1n2n")
+cost = 5
+glossary = "[回费]"
+skill_name = "回费"
+description = "[回费]回复[3]点费用"
+tags = "建筑 · 回费"
+visual = SubResource("Resource_boqu2")

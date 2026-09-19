@@ -1,6 +1,6 @@
 extends Node
 
-const SampleDeckLib := preload("res://scripts/data/sample_deck.gd")
+const CardPoolLib := preload("res://scripts/data/card_pool.gd")
 ## 【验证用 · 非生产】迭代054 UI 端到端：battle_scene + GameState 真实对局接线
 ## 状态：待封存（验证用，非生产文件）
 
@@ -84,7 +84,7 @@ func _ready() -> void:
 			else:
 				_chk("**立绘与卡数据同步**（非场景默认图）", tr.texture == want)
 	# 用**带立绘的卡**（样例卡组）验证立绘真的被绑定到单位卡上
-	var spec_deck: DeckData = SampleDeckLib.build("绿")
+	var spec_deck: DeckData = CardPoolLib.build("绿")
 	var art_card: UnitData = null
 	for c in spec_deck.cards:
 		if c is UnitData and c.visual != null and c.visual.artwork != null:

@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_qbyur")
-id = "507b2004-c1d5-4df0-8a3c-54b7660a1db4"
+id = "c5722593-fd24-4d84-945e-af0e883782f3"
 display_name = "丰饶"
 terrain_texture = ExtResource("2_8qvnb")
 description = "场地效果：第 3、9 回合玩家额外回复 4 点费用。"

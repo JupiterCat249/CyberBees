@@ -5,7 +5,7 @@
 
 [resource]
 script = ExtResource("1_s2qgu")
-id = "c237ddc5-fb27-4293-bb9d-77df4805e48f"
+id = "15ce398e-fceb-45d0-b349-e6182b825801"
 display_name = "铁锈"
 terrain_texture = ExtResource("2_8ovrn")
 description = "场地效果：位于特殊地形的单位获得 1 层[力场]效果。"

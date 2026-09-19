@@ -1,25 +1,33 @@
 [gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="1_up6hb"]
-[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="2_ylq06"]
-[ext_resource type="Texture2D" path="res://card-system/card_system/art/卡牌c1-叶蜂.png" id="3_ebcb0"]
-[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="4_8b65o"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_ylq06"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_ebcb0"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_8b65o"]
+[ext_resource type="Texture2D" path="res://assets/card_art/叶蜂.png" id="4_xwunb"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_eicwl"]
 
-[sub_resource type="Resource" id="Resource_xwunb"]
-script = ExtResource("4_8b65o")
-artwork = ExtResource("3_ebcb0")
+[sub_resource type="Resource" id="Resource_out7l"]
+script = ExtResource("1_ylq06")
+id = "e6fcf6b6-c8fd-4475-b39d-1013d88f7a79"
+display_name = "领地倍伤"
+atk_mul_in_foe_territory = 2.0
+
+[sub_resource type="Resource" id="Resource_om4tp"]
+script = ExtResource("5_eicwl")
+artwork = ExtResource("4_xwunb")
 
 [resource]
-script = ExtResource("1_up6hb")
+script = ExtResource("2_ebcb0")
 atk = 2
-hp = 3
-move = 1
+hp = 2
+move = 2
 attack_range = 1
-id = "da2eaea8-494d-437b-83f0-a95f9733e791"
+passives = Array[ExtResource("1_ylq06")]([SubResource("Resource_out7l")])
+id = "98dd546b-b89e-4086-8c1c-de56bc1fd6df"
 display_name = "叶蜂"
 cost = 2
-glossary = "支援"
-skill_name = "【支援】鼓舞"
-description = "选择 2 格内的 1 个己方单位，赋予「攻击提升」：攻击力 +1。使用后结束该单位行动。"
-tags = "支援 · 单位效果 · 增益"
-visual = SubResource("Resource_xwunb")
+glossary = "[被动]"
+skill_name = "领地突袭"
+description = "[被动]在敌方领地时，攻击造成[2]倍伤害"
+tags = "兵蜂 · 被动"
+visual = SubResource("Resource_om4tp")

@@ -137,10 +137,12 @@ func _begin_turn() -> void:
 
 ## 回费阶段：按 a500 — 蜂王回费量 + 第 7 回合起 +2
 func _do_recover() -> void:
+	## ⚠️ 迭代055：[回费] 是**单位自带技能**，凡标了回费的单位都应结算 ——
+	##    金刚蜂王(4) / 蜂巢(1) / 蜂巢III(3)。此前只算蜂王，建筑的 [回费] 全部漏结算。
 	var gain := 0
-	var q: UnitInstance = queen[active]
-	if q != null and q.data != null:
-		gain += q.data.refund
+	for u in board.units_of(active):
+		if u.data != null:
+			gain += u.data.refund
 	if round_no >= EXTRA_COST_FROM_ROUND:
 		gain += ROUND_EXTRA_COST
 	if gain > 0:
@@ -289,6 +291,7 @@ func deploy_unit(side: int, idx: int, cell: Vector2i) -> bool:
 	inst.has_moved = true
 	inst.has_acted = true                 ## a500：单位部署时没有行动机会
 	board.place(inst)
+	_apply_deploy_skills(inst, ud)        ## 迭代055：[部署]获得[装甲] 等
 	discard[side].append(data)
 	cost_changed.emit(side, cost[side])
 	hand_changed.emit(side)
@@ -296,6 +299,20 @@ func deploy_unit(side: int, idx: int, cell: Vector2i) -> bool:
 	log_added.emit("%s 部署 %s 到 (%d,%d)（费 -%d）" % [player_names[side], ud.display_name, cell.x, cell.y, maxi(0, ud.cost)])
 	state_changed.emit()
 	return true
+
+
+## 落地「[部署]」类技能（迭代055：金刚蜂王 `[部署]获得[装甲]效果`）
+## 判定依据：技能的 glossary 标为「部署」（卡数据里显式标注，不靠描述文本猜）
+func _apply_deploy_skills(inst: UnitInstance, ud: UnitData) -> void:
+	if inst == null or ud == null:
+		return
+	for sk in ud.skills:
+		if sk == null or sk.glossary != "部署":
+			continue
+		for e in sk.effects:
+			if e != null and Effects.grant(inst, e):
+				log_added.emit("%s 触发【部署】%s" % [ud.display_name, e.display_name])
+				effect_changed.emit(inst)
 
 
 ## 部署格合法性

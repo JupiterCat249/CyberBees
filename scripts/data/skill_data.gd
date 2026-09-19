@@ -14,6 +14,12 @@ enum Kind { ACTIVE, SUPPORT, PASSIVE }
 @export var ends_actor_action: bool = false          ## 使用后结束该单位行动
 @export var effects: Array[EffectData] = []          ## 施加的效果
 
+@export_group("数值型技能参数（迭代055：技能落地用）")
+## 支援回复费用量（熊蜂 `[支援]回复[3]点费用`）；0 = 不回复
+@export var refund: int = 0
+## 治疗量（支援治疗类）；0 = 不治疗
+@export var heal: int = 0
+
 
 func validate() -> Array[String]:
 	var errs: Array[String] = []

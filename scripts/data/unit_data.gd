@@ -17,6 +17,12 @@ extends CardData
 @export var deploy_adjacent: bool = false      ## 蜂王巢口：只能在自身相邻格部署兵蜂
 @export var grants_aura_id: String = ""        ## 本单位的"可赋予"效果 UUID（技能授予/光环授予）
 
+@export_group("被动效果（卡牌自带 · 永久生效）")
+## 迭代055：卡面自带的**数值型被动**（如叶蜂「在敌方领地攻击 ×2」、熊蜂「对蜂王伤害 ×2」）。
+## 与 `skills` 里的被动技能的区别：这里直接参与战斗结算，由
+## `battle_combat.raw_damage()` 读取；**不占用 T14 的「效果」槽**（不入效果列表、不叠加）。
+@export var passives: Array[EffectData] = []
+
 
 func validate() -> Array[String]:
 	var errs := super.validate()

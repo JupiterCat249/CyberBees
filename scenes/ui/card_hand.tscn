@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://csycanfke7qpq"]
 
-[ext_resource type="Script" path="res://scenes/ui/card_hand.gd" id="1_fame5"]
+[ext_resource type="Script" uid="uid://b5mpd14xr74yy" path="res://scenes/ui/card_hand.gd" id="1_fame5"]
 [ext_resource type="Texture2D" uid="uid://bsp7jd66ckh2l" path="res://card-system/card_system/art/卡牌c1-泥蜂.png" id="1_gvnpr"]
 [ext_resource type="Texture2D" uid="uid://bgqaavu8mbywd" path="res://assets/card_icons/icon-费用.png" id="2_gvnpr"]
 
@@ -38,9 +38,13 @@ subpixel_positioning = 0
 
 [node name="HandCard" type="Control" unique_id=791830242]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 200.0
-offset_bottom = 200.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("1_fame5")
 metadata/_edit_horizontal_guides_ = [0.0]
 metadata/_edit_vertical_guides_ = [200.0]
@@ -60,9 +64,16 @@ mouse_filter = 2
 
 [node name="ArtPlane" type="Panel" parent="Artwork" unique_id=1229676721]
 clip_contents = true
-layout_mode = 0
-offset_right = 200.0
-offset_bottom = 200.0
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.015000001
+anchor_top = 0.010000001
+anchor_right = 0.9850001
+anchor_bottom = 0.99000007
+offset_right = -1.5258789e-05
+offset_bottom = -1.5258789e-05
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R2")
 
