@@ -1,8 +1,8 @@
 extends Control
 ## BattleScene —— 战斗场景**接线控制器**（组合素材场景 + 驱动 GameState）
 ##
-## ⚠️ **本文件名为 battle_arena.gd（原 battle_scene.gd）** —— 改名原因：
-##    Godot 编辑器的脚本缓冲在多次外部修改后会把旧内容回写到磁盘，
+## ⚠️ **本文件名为 arena_controller.gd（曾用名 battle_scene.gd → battle_arena.gd）** —— 两次改名原因：
+##    Godot 编辑器的脚本缓冲会把旧内容回写到磁盘（实测连续覆盖 5 次），
 ##    已实测把本文件连续冲掉 4 次（退回 256 行旧版，逻辑全丢）。
 ##    换文件名后编辑器旧缓冲**再也无法命中**，从根上断开这条覆盖链。
 ##    场景 res://scenes/ui/battle_scene.tscn 已指向本文件。

@@ -61,7 +61,7 @@ func _ready() -> void:
 	lines.append("[gd_scene load_steps=%d format=3]" % (5 + _art_paths.size()))
 	lines.append("")
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]')
-	lines.append('[ext_resource type="Script" path="res://scenes/ui/battle_arena.gd" id="2_ctrl"]')
+	lines.append('[ext_resource type="Script" path="res://scenes/ui/arena_controller.gd" id="2_ctrl"]')
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/card_unit.tscn" id="3_unit"]')
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/card_hand.tscn" id="4_hand"]')
 	for id in _art_paths.keys():
