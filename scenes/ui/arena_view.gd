@@ -737,8 +737,20 @@ func _call_opt(node: Object, method: String, args: Array) -> void:
 		node.callv(method, args)
 
 
-## 主按钮 → 推进阶段（引擎自行判定回费/场地不可手动推）
+## 主按钮 → 按当前选中分流（G-6 Q-3：选中手牌时按钮兼顾弃牌）
 func _on_main_pressed() -> void:
-	print("[VIEW] 主按钮被点击 → request_end_phase()；phase=", engine.state.phase if engine != null else -1)
-	if engine != null:
-		engine.request_end_phase()
+	if engine == null or engine.state == null:
+		return
+	## 选中了手牌 → 弃牌
+	if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:
+		var card: CardData = null
+		var hand: Array = engine.state.sides[engine.state.active]["hand"]
+		if int(engine.sel_hand_index) < hand.size():
+			card = hand[engine.sel_hand_index]
+		var dc: int = engine.discard_cost_of(card) if card != null else 0
+		if not engine.request_discard(engine.state.active, engine.sel_hand_index):
+			_flash_msg("弃牌失败：需 %d 费，当前 %d" % [dc, engine.state.cost(engine.state.active)])
+		return
+	## 否则推进阶段
+	print("[VIEW] 主按钮被点击 → request_end_phase()；phase=", engine.state.phase)
+	engine.request_end_phase()

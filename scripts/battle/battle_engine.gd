@@ -481,6 +481,7 @@ func select_hand(side: int, index: int) -> void:
 	sel_hand_index = index
 	sel_unit = null
 	_emit_selection()
+	_emit_button()          ## 选卡后按钮变「弃牌」（G-6 Q-3）
 
 
 func select_unit(side: int, unit: UnitInstance) -> void:
@@ -490,6 +491,7 @@ func select_unit(side: int, unit: UnitInstance) -> void:
 	sel_unit = unit
 	sel_hand_index = -1
 	_emit_selection()
+	_emit_button()          ## 选中单位 → 按钮退出「弃牌」态，恢复阶段文案（G-6）
 
 
 ## 选中支援技能（视图点"支援"按钮时调用）→ 会下发支援目标预览
@@ -508,6 +510,8 @@ func _cancel_selection() -> void:
 	sel_hand_index = -1
 	sel_unit = null
 	sel_support = null
+	## 取消选中 → 按钮恢复原文案（G-6 Q-3：弃牌态只在选中手牌时存在）
+	_emit_button()
 
 
 # ============================================================
@@ -623,10 +627,22 @@ func _emit_action_availability() -> void:
 	bus().emit_signal(Bus.SIG_ACTION_AVAIL, state.active, can_deploy, can_act, can_act, true)
 
 
+## 主按钮文案与可用态
+## ⭐ 迭代059 G-6（人裁决 Q-3）：**选中手牌时，按钮兼顾「弃牌」**（文案同步改变）
+##    未选中手牌 → 保持原设计文案（完成部署 / 结束回合）
 func _emit_button() -> void:
 	var text := ""
 	var hint := ""
 	var enabled := true
+	## 选中手牌 → 按钮变弃牌（a500 抽卡 6：丢弃消耗 = 部署费用；X 费卡 = 10）
+	var sel_card: CardData = _selected_hand_card()
+	if sel_card != null:
+		var dc := discard_cost_of(sel_card)
+		text = "弃牌（消耗 %d 费）" % dc
+		enabled = state.cost(state.active) >= dc
+		hint = "%s：点右侧按钮丢弃此牌（消耗 %d 费）；或点高亮格使用它" % [sel_card.display_name, dc]
+		bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled, hint)
+		return
 	match state.phase:
 		state.Phase.RECOVER, state.Phase.TERRAIN:
 			text = "自动结算中…"
@@ -640,6 +656,59 @@ func _emit_button() -> void:
 			text = "结束回合"
 			hint = "点自己的单位可移动/攻击/支援；每个单位每回合 1 次行动"
 	bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled, hint)
+
+
+## 当前选中的手牌（无则 null）
+func _selected_hand_card() -> CardData:
+	if state == null or sel_kind != 1 or sel_hand_index < 0:
+		return null
+	var hand: Array = state.sides[state.active]["hand"]
+	if sel_hand_index >= hand.size():
+		return null
+	return hand[sel_hand_index]
+
+
+## 弃牌消耗（a500 抽卡 6：消耗等同于部署的费用；**X 费卡牌消耗 10 点费用**）
+func discard_cost_of(card: CardData) -> int:
+	if card == null:
+		return 0
+	if card.cost < 0:
+		return 10
+	return card.cost
+
+
+## 请求：丢弃手牌（a500 抽卡 6）
+##   · 消耗 = 卡费；X 费卡 = 10
+##   · 弃牌后进墓地（与使用后一样）
+##   · 仅可在部署/行动阶段
+func request_discard(side: int, hand_index: int) -> bool:
+	if state == null or state.is_over() or side != state.active:
+		return false
+	if state.phase != state.Phase.DEPLOY and state.phase != state.Phase.ACTION:
+		_log("仅部署/行动阶段可弃牌", 1)
+		return false
+	var hand: Array = state.sides[side]["hand"]
+	if hand_index < 0 or hand_index >= hand.size():
+		return false
+	var card: CardData = hand[hand_index]
+	if card == null:
+		return false
+	var dc := discard_cost_of(card)
+	if dc > state.cost(side):
+		_log("费用不足：弃牌需 %d，当前 %d" % [dc, state.cost(side)], 1)
+		return false
+	state.sides[side]["cost"] -= dc
+	bus().emit_signal(Bus.SIG_COST_CHANGED, side, state.cost(side), -dc)
+	hand.remove_at(hand_index)
+	state.sides[side]["discard"].append(card)
+	bus().emit_signal(Bus.SIG_CARD_DISCARDED, side, card, dc)
+	_log("%s 弃置 %s（费 -%d）" % [config.name_of(side), card.display_name, dc])
+	_cancel_selection()
+	_emit_hand(side)
+	_emit_selection()
+	_emit_button()
+	_emit_action_availability()
+	return true
 
 
 func _log(text: String, level: int = 0) -> void:
