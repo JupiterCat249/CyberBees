@@ -89,38 +89,53 @@ static func execute(state, card: CommandData, caster_side: int, target: UnitInst
 
 ## 收集本次指令的作用目标（单体 / 范围 / 链式）
 ## 蜂王判定（**只用于排除"扩散伤害"**：连锁/范围不波及蜂王；蜂王本身仍可作为首目标）
-static func _is_queen(u: UnitInstance) -> bool:
+## ⭐ 全局设计（人 2026-09-19 定）——**蜂王对指令卡「不存在」**
+##   > 「蜂王的情况是——**可以作为首选目标，但永远不会被纳入指令卡的判定计算中**」
+##
+##   具体含义（对本文件所有指令卡生效）：
+##     ① **可作为首选目标**：玩家能直接把指令指向蜂王（`target_legal` 通过，伤害照算）
+##     ② **永远不会被纳入判定计算**：一旦进入**扩散 / 范围 / 连锁**这类"判定计算"，
+##        蜂王就**不存在** —— 它不入选，也**不传递 / 不中断与否的通路**（= 视作空格）
+##     ③ 连锁的具体表现：链路遇到蜂王所在格，**该侧传播在此终止**（视为空格，不再继续）
+##
+##   ⚠️ 后续同类指令卡一律套用此口径，不要逐卡另写。
+static func is_queen(u: UnitInstance) -> bool:
 	return u != null and u.data != null and u.data.kind == CardData.CardKind.QUEEN
 
 
+## 指令卡真实伤害影响的单位
+##   首选目标：直接命中（蜂王若被直接指定，**照常受伤** —— 人明确「可作为首选目标」）
+##   扩散/范围/连锁：**完全排除蜂王**（人明确「永远不会被纳入判定计算」；链路遇蜂王**中断**）
 static func collect_targets(state, card: CommandData, primary: UnitInstance) -> Array:
 	var out: Array = []
 	if primary == null or state == null or state.board == null:
 		return out
-	# 范围（aoe_span > 0）：目标格周围曼哈顿半径内的所有单位
-	## ⚠️ 蜂王不参与指令伤害（同上：严格判定）
+	# 首选目标（含蜂王：可作首选目标）
+	out.append(primary)
+	# ① 范围（aoe_span > 0）：目标格周围曼哈顿半径内的单位 —— **不含蜂王**
 	if card.aoe_span > 0:
 		for u in state.board.all_units():
-			if _is_queen(u):
+			if u == primary or is_queen(u):
 				continue
 			if state.board.manhattan(u.cell, primary.cell) <= card.aoe_span:
 				out.append(u)
 		return out
-	# 链式（chain_span > 0）：设计原文「与目标**接触及间接接触**的单位都会受到相同伤害」
-	# ⭐ 迭代059 人明确定义：「**严格判定是只有单位在上下左右格直接相邻时这些单位才会被伤害共享
-	#    （且蜂王不会受到该伤害）**」
-	##   → **只取目标格的上/下/左/右 4 格**（单层直接相邻），**不做无限扩散**。
-	##     此前用 BFS 传播 `chain_span` 层，而卡数据 chain_span=99 → **扩散到全图**（人报的"全局伤害"缺陷）。
+	# ② 链式（chain_span > 0）：设计原文「与目标**接触及间接接触**的单位都会受到相同伤害」
+	#    人 2026-09-19 严格定义：
+	#      · 「**只有单位在上下左右格直接相邻时**这些单位才会被伤害共享」
+	#        → **只取首选目标的直接相邻 4 格**（不经过中间格绕连，避免又变成"范围/全局伤害"）
+	#      ·「蜂王**哪里=没有单位**，连锁在蜂王处**中断**」
+	#        → 蜂王格与空格一律**不作为传播通路**（该侧终止）
+	#      · 对角相邻**不传播**
 	if card.chain_span > 0:
-		out.append(primary)
 		for n in state.board.neighbors_cardinal(primary.cell):
 			var u2: UnitInstance = state.board.unit_at(n)
-			## 蜂王不参与**扩散**伤害（人明确：严格判定下蜂王不会受到该伤害）
-			if u2 != null and not _is_queen(u2):
-				out.append(u2)
+			## 空格 / 蜂王格 → 该方向**不共享伤害**（蜂王处连锁中断）
+			if u2 == null or is_queen(u2):
+				continue
+			out.append(u2)
 		return out
-	# 单体
-	out.append(primary)
+	# ③ 单体
 	return out
 
 

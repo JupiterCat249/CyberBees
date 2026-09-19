@@ -26,6 +26,7 @@ func _ready() -> void:
 	await _t_card_clickthrough()
 	_t_armor_not_permanent()
 	_t_chain_strict()
+	_t_queen_global_design()
 	_t_no_stacking_any()
 	await _t_discard_state_switch()
 	_report()
@@ -318,3 +319,52 @@ func _put(st, card_name: String, side: int, cell: Vector2i) -> UnitInstance:
 func _tick(n: int) -> void:
 	for _i in n:
 		await get_tree().process_frame
+
+
+# ============ 全局设计：蜂王对指令卡「不存在」 ============
+func _t_queen_global_design() -> void:
+	_section("全局设计：蜂王可作首选目标，但**永不纳入指令卡判定计算**（连锁在蜂王处中断）")
+	var RC := preload("res://scripts/battle/rules_command.gd")
+	var card: CommandData = Pool.card("电击")
+	# 布局（列 0 . 1 . 2 . 3）：
+	#   行 0：  (0,0)蜂巢   (0,1)红蜂王   (0,2)泥蜂_后   (0,3)空
+	#   行 1：  (1,0)泥蜂_前（与红蜂王相邻，与泥蜂_后不相邻）
+	var e = Eng.new()
+	e.start(ConfigLib.make(Pool.build("通A"), Pool.build("通B")))
+	var st = e.state
+	var qe: UnitInstance = st.queen(1)
+	st.board.remove(qe)
+	qe.cell = Vector2i(0, 1)
+	st.board.place(qe)
+	var before := _place(st, "泥蜂", 1, Vector2i(1, 1))     ## 紧邻蜂王（下方）
+	var behind := _place(st, "泥蜂", 1, Vector2i(0, 2))     ## 蜂王右侧（只能穿过蜂王到达）
+	print("    布阵：红蜂王@%s · 泥蜂_前@%s · 泥蜂_后@%s" % [
+		str(qe.cell), str(before.cell), str(behind.cell)])
+	var tg: Array = RC.collect_targets(st, card, before)
+	var cells: Array = []
+	for u in tg:
+		cells.append(str(u.cell))
+	print("    从「泥蜂_前」起连锁波及 = %s" % str(cells))
+	_chk("首选目标照常入选", tg.has(before))
+	_chk("**蜂王不入选**（不作为扩散目标）", not tg.has(qe))
+	_chk("**连锁在蜂王处中断** —— 蜂王另一侧的泥蜂_后**不入选**", not tg.has(behind))
+
+	# 反向验证：以蜂王为**首选目标**时，蜂王自身照常受伤
+	var e2 = Eng.new()
+	e2.start(ConfigLib.make(Pool.build("通C"), Pool.build("通D")))
+	var st2 = e2.state
+	var q2: UnitInstance = st2.queen(1)
+	var tg2: Array = RC.collect_targets(st2, card, q2)
+	_chk("蜂王可作为**首选目标**（自身入选）", tg2.has(q2))
+	# ⚠️ 伤害口径待裁决：代码里 `immune_command = (kind == QUEEN)` → 蜂王免疫指令伤害；
+	#    而人明确「蜂王可作为首选目标」。两者需人确认（见记录 §十八）。
+	#    本处只断言"可选作首选目标"这一项（不臆测伤害）。
+	_chk("蜂王可被选为**首选目标**（target_legal 通过）",
+		RC.target_legal(card, q2, 0))
+	_chk("已知口径：蜂王 immune_command（免疫指令伤害）—— 待人与「可作首选目标」对齐",
+		q2.data.immune_command)
+	# 代码层面：只剩一个公开入口 is_queen（避免两处实现漂移）
+	var src := FileAccess.get_file_as_string("scripts/battle/rules_command.gd")
+	_chk("公开入口名统一为 is_queen（无旧 _is_queen 残留）",
+		src.contains("static func is_queen(") and not src.contains("_is_queen("))
+	_chk("源码写明「蜂王处连锁中断」", src.contains("连锁中断") or src.contains("此处连锁中断"))
