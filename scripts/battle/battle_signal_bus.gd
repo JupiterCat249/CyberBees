@@ -4,29 +4,16 @@ extends Node
 ## 用法（不注册 Autoload，避免全局名冲突与加载顺序坑）：
 ##   const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
 ##   Bus.shared()                     # 取全局唯一实例（脚本内静态持有）
-##   Bus.signal_x.emit(...)           # 发；Bus.signal_x.connect(...) 收
+##   Bus.SIG_XXX                      # 信号名常量（发射用，不写裸字符串）
 ##
 ## 为什么不用 Autoload：① `class_name` 与 Autoload 同名会报 "hides an autoload singleton"
 ## ② `--check-only` 下 autoload 全局名不参与编译 ③ 记忆体记录过"Autoload _ready 早于场景
 ## _ready → 信号被漏接"的坑。preload 单例三条全避开，且仍是单一中枢。
 ##
-## 设计意图（迭代056 · a500 重建）
-##   · **规则层不引用 UI，UI 不读规则状态**：两侧都只通过本总线通信
-##   · 规则层：结算完后 `BattleSignalBus.xxx.emit(...)` 广播
-##   · 视图层：`BattleSignalBus.xxx.connect(_on_xxx)` 订阅，回调参数**直接给出对象与数值**
-##
-## 为什么用总线而不是"规则对象自己发信号"：
-##   ① 视图只需知道**一个**连接目标，不必持有规则对象引用（连引用都解耦）
-##   ② 规则层可独立实例化测试（无场景、无 Node 树依赖）
-##   ③ 新增视图（战报/小地图/回放）零改动规则层
-##
 ## 信号参数约定（依据 Godot 手册 §Signals：信号可写具名参数，emit 可传任意实参）：
 ##   · **一律用具名参数**，名字即语义 → 视图回调签名自解释
-##   · 参数**直接给对象引用**（`UnitInstance` / `CardData` / `EffectData`）与**数值**，
+##   · 参数**直接给对象引用**（`UnitInstance` / `CardData` / `EffectData` / `PreviewData`）与**数值**，
 ##     视图不反查全局状态、不做 id→对象 的查找
-##   · 需要额外上下文（如"哪一侧"）由发射方在参数里带全，不给视图留猜测空间
-##
-## ⚠️ 本文件**不 import 任何 scenes/、不 get_node、不判规则**。
 
 # ============================================================
 #  信号名常量
@@ -139,9 +126,9 @@ signal unit_stats_changed(inst: UnitInstance)
 #  交互 / UI 状态（**规则层下发，视图只表现**）
 # ============================================================
 
-## 选中态与可操作集合变化（视图据此高亮；参数是**只读快照**，视图不反查）
-signal selection_changed(kind: int, id: String, selectable_cells: Array,
-		selectable_units: Array)
+## 选中态变化 + **操作预览资源**（第三个参数就是供 UI 调用的 PreviewData）
+##   ⚠️ 人指示（迭代056）：范围预览做成**资源类**，视图直接读它渲染，**不自己算规则**
+signal selection_changed(kind: int, id: String, preview: Resource, selectable_units: Array)
 ## 行动机会可用性（a500 行动机会 1~6）
 signal action_availability(side: int, can_deploy: bool, can_move: bool,
 		can_act: bool, can_end_phase: bool)
@@ -154,14 +141,14 @@ signal log_added(text: String, level: int)
 #  便捷：清空所有连接（重开一局 / 视图重建时用）
 # ============================================================
 
-## 全局唯一实例（首次调用时创建，挂在场景树根下）
+## 全局唯一实例（首次调用时创建，挂到场景树根）
 static var _instance: Node = null
 
 static func shared() -> Node:
 	if _instance == null or not is_instance_valid(_instance):
-		var tree := Engine.get_main_loop() as SceneTree
 		_instance = preload("res://scripts/battle/battle_signal_bus.gd").new()
 		_instance.name = "BattleSignalBus"
+		var tree := Engine.get_main_loop() as SceneTree
 		if tree != null and tree.root != null:
 			tree.root.add_child.call_deferred(_instance)
 	return _instance

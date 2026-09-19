@@ -22,6 +22,7 @@ const ConfigLib := preload("res://scripts/battle/battle_config.gd")
 const Effects := preload("res://scripts/battle/rules_effects.gd")
 const Combat := preload("res://scripts/battle/rules_combat.gd")
 const Command := preload("res://scripts/battle/rules_command.gd")
+const Preview := preload("res://scripts/battle/rules_preview.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
 
 var state: BattleState = null
@@ -29,6 +30,7 @@ var config: BattleConfig = null
 
 ## 当前选中（**只保存索引/id，不保存 UI 引用**）
 var sel_kind: int = 0            ## 0=无 1=手牌 2=单位 3=支援
+var sel_support: SkillData = null   ## 支援技能（sel_kind==3 时有效）
 var sel_hand_index: int = -1
 var sel_unit: UnitInstance = null
 
@@ -439,10 +441,22 @@ func select_unit(side: int, unit: UnitInstance) -> void:
 	_emit_selection()
 
 
+## 选中支援技能（视图点"支援"按钮时调用）→ 会下发支援目标预览
+func select_support(side: int, unit: UnitInstance, skill: SkillData) -> void:
+	if state == null or unit == null or skill == null or unit.side != state.active:
+		return
+	sel_kind = 3
+	sel_unit = unit
+	sel_support = skill
+	sel_hand_index = -1
+	_emit_selection()
+
+
 func _cancel_selection() -> void:
 	sel_kind = 0
 	sel_hand_index = -1
 	sel_unit = null
+	sel_support = null
 
 
 # ============================================================
@@ -530,11 +544,26 @@ func can_play_hand(side: int, index: int) -> bool:
 	return state.phase == state.Phase.DEPLOY or state.phase == state.Phase.ACTION
 
 
+## 选中态 + **操作预览资源**一起下发
+## ⚠️ 人指示（迭代056）：范围预览是**资源类**（PreviewData），视图直接读它渲染，不自己算规则。
+## 这也保证「预览与试算同源」—— 视图看到的范围与实际可执行集合来自同一处计算。
 func _emit_selection() -> void:
-	var cells: Array = []
+	var pv: Resource = Preview.build(state, sel_kind, sel_hand_index, sel_unit, sel_support)
 	var units: Array = []
+	if pv != null:
+		units = pv.units
 	bus().emit_signal(Bus.SIG_SELECTION, sel_kind,
-		sel_unit.instance_id if sel_unit != null else "", cells, units)
+		sel_unit.instance_id if sel_unit != null else "", pv, units)
+
+
+## 供视图/测试直接索取预览资源（不必等信号）
+func current_preview():
+	return Preview.build(state, sel_kind, sel_hand_index, sel_unit, sel_support)
+
+
+## 某单位可操作范围预览（无选中时的"我的单位能做什么"提示）
+func availability_preview():
+	return Preview.availability(state)
 
 
 func _emit_action_availability() -> void:
