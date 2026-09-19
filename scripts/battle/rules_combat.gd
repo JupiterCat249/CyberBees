@@ -76,6 +76,11 @@ static func resolve_attack(attacker: UnitInstance, defender: UnitInstance,
 		defender.damage(dmg_to_def)
 	if dmg_to_atk > 0:
 		attacker.damage(dmg_to_atk)
+	## ⭐ 迭代059 修缺陷：「护盾 / 装甲」**参与防御计算后消失**（A5：抵挡一次，用后即消）
+	##   旧实现有 consume_defense_effects()，新实现曾漏掉 → 装甲变**永久减伤**，
+	##   导致「蜂王攻 2 − 装甲 2 = 0」的武将互攻**永远 0 伤**。
+	consume_defense_effects(defender)
+	consume_defense_effects(attacker)
 	res["damage_to_defender"] = dmg_to_def
 	res["damage_to_attacker"] = dmg_to_atk
 	res["counter_valid"] = counter_valid
@@ -89,6 +94,27 @@ static func resolve_attack(attacker: UnitInstance, defender: UnitInstance,
 		Bus.shared().emit_signal(Bus.SIG_UNIT_DAMAGED, attacker, dmg_to_atk,
 			attacker.current_hp, "counter")
 	return res
+
+
+## ⭐ 迭代059：**「护盾 / 装甲」参与防御计算后消失**（A5 原文：「两者都是"抵挡一次，参与防御计算则消失"」）
+##   旧实现有 `consume_defense_effects()`，新实现曾漏掉 → 装甲变成**永久减伤**，
+##   导致「蜂王攻 2 − 装甲 2 = 0」的武将互攻**永远 0 伤**。
+##   在**攻击/反击双方结算之后**各消耗一次。
+static func consume_defense_effects(inst: UnitInstance) -> void:
+	if inst == null:
+		return
+	var gone: Array = []
+	for e in inst.effects:
+		if e.data == null:
+			continue
+		## 装甲（dmg_reduce>0）与护盾/力场（blocks_command）都属"抵挡型"，参与防御后消失
+		if e.data.dmg_reduce > 0 or e.data.blocks_command:
+			gone.append(e)
+	for e in gone:
+		inst.remove_effect(e.data.id)
+		Bus.shared().emit_signal(Bus.SIG_EFFECT_EXPIRED, inst, e.data)
+	if gone.size() > 0:
+		Bus.shared().emit_signal(Bus.SIG_UNIT_STATS, inst)
 
 
 ## 指令伤害的最终数值（a500 效果 6 + 蜂王免疫 + 护盾抵挡）

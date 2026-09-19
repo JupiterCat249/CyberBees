@@ -26,8 +26,12 @@ const TYPE_COLOR := {
 var unit_id := ""
 
 
+## ⚠️ 每次绑定都**重置为正常显示** ——
+##   否则烤入场景里遗留的暗色 modulate（历史运行时状态）会让可出的牌也显示为灰。
+##   可出性由 `set_playable()` 单独控制，不依赖 modulate 的历史值。
 func bind(data: Dictionary) -> void:
 	unit_id = String(data.get("id", ""))
+	modulate = Color(1, 1, 1, 1)
 	_set_text("CostPlate/Cost", str(data.get("cost", 0)))
 	_set_text("Attr_Attack/Value", str(data.get("atk", 0)))
 	_set_text("Attr_Health/Value", str(data.get("hp", 0)))

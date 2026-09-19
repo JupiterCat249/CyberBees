@@ -91,7 +91,9 @@ func _ready() -> void:
 	for pu in PREVIEW_UNITS:
 		_append_unit(lines, pu)
 
-	# ④ 手牌（左右各 4 张；**只烤数据与立绘，不烤布局** —— 布局归 GridContainer）
+	# ④ 手牌（左右各 4 张；**只烤数据与立绘，不烤布局/不烤运行时状态**）
+	## ⚠️ 绝不要烤 `modulate` / 颜色 / 可见性 —— 那些是**运行时状态**（可出性等），
+	##    烤进 .tscn 会导致下次开局残留（迭代059 实测：手牌全显示为灰）
 	var demo: Array = Pool.DECK_NAMES
 	for side in ["Enemy", "Ally"]:
 		var parent := "Battle/HandPanelLeft/HandLeft" if side == "Enemy" \

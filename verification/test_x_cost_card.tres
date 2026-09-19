@@ -8,7 +8,7 @@
 script = ExtResource("2_xadef")
 target_range = 9
 x_cost_multiplier = 2
-id = "478abd8e-2b10-4758-9feb-51e89ccc8278"
+id = "9e6844ea-74b1-4383-8114-dd4129a3c81d"
 display_name = "测试·X费打击"
 cost = -1
 description = "【测试卡·非生产】X 费指令：伤害 = 目标部署费 × 2"

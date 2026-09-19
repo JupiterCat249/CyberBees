@@ -126,19 +126,33 @@ static func _make_skills(spec: Dictionary) -> Array[SkillData]:
 		sk2.display_name = "装甲"
 		sk2.kind = SkillData.Kind.PASSIVE
 		sk2.glossary = "部署"
-		sk2.description = "[部署]获得 [%d] 层装甲效果（受到的每次伤害 -1）" % armor
+		sk2.description = "[部署]获得 [%d] 层装甲效果（**参与防御计算后消失**）" % armor
 		sk2.effects = [make_armor(armor)]
 		out.append(sk2)
 	return out
 
 
 ## 造一个「装甲」效果（减伤 N）
+## 装甲的固定减伤值（**不随层数放大** —— 与旧 card-system 既定口径一致）
+##
+## ⭐ 迭代059 修缺陷：原实现按「[装甲]效果」的层数当减伤值（deploy_armor=2 → dmg_reduce=2），
+##   导致「蜂王攻 2 − 装甲 2 = 0」→ **蜂王互攻永远 0 伤**（人实测报缺陷）。
+##
+## 依据（旧实现 `scenes/battle/` 的既定口径，A5 时代已验证）：
+##   · 装甲：`e["reduce"] = 1`          —— **固定 1，不乘层数**
+##   · 力场：`ff_reduce = 2 * layers`   —— **按层数**（两者语义不同）
+##   · 两者都是「抵挡一次，参与防御计算则消失」
+## A5 图鉴里「装甲II = [部署]获得 **2 层**装甲效果」是**层数**表述，
+## 但按既定口径**每层减伤 1**、且同名效果不叠加（a500 效果 1）→ 实际固定 −1。
+const ARMOR_REDUCE := 1
+
+
 static func make_armor(n: int) -> EffectData:
 	var e := EffectData.new()
 	e.id = Uuid.generate()
 	e.display_name = "装甲"
-	e.dmg_reduce = n
-	e.duration = -1
+	e.dmg_reduce = ARMOR_REDUCE      ## ⚠️ 固定 1（不乘 n，见上方说明）
+	e.duration = -1                  ## 永久，直到「参与防御计算后消失」
 	e.is_debuff = false
 	e.allow_queen = true
 	e.allow_soldier = true

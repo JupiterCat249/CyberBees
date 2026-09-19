@@ -124,6 +124,46 @@ func _connect_static_ui() -> void:
 ##   **只改鼠标穿透，不动视觉**（扫描线照常显示）。
 func _make_overlays_click_through() -> void:
 	_set_ignore_recursive(self)
+	_make_card_children_click_through()
+
+
+## ⭐ 让**卡片内部的所有子节点**鼠标透明（迭代059 实测 bug③ 根因）
+##
+## 现象：`gui_get_hovered_control()` 在单位格上返回的是
+##   `Units/Unit_xxx/Artwork/ArtPlane/TextureRect` —— 单位卡**内部的立绘节点**。
+##   这些内部节点默认 `mouse_filter = STOP`，会**吃掉点击**，事件到不了卡根节点的
+##   `_gui_input` → 卡的 `unit_pressed` / `hand_pressed` 信号**永远不触发** →
+##   选中指令卡后点单位目标走不到指令分支（控制台只说"要选中己方单位"）。
+##
+## 修法：对卡片实例（单位卡 + 手牌卡）**递归把子 Control 设为 IGNORE**，
+##   只留卡根节点接收点击（卡根节点的 mouse_filter 在场景里已是 STOP）。
+func _make_card_children_click_through() -> void:
+	for node in _units_root.get_children():
+		_ignore_descendants(node)
+	_ignore_descendants(_hand_l)
+	_ignore_descendants(_hand_r)
+
+
+## 扫描**手牌容器**：把每张卡的**内部**节点设为穿透，但保留**卡根节点**可点。
+##   ⚠️ 卡根节点的 `mouse_filter = STOP` 由 `card_hand.gd` 的 `_ready()` 设置；
+##      若把根节点也设成 IGNORE，整张卡都点不到（迭代059 实测）。
+##   故此处**跳过容器的直接子节点（= 卡根）**，只处理它们下面的层级。
+func _ignore_descendants(container: Node) -> void:
+	if container == null:
+		return
+	for card in container.get_children():
+		_ignore_children(card)
+
+
+## 递归把 n 的**所有子 Control** 设为鼠标透明
+##   （用于**单位卡实例**：卡根由 `card_unit.gd` 的 `_ready()` 设 STOP，此处只清内部）
+func _ignore_children(n: Node) -> void:
+	if n == null:
+		return
+	for ch in n.get_children():
+		if ch is Control:
+			(ch as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_ignore_children(ch)
 
 
 func _set_ignore_recursive(n: Node) -> void:
@@ -307,9 +347,11 @@ func _apply_one_hand_params(node, p) -> void:
 func _on_battle_started(first_side: int, round_no: int, an: String, en: String) -> void:
 	_set_names(an, en)
 	_set_turn(first_side, round_no)
-	## 开局后把双方手牌与费用同步一遗（引擎已在 start() 里发出过，
-	## 但 _ready 里本视图可能尚未连上信号 → 主动拉一次，避免首帧空白）
-	_sync_all()
+	## ⚠️ `_sync_all()` 必须**推迟一帧**：
+	##   `engine.start()` 在「初始费用/后手加成/回费」**设好之前**就发出了本信号，
+	##   此时立刻渲染手牌会因 `cost=0` 把所有牌判为不可出 → **手牌全灰**（迭代059 实测 bug）。
+	##   改为 call_deferred → 引擎完全就绪后再同步。
+	_sync_all.call_deferred()
 
 
 func _on_round_started(round_no: int) -> void:
@@ -415,6 +457,8 @@ func _sync_all() -> void:
 		_on_cost_changed(side, st.cost(side), 0)
 		for u in st.units(side):
 			_spawn_unit(u, u.cell)
+	## 预览也拉一次（开局选中态清零）
+	_render_preview()
 
 
 # ============================================================
@@ -468,8 +512,9 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 				if not engine.request_use_command(side, engine.sel_hand_index, target):
 					_flash_msg("指令目标不合法或费用不足")
 			elif kind == K.Kind.SUPPORT:
-				if not engine.request_support(side, engine.sel_unit, engine.sel_support, target):
-					_flash_msg("支援目标不合法（需射程内己方单位）")
+				## 支援不针对特定单位（人澄清 Y-5）→ 点任意己方单位即进入待确认
+				if not engine.request_support(side, engine.sel_unit, engine.sel_support):
+					_flash_msg("再次点击（或点主按钮「确认」）才执行【支援】")
 			else:
 				if not engine.request_attack(side, engine.sel_unit, target):
 					_flash_msg("不能攻击该目标（射程外 / 已行动过 / 非行动阶段）")
@@ -547,6 +592,9 @@ func _render_hand(side: int, hand: Array, playable: Array) -> void:
 		## 手牌卡内部元素参数（**与详情区参数分开**）
 		if hand_params != null:
 			_apply_one_hand_params(node, hand_params)
+	## ⭐ 每次渲染后都把子卡内部节点设为鼠标透明（**保留卡根节点可点**）
+	##   （`_ready` 里那次跑在首次渲染之前 → 容器还是空的，等于没跑）
+	_ignore_descendants(parent)
 
 
 func _on_hand_clicked(card_id: String, side: int) -> void:
@@ -598,6 +646,7 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	## ⭐ 运行时新建的单位卡也会带 CrtFx 叠加层 → 必须单独设鼠标穿透，
 	##    否则新部署的单位会**盖住整块棋盘**、吞掉所有点击（迭代058 实测教训）
 	_set_ignore_recursive(node)
+	_ignore_children(node)          ## ⭐ 单位卡内部子节点鼠标透明（否则点击被立绘吃掉，bug③）
 	node.bind(_unit_view(inst, cell))
 	if node.has_signal("unit_pressed"):
 		node.unit_pressed.connect(_on_unit_clicked)
@@ -649,6 +698,24 @@ func _update_unit(inst: UnitInstance, hp_after: int) -> void:
 	n.bind(d)
 
 
+## 若当前选中指令卡且该单位是合法目标 → 执行指令（返回 true 表示已处理）
+## ⚠️ 必须在单位点击里**优先**于"攻击/重选"判断（否则指令卡永远用不出去）
+func _try_use_command_on(inst: UnitInstance) -> bool:
+	if engine == null or engine.state == null:
+		return false
+	if int(engine.sel_kind) != 1 or int(engine.sel_hand_index) < 0:
+		return false
+	var hand: Array = engine.state.sides[engine.state.active]["hand"]
+	if int(engine.sel_hand_index) >= hand.size():
+		return false
+	var card: CardData = hand[engine.sel_hand_index]
+	if not (card is CommandData):
+		return false
+	if not engine.request_use_command(engine.state.active, engine.sel_hand_index, inst):
+		_flash_msg("指令「%s」不能以 %s 为目标" % [card.display_name, inst.card_name()])
+	return true
+
+
 func _on_unit_clicked(instance_id: String) -> void:
 	if engine == null or engine.state == null:
 		return
@@ -656,11 +723,17 @@ func _on_unit_clicked(instance_id: String) -> void:
 	if inst == null:
 		return
 	var side: int = engine.state.active
+	## ⭐ 迭代059 修缺陷：单位卡盖在格子上（真实点击命中单位卡而非格子），
+	##   而"指令卡"需要一个单位目标 —— 若这里不转发，选中指令卡后点任何单位都会
+	##   被当作"攻击/重选单位"处理 → **指令卡永远用不出去**。
+	if _try_use_command_on(inst):
+		return
 	if inst.side == side:
 		# ── 支援双击确认（原设计）：已选中带支援技能的单位时，点友方 → 待确认 → 再点执行 ──
 		if int(engine.sel_kind) == 3 and engine.sel_unit != null and engine.sel_support != null \
 				and engine.sel_unit.instance_id != inst.instance_id:
-			engine.request_support(side, engine.sel_unit, engine.sel_support, inst)
+			## 支援不针对特定单位（Y-5）→ 点己方单位即确认/进入待确认
+			engine.request_support(side, engine.sel_unit, engine.sel_support)
 			return
 		engine.select_unit(side, inst)
 		show_detail(inst.data)

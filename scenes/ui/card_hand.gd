@@ -56,6 +56,9 @@ func bind(data: CardData) -> void:
 		visible = false
 		return
 	visible = true
+	## ⚠️ 重置为正常显示 —— 防止烤入场景里遗留的暗色 modulate 让可出的牌也显示为灰
+	##   （可出性由 `set_playable()` 控制，不依赖 modulate 历史值）
+	modulate = Color(1, 1, 1, 1)
 	var bg := _badge()
 	if bg != null:
 		bg.text = str(data.cost) if data.cost >= 0 else "X"

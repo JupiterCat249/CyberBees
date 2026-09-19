@@ -449,56 +449,47 @@ func request_use_command(side: int, hand_index: int, target: UnitInstance) -> bo
 	return true
 
 
-## 支援：**双击确认**（迭代059 步3 —— 恢复原设计，不需要额外 UI 入口）
-##   第一次点击友方 → 进入待确认（按钮变「确认」）
-##   **再次点击同一目标** 或 按主按钮「确认」 → 真正执行支援
-##   改选/取消/执行后 → 待确认失效
-## 返回：true = 已执行；false = 未执行（待确认中 / 不合法）
+## 支援：**双击确认 · 不针对特定单位**（迭代059 人澄清 Y-5）
+##   人：「熊蜂的支援技能是为己方回费3，这种技能自然不需要射程 —— 根本不是针对特定单位的技能」
+##   → 第一次调用 = 进入待确认（按钮变「确认」）；**第二次调用同一单位** = 执行
+##   → 执行效果作用于**己方整体**（回费/回血），不需要选目标
 func request_support(side: int, unit: UnitInstance, skill: SkillData,
-		target: UnitInstance) -> bool:
-	if not _can_act_with(side, unit) or skill == null or target == null:
+		_target: UnitInstance = null) -> bool:
+	if not _can_act_with(side, unit) or skill == null:
 		return false
 	if skill.kind != SkillData.Kind.SUPPORT:
 		return false
-	if target.side != side or not target.is_alive():
-		return false
-	if state.board.manhattan(unit.cell, target.cell) > skill.target_range:
-		return false
-	# ── 双击确认：第一次点击只进入待确认，不执行 ──
-	##  ⚠️ 顺序：**先判合法，再设待确认**。
-	##    若先设待确认，非法目标也会把按钮变成「确认」→ 误导玩家。
-	if support_pending != target:
-		support_pending = target
-		_log("待确认：再次点击 %s 执行【支援】%s" % [target.card_name(), skill.display_name])
+	# ── 双击确认：第一次只进入待确认，不执行 ──
+	if support_pending != unit:
+		support_pending = unit
+		_log("待确认：再次使用 %s 的【支援】%s" % [unit.card_name(), skill.display_name])
 		_emit_button()
 		_emit_selection()
 		return false
-	# ── 第二次点击同一目标 → 执行 ──
+	# ── 第二次 → 执行 ──
 	support_pending = null
+	return _resolve_support(side, unit, skill)
+
+
+## 实际结算支援（作用于己方整体：回费 / 回血；也支持效果赋予给自身）
+func _resolve_support(side: int, unit: UnitInstance, skill: SkillData) -> bool:
 	var applied := 0
 	for e in skill.effects:
-		if Effects.grant(target, e):
+		if Effects.grant(unit, e):
 			applied += 1
-	# 支援回费（如熊蜂「[支援]回复 3 点费用」）
 	var refunded := 0
 	if skill.refund > 0:
 		var before: int = state.cost(side)
 		state.sides[side]["cost"] = mini(state.MAX_COST, before + skill.refund)
 		refunded = state.cost(side) - before
 		bus().emit_signal(Bus.SIG_COST_CHANGED, side, state.cost(side), refunded)
-	var healed := 0
-	if skill.heal > 0:
-		var hp0: int = target.current_hp
-		target.heal(skill.heal)
-		healed = target.current_hp - hp0
-	unit.mark_acted()                           ## 行动机会 4：支援后自动结束行动
 	var extra := ""
 	if refunded > 0:
-		extra += "，回费 +%d" % refunded
-	if healed > 0:
-		extra += "，回血 +%d" % healed
-	_log("%s 对 %s 使用【支援】%s（生效 %d 个效果%s）" % [
-		unit.card_name(), target.card_name(), skill.display_name, applied, extra])
+		extra = "回费 +%d" % refunded
+	unit.mark_acted()                           ## 行动机会 4：使用支援后自动结束行动
+	_log("%s 使用【支援】%s（%s%s）" % [
+		unit.card_name(), skill.display_name, extra,
+		"，生效 %d 个效果" % applied if applied > 0 else ""])
 	_cancel_selection()
 	_emit_selection()
 	_emit_action_availability()
@@ -506,15 +497,19 @@ func request_support(side: int, unit: UnitInstance, skill: SkillData,
 	return true
 
 
-## 主按钮「确认」：对待确认的支援目标执行支援
+## 主按钮「确认」：对待确认的支援单位执行支援
 func confirm_pending() -> bool:
 	if support_pending == null:
 		return false
-	if sel_unit == null or sel_support == null:
+	var u: UnitInstance = support_pending
+	var sk := sel_support
+	if sk == null:
+		sk = find_support_skill(u)
+	if sk == null:
 		support_pending = null
 		_emit_button()
 		return false
-	return request_support(sel_unit.side, sel_unit, sel_support, support_pending)
+	return request_support(u.side, u, sk)
 
 
 func _can_act_with(side: int, unit: UnitInstance) -> bool:
@@ -718,8 +713,7 @@ func _emit_button() -> void:
 	if support_pending != null:
 		text = "确认"
 		enabled = true
-		hint = "再次点击 %s 或点本按钮执行【支援】%s" % [
-			support_pending.card_name(),
+		hint = "再次点击该单位或点本按钮执行【支援】%s" % [
 			sel_support.display_name if sel_support != null else ""]
 		bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled, hint)
 		return

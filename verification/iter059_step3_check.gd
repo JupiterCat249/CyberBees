@@ -22,7 +22,7 @@ func _ready() -> void:
 	print("\n===== 迭代059 步3：支援双击确认 + 地形渲染 + 提示省略 =====")
 	_t_support_auto()
 	_t_support_double_click()
-	_t_self_support()
+	_t_support_by_button()
 	_t_pending_cleared()
 	_t_terrain_render()
 	_t_no_hud_msg()
@@ -52,42 +52,11 @@ func _t_support_auto() -> void:
 ## ⚠️ 熊蜂 `support_range = 0` → 只能支援**自身**（Y-5 待确认项）。
 ##    为验证「双击确认」链路本身，这里把技能的 target_range 临时调到 1（射程内另有目标），
 ##    并单独保留一条「射程外 → 拒绝且**不**进入待确认」的用例。
+## ⚠️ 迭代059 人澄清 Y-5：**支援不针对特定单位、不需要射程**
+##   「熊蜂的支援技能是为己方回费3，这种技能自然不需要射程 —— 根本不是针对特定单位的技能」
+##   → 只验证：双击确认（第一次=待确认、第二次=执行）+ 回费生效
 func _t_support_double_click() -> void:
-	_section("支援：双击确认（第一次=待确认，第二次=执行）")
-	var eng = _engine()
-	var st = eng.state
-	st.phase = StateLib.Phase.ACTION
-	var u := _put(st, "熊蜂", 0, Vector2i(3, 0))     ## 支援者
-	u.reset_turn_flags()
-	var tgt := _put(st, "叶蜂", 0, Vector2i(3, 1))     ## 友方目标（相邻）
-	st.sides[0]["cost"] = 2
-	eng.select_unit(0, u)
-	_chk("选中后有支援技能", eng.sel_support != null)
-	# ① 射程外（target_range=0，目标在距离 1）→ 拒绝且**不**进入待确认
-	var r0: bool = eng.request_support(0, u, eng.sel_support, tgt)
-	_chk("射程外 → 拒绝执行", not r0)
-	_chk("射程外 → **不**进入待确认（不误导按钮）", eng.support_pending == null)
-	# 把射程调到 1，验证双击确认链路
-	eng.sel_support.target_range = 1
-	_chk("调整后目标在射程内", st.board.manhattan(u.cell, tgt.cell) <= eng.sel_support.target_range)
-	# ② 第一次点击目标
-	var r1: bool = eng.request_support(0, u, eng.sel_support, tgt)
-	_chk("第一次点击 → **未执行**（r=false）", not r1)
-	_chk("进入待确认态（support_pending != null）", eng.support_pending == tgt)
-	_chk("待确认时主按钮变「确认」（实际「%s」）" % _btn, _btn == "确认")
-	_chk("此时费用未变（2）", st.cost(0) == 2)
-	_chk("此时单位仍未行动过", not u.has_acted)
-	# ③ 第二次点击同一目标
-	var r2: bool = eng.request_support(0, u, eng.sel_support, tgt)
-	_chk("第二次点击 → **执行成功**", r2)
-	_chk("支援回费 +3（2 → 5）", st.cost(0) == 5)
-	_chk("支援后自动结束行动（行动机会 4）", u.has_acted)
-	_chk("待确认态已清空", eng.support_pending == null)
-
-
-# ============ 熊蜂自身支援（射程 0 的真实用法） ============
-func _t_self_support() -> void:
-	_section("熊蜂支援射程 0 → 只能支援自身（Y-5 口径）")
+	_section("支援：双击确认（第一次=待确认，第二次=执行）· 不需射程与目标")
 	var eng = _engine()
 	var st = eng.state
 	st.phase = StateLib.Phase.ACTION
@@ -95,14 +64,40 @@ func _t_self_support() -> void:
 	u.reset_turn_flags()
 	st.sides[0]["cost"] = 2
 	eng.select_unit(0, u)
-	_chk("自身在射程内（distance 0 <= range 0）",
-		st.board.manhattan(u.cell, u.cell) <= eng.sel_support.target_range)
-	# 双击确认 → 自身回费 +3
-	eng.request_support(0, u, eng.sel_support, u)
-	_chk("第一次点自身 → 待确认", eng.support_pending == u)
-	var ok: bool = eng.request_support(0, u, eng.sel_support, u)
-	_chk("第二次点自身 → 执行", ok)
-	_chk("自身支援回费 +3（2 → 5）", st.cost(0) == 5)
+	_chk("选中后有支援技能", eng.sel_support != null)
+	# ① 第一次 → 待确认，不执行
+	var r1: bool = eng.request_support(0, u, eng.sel_support)
+	_chk("第一次 → **未执行**（r=false）", not r1)
+	_chk("进入待确认态", eng.support_pending == u)
+	_chk("待确认时主按钮变「确认」（实际「%s」）" % _btn, _btn == "确认")
+	_chk("此时费用未变（2）", st.cost(0) == 2)
+	_chk("此时单位仍未行动过", not u.has_acted)
+	# ② 第二次 → 执行
+	var r2: bool = eng.request_support(0, u, eng.sel_support)
+	_chk("第二次 → **执行成功**", r2)
+	_chk("支援回费 +3（2 → 5）", st.cost(0) == 5)
+	_chk("支援后自动结束行动（行动机会 4）", u.has_acted)
+	_chk("待确认态已清空", eng.support_pending == null)
+	# ③ 支援**不需要射程**：把单位放到棋盘任意位置也能用（无目标概念）
+	_chk("支援技能不依赖 target_range（语义上无目标）",
+		not eng.has_method("support_needs_target"))
+
+
+# ============ 主按钮「确认」执行支援 ============
+func _t_support_by_button() -> void:
+	_section("主按钮「确认」也能执行待确认的支援")
+	var eng = _engine()
+	var st = eng.state
+	st.phase = StateLib.Phase.ACTION
+	var u := _put(st, "熊蜂", 0, Vector2i(3, 0))
+	u.reset_turn_flags()
+	st.sides[0]["cost"] = 1
+	eng.select_unit(0, u)
+	eng.request_support(0, u, eng.sel_support)
+	_chk("已进入待确认", eng.support_pending == u)
+	var ok: bool = eng.confirm_pending()
+	_chk("主按钮确认 → 执行", ok)
+	_chk("回费 +3（1 → 4）", st.cost(0) == 4)
 
 
 # ============ 待确认的失效路径 ============
@@ -116,16 +111,14 @@ func _t_pending_cleared() -> void:
 	var other := _put(st, "叶蜂", 0, Vector2i(3, 1))
 	other.reset_turn_flags()
 	eng.select_unit(0, u)
-	eng.sel_support.target_range = 1
-	eng.request_support(0, u, eng.sel_support, other)
-	_chk("已进入待确认", eng.support_pending == other)
+	eng.request_support(0, u, eng.sel_support)
+	_chk("已进入待确认", eng.support_pending == u)
 	eng.select_unit(0, other)
 	_chk("改选其它单位 → 待确认失效", eng.support_pending == null)
 	# 再次进入待确认后取消
 	eng.select_unit(0, u)
-	eng.sel_support.target_range = 1
-	eng.request_support(0, u, eng.sel_support, other)
-	_chk("再次进入待确认", eng.support_pending == other)
+	eng.request_support(0, u, eng.sel_support)
+	_chk("再次进入待确认", eng.support_pending == u)
 	eng._cancel_selection() if eng.has_method("_cancel_selection") else null
 	_chk("取消选中 → 待确认清空", eng.support_pending == null)
 
