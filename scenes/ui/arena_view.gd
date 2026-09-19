@@ -579,5 +579,6 @@ func _call_opt(node: Object, method: String, args: Array) -> void:
 
 ## 主按钮 → 推进阶段（引擎自行判定回费/场地不可手动推）
 func _on_main_pressed() -> void:
+	print("[VIEW] 主按钮被点击 → request_end_phase()；phase=", engine.state.phase if engine != null else -1)
 	if engine != null:
 		engine.request_end_phase()
