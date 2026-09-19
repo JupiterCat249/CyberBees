@@ -90,9 +90,16 @@ func start(p_config: BattleConfig) -> bool:
 
 
 func _queen_cell(side: int) -> Vector2i:
-	## ⚠️ 坐标约定：cell.x = 行（0 在上=红方领地）、cell.y = 列；
-	##    绿方（ALLY）蜂王在下半场行 3、红方（ENEMY）在上半场行 0
-	return Vector2i(3, 1) if side == state.SIDE_ALLY else Vector2i(0, 1)
+	## ⚠️ 坐标约定：cell.x = 行（0 在上 = 红方领地）、cell.y = 列（0 在最左）
+	##
+	## 人 2026-09-19 指定（以其口径为准：右 +、下 +、左上原点，坐标写 1-based (列,行)）：
+	##   · 红方蜂王 **(1,3)** → 0-based 行 2 · 列 0
+	##   · 我方蜂王 **(4,2)** → 0-based 行 1 · 列 3
+	##
+	## ✅ 中心对称校验（棋盘 4×4，几何中心在 (行1.5, 列1.5)）：
+	##   红方偏移 = (2−1.5, 0−1.5) = (+0.5, −1.5)
+	##   我方偏移 = (1−1.5, 3−1.5) = (−0.5, +1.5)  → 互为相反数，**严格中心对称**
+	return Vector2i(1, 3) if side == state.SIDE_ALLY else Vector2i(2, 0)
 
 
 func _apply_deploy_skills(inst: UnitInstance, ud: UnitData) -> void:

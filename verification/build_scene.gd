@@ -16,7 +16,7 @@ extends Node
 ##   手动坐标**正确**，保留。
 ##
 ## 设计约定（勿破坏）：
-##   · 根节点名 `BattleScene`，继承 `battle_ui_alpha.tscn`（**不挂脚本** —— 视图由新战斗系统接入）
+##   · 根节点名 `BattleScene`，继承 `battle_ui_alpha.tscn`，script = `arena_view.gd`（新战斗系统视图）
 ##   · 格节点名必须是 `Cell_<行>_<列>`
 ##   · 手牌容器：`Battle/HandPanelLeft/HandLeft`（敌）· `Battle/HandPanelRight/HandRight`（我）
 ##   · 单位容器：`Battle/MapView/Units`（预览单位，运行时会清掉重建）
@@ -62,15 +62,17 @@ func _ready() -> void:
 	_collect_art()
 	var lines: PackedStringArray = []
 	# ① 头部（不再引用旧控制器：迭代057 Q-3 已移除，避免文件混淆）
-	lines.append("[gd_scene load_steps=%d format=3]" % (4 + _art_paths.size()))
+	lines.append("[gd_scene load_steps=%d format=3]" % (5 + _art_paths.size()))
 	lines.append("")
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]')
+	lines.append('[ext_resource type="Script" path="res://scenes/ui/arena_view.gd" id="2_view"]')
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/card_unit.tscn" id="3_unit"]')
 	lines.append('[ext_resource type="PackedScene" path="res://scenes/ui/card_hand.tscn" id="4_hand"]')
 	for id in _art_paths.keys():
 		lines.append('[ext_resource type="Texture2D" path="%s" id="%s"]' % [_art_paths[id], id])
 	lines.append("")
 	lines.append('[node name="BattleScene" instance=ExtResource("1_base")]')
+	lines.append('script = ExtResource("2_view")')
 
 	# ② 16 个格点击区（`MapCells` 是**普通 Control** → 手动坐标正确）
 	for x in 4:

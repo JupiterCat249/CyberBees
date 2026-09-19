@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/ui/battle_ui_alpha.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scenes/ui/arena_view.gd" id="2_view"]
 [ext_resource type="PackedScene" path="res://scenes/ui/card_unit.tscn" id="3_unit"]
 [ext_resource type="PackedScene" path="res://scenes/ui/card_hand.tscn" id="4_hand"]
 [ext_resource type="Texture2D" path="res://assets/card_art/金刚蜂王.png" id="art_0"]
@@ -10,6 +11,7 @@
 [ext_resource type="Texture2D" path="res://assets/card_art/电击.png" id="art_4"]
 
 [node name="BattleScene" instance=ExtResource("1_base")]
+script = ExtResource("2_view")
 
 [node name="Cell_0_0" type="Control" parent="Battle/MapView/MapCells" index="0"]
 layout_mode = 0
