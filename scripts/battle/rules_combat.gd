@@ -20,12 +20,31 @@ const StateLib := preload("res://scripts/battle/battle_state.gd")
 static func raw_damage(attacker: UnitInstance, defender: UnitInstance, board: Board) -> int:
 	if attacker == null or defender == null:
 		return 0
+	## ⭐ 抵挡型效果（装甲/护盾/力场）—— 设计原文：「**抵挡一次攻击**，参与防御计算则消失」
+	##   → 完全免伤（不论伤害高低），本次攻击伤害为 0；该效果随后由调用方消耗。
+	if has_defense_effect(defender):
+		return 0
 	var dmg := int(round(float(attacker.atk()) * conditional_mul(attacker, defender, board)))
 	var reduce := 0
 	for e in defender.effects:
 		if e.data != null:
 			reduce += e.data.dmg_reduce
 	return maxi(0, dmg - reduce)
+
+
+## 是否持有「抵挡型」效果（装甲/护盾/力场）
+##   设计原文（`电子蜂A5策划案.md` 效果表）：
+##     装甲 | 单位效果 | **抵挡一次攻击，参与防御计算则消失。**
+##     护盾 | 兵蜂效果 | **抵挡一次攻击，参与防御计算或己方回费阶段消失。**
+##   → 不论伤害多高多低**完全抵挡**一次，随后该效果消失。
+##   ⚠️ 人 2026-09-19：「所有效果都不能叠加了，只有一层」→ 持有一个即成立。
+static func has_defense_effect(u: UnitInstance) -> bool:
+	if u == null:
+		return false
+	for e in u.effects:
+		if e.data != null and (e.data.blocks_attack or e.data.blocks_command):
+			return true
+	return false
 
 
 ## 条件倍伤（卡牌自带被动）：对蜂王 / 在敌方领地
@@ -72,15 +91,18 @@ static func resolve_attack(attacker: UnitInstance, defender: UnitInstance,
 		counter_valid = true
 		dmg_to_atk = raw_damage(defender, attacker, board)
 	# ② 一并施加
+	var def_blocked := has_defense_effect(defender)
+	var atk_blocked := has_defense_effect(attacker)
 	if dmg_to_def > 0:
 		defender.damage(dmg_to_def)
 	if dmg_to_atk > 0:
 		attacker.damage(dmg_to_atk)
-	## ⭐ 迭代059 修缺陷：「护盾 / 装甲」**参与防御计算后消失**（A5：抵挡一次，用后即消）
-	##   旧实现有 consume_defense_effects()，新实现曾漏掉 → 装甲变**永久减伤**，
-	##   导致「蜂王攻 2 − 装甲 2 = 0」的武将互攻**永远 0 伤**。
-	consume_defense_effects(defender)
-	consume_defense_effects(attacker)
+	## ⭐ 迭代059：「抵挡一次攻击，**参与防御计算**则消失」（设计原文）
+	##   仅当该效果真正参与了本次防御计算时才消耗 —— 装甲（承受方）与反击（攻击方）各自判定。
+	if def_blocked:
+		consume_defense_effects(defender)
+	if atk_blocked:
+		consume_defense_effects(attacker)
 	res["damage_to_defender"] = dmg_to_def
 	res["damage_to_attacker"] = dmg_to_atk
 	res["counter_valid"] = counter_valid
@@ -96,10 +118,9 @@ static func resolve_attack(attacker: UnitInstance, defender: UnitInstance,
 	return res
 
 
-## ⭐ 迭代059：**「护盾 / 装甲」参与防御计算后消失**（A5 原文：「两者都是"抵挡一次，参与防御计算则消失"」）
-##   旧实现有 `consume_defense_effects()`，新实现曾漏掉 → 装甲变成**永久减伤**，
-##   导致「蜂王攻 2 − 装甲 2 = 0」的武将互攻**永远 0 伤**。
-##   在**攻击/反击双方结算之后**各消耗一次。
+## ⭐ 指令伤害：抵挡型效果（装甲/护盾/力场）**完全抵挡**（设计原文：「抵挡一次攻击」）
+##   人 2026-09-19：装甲是"抵挡一次伤害后消失"，不论伤害高低都能抵挡 → 返回 -1 表示免伤
+##   随后由调用方消耗该效果。
 static func consume_defense_effects(inst: UnitInstance) -> void:
 	if inst == null:
 		return
@@ -107,8 +128,8 @@ static func consume_defense_effects(inst: UnitInstance) -> void:
 	for e in inst.effects:
 		if e.data == null:
 			continue
-		## 装甲（dmg_reduce>0）与护盾/力场（blocks_command）都属"抵挡型"，参与防御后消失
-		if e.data.dmg_reduce > 0 or e.data.blocks_command:
+		## 抵挡型（blocks_attack / blocks_command）参与防御计算后消失
+		if e.data.blocks_attack or e.data.blocks_command:
 			gone.append(e)
 	for e in gone:
 		inst.remove_effect(e.data.id)
@@ -130,9 +151,9 @@ static func command_damage_after_reduce(target: UnitInstance, amount: int,
 		return -1
 	if target.data != null and target.data.immune_command:
 		return -1
-	for e in target.effects:
-		if e.data != null and e.data.blocks_command:
-			return -1
+	## 抵挡型效果（装甲/护盾/力场）→ **完全抵挡**（设计原文：「抵挡一次攻击」）
+	if has_defense_effect(target):
+		return -1
 	var reduce := 0
 	for e in target.effects:
 		if e.data != null:

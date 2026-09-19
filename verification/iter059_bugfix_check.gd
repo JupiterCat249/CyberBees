@@ -62,7 +62,10 @@ func _t_hand_highlight() -> void:
 func _t_armor() -> void:
 	_section("② 装甲：固定减 1 · 参与防御后消失 · 蜂王互攻能伤")
 	var a := Pool.make_armor(2)
-	_chk("装甲减伤 = 1（**不随层数放大**）", a.dmg_reduce == 1)
+	# ⭐ 设计原文（`电子蜂A5策划案.md` 效果表）：装甲「**抵挡一次攻击**，参与防御计算则消失」
+	#   人 2026-09-19：不论伤害高低都能抵挡 → **不是数值减伤**
+	_chk("装甲不是数值减伤（dmg_reduce = 0）", a.dmg_reduce == 0)
+	_chk("装甲是一层（同名不叠加）", a.display_name == "装甲")
 	var e = Eng.new()
 	e.start(ConfigLib.make(Pool.build("甲A"), Pool.build("甲B")))
 	var st = e.state
@@ -78,17 +81,17 @@ func _t_armor() -> void:
 	st.board.place(qa)
 	st.phase = StateLib.Phase.ACTION
 	qa.reset_turn_flags()
-	_chk("蜂王攻 2 − 装甲 1 = 原始伤害 1", Combat.raw_damage(qa, qe, st.board) == 1)
+	_chk("持装甲时原始伤害 = 0（**完全抵挡**）", Combat.raw_damage(qa, qe, st.board) == 0)
 	var hp0: int = qe.current_hp
 	var ok: bool = e.request_attack(0, qa, qe)
-	_chk("蜂王互攻**能造成伤害**（%d → %d）" % [hp0, qe.current_hp], qe.current_hp == hp0 - 1)
+	_chk("首击被**完全抵挡**（血 %d → %d 不变）" % [hp0, qe.current_hp], qe.current_hp == hp0)
 	_chk("受击方装甲**参与防御后消失**", not _has(qe, "装甲"))
 	_chk("攻击方装甲也被消耗（反击参与）", not _has(qa, "装甲"))
-	# 第二击应打满 2（装甲已无）
+	# 装甲已消失 → 第二击打满（泥蜂类打 2，蜂王攻 2）
 	qa.reset_turn_flags()
 	var hp1: int = qe.current_hp
 	e.request_attack(0, qa, qe)
-	_chk("装甲消失后第二击伤害 = 2（%d → %d）" % [hp1, qe.current_hp], qe.current_hp == hp1 - 2)
+	_chk("装甲消失后第二击**打满**（%d → %d，应 -2）" % [hp1, qe.current_hp], qe.current_hp == hp1 - 2)
 
 
 # ============ ③ 卡内子节点鼠标透明 ============

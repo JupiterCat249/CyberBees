@@ -68,12 +68,16 @@ static func execute(state, card: CommandData, caster_side: int, target: UnitInst
 	var targets := collect_targets(state, card, target)
 	for u in targets:
 		## 传入地图数据 → 应用地形减免（迭代059 G-5：水没地形格 -2 指令伤害）
+		var had_defense: bool = Combat.has_defense_effect(u)
 		var real := Combat.command_damage_after_reduce(u, amount, state.map_data)
 		var blocked := real < 0
 		if real > 0:
 			u.damage(real)
 		else:
 			real = 0
+		## ⭐ 抵挡型效果「参与防御计算则消失」（设计原文）→ 指令伤害同样消耗
+		if had_defense:
+			Combat.consume_defense_effects(u)
 		out["damage"].append({"unit": u, "amount": real, "blocked": blocked})
 		if real > 0:
 			Bus.shared().emit_signal(Bus.SIG_UNIT_DAMAGED, u, real, u.current_hp, "command")

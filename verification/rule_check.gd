@@ -62,7 +62,46 @@ func _initialize() -> void:
 	_check_hand_container_contract()
 	_check_forbidden_files()
 	_check_overlay_clickthrough()
+	_check_effect_no_stacking()
 	_report()
+
+
+## ⑧ 效果**不叠加**（人 2026-09-19：「所有效果都不能叠加了，只有一层」）
+##   防复发：曾出现「按层数放大」（deploy_armor=2 → dmg_reduce=2 导致蜂王互攻 0 伤）。
+func _check_effect_no_stacking() -> void:
+	var ed := FileAccess.get_file_as_string("scripts/data/effect_data.gd")
+	_chk("EffectData.Stacking 只有 NONE", ed.contains("enum Stacking { NONE }"))
+	_chk("EffectData 有 blocks_attack 显式语义字段（抵挡一次攻击）", ed.contains("blocks_attack"))
+	var cp := FileAccess.get_file_as_string("scripts/data/card_pool.gd")
+	_chk("装甲工厂**不按层数放大**（blocks_attack = true）", cp.contains("e.blocks_attack = true"))
+	_chk("装甲不是数值减伤（dmg_reduce = 0）", cp.contains("e.dmg_reduce = 0"))
+	# 全仓不得出现按层数放大效果的写法
+	var offenders: Array = []
+	for rel in _all_gd_under("scripts"):
+		var txt := FileAccess.get_file_as_string(rel)
+		for line in txt.split("\n"):
+			var s := line.strip_edges()
+			if s.begins_with("#") or s.begins_with("##"):
+				continue
+			if s.contains("* layers") or s.contains("* n_layers") or s.contains("* n)"):
+				offenders.append(rel + " :: " + s)
+	_chk("scripts/ 内无「按层数放大效果」的写法", offenders.is_empty())
+
+
+func _all_gd_under(root: String) -> Array:
+	var out: Array = []
+	var dirs: Array = [root]
+	while dirs.size() > 0:
+		var d: String = dirs.pop_back()
+		var da := DirAccess.open(d)
+		if da == null:
+			continue
+		for f in da.get_files():
+			if f.ends_with(".gd"):
+				out.append(d + "/" + f)
+		for sub in da.get_directories():
+			dirs.append(d + "/" + sub)
+	return out
 	quit(0 if _fail == 0 else 1)
 
 

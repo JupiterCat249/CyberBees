@@ -133,31 +133,30 @@ static func _make_skills(spec: Dictionary) -> Array[SkillData]:
 
 
 ## 造一个「装甲」效果（减伤 N）
-## 装甲的固定减伤值（**不随层数放大** —— 与旧 card-system 既定口径一致）
+## 装甲：**抵挡一次攻击**（设计原文）
+##   > 装甲 | 单位效果 | **抵挡一次攻击，参与防御计算则消失。**（`电子蜂A5策划案.md` 效果表）
+##   → 不论伤害多高多低都**完全抵挡**，抵挡任意一次后消失（**不是数值减伤**）
 ##
-## ⭐ 迭代059 修缺陷：原实现按「[装甲]效果」的层数当减伤值（deploy_armor=2 → dmg_reduce=2），
-##   导致「蜂王攻 2 − 装甲 2 = 0」→ **蜂王互攻永远 0 伤**（人实测报缺陷）。
-##
-## 依据（旧实现 `scenes/battle/` 的既定口径，A5 时代已验证）：
-##   · 装甲：`e["reduce"] = 1`          —— **固定 1，不乘层数**
-##   · 力场：`ff_reduce = 2 * layers`   —— **按层数**（两者语义不同）
-##   · 两者都是「抵挡一次，参与防御计算则消失」
-## A5 图鉴里「装甲II = [部署]获得 **2 层**装甲效果」是**层数**表述，
-## 但按既定口径**每层减伤 1**、且同名效果不叠加（a500 效果 1）→ 实际固定 −1。
-const ARMOR_REDUCE := 1
-
-
+## ⚠️ 叠层口径（人 2026-09-19 明确）：「所有效果都不能叠加了，只有一层」
+##   设计原文里只有「灼烧」写「每层追加 2 点」；装甲/护盾均未写层数生效 → **一层即上述效果**。
+##   故 `make_armor(n)` 的 n 只是数据表述，实际**不叠层、不放大**。
 static func make_armor(n: int) -> EffectData:
 	var e := EffectData.new()
 	e.id = Uuid.generate()
 	e.display_name = "装甲"
-	e.dmg_reduce = ARMOR_REDUCE      ## ⚠️ 固定 1（不乘 n，见上方说明）
-	e.duration = -1                  ## 永久，直到「参与防御计算后消失」
+	e.dmg_reduce = 0                 ## ⚠️ **不是数值减伤**（抵挡 = 完全免伤，见上）
+	e.blocks_attack = true           ## ⭐ 抵挡一次攻击（显式语义字段）
+	e.duration = -1                  ## 永久，直到「参与防御计算」后消失
 	e.is_debuff = false
 	e.allow_queen = true
 	e.allow_soldier = true
 	e.allow_building = true
+	e.set_meta("armor_layers", n)    ## 仅记录原文层数，**不参与计算**
 	return e
+
+
+## 抵挡型效果（装甲/护盾/力场）的判定在**规则层** `RulesCombat.has_defense_effect()`
+## —— 数据层（本文件）不承担规则判定，避免两处实现漂移。
 
 
 ## 力场（a500 效果：相邻授予；T14 人明确：**护盾/力场同样抵挡指令伤害**）
@@ -171,6 +170,7 @@ static func field_effect() -> EffectData:
 	e.is_debuff = false
 	e.grants_field = true          ## 力场：相邻授予
 	e.blocks_command = true        ## T14：抵挡指令伤害
+	e.blocks_attack = true         ## 设计原文：抵挡一次攻击，参与防御计算则消失
 	e.allow_queen = true
 	e.allow_soldier = true
 	e.allow_building = true

@@ -18,7 +18,7 @@ enum Stacking { NONE }
 @export_group("数值修正")
 @export var atk_add: int = 0                         ## 攻击力 +N
 @export var atk_mul: float = 1.0                     ## 攻击力 ×N（乘优先于加）
-@export var dmg_reduce: int = 0                      ## 伤害减免（[装甲]/[护盾]）
+@export var dmg_reduce: int = 0                      ## 伤害减免（**已不用于装甲**；装甲走 blocks_attack）
 @export var dot_per_turn: int = 0                    ## 回合结束扣血（灼烧）
 @export var heal_per_turn: int = 0                   ## 回合结束回血
 
@@ -30,6 +30,10 @@ enum Stacking { NONE }
 @export var is_debuff: bool = false                  ## true=减益（上侧） / false=增益（下侧）
 @export var grants_field: bool = false               ## 力场：相邻授予
 @export var blocks_command: bool = false             ## 护盾/力场：抵挡指令卡伤害（T14 人明确）
+## ⭐ 抵挡型效果（迭代059）：**抵挡一次攻击，参与防御计算则消失**（设计原文）
+##   装甲 / 护盾 / 力场 均为 true。不论伤害高低都**完全抵挡**，随后消失。
+##   ⚠️ 这是**显式语义字段**，不要用"dmg_reduce > 0"来推断（装甲的 dmg_reduce 为 0）。
+@export var blocks_attack: bool = false
 
 @export_group("可赋予的单位类型（a500：单位类型不匹配则无法赋予效果）")
 @export var allow_queen: bool = true
