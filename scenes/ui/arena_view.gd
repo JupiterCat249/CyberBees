@@ -493,6 +493,11 @@ func _cell_pos(cell: Vector2i) -> Vector2:
 func _on_cell_clicked(cell: Vector2i) -> void:
 	if engine == null or engine.state == null:
 		return
+	## ⭐ 人 2026-09-19：「只要下一次点击的位置不是己方手牌里的卡，就应该默认切换状态」
+	##   → 点棋盘任何位置都先退出「弃牌」态（取消手牌选中），再按预览处理本次点击。
+	##     否则主按钮会一直停在「弃牌」，玩家无法回到阶段推进。
+	if int(engine.sel_kind) == 1:
+		engine.cancel_selection()
 	var spec = engine.current_preview()
 	var kind: int = int(spec.kind) if spec != null else 0
 	var side: int = engine.state.active
@@ -698,36 +703,19 @@ func _update_unit(inst: UnitInstance, hp_after: int) -> void:
 	n.bind(d)
 
 
-## 若当前选中指令卡且该单位是合法目标 → 执行指令（返回 true 表示已处理）
-## ⚠️ 必须在单位点击里**优先**于"攻击/重选"判断（否则指令卡永远用不出去）
-func _try_use_command_on(inst: UnitInstance) -> bool:
-	if engine == null or engine.state == null:
-		return false
-	if int(engine.sel_kind) != 1 or int(engine.sel_hand_index) < 0:
-		return false
-	var hand: Array = engine.state.sides[engine.state.active]["hand"]
-	if int(engine.sel_hand_index) >= hand.size():
-		return false
-	var card: CardData = hand[engine.sel_hand_index]
-	if not (card is CommandData):
-		return false
-	if not engine.request_use_command(engine.state.active, engine.sel_hand_index, inst):
-		_flash_msg("指令「%s」不能以 %s 为目标" % [card.display_name, inst.card_name()])
-	return true
 
 
 func _on_unit_clicked(instance_id: String) -> void:
 	if engine == null or engine.state == null:
 		return
+	## ⭐ 人 2026-09-19：点**非手牌**位置即切换状态（退出弃牌态）
+	##   注意：此时不能再用「选中指令卡 + 点单位」来出指令（人已明确该交互应让位给"点高亮格"）
+	if int(engine.sel_kind) == 1:
+		engine.cancel_selection()
 	var inst := _find_unit(instance_id)
 	if inst == null:
 		return
 	var side: int = engine.state.active
-	## ⭐ 迭代059 修缺陷：单位卡盖在格子上（真实点击命中单位卡而非格子），
-	##   而"指令卡"需要一个单位目标 —— 若这里不转发，选中指令卡后点任何单位都会
-	##   被当作"攻击/重选单位"处理 → **指令卡永远用不出去**。
-	if _try_use_command_on(inst):
-		return
 	if inst.side == side:
 		# ── 支援双击确认（原设计）：已选中带支援技能的单位时，点友方 → 待确认 → 再点执行 ──
 		if int(engine.sel_kind) == 3 and engine.sel_unit != null and engine.sel_support != null \

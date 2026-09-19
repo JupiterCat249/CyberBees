@@ -88,35 +88,36 @@ static func execute(state, card: CommandData, caster_side: int, target: UnitInst
 
 
 ## 收集本次指令的作用目标（单体 / 范围 / 链式）
+## 蜂王判定（**只用于排除"扩散伤害"**：连锁/范围不波及蜂王；蜂王本身仍可作为首目标）
+static func _is_queen(u: UnitInstance) -> bool:
+	return u != null and u.data != null and u.data.kind == CardData.CardKind.QUEEN
+
+
 static func collect_targets(state, card: CommandData, primary: UnitInstance) -> Array:
 	var out: Array = []
 	if primary == null or state == null or state.board == null:
 		return out
 	# 范围（aoe_span > 0）：目标格周围曼哈顿半径内的所有单位
+	## ⚠️ 蜂王不参与指令伤害（同上：严格判定）
 	if card.aoe_span > 0:
 		for u in state.board.all_units():
+			if _is_queen(u):
+				continue
 			if state.board.manhattan(u.cell, primary.cell) <= card.aoe_span:
 				out.append(u)
 		return out
-	# 链式（chain_span > 0）：与目标**接触及间接接触**的单位（BFS 传播）
+	# 链式（chain_span > 0）：设计原文「与目标**接触及间接接触**的单位都会受到相同伤害」
+	# ⭐ 迭代059 人明确定义：「**严格判定是只有单位在上下左右格直接相邻时这些单位才会被伤害共享
+	#    （且蜂王不会受到该伤害）**」
+	##   → **只取目标格的上/下/左/右 4 格**（单层直接相邻），**不做无限扩散**。
+	##     此前用 BFS 传播 `chain_span` 层，而卡数据 chain_span=99 → **扩散到全图**（人报的"全局伤害"缺陷）。
 	if card.chain_span > 0:
-		var seen := {primary.cell: true}
-		var frontier: Array = [primary.cell]
-		var depth := 0
 		out.append(primary)
-		while not frontier.is_empty() and depth < card.chain_span:
-			var next: Array = []
-			for c in frontier:
-				for n in state.board.neighbors_cardinal(c):
-					if seen.has(n):
-						continue
-					seen[n] = true
-					next.append(n)
-					var u2: UnitInstance = state.board.unit_at(n)
-					if u2 != null:
-						out.append(u2)
-			frontier = next
-			depth += 1
+		for n in state.board.neighbors_cardinal(primary.cell):
+			var u2: UnitInstance = state.board.unit_at(n)
+			## 蜂王不参与**扩散**伤害（人明确：严格判定下蜂王不会受到该伤害）
+			if u2 != null and not _is_queen(u2):
+				out.append(u2)
 		return out
 	# 单体
 	out.append(primary)

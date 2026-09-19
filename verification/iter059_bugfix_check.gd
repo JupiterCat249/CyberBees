@@ -11,6 +11,7 @@ const ConfigLib := preload("res://scripts/battle/battle_config.gd")
 const StateLib := preload("res://scripts/battle/battle_state.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
 const Combat := preload("res://scripts/battle/rules_combat.gd")
+const Effects := preload("res://scripts/battle/rules_effects.gd")
 
 var _pass := 0
 var _fail := 0
@@ -23,6 +24,10 @@ func _ready() -> void:
 	await _t_hand_highlight()
 	_t_armor()
 	await _t_card_clickthrough()
+	_t_armor_not_permanent()
+	_t_chain_strict()
+	_t_no_stacking_any()
+	await _t_discard_state_switch()
 	_report()
 	get_tree().quit(0 if _fail == 0 else 1)
 
@@ -167,3 +172,149 @@ func _report() -> void:
 	for f in _failures:
 		print("   X ", f)
 	print("========================")
+
+
+# ============ 装甲：**不永久**（连续两次互攻状态一致） ============
+func _t_armor_not_permanent() -> void:
+	_section("装甲不永久：首击抵挡后消失，后续每次都算伤")
+	var e = Eng.new()
+	e.start(ConfigLib.make(Pool.build("永A"), Pool.build("永B")))
+	var st = e.state
+	var qa: UnitInstance = st.queen(0)
+	var qe: UnitInstance = st.queen(1)
+	st.board.remove(qe)
+	qe.cell = Vector2i(3, 1)
+	st.board.place(qe)
+	st.board.remove(qa)
+	qa.cell = Vector2i(3, 2)
+	st.board.place(qa)
+	st.phase = StateLib.Phase.ACTION
+	var hp_seq: Array = []
+	for i in 3:
+		qa.reset_turn_flags()
+		e.request_attack(0, qa, qe)
+		hp_seq.append(qe.current_hp)
+	print("    红方蜂王血量序列 = %s（应 12,10,8）" % str(hp_seq))
+	_chk("第1击被**完全抵挡**（12→12）", hp_seq[0] == 12)
+	_chk("第2击算伤（12→10）—— 装甲已消耗", hp_seq[1] == 10)
+	_chk("第3击继续算伤（10→8）—— 装甲**不是永久**", hp_seq[2] == 8)
+	_chk("三击后血量低于初始（说明不是永久抵挡）", hp_seq[2] < 12)
+	_chk("防御方装甲已消失", not _has(qe, "装甲"))
+	_chk("攻击方装甲也已消失", not _has(qa, "装甲"))
+
+
+# ============ 电击连锁：严格上下左右直接相邻 + 蜂王不受扩散 ============
+func _t_chain_strict() -> void:
+	_section("电击连锁：只波及上下左右直接相邻 · 蜂王不受扩散伤害")
+	var e = Eng.new()
+	e.start(ConfigLib.make(Pool.build("链A"), Pool.build("链B")))
+	var st = e.state
+	var RC := preload("res://scripts/battle/rules_command.gd")
+	var card: CommandData = Pool.card("电击")
+	# 清空战场，手工摆位：目标(2,2)、正相邻4格、对角格、远处格
+	## ⚠️ 必须避开双方蜂王所在格（绿 (3,2) / 红 (0,1)），否则 place 失败、断言会假失败
+	var target := _place(st, "泥蜂", 1, Vector2i(2, 2))
+	var n_up := _place(st, "泥蜂", 1, Vector2i(1, 2))
+	var n_left := _place(st, "泥蜂", 1, Vector2i(2, 1))
+	var n_right := _place(st, "泥蜂", 1, Vector2i(2, 3))
+	var n_down := _place(st, "泥蜂", 1, Vector2i(3, 3))     ## 用 (3,3) 代替被蜂王占用的 (3,2)
+	var diag := _place(st, "泥蜂", 1, Vector2i(1, 1))       ## 对角 → **不应**被波及
+	var far := _place(st, "泥蜂", 1, Vector2i(0, 0))        ## 远处 → **不应**被波及
+	var targets: Array = RC.collect_targets(st, card, target)
+	var names: Array = []
+	for u in targets:
+		names.append(str(u.cell))
+	print("    连锁波及 = %s" % str(names))
+	_chk("首目标被波及", targets.has(target))
+	## 目标在 (2,2)：相邻格为 (1,2)/(3,2)/(2,1)/(2,3)；
+	## 其中 (3,2) 被绿方蜂王占用 → 改用 (2,3) 之外的第三格验证"4 邻"必须**实际有单位**
+	_chk("上/左/右 相邻格被波及（(1,2)/(2,1)/(2,3)）",
+		targets.has(n_up) and targets.has(n_left) and targets.has(n_right))
+	_chk("相邻格有单位即波及（不跳过直接相邻）", targets.size() == 4)
+	_chk("**对角格不波及**（不是范围伤害）", not targets.has(diag))
+	_chk("**远处格不波及**（不是全局伤害）", not targets.has(far))
+	_chk("波及总数 = 4（自身 + 3 个实际存在的相邻单位）", targets.size() == 4)
+	# 蜂王在相邻格 → 不应被连锁波及
+	var e2 = Eng.new()
+	e2.start(ConfigLib.make(Pool.build("链C"), Pool.build("链D")))
+	var st2 = e2.state
+	var t2 := _place(st2, "泥蜂", 1, Vector2i(2, 2))
+	var q_adj: UnitInstance = st2.queen(1)
+	st2.board.remove(q_adj)
+	q_adj.cell = Vector2i(1, 2)
+	st2.board.place(q_adj)
+	var tg2: Array = RC.collect_targets(st2, card, t2)
+	_chk("**蜂王在相邻格也不被连锁波及**", not tg2.has(q_adj))
+
+
+# ============ 任何效果都不叠加 ============
+func _t_no_stacking_any() -> void:
+	_section("任何效果都不叠加（通用单层）")
+	var e = Eng.new()
+	e.start(ConfigLib.make(Pool.build("叠A"), Pool.build("叠B")))
+	var st = e.state
+	var u := _put(st, "泥蜂", 0, Vector2i(3, 0))
+	# 同名不同 UUID 的效果（模拟不同来源各赋一次）
+	var a1 := _mk_effect("灼烧", 2)
+	var a2 := _mk_effect("灼烧", 5)
+	Effects.grant(u, a1)
+	var n1: int = u.effects.size()
+	var applied: bool = Effects.grant(u, a2)
+	_chk("同名效果第二次**不加层**（%d → %d）" % [n1, u.effects.size()], u.effects.size() == n1)
+	_chk("第二次赋予返回 false", not applied)
+	_chk("保留原有单层效果（不产生第二层、不复写语义）",
+		u.effects.size() == 1 and u.effects[0].data.display_name == "灼烧")
+	_chk("第二次赋予只刷新时长（duration = -1）", int(u.effects[0].turns) == -1)
+	_chk("Stacking 枚举只有 NONE", EffectData.Stacking.size() == 1)
+
+
+# ============ 弃牌态：点非手牌位置即切换 ============
+func _t_discard_state_switch() -> void:
+	_section("主按钮弃牌态：点非手牌位置即切换回阶段文案")
+	var s := (load("res://scenes/ui/battle_scene.tscn") as PackedScene).instantiate() as Control
+	add_child(s)
+	for _i in 10:
+		await get_tree().process_frame
+	var eng = s.get("engine")
+	var st = eng.state
+	st.phase = 2
+	st.sides[0]["cost"] = 10
+	var idx: int = 0
+	eng.select_hand(0, idx)
+	await _tick(3)
+	_chk("选中手牌 → sel_kind = 1（弃牌态）", eng.sel_kind == 1)
+	_chk("引擎有公开 cancel_selection 入口", eng.has_method("cancel_selection"))
+	# 模拟点棋盘空地
+	eng.cancel_selection()
+	await _tick(3)
+	_chk("点非手牌位置 → 选中被清除", eng.sel_kind == 0 and eng.sel_hand_index == -1)
+	var view := FileAccess.get_file_as_string("scenes/ui/arena_view.gd")
+	_chk("点格处理里会退出弃牌态（_on_cell_clicked）",
+		view.contains("if int(engine.sel_kind) == 1:
+		engine.cancel_selection()"))
+	s.queue_free()
+
+
+func _mk_effect(nm: String, dot: int) -> EffectData:
+	var e := EffectData.new()
+	e.id = Uuid.generate()
+	e.display_name = nm
+	e.dot_per_turn = dot
+	e.duration = -1
+	return e
+
+
+func _place(st, card_name: String, side: int, cell: Vector2i) -> UnitInstance:
+	var ud: UnitData = Pool.card(card_name) as UnitData
+	var u := UnitInstance.create(ud, side, cell)
+	u.instance_id = "p_%s_%d_%d_%d" % [card_name, side, cell.x, cell.y]
+	st.board.place(u)
+	return u
+
+func _put(st, card_name: String, side: int, cell: Vector2i) -> UnitInstance:
+	return _place(st, card_name, side, cell)
+
+
+func _tick(n: int) -> void:
+	for _i in n:
+		await get_tree().process_frame

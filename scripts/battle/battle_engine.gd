@@ -579,6 +579,13 @@ func select_support(side: int, unit: UnitInstance, skill: SkillData) -> void:
 	_emit_selection()
 
 
+## 公开入口：取消当前选中（视图在"点击非手牌位置"时调用，退出弃牌/确认等态）
+func cancel_selection() -> void:
+	_cancel_selection()
+	_emit_selection()
+	_emit_action_availability()
+
+
 func _cancel_selection() -> void:
 	support_pending = null
 	sel_kind = 0

@@ -72,6 +72,10 @@ static func grant(inst: UnitInstance, eff: EffectData) -> bool:
 
 ## 两个效果是否视为「同一效果」（a500：相同效果最多一个）
 ## 优先比名称（名称非空时），否则比 id
+## 两个效果是否视为「同一效果」→ **单一层，绝不叠加**（人 2026-09-19：所有效果都不允许叠加，无例外）
+##   · 名称非空时**按名称**判同一（覆盖"不同 UUID 的同名效果"）
+##   · 名称空时退回比 id
+##   ⚠️ 这是**唯一**的效果叠加入口：任何效果（灼烧/装甲/护盾/力场/…)都走这里，一律只保留一层。
 static func _same_effect(a: EffectData, b: EffectData) -> bool:
 	if a.display_name != "" and b.display_name != "":
 		return a.display_name == b.display_name

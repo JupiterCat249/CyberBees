@@ -81,7 +81,7 @@ static func resolve_attack(attacker: UnitInstance, defender: UnitInstance,
 	var res := {"damage_to_defender": 0, "damage_to_attacker": 0, "counter_valid": false}
 	if attacker == null or defender == null:
 		return res
-	# ① 先算完双方（同时计算）
+	# ① 先算完双方（同时计算）—— 此时**尚未消耗任何抵挡效果**
 	var dmg_to_def := raw_damage(attacker, defender, board)
 	var counter_valid := false
 	var dmg_to_atk := 0
@@ -90,18 +90,19 @@ static func resolve_attack(attacker: UnitInstance, defender: UnitInstance,
 			and board.manhattan(attacker.cell, defender.cell) <= defender.attack_range():
 		counter_valid = true
 		dmg_to_atk = raw_damage(defender, attacker, board)
-	# ② 一并施加
-	var def_blocked := has_defense_effect(defender)
-	var atk_blocked := has_defense_effect(attacker)
+	# ② **先记下本次是否触发了抵挡**（必须在消耗之前记录）
+	var def_had_defense := has_defense_effect(defender)
+	var atk_had_defense := has_defense_effect(attacker)
+	# ③ 一并施加
 	if dmg_to_def > 0:
 		defender.damage(dmg_to_def)
 	if dmg_to_atk > 0:
 		attacker.damage(dmg_to_atk)
-	## ⭐ 迭代059：「抵挡一次攻击，**参与防御计算**则消失」（设计原文）
-	##   仅当该效果真正参与了本次防御计算时才消耗 —— 装甲（承受方）与反击（攻击方）各自判定。
-	if def_blocked:
+	# ④ **最后统一消耗**：设计原文「抵挡一次攻击，**参与防御计算**则消失」
+	##    ⚠️ 顺序很关键：若在算反击之前就消耗，状态会前后不一致（曾导致装甲看似永久）
+	if def_had_defense:
 		consume_defense_effects(defender)
-	if atk_blocked:
+	if atk_had_defense:
 		consume_defense_effects(attacker)
 	res["damage_to_defender"] = dmg_to_def
 	res["damage_to_attacker"] = dmg_to_atk
