@@ -41,6 +41,11 @@ static func make(deck_ally: DeckData, deck_enemy: DeckData,
 	return c
 
 
+## 后手方（用于「后手初始费用 +2」与轮次判定）
+func second_side() -> int:
+	return 1 - first_side
+
+
 func deck_of(side: int) -> DeckData:
 	return deck_ally if side == 0 else deck_enemy
 
