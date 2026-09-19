@@ -93,9 +93,13 @@ func setup(decks: Dictionary, first_player: int = Board.ALLY,
 		deck[side] = []
 		discard[side] = []
 		# 蜂王先就位
+		# ⚠️ 迭代055：蜂王**不走 deploy_unit()**（开局直接入场），因此这里必须显式结算
+		#    它的 [部署] 技能 —— 否则金刚蜂王的 `[部署]获得[装甲]` 永远不会生效。
 		var q := UnitInstance.create(dd.queen, side, _queen_cell(side))
 		queen[side] = q
 		board.place(q)
+		if dd.queen != null:
+			_apply_deploy_skills(q, dd.queen)
 		# 卡组：蜂王之外的全部卡
 		var rest: Array[CardData] = []
 		for c in dd.cards:

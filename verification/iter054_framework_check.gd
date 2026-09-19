@@ -310,7 +310,7 @@ func _random_legal_cell(st: GameState, ud: UnitData) -> Variant:
 func _test_sample_deck() -> void:
 	var dd: DeckData = load("res://scripts/data/card_pool.gd").build("测试")
 	_chk("样例卡组：有蜂王", dd.queen != null and dd.queen.kind == CardData.CardKind.QUEEN)
-	_chk("样例卡组：12 张（1 蜂王 + 11 常规）", dd.cards.size() == 12)
+	_chk("示范卡组：8 张常规（迭代055 权威表；不含治疗）", dd.cards.size() == 8)
 	var errs := dd.validate()
 	_chk("样例卡组：通过校验", errs.is_empty())
 	_chk("样例卡组：金刚蜂王回费 = 4", dd.queen.refund == 4)
@@ -319,10 +319,10 @@ func _test_sample_deck() -> void:
 	var by := {}
 	for c in dd.cards:
 		by[c.display_name] = c
-	_chk("数值一致：叶蜂 2/2/1/3/1", by.has("叶蜂") and by["叶蜂"].cost == 2 and by["叶蜂"].atk == 2 and by["叶蜂"].hp == 3)
-	_chk("数值一致：蜂巢III cost 9 / hp 12 / 回费 2",
-		by.has("蜂巢III") and by["蜂巢III"].cost == 9 and by["蜂巢III"].hp == 12 and by["蜂巢III"].refund == 2)
-	_chk("指令卡：电击 dmg4 / range2", by.has("电击") and (by["电击"] as CommandData).dmg == 4)
+	_chk("数值一致：叶蜂 费2/攻2/射1/移2/血2", by.has("叶蜂") and by["叶蜂"].cost == 2 and by["叶蜂"].atk == 2 and by["叶蜂"].move == 2 and by["叶蜂"].hp == 2)
+	_chk("数值一致：蜂巢III 费5 / 血9 / 回费3",
+		by.has("蜂巢III") and by["蜂巢III"].cost == 5 and by["蜂巢III"].hp == 9 and by["蜂巢III"].refund == 3)
+	_chk("指令卡：电击 伤2 / 费2 / 链式", by.has("电击") and (by["电击"] as CommandData).dmg == 2 and (by["电击"] as CommandData).chain_span > 0)
 
 
 func _test_command_cards() -> void:
