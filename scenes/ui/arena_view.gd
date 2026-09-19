@@ -54,6 +54,12 @@ var _preview_cleared := false
 var detail_params: Resource = DetailP.new()
 var hand_params: Resource = HandP.new()
 
+## 操作反馈标签（**运行时新建**，不改素材场景）
+## 用途：请求失败/规则拦截时给出**可读原因**（迭代058 G4：不再"点了没反应"）
+var _msg: Label = null
+var _flash_frames := 0
+const FLASH_FRAMES := 180      ## 反馈显示 3 秒 @60fps（T2：帧数计时，非 DeltaTime）
+
 
 func _ready() -> void:
 	_connect_bus()
@@ -95,6 +101,58 @@ func _connect_static_ui() -> void:
 	var b: Button = $HUD/ActionBar/MainButton
 	if b != null and not b.pressed.is_connected(_on_main_pressed):
 		b.pressed.connect(_on_main_pressed)
+	_make_feedback_label()
+	_fit_text_labels()
+
+
+## 适配长文案（迭代058：按钮文案写明目标阶段后变长，原字号会溢出面板）
+## ⚠️ 只调字号/换行，**不改素材场景的布局**（D-2 不动人工处理）
+func _fit_text_labels() -> void:
+	## 主按钮 400px 宽；11 个汉字 ×38px ≈ 418 → 溢出，缩到 30
+	var bar_label := $HUD/ActionBar/Label as Label
+	if bar_label != null:
+		bar_label.add_theme_font_size_override("font_size", 30)
+	## 阶段提示区只有 300×100 → 开自动换行 + 缩字号，容纳「阶段 + 操作提示」
+	var se := $HUD/MatchInfo/SiteEffect as Label
+	if se != null:
+		se.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		se.add_theme_font_size_override("font_size", 20)
+
+
+## 建操作反馈标签（挂在 ActionBar 下、主按钮上方）
+## ⚠️ **运行时新建**而不是改素材场景 —— 保持 battle_ui_alpha.tscn 的人工内容不被改动
+func _make_feedback_label() -> void:
+	if _msg != null and is_instance_valid(_msg):
+		return
+	var bar := $HUD/ActionBar as Control
+	if bar == null:
+		return
+	_msg = Label.new()
+	_msg.name = "OperationMsg"
+	_msg.text = ""
+	_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_msg.add_theme_font_size_override("font_size", 20)
+	_msg.add_theme_color_override("font_color", Color(1.0, 0.82, 0.35, 1.0))
+	bar.add_child(_msg)
+	# 摆到主按钮正上方（主按钮在 ActionBar 内的 offset 约 400x100）
+	_msg.position = Vector2(-40.0, -60.0)
+	_msg.size = Vector2(480.0, 52.0)
+
+
+## 显示一条操作反馈（3 秒后自动清空 —— 帧数计时，符合 T2）
+func _flash_msg(text: String) -> void:
+	if _msg == null or not is_instance_valid(_msg):
+		return
+	_msg.text = text
+	_flash_frames = FLASH_FRAMES
+
+
+func _process(_delta: float) -> void:
+	if _flash_frames > 0:
+		_flash_frames -= 1
+		if _flash_frames == 0 and _msg != null and is_instance_valid(_msg):
+			_msg.text = ""
 
 
 # ============================================================
@@ -237,9 +295,17 @@ func _set_turn(side: int, round_no: int) -> void:
 
 
 func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
+	## 阶段文本 + 操作提示（迭代058：可发现性 —— 告诉玩家\"现在能做什么\"）
 	var names := {0: "回费", 1: "场地", 2: "部署", 3: "行动"}
-	$HUD/MatchInfo/SiteEffect.text = "阶段：%s（%s）" % [
-		str(names.get(phase, "?")), "绿" if side == SIDE_ALLY else "红"]
+	var tips := {
+		0: "自动结算：己方单位回费 + 行动机会重置",
+		1: "自动结算：场地效果作用于格子上的单位",
+		2: "部署阶段：点手牌部署单位/使用指令，准备好后点右侧按钮进入行动阶段",
+		3: "行动阶段：点自己的单位可移动/攻击/支援（每单位每回合 1 次行动）",
+	}
+	$HUD/MatchInfo/SiteEffect.text = "%s阶段（%s）｜%s" % [
+		str(names.get(phase, "?")), "绿" if side == SIDE_ALLY else "红",
+		str(tips.get(phase, ""))]
 
 
 func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
@@ -284,7 +350,8 @@ func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: A
 	_render_preview()
 
 
-func _on_main_button(text: String, enabled: bool) -> void:
+func _on_main_button(text: String, enabled: bool, _hint: String = "") -> void:
+	## 提示由 `_on_phase_started` 统一负责（避免两个信号争抢同一标签）
 	var b: Button = $HUD/ActionBar/MainButton
 	if b != null:
 		b.disabled = not enabled
@@ -293,6 +360,9 @@ func _on_main_button(text: String, enabled: bool) -> void:
 
 func _on_log(text: String, level: int) -> void:
 	print("[BATTLE]", "[WARN]" if level > 0 else "", " ", text)
+	## 失败/拦截原因**直接回显到 HUD**（迭代058 G4）—— 引擎已写好原因文案
+	if level > 0:
+		_flash_msg("⚠ " + text)
 
 
 func _on_battle_ended(result: int, reason: String) -> void:
@@ -354,25 +424,63 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 	var side: int = engine.state.active
 	match kind:
 		K.Kind.DEPLOY:
-			engine.request_deploy(side, engine.sel_hand_index, cell)
+			if not engine.request_deploy(side, engine.sel_hand_index, cell):
+				_flash_msg("该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）")
 		K.Kind.MOVE:
-			engine.request_move(side, engine.sel_unit, cell)
+			if not engine.request_move(side, engine.sel_unit, cell):
+				_flash_msg("该格不可到达")
 		K.Kind.COMMAND, K.Kind.SUPPORT, K.Kind.ATTACK:
 			var target: UnitInstance = engine.state.board.unit_at(cell)
 			if target == null:
+				_flash_msg("该格没有目标单位")
 				return
 			if kind == K.Kind.COMMAND:
-				engine.request_use_command(side, engine.sel_hand_index, target)
+				if not engine.request_use_command(side, engine.sel_hand_index, target):
+					_flash_msg("指令目标不合法或费用不足")
 			elif kind == K.Kind.SUPPORT:
-				engine.request_support(side, engine.sel_unit, engine.sel_support, target)
+				if not engine.request_support(side, engine.sel_unit, engine.sel_support, target):
+					_flash_msg("支援目标不合法（需射程内己方单位）")
 			else:
-				engine.request_attack(side, engine.sel_unit, target)
+				if not engine.request_attack(side, engine.sel_unit, target):
+					_flash_msg("不能攻击该目标（射程外 / 已行动过 / 非行动阶段）")
 		_:
-			## 无预览 → 尝试选中该格上的己方单位
+			## 无预览 → 尝试选中该格上的己方单位（并说明"为什么不能操作"）
 			var here: UnitInstance = engine.state.board.unit_at(cell)
-			if here != null and here.side == side:
-				engine.select_unit(side, here)
-				show_detail(here.data)
+			if here == null:
+				## 空且无预览：最常见的原因是阶段不对
+				if engine.state.phase == 2:
+					_flash_msg("部署阶段：点手牌选卡后点高亮格部署；要操作单位请先点右侧「完成部署 → 进入行动」")
+				elif engine.state.phase == 3 and engine.sel_unit == null:
+					_flash_msg("点是自己的单位来选中它（选中后才能移动/攻击/支援）")
+				return
+			if here.side != side:
+				_flash_msg("这是对方的单位（要攻击请先选中自己的单位）")
+				return
+			engine.select_unit(side, here)
+			show_detail(here.data)
+			_explain_actions(here)
+
+
+## 选中单位后，把"现在能做什么 / 为什么不能做"说清楚（迭代058 G3/G7）
+func _explain_actions(inst: UnitInstance) -> void:
+	if inst == null:
+		return
+	if inst.has_acted:
+		_flash_msg("%s 本回合已行动过（每个单位每回合 1 次行动）" % inst.card_name())
+		return
+	if inst.side == SIDE_ALLY and inst.cell.x == 3 and inst.has_moved and inst.has_acted:
+		pass
+	var pv = engine.current_preview()
+	var n_move := 0
+	var n_atk := 0
+	if pv != null:
+		n_move = K.cells_from(pv, K.Kind.MOVE).size()
+		n_atk = pv.units.size()
+	# a500 行动机会 3：部署当回合无行动机会（视图据此解释，不自己判定规则）
+	if n_move == 0 and n_atk == 0 and not inst.has_acted:
+		_flash_msg("%s 本回合无可行动作（刚部署的单位当回合无行动机会；下个己方回合即可行动）" % inst.card_name())
+	else:
+		_flash_msg("%s：可移动 %d 格 · 可攻击 %d 个目标" % [inst.card_name(), n_move, n_atk])
 
 
 # ============================================================
@@ -417,10 +525,32 @@ func _on_hand_clicked(card_id: String, side: int) -> void:
 	var idx: int = _hand_order[side].find(card_id)
 	if idx < 0:
 		return
+	## 非行动方的手牌不可操作（本地双人热座：只有轮到的一方能动）
+	if side != engine.state.active:
+		_flash_msg("现在不是%s的回合" % ("绿方" if side == SIDE_ALLY else "红方"))
+		return
 	engine.select_hand(side, idx)
 	var hand: Array = engine.state.sides[side]["hand"]
 	if idx < hand.size():
-		show_detail(hand[idx])
+		var card: CardData = hand[idx]
+		show_detail(card)
+		_explain_hand(card, side)
+
+
+## 选卡后的可发现性说明（迭代058 G3）
+func _explain_hand(card: CardData, side: int) -> void:
+	if card == null:
+		return
+	if not engine.can_play_hand(side, engine.sel_hand_index):
+		if card.cost > engine.state.cost(side):
+			_flash_msg("%s 费用 %d，当前只有 %d" % [card.display_name, card.cost, engine.state.cost(side)])
+		else:
+			_flash_msg("%s 现在不能使用（仅部署/行动阶段可用）" % card.display_name)
+		return
+	if card is UnitData:
+		_flash_msg("已选「%s」：点高亮格部署（兵蜂需蜂王相邻，建筑需己方领地）" % card.display_name)
+	elif card is CommandData:
+		_flash_msg("已选指令「%s」：点高亮的合法目标使用" % card.display_name)
 
 
 # ============================================================
@@ -496,8 +626,10 @@ func _on_unit_clicked(instance_id: String) -> void:
 	if inst.side == side:
 		engine.select_unit(side, inst)
 		show_detail(inst.data)
+		_explain_actions(inst)
 	else:
-		engine.request_attack(side, engine.sel_unit, inst)
+		if not engine.request_attack(side, engine.sel_unit, inst):
+			_flash_msg("不能攻击 %s（需先选中自己的单位，且目标在射程内）" % inst.card_name())
 
 
 func _find_unit(instance_id: String) -> UnitInstance:

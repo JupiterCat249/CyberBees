@@ -134,7 +134,9 @@ signal selection_changed(kind: int, id: String, preview: Resource, selectable_un
 signal action_availability(side: int, can_deploy: bool, can_move: bool,
 		can_act: bool, can_end_phase: bool)
 ## 主按钮文案与可用态（视图只显示，不判断）
-signal main_button_state(text: String, enabled: bool)
+##   · text  = 按钮文案（**迭代058：明确写出\"点了会进入哪个阶段\"**，提升可发现性）
+##   · hint  = 当前阶段的操作提示（告诉玩家现在能做什么）—— 视图显示在提示区
+signal main_button_state(text: String, enabled: bool, hint: String)
 ## 战报文本
 signal log_added(text: String, level: int)
 

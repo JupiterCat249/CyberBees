@@ -607,16 +607,21 @@ func _emit_action_availability() -> void:
 
 func _emit_button() -> void:
 	var text := ""
+	var hint := ""
 	var enabled := true
 	match state.phase:
 		state.Phase.RECOVER, state.Phase.TERRAIN:
-			text = "推进…"
+			text = "自动结算中…"
+			hint = "回费/场地阶段自动结算，无需操作"
 			enabled = false
 		state.Phase.DEPLOY:
-			text = "完成部署"
+			## 文案明确目标阶段（迭代058：可发现性）
+			text = "完成部署 → 进入行动"
+			hint = "点手牌部署单位/使用指令；准备好后点右侧按钮进入行动阶段"
 		state.Phase.ACTION:
-			text = "结束回合"
-	bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled)
+			text = "结束回合 → 交给对方"
+			hint = "点自己的单位可移动/攻击/支援；每个单位每回合 1 次行动"
+	bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled, hint)
 
 
 func _log(text: String, level: int = 0) -> void:
