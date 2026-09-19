@@ -123,14 +123,11 @@ func setup(decks: Dictionary, first_player: int = Board.ALLY,
 
 
 func _queen_cell(side: int) -> Vector2i:
-	## 半径约定：Vector2i(行, 列)；我方在下半（行 3）、敌方在上半（行 0），居中列
-	##
-	## ⚠️ 人 2026-09-19 重新指定起始位置（**与 scripts/battle/battle_engine.gd 保持一致**）：
-	##   · 红方蜂王 (1,3) → 0-based 行 2 · 列 0
-	##   · 我方蜂王 (4,2) → 0-based 行 1 · 列 3
-	##   ✅ 关于棋盘几何中心 (行1.5, 列1.5) 严格中心对称
-	##   （旧值 (3,1)/(0,1) 两王同列、距中心相差 90px → 已废弃）
-	return Vector2i(1, 3) if side == Board.ALLY else Vector2i(2, 0)
+	## ⚠️ 人 2026-09-19 最终指定（**顶部/底部行**，不是左右两侧）：
+	##   本方蜂王 (行3, 列2) · 红方蜂王 (行0, 列1)
+	##   校验：关于几何中心 (1.5,1.5) 严格中心对称（偏移互为相反数）
+	##   ⚠️ 与 `scripts/battle/battle_engine.gd` 的 `queen_cell()` 必须保持一致
+	return Vector2i(3, 2) if side == Board.ALLY else Vector2i(0, 1)
 
 
 # ============================================================

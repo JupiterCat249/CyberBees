@@ -48,6 +48,7 @@ const SIG_SELECTION := "selection_changed"
 const SIG_ACTION_AVAIL := "action_availability"
 const SIG_MAIN_BUTTON := "main_button_state"
 const SIG_LOG := "log_added"
+const SIG_MAP_ASSETS := "map_assets_changed"
 
 # ============================================================
 #  对局生命周期
@@ -136,6 +137,18 @@ signal action_availability(side: int, can_deploy: bool, can_move: bool,
 signal main_button_state(text: String, enabled: bool)
 ## 战报文本
 signal log_added(text: String, level: int)
+
+# ============================================================
+#  地图 / 背景资产（**解耦下发**：两个 TextureRect 各自订阅本条信号）
+# ============================================================
+
+## 地图与背景资产变化。
+##   · 参数 `assets` = `ArenaAssets` 资源（内含 map_texture / background_texture / 地图名/描述）
+##   · 视图侧两个节点**互不引用**：
+##       `Battle/MapView/MapPlate/TextureRect` → 只读 `assets.map_texture`
+##       `Background/TextureRect`              → 只读 `assets.background_texture`
+##   · 换图时引擎重发一次，两边自动跟着变（人要求：信号 + 信号传参）
+signal map_assets_changed(assets: Resource)
 
 # ============================================================
 #  便捷：清空所有连接（重开一局 / 视图重建时用）

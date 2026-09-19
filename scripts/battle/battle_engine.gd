@@ -23,6 +23,7 @@ const Effects := preload("res://scripts/battle/rules_effects.gd")
 const Combat := preload("res://scripts/battle/rules_combat.gd")
 const Command := preload("res://scripts/battle/rules_command.gd")
 const Preview := preload("res://scripts/battle/rules_preview.gd")
+const Assets := preload("res://scripts/battle/arena_assets.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
 
 var state: BattleState = null
@@ -71,7 +72,7 @@ func start(p_config: BattleConfig) -> bool:
 				state.sides[side]["deck"].append(c)
 			i += 1
 		# 对战准备 9：部署蜂王（a500 建筑/兵蜂另论；蜂王开局即在位）
-		var q := UnitInstance.create(dd.queen, side, _queen_cell(side))
+		var q := UnitInstance.create(dd.queen, side, queen_cell(side))
 		state.sides[side]["queen"] = q
 		state.board.place(q)
 		# 蜂王开局即结算它的 [部署] 技能（如金刚蜂王「获得装甲」）
@@ -85,21 +86,25 @@ func start(p_config: BattleConfig) -> bool:
 	_log("对局开始：%s 先手；%s 初始费用 +%d" % [
 		config.name_of(state.active), config.name_of(config.second_side()),
 		config.second_side_bonus])
+	# 地图/背景下发（**解耦**：视图两个 TextureRect 各自订阅同一条信号的参数）
+	emit_map_assets()
 	_enter_phase(state.Phase.RECOVER)
 	return true
 
 
-func _queen_cell(side: int) -> Vector2i:
-	## ⚠️ 坐标约定：cell.x = 行（0 在上 = 红方领地）、cell.y = 列（0 在最左）
-	##
-	## 人 2026-09-19 指定（以其口径为准：右 +、下 +、左上原点，坐标写 1-based (列,行)）：
-	##   · 红方蜂王 **(1,3)** → 0-based 行 2 · 列 0
-	##   · 我方蜂王 **(4,2)** → 0-based 行 1 · 列 3
-	##
-	## ✅ 中心对称校验（棋盘 4×4，几何中心在 (行1.5, 列1.5)）：
-	##   红方偏移 = (2−1.5, 0−1.5) = (+0.5, −1.5)
-	##   我方偏移 = (1−1.5, 3−1.5) = (−0.5, +1.5)  → 互为相反数，**严格中心对称**
-	return Vector2i(1, 3) if side == state.SIDE_ALLY else Vector2i(2, 0)
+## 蜂王开局位置（a500 对战准备 9）
+## ⚠️ 坐标约定：`Vector2i(行, 列)`；行 0 在上（红方领地）、行 3 在下（我方领地）
+##
+## 人 2026-09-19 最终指定（**位于顶部/底部行**，不是左右两侧）：
+##   · 我方蜂王 **(行3, 列2)** —— 底部行·中右列
+##   · 红方蜂王 **(行0, 列1)** —— 顶部行·中左列
+##
+## ✅ 中心对称校验（棋盘 4×4，几何中心在 (1.5, 1.5)）：
+##   我方偏移 = (3−1.5, 2−1.5) = (+1.5, +0.5)
+##   红方偏移 = (0−1.5, 1−1.5) = (−1.5, −0.5)  → 互为相反数，**严格中心对称**
+##   （人原口径 (4,2)/(1,3) 指旧朝向；整体顺时针旋转 90° 后即本值）
+static func queen_cell(side: int) -> Vector2i:
+	return Vector2i(3, 2) if side == 0 else Vector2i(0, 1)
 
 
 func _apply_deploy_skills(inst: UnitInstance, ud: UnitData) -> void:
@@ -112,6 +117,27 @@ func _apply_deploy_skills(inst: UnitInstance, ud: UnitData) -> void:
 		for e in sk.effects:
 			if e != null and Effects.grant(inst, e):
 				_log("%s 触发【部署】%s" % [ud.display_name, e.display_name])
+
+
+# ============================================================
+#  地图 / 背景（**解耦下发**）
+# ============================================================
+
+## 主动广播地图/背景资源。
+## 视图侧 `Battle/MapView/MapPlate/TextureRect` 与 `Background/TextureRect`
+## **各自独立订阅** `SIG_MAP_ASSETS`（同一条信号两个参数，互不直接引用）。
+func emit_map_assets() -> void:
+	var a: Resource = Assets.make(state.map_data)
+	bus().emit_signal(Bus.SIG_MAP_ASSETS, a)
+
+
+## 换图（外部可调；走同一信号，视图无需知道变化来源）
+func load_map(md: MapData) -> void:
+	if state == null:
+		return
+	state.map_data = md
+	emit_map_assets()
+	_log("更换地图：%s" % (md.display_name if md != null else "（无）"))
 
 
 # ============================================================

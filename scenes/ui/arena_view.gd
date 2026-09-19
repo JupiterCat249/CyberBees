@@ -18,6 +18,8 @@ const EngLib := preload("res://scripts/battle/battle_engine.gd")
 const ConfigLib := preload("res://scripts/battle/battle_config.gd")
 const K := preload("res://scripts/battle/preview_kind.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
+const DetailP := preload("res://scripts/data/detail_params.gd")
+const HandP := preload("res://scripts/data/hand_card_params.gd")
 const HAND_CARD_SCENE := preload("res://scenes/ui/card_hand.tscn")
 const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
@@ -47,14 +49,21 @@ var _hand_order := {SIDE_ALLY: [], SIDE_ENEMY: []}
 var _preview: Resource = null
 var _preview_cleared := false
 
+## 两套 UI 参数（**各自独立**，人要求：详情区 / 手牌卡不共用）
+## 运行时可替换（如换皮肤/调参）——替换后调 apply_params() 重施即可
+var detail_params: Resource = DetailP.new()
+var hand_params: Resource = HandP.new()
+
 
 func _ready() -> void:
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
+	apply_params()                       ## 两套 UI 参数各施其位（详情区 / 手牌卡）
 	engine = EngLib.new()
 	if auto_start and not engine.start(_config()):
 		push_warning("BattleEngine 启动失败（看上面的配置错误日志）")
+	apply_params()                       ## 开局后手牌已渲染 → 再施一次手牌参数
 
 
 func _exit_tree() -> void:
@@ -104,6 +113,105 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_MAIN_BUTTON, _on_main_button)
 	b.connect(Bus.SIG_LOG, _on_log)
 	b.connect(Bus.SIG_BATTLE_ENDED, _on_battle_ended)
+	## 地图 / 背景：两个 TextureRect **各自独立**从同一条信号的参数取值（解耦）
+	b.connect(Bus.SIG_MAP_ASSETS, _on_map_assets)
+
+
+## 地图与背景资产变化
+## ⚠️ 解耦：本方法只把 `assets` 的两个字段分别投给两个**互不引用**的节点；
+##   换图时引擎重发同一信号，两个节点自动跟着变（人要求：信号 + 信号传参）
+func _on_map_assets(assets: Resource) -> void:
+	if assets == null:
+		return
+	var plate := $Battle/MapView/MapPlate/TextureRect as TextureRect
+	if plate != null and assets.map_texture != null:
+		plate.texture = assets.map_texture
+	if plate != null:
+		plate.visible = bool(assets.has_map)
+	var bg := $Background/TextureRect as TextureRect
+	if bg != null and assets.background_texture != null:
+		bg.texture = assets.background_texture
+	if assets.map_name != "":
+		var nm := $HUD/MatchInfo/MapName
+		if nm != null:
+			nm.text = assets.map_name
+	if assets.map_desc != "":
+		var se := $HUD/MatchInfo/SiteEffect
+		if se != null:
+			se.text = assets.map_desc
+
+
+## 应用两套 UI 参数（**分开应用**，不混用）
+func apply_params() -> void:
+	_apply_detail_params()
+	_apply_hand_params()
+
+
+func _apply_detail_params() -> void:
+	var p = detail_params
+	if p == null:
+		return
+	var nm := $HUD/InfoPanel/CardName as Label
+	if nm != null:
+		nm.add_theme_font_size_override("font_size", int(p.name_font_size))
+		nm.add_theme_color_override("font_color", p.name_color)
+	var ds := $HUD/InfoPanel/SkillDesc as Label
+	if ds != null:
+		ds.add_theme_font_size_override("font_size", int(p.desc_font_size))
+		ds.add_theme_color_override("font_color", p.desc_color)
+		ds.add_theme_constant_override("line_spacing", int(p.desc_line_spacing))
+	var portrait := $HUD/InfoPanel/DetailBlock/Artwork/Portrait as TextureRect
+	if portrait != null:
+		portrait.size = p.art_size
+	var attrs := $HUD/InfoPanel/Attributes
+	if attrs != null:
+		for i in int(p.attr_rows):
+			var row := attrs.get_node_or_null("Row%d" % (i + 1))
+			if row == null:
+				continue
+			var v: Label = row.get_node_or_null("Value")
+			if v != null:
+				v.add_theme_font_size_override("font_size", int(p.attr_value_font_size))
+			var ic: TextureRect = row.get_node_or_null("Icon")
+			if ic != null:
+				ic.size = p.attr_icon_size
+
+
+func _apply_hand_params() -> void:
+	var p = hand_params
+	if p == null:
+		return
+	## 手牌卡**只在需要时取参数**（容器决定尺寸；参数只用于卡内部元素）
+	for side in [SIDE_ALLY, SIDE_ENEMY]:
+		for id in _hand_nodes[side].keys():
+			var node = _hand_nodes[side][id]
+			if node != null and is_instance_valid(node):
+				_apply_one_hand_params(node, p)
+
+
+func _apply_one_hand_params(node, p) -> void:
+	var badge: TextureRect = node.get_node_or_null("BadgeImage")
+	if badge != null:
+		badge.size = p.badge_size
+		var bv: Label = badge.get_node_or_null("Value")
+		if bv != null:
+			bv.add_theme_font_size_override("font_size", int(p.badge_font_size))
+			bv.add_theme_color_override("font_color", p.badge_color)
+	var line: Panel = node.get_node_or_null("InnerLine")
+	if line != null:
+		line.size = p.inner_line_size
+	var img: TextureRect = node.get_node_or_null("Artwork/ArtPlane/Image")
+	if img != null and node.get("card_data") != null:
+		var vis: CardVisual = (node.get("card_data") as CardData).visual
+		var off: Vector2 = p.final_art_offset(vis)
+		var base: Vector2 = p.art_base_offset
+		## Image 基准尺寸为 400x454（源图量级）→ 用 offset 控制裁剪窗里显示哪一块
+		var sz := Vector2(400, 454)
+		img.offset_left = off.x
+		img.offset_top = off.y
+		img.offset_right = off.x + sz.x
+		img.offset_bottom = off.y + sz.y
+		img.scale = p.final_art_scale(vis)
 
 
 func _on_battle_started(first_side: int, round_no: int, an: String, en: String) -> void:
@@ -293,6 +401,9 @@ func _render_hand(side: int, hand: Array, playable: Array) -> void:
 		_hand_order[side].append(data.id)
 		if i < playable.size():
 			_call_opt(node, "set_playable", [bool(playable[i])])
+		## 手牌卡内部元素参数（**与详情区参数分开**）
+		if hand_params != null:
+			_apply_one_hand_params(node, hand_params)
 
 
 func _on_hand_clicked(card_id: String, side: int) -> void:

@@ -46,9 +46,17 @@ func _run() -> void:
 	_chk("我方蜂王在位", qa != null)
 	_chk("敌方蜂王在位", qe != null)
 	if qa != null:
-		_chk("我方蜂王坐标 = (行1,列3)（人指定）", qa.cell == Vector2i(1, 3))
+		_chk("我方蜂王坐标 = (行3,列2)（人指定·底部行）", qa.cell == Vector2i(3, 2))
 	if qe != null:
-		_chk("敌方蜂王坐标 = (行2,列0)（人指定）", qe.cell == Vector2i(2, 0))
+		_chk("敌方蜂王坐标 = (行0,列1)（人指定·顶部行）", qe.cell == Vector2i(0, 1))
+	# 中心对称断言（几何中心 (1.5,1.5)，两边偏移应为相反数）
+	if qa != null and qe != null:
+		var oa := Vector2(qa.cell.x - 1.5, qa.cell.y - 1.5)
+		var oe := Vector2(qe.cell.x - 1.5, qe.cell.y - 1.5)
+		_chk("**两蜂王关于棋盘中心严格中心对称**（偏移 %s / %s）" % [str(oa), str(oe)],
+			oa.x == -oe.x and oa.y == -oe.y)
+		_chk("两蜂王位于顶部/底部行（不是左右两侧）",
+			qa.cell.x == 3 and qe.cell.x == 0)
 	_chk("开局费用：先手 4（回费后）", st.cost(0) == 4)
 	_chk("开局费用：后手 2（后手 +2）", st.cost(1) == 2)
 	_chk("开局阶段 = 部署（回费/场地已自动推进）", st.phase == 2)
@@ -59,6 +67,16 @@ func _run() -> void:
 	_chk("我方手牌区有 4 张（容器装下了）", hr.get_child_count() == 4)
 	_chk("敌方手牌区有 4 张", hl.get_child_count() == 4)
 	_chk("手牌容器 columns = 2（未回退单列）", int(hr.get("columns")) == 2)
+
+	# ②之二 地图/背景解耦（同一信号 → 两个互不引用的 TextureRect）
+	var plate := _scene.get_node_or_null("Battle/MapView/MapPlate/TextureRect") as TextureRect
+	var bg := _scene.get_node_or_null("Background/TextureRect") as TextureRect
+	_chk("地图板节点存在（Battle/MapView/MapPlate/TextureRect）", plate != null)
+	_chk("背景节点存在（Background/TextureRect）", bg != null)
+	_chk("视图已接 apply_params()（两套 UI 参数分离）",
+		view.get("detail_params") != null and view.get("hand_params") != null)
+	_chk("详情区参数与手牌参数是**不同对象**",
+		view.get("detail_params") != view.get("hand_params"))
 
 	# ③ 部署
 	var hand_before: int = st.hand(0).size()
