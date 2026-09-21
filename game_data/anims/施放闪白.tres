@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_i2agm"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_dxg1y"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_rp37g"]
+
+[sub_resource type="Resource" id="Resource_x58ky"]
+script = ExtResource("3_rp37g")
+kind = 3
+
+[sub_resource type="Resource" id="Resource_4et4t"]
+script = ExtResource("2_dxg1y")
+unit_name = "闪白"
+clips = Array[ExtResource("3_rp37g")]([SubResource("Resource_x58ky")])
+
+[resource]
+script = ExtResource("1_i2agm")
+pattern_name = "施放闪白"
+units = Array[ExtResource("2_dxg1y")]([SubResource("Resource_4et4t")])

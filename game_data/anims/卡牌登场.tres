@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_4xa8t"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_1x0tq"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_4w1s5"]
+
+[sub_resource type="Resource" id="Resource_37vqu"]
+script = ExtResource("3_4w1s5")
+kind = 3
+tint = Color(1, 1, 1, 0)
+
+[sub_resource type="Resource" id="Resource_sljx5"]
+script = ExtResource("3_4w1s5")
+kind = 3
+tint = Color(1, 1, 1, 0.25)
+
+[sub_resource type="Resource" id="Resource_od3kl"]
+script = ExtResource("3_4w1s5")
+kind = 3
+tint = Color(1, 1, 1, 0.5)
+
+[sub_resource type="Resource" id="Resource_v25ui"]
+script = ExtResource("3_4w1s5")
+kind = 3
+tint = Color(1, 1, 1, 0.75)
+
+[sub_resource type="Resource" id="Resource_e1qs3"]
+script = ExtResource("3_4w1s5")
+kind = 3
+
+[sub_resource type="Resource" id="Resource_4n175"]
+script = ExtResource("2_1x0tq")
+unit_name = "淡入"
+clips = Array[ExtResource("3_4w1s5")]([SubResource("Resource_37vqu"), SubResource("Resource_sljx5"), SubResource("Resource_od3kl"), SubResource("Resource_v25ui"), SubResource("Resource_e1qs3")])
+
+[resource]
+script = ExtResource("1_4xa8t")
+pattern_name = "卡牌登场"
+units = Array[ExtResource("2_1x0tq")]([SubResource("Resource_4n175")])

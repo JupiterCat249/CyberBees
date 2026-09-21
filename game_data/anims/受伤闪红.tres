@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_qh2rw"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_qqgc1"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_erqi4"]
+
+[sub_resource type="Resource" id="Resource_xdchd"]
+script = ExtResource("3_erqi4")
+kind = 3
+frames = 2
+tint = Color(1, 0.1254902, 0, 1)
+
+[sub_resource type="Resource" id="Resource_lwnk6"]
+script = ExtResource("3_erqi4")
+kind = 3
+frames = 2
+tint = Color(1, 0.53333336, 0, 1)
+
+[sub_resource type="Resource" id="Resource_0bnxg"]
+script = ExtResource("3_erqi4")
+kind = 3
+frames = 2
+
+[sub_resource type="Resource" id="Resource_tnibq"]
+script = ExtResource("2_qqgc1")
+unit_name = "变色"
+clips = Array[ExtResource("3_erqi4")]([SubResource("Resource_xdchd"), SubResource("Resource_lwnk6"), SubResource("Resource_0bnxg")])
+
+[resource]
+script = ExtResource("1_qh2rw")
+pattern_name = "受伤闪红"
+units = Array[ExtResource("2_qqgc1")]([SubResource("Resource_tnibq")])

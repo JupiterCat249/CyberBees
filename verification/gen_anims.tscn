@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://brwd4y21hbh1a"]
+
+[ext_resource type="Script" path="res://verification/gen_anims.gd" id="1_rbkiq"]
+
+[node name="GenAnims" type="Node" unique_id=1823106506]
+script = ExtResource("1_rbkiq")

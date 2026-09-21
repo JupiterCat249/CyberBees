@@ -1,0 +1,115 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_ur1nf"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_pa1ms"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_6xhoh"]
+
+[sub_resource type="Resource" id="Resource_dgu76"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.95)
+
+[sub_resource type="Resource" id="Resource_r071x"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.9)
+
+[sub_resource type="Resource" id="Resource_r0k6v"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.85)
+
+[sub_resource type="Resource" id="Resource_vjaar"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.8)
+
+[sub_resource type="Resource" id="Resource_r6ikg"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.75)
+
+[sub_resource type="Resource" id="Resource_uy0tk"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.7)
+
+[sub_resource type="Resource" id="Resource_55r2o"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.65)
+
+[sub_resource type="Resource" id="Resource_yiwii"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.6)
+
+[sub_resource type="Resource" id="Resource_2pmky"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.55)
+
+[sub_resource type="Resource" id="Resource_i3jgi"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.5)
+
+[sub_resource type="Resource" id="Resource_2yvw3"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.45)
+
+[sub_resource type="Resource" id="Resource_q7112"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.4)
+
+[sub_resource type="Resource" id="Resource_k5i6s"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.35)
+
+[sub_resource type="Resource" id="Resource_7fo41"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.3)
+
+[sub_resource type="Resource" id="Resource_0bo1m"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.25)
+
+[sub_resource type="Resource" id="Resource_d35nf"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.2)
+
+[sub_resource type="Resource" id="Resource_b465y"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.15)
+
+[sub_resource type="Resource" id="Resource_pi37q"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.1)
+
+[sub_resource type="Resource" id="Resource_ioevd"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0.05)
+
+[sub_resource type="Resource" id="Resource_kyw57"]
+script = ExtResource("3_6xhoh")
+kind = 3
+tint = Color(1, 1, 1, 0)
+
+[sub_resource type="Resource" id="Resource_27pd0"]
+script = ExtResource("2_pa1ms")
+unit_name = "淡出"
+clips = Array[ExtResource("3_6xhoh")]([SubResource("Resource_dgu76"), SubResource("Resource_r071x"), SubResource("Resource_r0k6v"), SubResource("Resource_vjaar"), SubResource("Resource_r6ikg"), SubResource("Resource_uy0tk"), SubResource("Resource_55r2o"), SubResource("Resource_yiwii"), SubResource("Resource_2pmky"), SubResource("Resource_i3jgi"), SubResource("Resource_2yvw3"), SubResource("Resource_q7112"), SubResource("Resource_k5i6s"), SubResource("Resource_7fo41"), SubResource("Resource_0bo1m"), SubResource("Resource_d35nf"), SubResource("Resource_b465y"), SubResource("Resource_pi37q"), SubResource("Resource_ioevd"), SubResource("Resource_kyw57")])
+
+[resource]
+script = ExtResource("1_ur1nf")
+pattern_name = "单位退场"
+units = Array[ExtResource("2_pa1ms")]([SubResource("Resource_27pd0")])

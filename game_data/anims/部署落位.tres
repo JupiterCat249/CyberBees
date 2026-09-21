@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_wi3sg"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_5nu44"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_b8nv1"]
+
+[sub_resource type="Resource" id="Resource_wdqr1"]
+script = ExtResource("3_b8nv1")
+offset = Vector2(0, 3)
+
+[sub_resource type="Resource" id="Resource_xndny"]
+script = ExtResource("3_b8nv1")
+offset = Vector2(0, -3)
+
+[sub_resource type="Resource" id="Resource_rx2nk"]
+script = ExtResource("2_5nu44")
+unit_name = "下沉回弹"
+clips = Array[ExtResource("3_b8nv1")]([SubResource("Resource_wdqr1"), SubResource("Resource_xndny")])
+
+[resource]
+script = ExtResource("1_wi3sg")
+pattern_name = "部署落位"
+units = Array[ExtResource("2_5nu44")]([SubResource("Resource_rx2nk")])

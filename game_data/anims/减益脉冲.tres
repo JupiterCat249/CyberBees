@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_m1mn5"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_ev7xg"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_epx8j"]
+
+[sub_resource type="Resource" id="Resource_3ld0s"]
+script = ExtResource("3_epx8j")
+kind = 3
+tint = Color(1, 0.5411765, 0.41568628, 1)
+
+[sub_resource type="Resource" id="Resource_53nn1"]
+script = ExtResource("2_ev7xg")
+unit_name = "脉冲"
+clips = Array[ExtResource("3_epx8j")]([SubResource("Resource_3ld0s")])
+
+[resource]
+script = ExtResource("1_m1mn5")
+pattern_name = "减益脉冲"
+units = Array[ExtResource("2_ev7xg")]([SubResource("Resource_53nn1")])

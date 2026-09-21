@@ -1,0 +1,118 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_5vcpa"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_lyi4w"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_15n1m"]
+
+[sub_resource type="Resource" id="Resource_nc6df"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-3.5149674, 0)
+
+[sub_resource type="Resource" id="Resource_riv0p"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(3.1627612, 0)
+
+[sub_resource type="Resource" id="Resource_8er75"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-3.4052913, 0)
+
+[sub_resource type="Resource" id="Resource_fs4rt"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(3.1361432, 0)
+
+[sub_resource type="Resource" id="Resource_5btfp"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-2.689136, 0)
+
+[sub_resource type="Resource" id="Resource_bsbwh"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(2.0227244, 0)
+
+[sub_resource type="Resource" id="Resource_0c18i"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-1.5637234, 0)
+
+[sub_resource type="Resource" id="Resource_hwi8r"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(1.6109952, 0)
+
+[sub_resource type="Resource" id="Resource_ldbu1"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-1.3923818, 0)
+
+[sub_resource type="Resource" id="Resource_x8ai0"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(1.389039, 0)
+
+[sub_resource type="Resource" id="Resource_o63f0"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-1.3029684, 0)
+
+[sub_resource type="Resource" id="Resource_2qkv8"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(0.9256599, 0)
+
+[sub_resource type="Resource" id="Resource_3cj0j"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-0.8920791, 0)
+
+[sub_resource type="Resource" id="Resource_kp06d"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(0.6671671, 0)
+
+[sub_resource type="Resource" id="Resource_ujgqd"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-0.57165015, 0)
+
+[sub_resource type="Resource" id="Resource_ttf8y"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(0.5497016, 0)
+
+[sub_resource type="Resource" id="Resource_yyd3w"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-0.6022742, 0)
+
+[sub_resource type="Resource" id="Resource_aiwqe"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(0.4915641, 0)
+
+[sub_resource type="Resource" id="Resource_5fw44"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(-0.33839485, 0)
+
+[sub_resource type="Resource" id="Resource_70x34"]
+script = ExtResource("3_15n1m")
+frames = 2
+offset = Vector2(2.3171113, 0)
+
+[sub_resource type="Resource" id="Resource_ngdtc"]
+script = ExtResource("2_lyi4w")
+unit_name = "左右往复"
+clips = Array[ExtResource("3_15n1m")]([SubResource("Resource_nc6df"), SubResource("Resource_riv0p"), SubResource("Resource_8er75"), SubResource("Resource_fs4rt"), SubResource("Resource_5btfp"), SubResource("Resource_bsbwh"), SubResource("Resource_0c18i"), SubResource("Resource_hwi8r"), SubResource("Resource_ldbu1"), SubResource("Resource_x8ai0"), SubResource("Resource_o63f0"), SubResource("Resource_2qkv8"), SubResource("Resource_3cj0j"), SubResource("Resource_kp06d"), SubResource("Resource_ujgqd"), SubResource("Resource_ttf8y"), SubResource("Resource_yyd3w"), SubResource("Resource_aiwqe"), SubResource("Resource_5fw44"), SubResource("Resource_70x34")])
+
+[resource]
+script = ExtResource("1_5vcpa")
+pattern_name = "受击抖动"
+units = Array[ExtResource("2_lyi4w")]([SubResource("Resource_ngdtc")])
+value_ref = 4
+value_threshold = 7
+extra_frames = 14
