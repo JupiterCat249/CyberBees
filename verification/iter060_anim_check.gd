@@ -29,6 +29,9 @@ func _ready() -> void:
 	var player: Node = PlayerLib.new()
 	player.name = "AnimPlayer"
 	add_child(player)
+	## 0) 数据驱动装载：`game_data/anims/*.tres` → Pattern 库
+	var names: Array[StringName] = player.pattern_names()
+	_check(names.size() == 11, "库装载 11 条 Pattern（实际 %d：%s）" % [names.size(), str(names)])
 
 	## 1) 静态类型 Resource 构造
 	var c1 := ClipLib.new()
