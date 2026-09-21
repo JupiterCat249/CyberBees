@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://daen2ka4no4e0"]
+
+[ext_resource type="Script" path="res://verification/iter060_anim_check.gd" id="1_y760i"]
+
+[node name="Iter060AnimCheck" type="Node" unique_id=1726610450]
+script = ExtResource("1_y760i")

@@ -7,9 +7,9 @@ extends Resource
 ## 运行选项（§一之4）：运行时禁 UI 交互 · 是否受全局暂停影响
 ##
 ## 数据驱动：一条 Pattern = 一个 `.tres`（`game_data/anims/`），**新增动画不改代码**
-## 注：`units` 用无类型 Array（同 AnimUnit 的说明）；元素必须是 AnimUnit。
 @export var pattern_name: String = ""
-@export var units: Array = []
+## 组成该动画的单元列表（静态类型：元素必须是 AnimUnit；同一 Pattern 内并行推进）
+@export var units: Array[AnimUnit] = []
 ## 动画**开始时**触发的 Pattern 名（空 = 不触发）
 @export var trigger_on_start: String = ""
 ## 动画**终止时**触发的 Pattern 名（空 = 不触发）

@@ -5,9 +5,8 @@ extends Resource
 ## · 5 类 Unit 由 `clips[i].kind` 表达（MOVE_BY / MOVE_TO / ROT_TRACK / TINT / SPAWN_FX）
 ## · 同一 Pattern 内的多个 Unit **并行**推进（每帧各推一次）——
 ##   ⚠️ 这是旧实现用实测换来的口径（迭代024：一次只推"当前单元"导致「配置帧 ≠ 实际帧」）
-## 注：`clips` 用无类型 Array（Godot 的 `Array[Class]` 导出依赖全局类表在解析期就绪，
-##     而本目录脚本是新增的 → 改用无类型可避开"新增类首次解析"失败）；元素必须是 AnimClip。
 @export var unit_name: String = ""
-@export var clips: Array = []
+## 顺序执行的动作列表（静态类型：元素必须是 AnimClip）
+@export var clips: Array[AnimClip] = []
 ## 不可重复：该 Unit 已在同一目标上运行时，不重复起（对应"到指定值 / 追踪"类语义）
 @export var unique: bool = false
