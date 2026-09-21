@@ -22,9 +22,7 @@ const DetailP := preload("res://scripts/data/detail_params.gd")
 const HandP := preload("res://scripts/data/hand_card_params.gd")
 const TerrainP := preload("res://scripts/data/terrain_params.gd")
 const HAND_CARD_SCENE := preload("res://scenes/ui/card_hand.tscn")
-## 单位卡外层容器（迭代060 检查点2a）：**视图拥有外层 position，动画拥有内层 Card**
-##   —— 避免"动画写 position / 视图写 position"互相覆盖（迭代021 同类根因）；结构见 unit_view.tscn
-const UNIT_VIEW_SCENE := preload("res://scenes/ui/unit_view.tscn")
+const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 
 const SIDE_ALLY := 0
@@ -149,12 +147,8 @@ func _make_overlays_click_through() -> void:
 ## 修法：对卡片实例（单位卡 + 手牌卡）**递归把子 Control 设为 IGNORE**，
 ##   只留卡根节点接收点击（卡根节点的 mouse_filter 在场景里已是 STOP）。
 func _make_card_children_click_through() -> void:
-	for view in _units_root.get_children():
-		## 单位卡现包在 `UnitView`（迭代060 动画层）里：**外层穿透、卡根保留可点**（迭代059 教训）
-		if view is Control:
-			(view as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
-		for card in view.get_children():
-			_ignore_children(card)
+	for node in _units_root.get_children():
+		_ignore_descendants(node)
 	_ignore_descendants(_hand_l)
 	_ignore_descendants(_hand_r)
 
@@ -705,13 +699,10 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	if inst == null or _unit_nodes.has(inst.instance_id):
 		return
 	_clear_preview_units_once()
-	## 外层 UnitView：**位置由视图拥有**；内层 Card：**位置/颜色由动画拥有**（迭代060 检查点2a）
-	var view: Control = UNIT_VIEW_SCENE.instantiate()
-	view.name = "Unit_" + inst.instance_id.substr(0, 8)
-	view.position = _cell_pos(cell)
-	_units_root.add_child(view)
-	var node: Control = view.get_node("Card")
-	_register_unit_anim(view)
+	var node: Control = UNIT_CARD_SCENE.instantiate()
+	node.name = "Unit_" + inst.instance_id.substr(0, 8)
+	node.position = _cell_pos(cell)
+	_units_root.add_child(node)
 	## ⭐ 运行时新建的单位卡也会带 CrtFx 叠加层 → 必须单独设鼠标穿透，
 	##    否则新部署的单位会**盖住整块棋盘**、吞掉所有点击（迭代058 实测教训）
 	_set_ignore_recursive(node)
@@ -720,16 +711,6 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	if node.has_signal("unit_pressed"):
 		node.unit_pressed.connect(_on_unit_clicked)
 	_unit_nodes[inst.instance_id] = node
-
-
-## 把单位卡的动画播放器注册到确定性推进器（迭代060 检查点2a）
-##   MANUAL + 每帧 advance(1/60)：动画进度＝帧数的纯函数（回放一致性）
-func _register_unit_anim(view: Control) -> void:
-	if anim_driver == null:
-		return
-	var p := view.get_node_or_null("UnitAnim") as AnimationPlayer
-	if p != null:
-		anim_driver.register_player(p)
 
 
 func _clear_preview_units_once() -> void:
