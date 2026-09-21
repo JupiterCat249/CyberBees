@@ -822,8 +822,14 @@ func _play(pname: String, inst: UnitInstance, value: int = 0) -> void:
 
 ## 动画自然播完的收尾（基础动画 §一：**播完立即退场**，不额外等帧）
 ##   仅 "单位退场" 需要释放节点；其余动画的收尾已由引擎自身回位
+## 动画自然播完的收尾（基础动画 §一：**播完立即退场**，不额外等帧）
+##   · `单位退场` → 释放幽灵节点
+##   · `浮字上浮` → 释放飘字（否则淡到 α=0 后永远留在浮字层＝泄漏）
 func _on_anim_finished(pname: StringName, target: Node) -> void:
-	if String(pname) == "单位退场" and target != null and is_instance_valid(target):
+	if target == null or not is_instance_valid(target):
+		return
+	var n := String(pname)
+	if n == "单位退场" or n == "浮字上浮":
 		target.queue_free()
 
 
