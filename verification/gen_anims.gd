@@ -110,14 +110,12 @@ func _gen_shake() -> void:
 	var segs: int = SHAKE_FRAMES / SHAKE_SEG_FRAMES
 	var dir: float = 1.0 if rng.randf() < 0.5 else -1.0
 	var clips: Array[AnimClip] = []
-	var run: float = 0.0
 	for k: int in range(segs - 1):
 		var a: float = SHAKE_AMP * pow(SHAKE_DECAY, float(k)) * (1.0 + rng.randf_range(-SHAKE_JITTER, SHAKE_JITTER))
-		var off: float = a * dir
-		run += off
-		clips.append(_clip(ClipLib.Kind.MOVE_BY, SHAKE_SEG_FRAMES, Vector2(off, 0)))
+		clips.append(_clip(ClipLib.Kind.MOVE_TO, SHAKE_SEG_FRAMES, Vector2(a * dir, 0)))
 		dir = -dir
-	clips.append(_clip(ClipLib.Kind.MOVE_BY, SHAKE_SEG_FRAMES, Vector2(-run, 0)))
+	## 末段回原位（MOVE_TO = 到指定值，天然不累积 → 峰值 = 基准振幅、Σ 恒为 0）
+	clips.append(_clip(ClipLib.Kind.MOVE_TO, SHAKE_SEG_FRAMES, Vector2.ZERO))
 	var p: AnimPattern = _pattern("受击抖动", _units1(_unit("左右往复", clips)))
 	p.value_ref = 4
 	p.value_threshold = SHAKE_THRESHOLD
@@ -229,14 +227,11 @@ func _gen_map_shake() -> void:
 	var segs: int = MAP_SHAKE_FRAMES / MAP_SHAKE_SEG
 	var dir: float = 1.0 if rng.randf() < 0.5 else -1.0
 	var clips: Array[AnimClip] = []
-	var run: float = 0.0
 	for k: int in range(segs - 1):
 		var a: float = MAP_SHAKE_AMP * pow(SHAKE_DECAY, float(k)) * (1.0 + rng.randf_range(-SHAKE_JITTER, SHAKE_JITTER))
-		var off: float = a * dir
-		run += off
-		clips.append(_clip(ClipLib.Kind.MOVE_BY, MAP_SHAKE_SEG, Vector2(off, 0)))
+		clips.append(_clip(ClipLib.Kind.MOVE_TO, MAP_SHAKE_SEG, Vector2(a * dir, 0)))
 		dir = -dir
-	clips.append(_clip(ClipLib.Kind.MOVE_BY, MAP_SHAKE_SEG, Vector2(-run, 0)))
+	clips.append(_clip(ClipLib.Kind.MOVE_TO, MAP_SHAKE_SEG, Vector2.ZERO))
 	_save(_pattern("地图抖动", _units1(_unit("地图左右往复", clips))))
 
 
