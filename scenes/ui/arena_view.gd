@@ -35,8 +35,9 @@ const PITCH := 250.0
 @export var enemy_name := "玩家·红"
 
 var engine = null
-## 动画推进器（迭代060 检查点1）：帧数确定性推进的**唯一来源**（见 battle_anim_driver.gd 头注）
-var anim_driver: Node = null
+## 动画引擎（迭代060 v4）：Pattern→Unit→Clip **数据驱动**，数据在 `game_data/anims/*.tres`
+##   帧数计时（T2）+ 确定性推进（回放一致）；实现见 `scripts/anim/anim_player.gd`
+var anim: Node = null
 
 # 节点引用
 @onready var _cells_root: Control = $Battle/MapView/MapCells
@@ -68,10 +69,11 @@ func _ready() -> void:
 	## T2 / 回放一致性（迭代060 检查点1）：**锁 60fps** —— 帧数基准的硬前提
 	##   （`project.godot` 的 run/max_fps 在本机不生效；旧实现只在 `scenes/battle_flow.gd` 里显式设置）
 	Engine.max_fps = 60
-	## 动画推进器（迭代060 检查点1）：全部动画节点的**唯一推进来源**
-	anim_driver = preload("res://scenes/ui/battle_anim_driver.gd").new()
-	anim_driver.name = "BattleAnimDriver"
-	add_child(anim_driver)
+	## 动画引擎（迭代060 v4）：唯一动画宿主；帧数计时 + 确定性推进（回放一致）
+	anim = preload("res://scripts/anim/anim_player.gd").new()
+	anim.name = "AnimPlayer"
+	add_child(anim)
+	anim.instance_finished.connect(_on_anim_finished)
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
@@ -415,10 +417,13 @@ func _on_unit_moved(inst: UnitInstance, _from: Vector2i, to: Vector2i) -> void:
 	var n: Control = _unit_nodes.get(inst.instance_id, null)
 	if n != null and is_instance_valid(n):
 		n.position = _cell_pos(to)
+		_play("移动落位", inst)
 
 
-func _on_unit_damaged(inst: UnitInstance, _dmg: int, hp_after: int, _src: String) -> void:
+func _on_unit_damaged(inst: UnitInstance, dmg: int, hp_after: int, _src: String) -> void:
 	_update_unit(inst, hp_after)
+	_play("受伤闪红", inst)
+	_play("受击抖动", inst, dmg)
 
 
 func _on_unit_healed(inst: UnitInstance, _amt: int, hp_after: int) -> void:
@@ -427,9 +432,16 @@ func _on_unit_healed(inst: UnitInstance, _amt: int, hp_after: int) -> void:
 
 func _on_unit_removed(inst: UnitInstance, _reason: String) -> void:
 	var n: Control = _unit_nodes.get(inst.instance_id, null)
-	if n != null and is_instance_valid(n):
-		n.queue_free()
 	_unit_nodes.erase(inst.instance_id)
+	if n == null or not is_instance_valid(n):
+		return
+	## 退场：**动画播完才真正释放**（幽灵节点）—— 基础动画 §一「播完立即退场」
+	##   节点先立刻移出注册表 + 鼠标穿透（防吞点击），收尾在 `_on_anim_finished`
+	n.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if anim != null and anim.has_pattern("单位退场"):
+		anim.action("单位退场", n)
+	else:
+		n.queue_free()
 
 
 func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: Array) -> void:
@@ -457,6 +469,8 @@ func _on_battle_ended(result: int, reason: String) -> void:
 	var who := {0: "", 1: "绿方胜", 2: "红方胜", 3: "平局"}
 	$HUD/ActionBar/Label.text = "%s（%s）" % [str(who.get(result, "?")), reason]
 	$HUD/ActionBar/MainButton.disabled = true
+	if anim != null:
+		anim.stop_all()
 
 
 ## 开局后主动同步一遗（信号可能早于本视图连线）
@@ -711,6 +725,23 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	if node.has_signal("unit_pressed"):
 		node.unit_pressed.connect(_on_unit_clicked)
 	_unit_nodes[inst.instance_id] = node
+	_play("卡牌登场", inst)
+
+
+## 播动画（迭代060 v4）—— 目标节点由 `instance_id` 解析；不在册则跳过（不报错、不吞）
+func _play(pname: String, inst: UnitInstance, value: int = 0) -> void:
+	if anim == null or inst == null:
+		return
+	var n: Control = _unit_nodes.get(inst.instance_id, null)
+	if n != null and is_instance_valid(n):
+		anim.action(pname, n, value)
+
+
+## 动画自然播完的收尾（基础动画 §一：**播完立即退场**，不额外等帧）
+##   仅 "单位退场" 需要释放节点；其余动画的收尾已由引擎自身回位
+func _on_anim_finished(pname: StringName, target: Node) -> void:
+	if String(pname) == "单位退场" and target != null and is_instance_valid(target):
+		target.queue_free()
 
 
 func _clear_preview_units_once() -> void:
