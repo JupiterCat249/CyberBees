@@ -35,6 +35,8 @@ const PITCH := 250.0
 @export var enemy_name := "玩家·红"
 
 var engine = null
+## 动画推进器（迭代060 检查点1）：帧数确定性推进的**唯一来源**（见 battle_anim_driver.gd 头注）
+var anim_driver: Node = null
 
 # 节点引用
 @onready var _cells_root: Control = $Battle/MapView/MapCells
@@ -63,6 +65,13 @@ const FLASH_FRAMES := 180      ## 保留常量占位（若日后要恢复 HUD �
 
 
 func _ready() -> void:
+	## T2 / 回放一致性（迭代060 检查点1）：**锁 60fps** —— 帧数基准的硬前提
+	##   （`project.godot` 的 run/max_fps 在本机不生效；旧实现只在 `scenes/battle_flow.gd` 里显式设置）
+	Engine.max_fps = 60
+	## 动画推进器（迭代060 检查点1）：全部动画节点的**唯一推进来源**
+	anim_driver = preload("res://scenes/ui/battle_anim_driver.gd").new()
+	anim_driver.name = "BattleAnimDriver"
+	add_child(anim_driver)
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
