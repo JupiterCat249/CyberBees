@@ -22,6 +22,20 @@ const DetailP := preload("res://scripts/data/detail_params.gd")
 const HandP := preload("res://scripts/data/hand_card_params.gd")
 const TerrainP := preload("res://scripts/data/terrain_params.gd")
 const HAND_CARD_SCENE := preload("res://scenes/ui/card_hand.tscn")
+## 飘字场景（迭代060 v4）
+const FLOAT_TEXT_SCENE := preload("res://scenes/ui/float_text.tscn")
+## 飘字字号：数值越大字体越大（《动画系统及流程》§二之2 line 51；线性映射，参数集中便于实机返工 T14/T15）
+const FLOAT_FS_BASE := 40        ## 数值 0 → 该字号
+const FLOAT_FS_MAX := 96         ## 参考数值 → 该字号
+const FLOAT_FS_REF := 25         ## 字号映射的参考数值
+## 数值文本颜色（《动画系统及流程》§二之2 line 48-50）
+const COL_COST := Color("#FFA300")     ## 回费
+const COL_DAMAGE := Color("#FF2000")   ## 受伤
+const COL_HEAL := Color("#00DD00")     ## 回血
+## 阶段枚举镜像（battle_state.gd: enum Phase { RECOVER, TERRAIN, DEPLOY, ACTION }）
+##   仅用于 §二之3 的文本色表（回费/场地·等待行动 = 白 50%）
+const PHASE_RECOVER := 0
+const PHASE_TERRAIN := 1
 const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 
@@ -38,6 +52,10 @@ var engine = null
 ## 动画引擎（迭代060 v4）：Pattern→Unit→Clip **数据驱动**，数据在 `game_data/anims/*.tres`
 ##   帧数计时（T2）+ 确定性推进（回放一致）；实现见 `scripts/anim/anim_player.gd`
 var anim: Node = null
+## 飘字层（迭代060 v4）：`battle_scene.tscn` 的**最后子节点** + `z_index=100`（迭代021 教训：飘字必须后绘制）
+var _fx_root: Control = null
+## UI 锁定（§一之4 line 29）：`block_ui` 动画运行期间屏蔽交互
+var _ui_locked: bool = false
 
 # 节点引用
 @onready var _cells_root: Control = $Battle/MapView/MapCells
@@ -74,6 +92,8 @@ func _ready() -> void:
 	anim.name = "AnimPlayer"
 	add_child(anim)
 	anim.instance_finished.connect(_on_anim_finished)
+	anim.ui_lock_changed.connect(_on_ui_lock)
+	_fx_root = get_node_or_null("EffectsTop") as Control
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
@@ -230,6 +250,10 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_BATTLE_ENDED, _on_battle_ended)
 	## 地图 / 背景：两个 TextureRect **各自独立**从同一条信号的参数取值（解耦）
 	b.connect(Bus.SIG_MAP_ASSETS, _on_map_assets)
+	## 迭代060 v4 动画接线：地图抖动 / 回合色 / 阶段文本色
+	b.connect(Bus.SIG_COMMAND_RESOLVED, _on_command_resolved)
+	b.connect(Bus.SIG_TURN_STARTED, _on_turn_color)
+	b.connect(Bus.SIG_PHASE_STARTED, _on_phase_text_color)
 
 
 ## 地图与背景资产变化
@@ -393,7 +417,7 @@ func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
 	refresh_hand_affordability()
 
 
-func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
+func _on_cost_changed(side: int, cost: int, delta: int) -> void:
 	## ⚠️ 左右与阵营的对应（迭代059 小修补：原实现左右反了）
 	##   左侧面板 `PlayerBesaInfoLift` = **敌方**（与 `HandPanelLeft`/`EnemyHand_*` 同侧）
 	##   右侧面板 `PlayerBesaInfoRight` = **我方**（与 `HandPanelRight`/`AllyHand_*` 同侧）
@@ -403,6 +427,10 @@ func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
 		lb.text = str(cost)
 	## ⭐ 费用一变，双方手牌的亮/灰立刻按**费用口径**重算（幂等）
 	refresh_hand_affordability()
+	## 回费文本（§二之1 line 42「回费文本」；§二之2 line 48 回费 = #FFA300）
+	if delta > 0:
+		var badge: Control = node.get_node_or_null("BadgeImage")
+		_float_at(badge, "+%d" % delta, COL_COST, delta)
 
 
 func _on_hand_changed(side: int, hand: Array, playable: Array) -> void:
@@ -424,10 +452,12 @@ func _on_unit_damaged(inst: UnitInstance, dmg: int, hp_after: int, _src: String)
 	_update_unit(inst, hp_after)
 	_play("受伤闪红", inst)
 	_play("受击抖动", inst, dmg)
+	_float_at(_unit_nodes.get(inst.instance_id, null), "-%d" % dmg, COL_DAMAGE, dmg)
 
 
-func _on_unit_healed(inst: UnitInstance, _amt: int, hp_after: int) -> void:
+func _on_unit_healed(inst: UnitInstance, amt: int, hp_after: int) -> void:
 	_update_unit(inst, hp_after)
+	_float_at(_unit_nodes.get(inst.instance_id, null), "+%d" % amt, COL_HEAL, amt)
 
 
 func _on_unit_removed(inst: UnitInstance, _reason: String) -> void:
@@ -455,6 +485,8 @@ func _on_main_button(text: String, enabled: bool, _hint: String = "") -> void:
 	var b: Button = $HUD/ActionBar/MainButton
 	if b != null:
 		b.disabled = not enabled
+		## §二之3 line 60：结束部署 / 结束行动 = 文本白
+		b.add_theme_color_override("font_color", Color(1, 1, 1, 1))
 	$HUD/ActionBar/Label.text = text
 
 
@@ -521,6 +553,7 @@ func _cell_pos(cell: Vector2i) -> Vector2:
 
 ## 点格 → 翻译成引擎请求（**不在视图里做规则判定**：种类看预览资源给的 kind）
 func _on_cell_clicked(cell: Vector2i) -> void:
+	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return
 	## ⭐ 手牌状态机（人 2026-09-19）：
@@ -672,6 +705,7 @@ func refresh_hand_affordability() -> void:
 
 
 func _on_hand_clicked(card_id: String, side: int) -> void:
+	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null:
 		return
 	var idx: int = _hand_order[side].find(card_id)
@@ -726,6 +760,52 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 		node.unit_pressed.connect(_on_unit_clicked)
 	_unit_nodes[inst.instance_id] = node
 	_play("卡牌登场", inst)
+
+
+# ============================================================
+#  迭代060 v4 接线：飘字 / 地图抖动 / 回合色 / UI 锁定
+# ============================================================
+
+## 规则4（§一之4 line 29）：`block_ui` 动画运行期间屏蔽交互
+func _on_ui_lock(locked: bool) -> void:
+	_ui_locked = locked
+
+
+## 飘字（§二之1 line 42-43「回费文本 / 数值buff变化 / 战斗结算文本」
+##       + §二之2 line 47-51：三色 + **数值越大字体越大**）
+func _float_at(anchor: Control, text: String, color: Color, value: int) -> void:
+	if _fx_root == null or anchor == null or not is_instance_valid(anchor):
+		return
+	var lb: Label = FLOAT_TEXT_SCENE.instantiate()
+	lb.text = text
+	lb.modulate = color
+	var t: float = clampf(float(value) / float(FLOAT_FS_REF), 0.0, 1.0)
+	lb.add_theme_font_size_override("font_size", int(round(lerpf(float(FLOAT_FS_BASE), float(FLOAT_FS_MAX), t))))
+	_fx_root.add_child(lb)
+	## 坐标空间：飘字挂 EffectsTop（与视图根同原点的整屏 Control）→ 用 global 差值换算
+	lb.position = anchor.global_position + Vector2(anchor.size.x * 0.5 - 100.0, -20.0) - _fx_root.global_position
+	anim.action("浮字上浮", lb)
+
+
+## 地图抖动（§二之2 line 54「释放攻击 AOE 时整个地图/镜头抖动」；§六「指令技能命中 ≥2 处」）
+func _on_command_resolved(_side: int, _card, targets: Array, _damage: int, _healed: int) -> void:
+	if anim != null and targets.size() >= 2:
+		anim.action("地图抖动", $Battle/MapView)
+
+
+## 回合色（§二之3 line 57-59）：我方绿 `#499169` / 敌方红 `#A84331`（1 帧硬切）
+func _on_turn_color(side: int, _round_no: int) -> void:
+	if anim == null:
+		return
+	anim.action("回合色-我方" if side == SIDE_ALLY else "回合色-敌方", $Background)
+
+
+## 文本色表（§二之3 line 60-62）：结束部署/行动 = 白；回费阶段·等待行动 = 白 50%
+func _on_phase_text_color(_side: int, phase: int, _round_no: int) -> void:
+	var lb: Label = $HUD/ActionBar/Label
+	if lb == null:
+		return
+	lb.modulate = Color(1, 1, 1, 0.5) if (phase == PHASE_RECOVER or phase == PHASE_TERRAIN) else Color(1, 1, 1, 1)
 
 
 ## 播动画（迭代060 v4）—— 目标节点由 `instance_id` 解析；不在册则跳过（不报错、不吞）
@@ -792,6 +872,7 @@ func _update_unit(inst: UnitInstance, hp_after: int) -> void:
 
 
 func _on_unit_clicked(instance_id: String) -> void:
+	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return
 	var inst := _find_unit(instance_id)
@@ -899,6 +980,7 @@ func _call_opt(node: Object, method: String, args: Array) -> void:
 
 ## 主按钮 → 按当前选中分流（G-6 Q-3：选中手牌时按钮兼顾弃牌）
 func _on_main_pressed() -> void:
+	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return
 	## 待确认支援 → 按钮「确认」执行（迭代059 步3：恢复原设计）

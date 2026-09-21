@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://fjk0wyirab0k"]
+
+[node name="FloatText" type="Label" unique_id=1735134723]
+offset_right = 200.0
+offset_bottom = 60.0
+horizontal_alignment = 1
+vertical_alignment = 1
