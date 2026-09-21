@@ -776,15 +776,18 @@ func _on_ui_lock(locked: bool) -> void:
 func _float_at(anchor: Control, text: String, color: Color, value: int) -> void:
 	if _fx_root == null or anchor == null or not is_instance_valid(anchor):
 		return
-	var lb: Label = FLOAT_TEXT_SCENE.instantiate()
+	var ft: Control = FLOAT_TEXT_SCENE.instantiate()
+	## ⚠️ 颜色/字号放**子节点**：`浮字上浮` 的淡出是 TINT（绝对 modulate），
+	##   若把颜色放在动画目标本身会被白色冲掉（实测踩坑）→ 外层只吃 alpha，内层保留颜色
+	var lb: Label = ft.get_node("Text")
 	lb.text = text
 	lb.modulate = color
 	var t: float = clampf(float(value) / float(FLOAT_FS_REF), 0.0, 1.0)
 	lb.add_theme_font_size_override("font_size", int(round(lerpf(float(FLOAT_FS_BASE), float(FLOAT_FS_MAX), t))))
-	_fx_root.add_child(lb)
+	_fx_root.add_child(ft)
 	## 坐标空间：飘字挂 EffectsTop（与视图根同原点的整屏 Control）→ 用 global 差值换算
-	lb.position = anchor.global_position + Vector2(anchor.size.x * 0.5 - 100.0, -20.0) - _fx_root.global_position
-	anim.action("浮字上浮", lb)
+	ft.position = anchor.global_position + Vector2(anchor.size.x * 0.5 - 100.0, -20.0) - _fx_root.global_position
+	anim.action("浮字上浮", ft)
 
 
 ## 地图抖动（§二之2 line 54「释放攻击 AOE 时整个地图/镜头抖动」；§六「指令技能命中 ≥2 处」）
