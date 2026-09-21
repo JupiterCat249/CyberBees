@@ -31,7 +31,7 @@ func _ready() -> void:
 	add_child(player)
 	## 0) 数据驱动装载：`game_data/anims/*.tres` → Pattern 库
 	var names: Array[StringName] = player.pattern_names()
-	_check(names.size() == 11, "库装载 11 条 Pattern（实际 %d：%s）" % [names.size(), str(names)])
+	_check(names.size() == 14, "库装载 14 条 Pattern（实际 %d：%s）" % [names.size(), str(names)])
 
 	## 1) 静态类型 Resource 构造
 	var c1 := ClipLib.new()
@@ -69,5 +69,56 @@ func _ready() -> void:
 	_check(tgt.position == Vector2(100, 200), "终帧精确归位 %s" % str(tgt.position))
 	_check(not player.is_running("冒烟-移动落位"), "播完自动结束")
 
+	## 4) 规则3（§一之4 line 28）：终止**级联**到子 Pattern
+	var cb := ClipLib.new()
+	cb.kind = ClipLib.Kind.TINT
+	cb.frames = 30
+	var ub := UnitLib.new()
+	ub.unit_name = "子"
+	ub.clips = [cb]
+	var pb := PatternLib.new()
+	pb.pattern_name = "冒烟-子"
+	pb.units = [ub]
+	player.register(pb)
+	var ca := ClipLib.new()
+	ca.kind = ClipLib.Kind.TINT
+	ca.frames = 30
+	var ua := UnitLib.new()
+	ua.unit_name = "父"
+	ua.clips = [ca]
+	var pa := PatternLib.new()
+	pa.pattern_name = "冒烟-父"
+	pa.trigger_on_start = "冒烟-子"
+	pa.units = [ua]
+	player.register(pa)
+	player.action("冒烟-父", tgt)
+	_check(player.is_running("冒烟-父") and player.is_running("冒烟-子"), "规则2：A 开始时触发 B（两者并行在跑）")
+	player.stop("冒烟-父")
+	_check(not player.is_running("冒烟-父") and not player.is_running("冒烟-子"), "规则3：停 A → 级联停 B")
+
+	## 5) 规则2 的条件判断：value 门控
+	var cc := ClipLib.new()
+	cc.kind = ClipLib.Kind.TINT
+	cc.frames = 2
+	cc.condition = ClipLib.Cond.VALUE_GTE
+	cc.cond_value = 7
+	cc.on_start_trigger = "冒烟-子"
+	var uc := UnitLib.new()
+	uc.unit_name = "带条件"
+	uc.clips = [cc]
+	var pc := PatternLib.new()
+	pc.pattern_name = "冒烟-条件"
+	pc.units = [uc]
+	player.register(pc)
+	player.action("冒烟-条件", tgt, 3)
+	player._step("冒烟-条件#%d" % tgt.get_instance_id())
+	_check(not player.is_running("冒烟-子"), "规则2：value=3 < 7 → 条件不成立、不触发")
+	player.stop_all()
+	player.action("冒烟-条件", tgt, 9)
+	player._step("冒烟-条件#%d" % tgt.get_instance_id())
+	_check(player.is_running("冒烟-子"), "规则2：value=9 ≥ 7 → 条件成立、触发 B")
+	player.stop_all()
+
 	print("=== 结果：%d PASS / %d FAIL ===" % [_pass, _fail])
+	await get_tree().create_timer(0.6).timeout
 	get_tree().quit(1 if _fail > 0 else 0)

@@ -27,6 +27,9 @@ const SHAKE_EXTRA: int = 14         ## 延长量（40 → 54 帧）
 const EXIT_FRAMES: int = 20         ## 单位退场（迭代032 定稿：仅一次淡出）
 const FLOAT_RISE: int = 40          ## 飘字上浮帧数
 const FLOAT_FADE: int = 20          ## 飘字淡出帧数
+const MAP_SHAKE_FRAMES: int = 54    ## 地图抖动总帧数（§六：54 帧 0.90s；《动画系统及流程》§二之2）
+const MAP_SHAKE_SEG: int = 3        ## 每段帧数（18 段 × 3 = 54）
+const MAP_SHAKE_AMP: float = 7.0    ## 基准振幅 px（§六）
 
 var _saved: int = 0
 var _failed: int = 0
@@ -46,6 +49,9 @@ func _ready() -> void:
 	_gen_buff_pulse(true)
 	_gen_buff_pulse(false)
 	_gen_float_text()
+	_gen_map_shake()
+	_gen_turn_color(true)
+	_gen_turn_color(false)
 	print("=== 结果：%d 已生成 / %d 失败 ===" % [_saved, _failed])
 	get_tree().quit(1 if _failed > 0 else 0)
 
@@ -211,3 +217,35 @@ func _gen_float_text() -> void:
 	units.append(_unit("上浮", rise))
 	units.append(_unit("淡出", fade))
 	_save(_pattern("浮字上浮", units))
+
+
+# ------------------------------------------------------------
+#  ⑪ 地图抖动（《动画系统及流程》§二之2：「释放攻击 AOE 时整个地图/镜头抖动」
+#     §六：54 帧 0.90s · 18 段 ±2 · 基准 7px）
+#     同受击抖动：围绕原位对称、逐段衰减、末段抵消归零
+func _gen_map_shake() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SHAKE_SEED + 1
+	var segs: int = MAP_SHAKE_FRAMES / MAP_SHAKE_SEG
+	var dir: float = 1.0 if rng.randf() < 0.5 else -1.0
+	var clips: Array[AnimClip] = []
+	var run: float = 0.0
+	for k: int in range(segs - 1):
+		var a: float = MAP_SHAKE_AMP * pow(SHAKE_DECAY, float(k)) * (1.0 + rng.randf_range(-SHAKE_JITTER, SHAKE_JITTER))
+		var off: float = a * dir
+		run += off
+		clips.append(_clip(ClipLib.Kind.MOVE_BY, MAP_SHAKE_SEG, Vector2(off, 0)))
+		dir = -dir
+	clips.append(_clip(ClipLib.Kind.MOVE_BY, MAP_SHAKE_SEG, Vector2(-run, 0)))
+	_save(_pattern("地图抖动", _units1(_unit("地图左右往复", clips))))
+
+
+# ------------------------------------------------------------
+#  ⑫ 回合色（《动画系统及流程》§二之3；§六：1 帧硬切）
+#     我方 `#499169` / 敌方 `#A84331`；实现＝对目标做 1 帧 TINT（modulate 乘色）
+func _gen_turn_color(is_ally: bool) -> void:
+	var nm: String = "回合色-我方" if is_ally else "回合色-敌方"
+	var col: Color = Color("#499169") if is_ally else Color("#A84331")
+	var clips: Array[AnimClip] = []
+	clips.append(_clip(ClipLib.Kind.TINT, 1, Vector2.ZERO, col))
+	_save(_pattern(nm, _units1(_unit("硬切", clips))))

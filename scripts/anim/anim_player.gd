@@ -71,17 +71,17 @@ func pattern_names() -> Array[StringName]:
 #  生命周期（§一之2）：ResetUnit / Action / Stop
 # ============================================================
 
-func action(pname: StringName, target: Node = null, value: int = 0) -> void:
+func action(pname: StringName, target: Node = null, value: int = 0) -> String:
 	var pat: AnimPattern = _patterns.get(pname, null)
 	if pat == null or target == null or not is_instance_valid(target):
-		return
+		return ""
 	var key: String = _key(pname, target)
 	if _running.has(key):
 		## 重播：先按自然收尾结束上一条（回位），避免位移累积
 		_finish(key, true)
 	var units: Array[AnimUnit] = pat.units
 	if units.is_empty():
-		return
+		return ""
 	var grow: bool = pat.extra_frames > 0 and value >= pat.value_threshold
 	var ci: Array[int] = []
 	var cf: Array[int] = []
@@ -95,12 +95,17 @@ func action(pname: StringName, target: Node = null, value: int = 0) -> void:
 		"ci": ci, "cf": cf, "extra": ex,
 		"base_pos": _pos(target), "base_rot": target.rotation, "base_mod": target.modulate,
 		"total": _total_frames(pat, grow),
+		"children": [],   ## 规则3：本动画触发的子动画键（终止时**级联**终止）
 	}
 	_refresh_ui_lock()
 	if not pat.trigger_on_start.is_empty():
-		action(pat.trigger_on_start, target, value)
+		var ck: String = action(pat.trigger_on_start, target, value)
+		if not ck.is_empty():
+			var kids: Array = _running[key]["children"]
+			kids.append(ck)
 	if debug_log_timing:
 		print("[ANIM] start %s → %s (frames=%d)" % [pname, target.name, _running[key]["total"]])
+	return key
 
 
 func stop(pname: StringName) -> void:
@@ -162,7 +167,7 @@ func _step(key: String) -> void:
 			continue
 		var clip: AnimClip = u.clips[ci[i]]
 		var want: int = clip.frames + (ex[i] if ci[i] == u.clips.size() - 1 else 0)
-		_apply(clip, target, st, cf[i], want)
+		_apply(clip, target, st, cf[i], want, i)
 		cf[i] += 1
 		if cf[i] >= want:
 			cf[i] = 0
@@ -182,7 +187,10 @@ func _all_done(units: Array[AnimUnit], ci: Array[int]) -> bool:
 	return true
 
 
-func _apply(clip: AnimClip, target: Node, st: Dictionary, done_frames: int, want: int) -> void:
+func _apply(clip: AnimClip, target: Node, st: Dictionary, done_frames: int, want: int, ui: int) -> void:
+	## 规则2（§一之4 line 27）：**动作开始时**可跳转/触发/终止其他单元或动画（条件门控）
+	if done_frames == 0:
+		_apply_rules(clip, target, st, ui)
 	var scale: float = 1.0
 	var ref: int = st["pat"].value_ref
 	if ref > 0:
@@ -211,11 +219,47 @@ func _apply(clip: AnimClip, target: Node, st: Dictionary, done_frames: int, want
 					host.add_child(clip.fx_scene.instantiate())
 
 
+## 规则2：Clip 开始时评估条件 → 触发 / 终止 / 跳转（全部为数据字段，非脚本语言）
+##   跳转语义：**只能向后跳**（目标单元下标 > 当前单元下标）—— 杆绝自跳死循环
+func _apply_rules(clip: AnimClip, target: Node, st: Dictionary, ui: int) -> void:
+	if not _cond_ok(clip, st):
+		return
+	var value: int = int(st["value"])
+	if not clip.on_start_trigger.is_empty():
+		var ck: String = action(clip.on_start_trigger, target, value)
+		if not ck.is_empty():
+			var kids: Array = st["children"]
+			kids.append(ck)
+	if not clip.on_start_stop.is_empty():
+		stop(clip.on_start_stop)
+	var units: Array[AnimUnit] = st["pat"].units
+	if clip.on_start_goto_unit > ui and clip.on_start_goto_unit < units.size():
+		var ci: Array[int] = st["ci"]
+		var cf: Array[int] = st["cf"]
+		for i: int in range(units.size()):
+			ci[i] = 0 if i == clip.on_start_goto_unit else units[i].clips.size()
+			cf[i] = 0
+
+
+## 条件判断（数据驱动；NONE = 恒真）
+func _cond_ok(clip: AnimClip, st: Dictionary) -> bool:
+	match clip.condition:
+		AnimClip.Cond.VALUE_GTE:
+			return int(st["value"]) >= clip.cond_value
+		AnimClip.Cond.VALUE_LT:
+			return int(st["value"]) < clip.cond_value
+	return true
+
+
 func _finish(key: String, restore: bool) -> void:
 	if not _running.has(key):
 		return
 	var st: Dictionary = _running[key]
 	_running.erase(key)
+	## 规则3（§一之4 line 28）：**终止会一并终止子单元与动作**（级联；级联项不复位）
+	for ck: String in (st.get("children", []) as Array):
+		if _running.has(ck):
+			_finish(ck, false)
 	var target: Node = st["target"]
 	if target != null and is_instance_valid(target):
 		if restore:

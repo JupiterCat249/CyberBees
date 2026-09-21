@@ -12,6 +12,13 @@ enum Kind {
 	SPAWN_FX,  ## **生成特效** —— 在目标处实例化 fx_scene
 }
 
+## 规则2 的条件（§一之4 line 27：任意动作可跳转/触发/终止，**支持条件判断**）
+enum Cond {
+	NONE,      ## 无条件（恒真）
+	VALUE_GTE, ## 本次动画的 value ≥ cond_value
+	VALUE_LT,  ## 本次动画的 value < cond_value
+}
+
 @export var kind: Kind = Kind.MOVE_BY
 ## 持续帧数（1 帧 = 瞬时动作）
 @export var frames: int = 1
@@ -25,3 +32,17 @@ enum Kind {
 @export var tint: Color = Color(1, 1, 1, 1)
 ## SPAWN_FX：要实例化的特效场景
 @export var fx_scene: PackedScene = null
+
+# ------------------------------------------------------------
+#  规则2（§一之4 line 27）：本 Clip **开始时**可跳转 / 触发 / 终止其他单元或动画
+#  由 `condition` 门控；三项均为数据字段（非脚本语言）
+# ------------------------------------------------------------
+@export var condition: Cond = Cond.NONE
+@export var cond_value: int = 0
+## 本 Clip 开始时**触发**的 Pattern 名（空 = 不触发）
+@export var on_start_trigger: String = ""
+## 本 Clip 开始时**终止**的 Pattern 名（空 = 不终止）
+@export var on_start_stop: String = ""
+## 本 Clip 开始时**跳转**到本 Pattern 的第 N 个 Unit（-1 = 不跳转）
+##   ⚠️ 语义：**只能向后跳**（N > 当前单元下标）—— 从前向后跳以杆绝自跳死循环
+@export var on_start_goto_unit: int = -1

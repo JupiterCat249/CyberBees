@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AnimPattern" format=3]
+
+[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_alsqj"]
+[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_nc8wt"]
+[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_5ath5"]
+
+[sub_resource type="Resource" id="Resource_teauo"]
+script = ExtResource("3_5ath5")
+kind = 3
+tint = Color(0.65882355, 0.2627451, 0.19215687, 1)
+
+[sub_resource type="Resource" id="Resource_6o8gp"]
+script = ExtResource("2_nc8wt")
+unit_name = "硬切"
+clips = Array[ExtResource("3_5ath5")]([SubResource("Resource_teauo")])
+
+[resource]
+script = ExtResource("1_alsqj")
+pattern_name = "回合色-敌方"
+units = Array[ExtResource("2_nc8wt")]([SubResource("Resource_6o8gp")])
