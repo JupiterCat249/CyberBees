@@ -97,7 +97,14 @@ func _ready() -> void:
 	add_child(anim)
 	anim.instance_finished.connect(_on_anim_finished)
 	anim.ui_lock_changed.connect(_on_ui_lock)
-	_fx_root = get_node_or_null("EffectsTop") as Control
+	## 飘字层：**运行时建**（不落盘），挂在 HUD 下（HUD 是最后绘制的一层）+ z_index 拉高
+	##   ⚠️ 不再往 `battle_scene.tscn` 里加节点：编辑器持有旧内存副本，
+	##      `node_create + scene_save` 会把整个场景回退（迭代060 实测：节点 56 → 29）
+	_fx_root = Control.new()
+	_fx_root.name = "EffectsTop"
+	_fx_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fx_root.z_index = 100
+	$HUD.add_child(_fx_root)
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
