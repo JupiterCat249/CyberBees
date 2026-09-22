@@ -50,8 +50,6 @@ func _ready() -> void:
 	_gen_buff_pulse(false)
 	_gen_float_text()
 	_gen_map_shake()
-	_gen_turn_color(true)
-	_gen_turn_color(false)
 	print("=== 结果：%d 已生成 / %d 失败 ===" % [_saved, _failed])
 	get_tree().quit(1 if _failed > 0 else 0)
 
@@ -234,13 +232,3 @@ func _gen_map_shake() -> void:
 	clips.append(_clip(ClipLib.Kind.MOVE_TO, MAP_SHAKE_SEG, Vector2.ZERO))
 	_save(_pattern("地图抖动", _units1(_unit("地图左右往复", clips))))
 
-
-# ------------------------------------------------------------
-#  ⑫ 回合色（《动画系统及流程》§二之3；§六：1 帧硬切）
-#     我方 `#499169` / 敌方 `#A84331`；实现＝对目标做 1 帧 TINT（modulate 乘色）
-func _gen_turn_color(is_ally: bool) -> void:
-	var nm: String = "回合色-我方" if is_ally else "回合色-敌方"
-	var col: Color = Color("#499169") if is_ally else Color("#A84331")
-	var clips: Array[AnimClip] = []
-	clips.append(_clip(ClipLib.Kind.TINT, 1, Vector2.ZERO, col))
-	_save(_pattern(nm, _units1(_unit("硬切", clips))))

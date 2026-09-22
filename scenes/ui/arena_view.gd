@@ -252,7 +252,6 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_MAP_ASSETS, _on_map_assets)
 	## 迭代060 v4 动画接线：地图抖动 / 回合色 / 阶段文本色
 	b.connect(Bus.SIG_COMMAND_RESOLVED, _on_command_resolved)
-	b.connect(Bus.SIG_TURN_STARTED, _on_turn_color)
 	b.connect(Bus.SIG_PHASE_STARTED, _on_phase_text_color)
 
 
@@ -794,13 +793,6 @@ func _float_at(anchor: Control, text: String, color: Color, value: int) -> void:
 func _on_command_resolved(_side: int, _card, targets: Array, _damage: int, _healed: int) -> void:
 	if anim != null and targets.size() >= 2:
 		anim.action("地图抖动", $Battle/MapView)
-
-
-## 回合色（§二之3 line 57-59）：我方绿 `#499169` / 敌方红 `#A84331`（1 帧硬切）
-func _on_turn_color(side: int, _round_no: int) -> void:
-	if anim == null:
-		return
-	anim.action("回合色-我方" if side == SIDE_ALLY else "回合色-敌方", $Background)
 
 
 ## 文本色表（§二之3 line 60-62）：结束部署/行动 = 白；回费阶段·等待行动 = 白 50%
