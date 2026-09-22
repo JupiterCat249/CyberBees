@@ -1,0 +1,8 @@
+{
+  "_comment": "客户端联机参数（测试）：本地/测试中继。切换：--net-profile=prod 或 SB_NET_PROFILE",
+  "host": "127.0.0.1",
+  "port": 8091,
+  "path": "/relay",
+  "wss": false,
+  "build": "godot-test-2026-09-21"
+}

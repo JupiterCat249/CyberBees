@@ -128,7 +128,10 @@ function createServer(cfg) {
     if (code === ERR.VERSION_MISMATCH) stats.version_rejects++;
     log('info', 'reject', { sid: conn.sid, code, msg: msg || '' });
     send(conn, { t: 'err', code, msg: msg || '' });
-    if (fatal) { try { conn.ws.close(1008, code); } catch (_) {} }
+    if (fatal) {
+      // ⚠️ 先让 err 出网再关闭：立即 close 可能让客户端丢掉最后一条报文（迭代061 检查点2 实测踩到）
+      setTimeout(() => { try { conn.ws.close(1008, code); } catch (_) {} }, 120);
+    }
     return false;
   }
   function validate(type, msg) {

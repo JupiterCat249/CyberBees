@@ -1,0 +1,8 @@
+{
+  "_comment": "客户端联机参数（生产模板）：域名 + wss（宝塔反代 /relay 并开启 WebSocket）；与测试仅参数不同",
+  "host": "www.ourwangzhan.com",
+  "port": 443,
+  "path": "/relay",
+  "wss": true,
+  "build": "godot-prod-YYYYMMDD"
+}

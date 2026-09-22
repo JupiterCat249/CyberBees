@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://qhhscpulj1yy"]
+
+[ext_resource type="Script" path="res://verification/iter061_net_check.gd" id="1_pcq16"]
+
+[node name="Iter061NetCheck" type="Node" unique_id=1387771979]
+script = ExtResource("1_pcq16")
