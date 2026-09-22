@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>电子蜂 · 中继管理面板</title>
+<style>
+  :root{--bg:#05070d;--fg:#cfe7ff;--dim:#7d93ab;--neon:#00e5ff;--green:#39d98a;--amber:#ffb020;--mag:#ff2e88;--line:rgba(0,229,255,.22)}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.6 "Microsoft YaHei",system-ui,sans-serif}
+  header{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  h1{margin:0;font-size:19px;letter-spacing:2px;color:#eaf7ff;text-shadow:0 0 14px rgba(0,229,255,.5)}
+  .tag{font-size:12px;color:var(--dim)}
+  main{padding:18px 22px 40px;max-width:1200px;margin:0}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:18px}
+  .card{border:1px solid var(--line);padding:10px 12px;background:linear-gradient(160deg,rgba(0,229,255,.07),transparent)}
+  .card b{display:block;font:600 22px/1.2 Georgia,serif;color:var(--neon)}
+  .card span{font-size:11.5px;color:var(--dim)}
+  h2{font-size:13.5px;letter-spacing:1.4px;color:var(--neon);border-bottom:1px solid var(--line);padding-bottom:5px;margin:22px 0 8px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--dim);font-weight:400;font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--line)}
+  td{padding:6px 8px;border-bottom:1px solid rgba(125,147,171,.14);vertical-align:top}
+  code{color:var(--amber);font-family:Consolas,monospace}
+  button{background:transparent;border:1px solid var(--line);color:var(--fg);padding:3px 9px;border-radius:3px;cursor:pointer;font-size:12px}
+  button:hover{border-color:var(--mag);color:var(--mag)}
+  input{background:#0a0f18;border:1px solid var(--line);color:var(--fg);padding:5px 8px;border-radius:3px;font-size:12.5px}
+  pre{background:#0a0f18;border:1px solid var(--line);padding:10px;max-height:280px;overflow:auto;font:11.5px/1.5 Consolas,monospace;color:#9fd7ff;white-space:pre-wrap}
+  .ok{color:var(--green)}.bad{color:var(--mag)}.warn{color:var(--amber)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header>
+  <h1>中继管理面板</h1>
+  <span class="tag" id="conn">连接中…</span>
+  <span class="row" style="margin-left:auto">
+    <input id="tok" type="password" placeholder="admin_token（未配置可留空）" size="26">
+    <button onclick="saveTok()">保存</button>
+    <button onclick="refresh()">立即刷新</button>
+    <label class="tag"><input type="checkbox" id="auto" checked> 3s 自动刷新</label>
+  </span>
+</header>
+<main>
+  <div class="cards" id="cards"></div>
+
+  <h2>房间（房间号 / 对局情况）</h2>
+  <div class="row" style="margin-bottom:6px">
+    <button onclick="closeAll()">关闭全部房间</button>
+    <span class="tag">关房＝给双方发 peer_left{ended:true} 并回收（T7：掉线/结束即关房）</span>
+  </div>
+  <table><thead><tr><th>房间号</th><th>状态</th><th>存在</th><th>对局时长</th><th>操作数</th><th>流量</th><th>seed / 先手</th><th>座位</th><th></th></tr></thead><tbody id="rooms"></tbody></table>
+
+  <h2>连接</h2>
+  <table><thead><tr><th>sid</th><th>IP</th><th>房间</th><th>座位</th><th>握手</th><th>在线</th><th>消息</th><th>收/发</th><th></th></tr></thead><tbody id="conns"></tbody></table>
+
+  <h2>最近日志（不含玩家操作内容）</h2>
+  <pre id="log"></pre>
+</main>
+<script>
+let TOKEN = localStorage.getItem('cb_admin_token') || '';
+document.getElementById('tok').value = TOKEN;
+function saveTok(){ TOKEN = document.getElementById('tok').value.trim(); localStorage.setItem('cb_admin_token', TOKEN); refresh(); }
+function api(p, opt){ return fetch(p, Object.assign({headers: TOKEN ? {Authorization: 'Bearer ' + TOKEN} : {}}, opt||{})).then(r=>r.json()); }
+function fmtB(n){ return n > 1048576 ? (n/1048576).toFixed(2)+' MB' : n > 1024 ? (n/1024).toFixed(1)+' KB' : n+' B'; }
+function esc(s){ return String(s==null?'':s).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+async function refresh(){
+  try{
+    const s = await api('/admin/api/summary');
+    if(!s.ok){ document.getElementById('conn').innerHTML = '<span class="bad">鉴权失败：'+esc(s.error)+'</span>'; return; }
+    const h = s.health;
+    document.getElementById('conn').innerHTML = '<span class="ok">在线</span> · proto '+h.proto+' · build '+esc(h.build)+' · 配置 '+esc(h.config)+' · 运行 '+h.uptime_s+'s'+(s.admin.token_required?' · <span class="warn">已启用 token</span>':' · <span class="warn">仅环回可访问</span>');
+    document.getElementById('cards').innerHTML = [
+      ['房间在开', h.rooms], ['累计建房', h.rooms_created], ['连接', h.conns], ['累计连接', h.conns_total],
+      ['转发操作', h.ops_relayed], ['操作流量', fmtB(h.payload_bytes)], ['拒绝', h.rejects], ['版本拒绝', h.version_rejects]
+    ].map(([k,v])=>`<div class="card"><b>${v}</b><span>${k}</span></div>`).join('');
+    const rs = await api('/admin/api/rooms');
+    document.getElementById('rooms').innerHTML = rs.ok && rs.rooms.length ? rs.rooms.map(r=>`<tr>
+      <td><code>${esc(r.code)}</code></td><td>${r.state==='playing'?'<span class="ok">对局中</span>':'<span class="warn">等待中</span>'}</td>
+      <td>${r.age_s}s</td><td>${r.playing_s?r.playing_s+'s':'—'}</td><td>${r.ops_relayed}</td><td>${fmtB(r.payload_bytes)}</td>
+      <td><code>${r.seed||'—'}</code> / ${r.first_side}</td>
+      <td>${r.seats.map(x=>x.empty?'<span class="tag">空</span>':esc(x.name||'?')+' <span class="tag">'+esc(x.ip)+'</span>').join('<br>')}</td>
+      <td><button onclick="closeRoom('${esc(r.code)}')">关房</button></td></tr>`).join('') : '<tr><td colspan="9" class="tag">（暂无房间）</td></tr>';
+    const cs = await api('/admin/api/conns');
+    document.getElementById('conns').innerHTML = cs.ok && cs.conns.length ? cs.conns.map(c=>`<tr>
+      <td><code>${esc(c.sid)}</code></td><td>${esc(c.ip)}</td><td>${c.room?('<code>'+esc(c.room)+'</code>'):'—'}</td><td>${c.seat==null?'—':c.seat}</td>
+      <td>${c.hello?'<span class="ok">是</span>':'<span class="bad">否</span>'}</td><td>${c.age_s}s</td><td>${c.msgs}</td>
+      <td>${fmtB(c.bytes_in)} / ${fmtB(c.bytes_out)}</td>
+      <td><button onclick="kick('${esc(c.sid)}')">踢线</button></td></tr>`).join('') : '<tr><td colspan="9" class="tag">（暂无连接）</td></tr>';
+    const lg = await api('/admin/api/log?n=120');
+    document.getElementById('log').textContent = lg.ok ? lg.lines.map(l=>`[${l.ts.slice(11,19)}] ${l.level.toUpperCase().padEnd(5)} ${l.evt} ${JSON.stringify(Object.assign({},l,{ts:undefined,level:undefined,evt:undefined}))}`.replace(/\{"ts":undefined.*?\}/,'').replace(/undefined/g,'').trim()).join('\n') : '（日志不可用）';
+  }catch(e){ document.getElementById('conn').innerHTML = '<span class="bad">请求失败：'+esc(e.message)+'</span>'; }
+}
+async function closeRoom(code){ if(!confirm('关闭房间 '+code+' ？双方会收到对局结束。')) return; const r = await api('/admin/api/room/close',{method:'POST',headers:Object.assign({'content-type':'application/json'}, TOKEN?{Authorization:'Bearer '+TOKEN}:{}),body:JSON.stringify({code})}); alert(JSON.stringify(r)); refresh(); }
+async function kick(sid){ if(!confirm('踢下线 '+sid+' ？')) return; const r = await api('/admin/api/conn/kick',{method:'POST',headers:Object.assign({'content-type':'application/json'}, TOKEN?{Authorization:'Bearer '+TOKEN}:{}),body:JSON.stringify({sid})}); alert(JSON.stringify(r)); refresh(); }
+async function closeAll(){ if(!confirm('关闭全部房间？')) return; const r = await api('/admin/api/rooms/close_all',{method:'POST',headers:Object.assign({'content-type':'application/json'}, TOKEN?{Authorization:'Bearer '+TOKEN}:{}),body:'{}'}); alert(JSON.stringify(r)); refresh(); }
+refresh();
+setInterval(()=>{ if(document.getElementById('auto').checked) refresh(); }, 3000);
+</script>
+</body>
+</html>

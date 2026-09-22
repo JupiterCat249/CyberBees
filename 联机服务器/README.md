@@ -71,6 +71,25 @@ bash tools/update.sh
 - 进程重启命令可配（`RESTART_CMD`）：pm2 用 `pm2 reload`；**宝塔 Node 项目管理器**可直接用面板重启按钮（或把其重启入口填进 `RESTART_CMD`）
 - 若反代只暴露 `/relay`，健康检查走本机 `127.0.0.1:<port>/healthz`（脚本默认如此）
 
+## 五之二、内置管理面板（`/admin`）
+
+浏览器打开 `http://127.0.0.1:8090/admin`（生产建议只从内网/白名单访问）：
+
+- **房间**：房间号 · 状态（等待/对局中）· 存在时长 · 对局时长 · **操作数** · 流量 · seed/先手 · 座位（名称/IP）
+- **连接**：sid · IP · 所属房间 · 座位 · 是否握手 · 在线时长 · 消息数 · 收/发字节
+- **处置**：关房（通知双方 `peer_left{ended:true}`）· 踢线 · 关闭全部房间
+- **日志环**：最近 ≤500 条（**不含玩家操作内容**）
+
+**鉴权（两道，安全默认）**：
+
+| 配置 | 行为 |
+|---|---|
+| `admin_token` 已填（或 `SB_ADMIN_TOKEN=...`） | 必须 `Authorization: Bearer <token>`（页面里填一次存 localStorage），比较用**常量时间** |
+| `admin_token` 留空 | **仅允许环回地址**访问，外网返回 `403` |
+
+> 面板**不能**注入操作、不能改对局数据（T7）。API 清单见 `系统维护/网络联机/基础描述.md` §八之二。
+> 联调小工具：`node tools/demo_session.js --config config.test.json --hold=180`（起一对客户端建立真实对局，方便看面板）。
+
 ## 六、健康检查字段（`/healthz`）
 
 `ok` · `proto` · `build` · `config`（当前配置文件名）· `uptime_s` · `conns` · `conns_total` · `rooms` · `rooms_created` · `ops_relayed` · `payload_bytes` · `rejects` · `version_rejects` · `require_wss`

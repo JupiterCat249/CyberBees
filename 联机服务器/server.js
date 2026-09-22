@@ -59,7 +59,7 @@ function loadConfig(argv) {
   if (i >= 0 && argv[i + 1]) file = argv[i + 1];
   const abs = path.isAbsolute(file) ? file : path.join(__dirname, file);
   const cfg = JSON.parse(fs.readFileSync(abs, 'utf8'));
-  const envMap = { SB_HOST: 'host', SB_PORT: 'port', SB_PATH: 'path', SB_PROTO: 'proto', SB_LOG_PRETTY: 'log_pretty' };
+  const envMap = { SB_HOST: 'host', SB_PORT: 'port', SB_PATH: 'path', SB_PROTO: 'proto', SB_LOG_PRETTY: 'log_pretty', SB_ADMIN_TOKEN: 'admin_token' };
   for (const [envKey, key] of Object.entries(envMap)) {
     const raw = process.env[envKey];
     if (raw === undefined || raw === '') continue;
@@ -72,10 +72,16 @@ function loadConfig(argv) {
 // ---------------------------------------------------------------------------
 // 日志（结构化；**永不打印 payload 内容**，只记长度）
 // ---------------------------------------------------------------------------
+/** 内置管理系统：最近日志环形缓冲（最多 500 条；**日志本身就不打印 payload 内容**，故不含玩家操作） */
+const LOG_RING = [];
+const LOG_RING_MAX = 500;
+
 function makeLogger(cfg) {
   const pretty = cfg.log_pretty !== false;
   return function log(level, evt, fields) {
     const rec = { ts: new Date().toISOString(), level, evt, ...(fields || {}) };
+    LOG_RING.push(rec);
+    if (LOG_RING.length > LOG_RING_MAX) LOG_RING.shift();
     if (pretty) {
       const { ts, level: lv, evt: e, ...rest } = rec;
       console.log(`[${ts}] ${String(lv).toUpperCase().padEnd(5)} ${e} ${Object.keys(rest).length ? JSON.stringify(rest) : ''}`);
@@ -121,7 +127,12 @@ function createServer(cfg) {
   // ---- 发送 / 拒绝 ----
   function send(conn, obj) {
     if (!conn || conn.ws.readyState !== conn.ws.OPEN) return false;
-    try { conn.ws.send(JSON.stringify(obj)); return true; } catch (e) { log('warn', 'send.fail', { sid: conn.sid, err: String(e && e.message) }); return false; }
+    try {
+      const s = JSON.stringify(obj);
+      conn.ws.send(s);
+      conn.bytes_out += Buffer.byteLength(s); // 管理面板统计
+      return true;
+    } catch (e) { log('warn', 'send.fail', { sid: conn.sid, err: String(e && e.message) }); return false; }
   }
   function fail(conn, code, msg, fatal) {
     stats.rejects++;
@@ -153,6 +164,7 @@ function createServer(cfg) {
     if (conn.room) { detach(conn, 'recreate'); }
     const room = {
       code: newCode(), state: 'waiting', created_at: Date.now(),
+      started_at: 0, ops_relayed: 0, payload_bytes: 0,
       peers: new Array(roomMax).fill(null), seed: 0, first_side: 0
     };
     rooms.set(room.code, room);
@@ -186,6 +198,7 @@ function createServer(cfg) {
     const filled = room.peers.filter(Boolean).length;
     if (filled < 2) return fail(conn, ERR.NEED_TWO_PLAYERS);
     room.state = 'playing';
+    room.started_at = Date.now();
     room.seed = crypto.randomInt(1, 2147483647);
     room.first_side = crypto.randomInt(0, 2); // 0=绿方先手（与引擎 SIDE_ALLY 对齐）
     const payload = { t: 'start', seed: room.seed, first_side: room.first_side, proto };
@@ -199,11 +212,13 @@ function createServer(cfg) {
     if (room.state !== 'playing') return fail(conn, ERR.NOT_STARTED);
     const payloadSize = JSON.stringify(msg.payload === undefined ? null : msg.payload).length;
     stats.payload_bytes += payloadSize;
+    room.payload_bytes += payloadSize;
     const out = {
       t: 'op', seat: conn.seat, seq: msg.seq, frame: msg.frame,
       payload: msg.payload, sseq: ++sseqCounter
     };
     stats.ops_relayed++;
+    room.ops_relayed++; // 内置管理系统：按房统计
     for (const p of room.peers) if (p && p !== conn) send(p, out);
     send(conn, { t: 'op_ack', seq: msg.seq, sseq: out.sseq });
     return true;
@@ -233,6 +248,11 @@ function createServer(cfg) {
   const server = http.createServer((req, res) => {
     let pathname = '/';
     try { pathname = new URL(req.url, 'http://placeholder').pathname; } catch (_) {}
+    // ---- 内置管理系统（/admin）----
+    if (pathname === '/admin' || pathname === '/admin.html' || pathname.startsWith('/admin/')) {
+      handleAdmin(req, res, pathname);
+      return;
+    }
     if (pathname === '/healthz') {
       const body = JSON.stringify(health(), null, 2);
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
@@ -267,6 +287,141 @@ function createServer(cfg) {
     };
   }
 
+  // ========================================================================
+  //  内置管理系统（/admin）—— 只做「观察 + 运维处置」
+  //  ★ 与 T7 不冲突：面板**不能**注入操作、不能改对局数据；只能「看」与「关房/踢线」
+  //  鉴权：① 配了 admin_token → 需 Bearer token（或 ?token=），常量时间比较
+  //        ② 未配 token → **仅允许环回地址**（127.0.0.1/::1），外网一律 403
+  //  端点：GET  /admin（页面）· /admin/api/summary|rooms|conns|log
+  //        POST /admin/api/room/close · /admin/api/conn/kick · /admin/api/rooms/close_all
+  // ========================================================================
+  const ADMIN_TOKEN = String(cfg.admin_token || '');
+  const ADMIN_MAX_BODY = 4096;
+
+  function timingEq(a, b) {
+    const x = Buffer.from(String(a)), y = Buffer.from(String(b));
+    if (x.length !== y.length) return false;
+    return crypto.timingSafeEqual(x, y);
+  }
+  function isLoopback(req) {
+    const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0].trim() || (req.socket.remoteAddress || ''));
+    return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  }
+  function adminAuth(req, url) {
+    if (ADMIN_TOKEN !== '') {
+      const h = String(req.headers.authorization || '');
+      const bearer = h.startsWith('Bearer ') ? h.slice(7) : '';
+      const q = String(url.searchParams.get('token') || '');
+      const ok = (bearer !== '' && timingEq(bearer, ADMIN_TOKEN)) || (q !== '' && timingEq(q, ADMIN_TOKEN));
+      return ok ? null : 'TOKEN_REQUIRED';
+    }
+    return isLoopback(req) ? null : 'LOOPBACK_ONLY';
+  }
+  function readBody(req, cb) {
+    let raw = '';
+    req.on('data', (c) => { raw += c; if (raw.length > ADMIN_MAX_BODY) req.destroy(); });
+    req.on('end', () => {
+      if (!raw) return cb({});
+      try { cb(JSON.parse(raw)); } catch (_) { cb(null); }
+    });
+  }
+  function sendJson(res, code, obj) {
+    res.writeHead(code, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' });
+    res.end(JSON.stringify(obj, null, 2));
+  }
+  function connView(c) {
+    return {
+      sid: c.sid, ip: c.peer_ip, room: c.room ? c.room.code : null, seat: c.seat,
+      name: c.name, hello: c.hello,
+      age_s: Math.round((Date.now() - c.created_at) / 1000),
+      idle_s: Math.round((Date.now() - c.last_seen) / 1000),
+      msgs: c.msgs, bytes_in: c.bytes_in, bytes_out: c.bytes_out
+    };
+  }
+  function roomView(r) {
+    return {
+      code: r.code, state: r.state,
+      age_s: Math.round((Date.now() - r.created_at) / 1000),
+      playing_s: r.state === 'playing' ? Math.round((Date.now() - r.started_at) / 1000) : 0,
+      seed: r.seed, first_side: r.first_side,
+      ops_relayed: r.ops_relayed, payload_bytes: r.payload_bytes,
+      seats: r.peers.map((p, i) => (p
+        ? { seat: i, name: p.name, ip: p.peer_ip, sid: p.sid, idle_s: Math.round((Date.now() - p.last_seen) / 1000) }
+        : { seat: i, empty: true }))
+    };
+  }
+  function closeRoomByCode(code, reason) {
+    const room = rooms.get(String(code || '').toUpperCase());
+    if (!room) return false;
+    for (const p of room.peers) {
+      if (!p) continue;
+      send(p, { t: 'peer_left', seat: p.seat, reason: reason || 'admin_close', ended: true });
+      p.room = null; p.seat = null;
+      setTimeout(() => { try { p.ws.close(1001, 'admin_close'); } catch (_) {} }, 120);
+    }
+    room.peers = new Array(roomMax).fill(null);
+    room.state = 'closed';
+    rooms.delete(room.code);
+    log('warn', 'admin.room_close', { code: room.code, reason: reason || 'admin_close' });
+    return true;
+  }
+  function handleAdmin(req, res, pathname) {
+    let url;
+    try { url = new URL(req.url, 'http://placeholder'); } catch (_) { return sendJson(res, 400, { ok: false, error: 'BAD_URL' }); }
+    const deny = adminAuth(req, url);
+    if (deny) {
+      log('warn', 'admin.denied', { path: pathname, reason: deny, ip: req.socket.remoteAddress });
+      return sendJson(res, deny === 'TOKEN_REQUIRED' ? 401 : 403, { ok: false, error: deny });
+    }
+    if (pathname === '/admin' || pathname === '/admin.html') {
+      const f = path.join(__dirname, 'admin.html');
+      if (!fs.existsSync(f)) return sendJson(res, 404, { ok: false, error: 'admin.html missing' });
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      return res.end(fs.readFileSync(f));
+    }
+    const api = pathname.replace(/^\/admin\/api\/?/, '');
+    if (req.method === 'GET') {
+      if (api === 'summary') {
+        return sendJson(res, 200, {
+          ok: true, health: health(),
+          admin: { token_required: ADMIN_TOKEN !== '', loopback_only: ADMIN_TOKEN === '' },
+          log_ring: LOG_RING.length
+        });
+      }
+      if (api === 'rooms') return sendJson(res, 200, { ok: true, rooms: [...rooms.values()].map(roomView) });
+      if (api === 'conns') return sendJson(res, 200, { ok: true, conns: [...conns].map(connView) });
+      if (api === 'log') {
+        const n = Math.min(Number(url.searchParams.get('n')) || 100, LOG_RING_MAX);
+        return sendJson(res, 200, { ok: true, lines: LOG_RING.slice(-n) });
+      }
+      return sendJson(res, 404, { ok: false, error: 'unknown admin api: ' + api });
+    }
+    if (req.method === 'POST') {
+      return readBody(req, (body) => {
+        if (body === null) return sendJson(res, 400, { ok: false, error: 'BAD_JSON' });
+        if (api === 'room/close') {
+          const okc = closeRoomByCode(body.code, body.reason || 'admin_close');
+          return sendJson(res, okc ? 200 : 404, { ok: okc, code: body.code || '' });
+        }
+        if (api === 'conn/kick') {
+          const target = [...conns].find((c) => c.sid === String(body.sid || ''));
+          if (!target) return sendJson(res, 404, { ok: false, error: 'conn not found' });
+          log('warn', 'admin.kick', { sid: target.sid, reason: body.reason || 'admin_kick' });
+          detach(target, 'admin_kick');
+          try { target.ws.close(1008, 'admin_kick'); } catch (_) {}
+          return sendJson(res, 200, { ok: true, sid: target.sid });
+        }
+        if (api === 'rooms/close_all') {
+          const codes = [...rooms.keys()];
+          for (const c of codes) closeRoomByCode(c, body.reason || 'admin_close_all');
+          return sendJson(res, 200, { ok: true, closed: codes.length });
+        }
+        return sendJson(res, 404, { ok: false, error: 'unknown admin api: ' + api });
+      });
+    }
+    return sendJson(res, 405, { ok: false, error: 'method not allowed' });
+  }
+
   // ---- WebSocket ----
   const wss = new WebSocketServer({ server, path: cfg.path || '/relay', maxPayload: maxMsg });
 
@@ -288,6 +443,7 @@ function createServer(cfg) {
       sid: crypto.randomBytes(6).toString('hex'),
       ws, room: null, seat: null, name: null, hello: false,
       alive: true, last_seen: Date.now(), bucket: rlBurst, bucket_ts: Date.now(),
+      created_at: Date.now(), msgs: 0, bytes_in: 0, bytes_out: 0,
       peer_ip: (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || (req.socket.remoteAddress || '')
     };
     conns.add(conn);
@@ -314,6 +470,8 @@ function createServer(cfg) {
 
     ws.on('message', (data, isBinary) => {
       conn.last_seen = Date.now();
+      conn.msgs++;
+      conn.bytes_in += data.length;
       // 令牌桶限流
       const now = Date.now();
       if (now - conn.bucket_ts >= 1000) {
