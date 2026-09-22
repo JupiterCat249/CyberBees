@@ -121,6 +121,22 @@ func stop_all() -> void:
 		_finish(k, false)
 
 
+## 终止所有**作用在同一目标**上的动画实例（级联、不复位）
+##   用途：单位被移除时先清掉它身上还在跑的受击/闪红，再播「单位退场」
+##   ① 避免动画写已释放节点（迭代060 人报缺陷根因） ② 避免变色与淡出互相打架
+func stop_on_target(target: Node) -> int:
+	if target == null:
+		return 0
+	var n: int = 0
+	for k: String in _running.keys():
+		var st: Dictionary = _running[k]
+		var tv = st.get("target", null)
+		if tv != null and is_instance_valid(tv) and tv == target:
+			_finish(k, false)
+			n += 1
+	return n
+
+
 func is_running(pname: StringName) -> bool:
 	var prefix: String = "%s#" % pname
 	for k: String in _running.keys():
@@ -151,8 +167,12 @@ func _process(_delta: float) -> void:
 func _step(key: String) -> void:
 	var st: Dictionary = _running[key]
 	var pat: AnimPattern = st["pat"]
-	var target: Node = st["target"]
-	if target == null or not is_instance_valid(target):
+	## ⚠️ 目标必须**先取无类型值再判有效**：若目标已被释放（同一节点上"单位退场"先播完并
+	##   `queue_free()`，而"受伤闪红/受击抖动"还在跑），`var target: Node = <已释放>` 会直接抛
+	##   `Trying to assign invalid previously freed instance` 并把游戏停进断点（迭代060 人报缺陷）
+	var tv = st["target"]
+	var target: Node = tv if (tv != null and is_instance_valid(tv)) else null
+	if target == null:
 		_finish(key, false)
 		return
 	if anim_paused and pat.pause_global:
@@ -260,8 +280,9 @@ func _finish(key: String, restore: bool) -> void:
 	for ck: String in (st.get("children", []) as Array):
 		if _running.has(ck):
 			_finish(ck, false)
-	var target: Node = st["target"]
-	if target != null and is_instance_valid(target):
+	var tv = st["target"]
+	var target: Node = tv if (tv != null and is_instance_valid(tv)) else null
+	if target != null:
 		if restore:
 			_set_pos(target, st["base_pos"])
 			target.rotation = st["base_rot"]

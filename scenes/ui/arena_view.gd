@@ -467,6 +467,9 @@ func _on_unit_removed(inst: UnitInstance, _reason: String) -> void:
 	## 退场：**动画播完才真正释放**（幽灵节点）—— 基础动画 §一「播完立即退场」
 	##   节点先立刻移出注册表 + 鼠标穿透（防吞点击），收尾在 `_on_anim_finished`
 	n.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	## ⚠️ 先清掉该单位身上还在跑的受击/闪红：否则它会在退场淡出后仍被写（迭代060 人报缺陷）
+	if anim != null:
+		anim.stop_on_target(n)
 	if anim != null and anim.has_pattern("单位退场"):
 		anim.action("单位退场", n)
 	else:
