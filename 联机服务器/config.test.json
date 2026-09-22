@@ -1,0 +1,17 @@
+{
+  "_comment": "测试参数（域名/服务器为测试用；代码与结构按准生产写，仅参数不同）",
+  "host": "0.0.0.0",
+  "port": 8080,
+  "path": "/relay",
+  "proto": 1,
+  "build": "test-2026-09-21",
+  "room_max": 2,
+  "idle_timeout_ms": 60000,
+  "hb_interval_ms": 15000,
+  "max_msg_bytes": 32768,
+  "rate_limit": { "burst": 60, "per_sec": 30 },
+  "allow_origins": [],
+  "require_wss": false,
+  "log_pretty": true,
+  "serve_index": true
+}

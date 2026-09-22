@@ -1,0 +1,19 @@
+{
+  "_comment": "生产参数模板（准生产交付物之一：与 test 同代码、只换参数；部署时在宝塔按实际域名/端口/证书调整）",
+  "host": "127.0.0.1",
+  "port": 8090,
+  "path": "/relay",
+  "proto": 1,
+  "build": "prod-YYYYMMDD",
+  "room_max": 2,
+  "idle_timeout_ms": 60000,
+  "hb_interval_ms": 15000,
+  "max_msg_bytes": 32768,
+  "rate_limit": { "burst": 60, "per_sec": 30 },
+  "allow_origins": [
+    "https://www.ourwangzhan.com"
+  ],
+  "require_wss": true,
+  "log_pretty": false,
+  "serve_index": false
+}

@@ -1,0 +1,6 @@
+# 联机服务器 · 忽略清单（准生产交付）
+node_modules/
+.backup/
+*.log
+.env
+tmp/

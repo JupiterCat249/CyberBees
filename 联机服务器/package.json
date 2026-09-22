@@ -1,0 +1,18 @@
+{
+  "name": "cyberbees-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "《电子蜂》中继服务器（准生产）—— 只做房间管理与操作转发；不跑规则、不裁决、不持有对局状态",
+  "main": "server.js",
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js --config config.prod.json",
+    "start:test": "node server.js --config config.test.json",
+    "smoke": "node tools/smoke_client.js --config config.test.json",
+    "health": "node tools/health.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
