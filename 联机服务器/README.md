@@ -3,6 +3,9 @@
 > 最后更新：2026-09-21 · 迭代061 检查点 1
 > 口径依据：《边界约束》**T7 v1.12** · 规划 `实时开发记录/迭代记录/迭代061/规划.md`
 > 分工：**功能实现由 AI 提供（本目录）**；面板/域名/证书/进程由人（宝塔）管理
+> 📍 **本目录位于游戏仓**：`Godot版Games代码/电子蜂/联机服务器/`（2026-09-21 由文档仓迁入，便于异地备份与交付）。
+> ⚠️ 目录内含**空文件 `.gdignore`** —— 依据引擎文档 `tutorials/best_practices/project_organization.html`「Ignoring specific folders」，
+> 该目录**不被 Godot 编辑器扫描**（否则会去索引 `node_modules` 的上千文件）。`node_modules/` `.backup/` `*.log` `.env` 不入库（见同目录 `.gitignore`）。
 
 ## 一、这是什么
 
