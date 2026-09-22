@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="电子蜂"
-run/main_scene="res://scenes/unuseful_battle_card.tscn"
+run/main_scene="res://scenes/ui/battle_scene.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 "60 帧å®éåªæ­0.36sï¼é£å­/æå¨ç»ç»æ¯éç½®ç­å¾å¤ï¼ãrun/max_fps"=60
