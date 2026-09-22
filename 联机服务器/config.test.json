@@ -1,7 +1,8 @@
 {
   "_comment": "测试参数（域名/服务器为测试用；代码与结构按准生产写，仅参数不同）",
+  "_note": "本机 8080 被 ApplicationWebServer 占用 → 测试档统一用 8091（与客户端 net_config/net.test.json 一致）；临时改端口可用 SB_PORT=<port> 覆盖",
   "host": "0.0.0.0",
-  "port": 8080,
+  "port": 8091,
   "path": "/relay",
   "proto": 1,
   "build": "test-2026-09-21",
@@ -11,6 +12,7 @@
   "max_msg_bytes": 32768,
   "rate_limit": { "burst": 60, "per_sec": 30 },
   "allow_origins": [],
+  "admin_token": "",
   "require_wss": false,
   "log_pretty": true,
   "serve_index": true

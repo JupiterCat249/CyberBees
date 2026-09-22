@@ -42,6 +42,21 @@ curl http://127.0.0.1:8080/healthz
 冒烟覆盖：① 版本不匹配被拒并断开 ② 建房返回 6 位房间码 ③ 第二名以 seat=1 加入 ④ 开局下发同一 `seed/first_side`
 ⑤ 操作转发附 `seat/sseq` ⑥ **payload 原样透传**（证明服务器不解释）⑦ 消息类型全在白名单（无状态下发）⑧ 掉线 → `peer_left{ended:true}`
 
+## 三之二、自检总表（本地 · 按顺序照抄即可）
+
+| # | 目的 | 命令 / 操作 | 期望结果 |
+|---|---|---|---|
+| 1 | 起服（测试档，端口见 `config.test.json`＝**8091**） | `npm run start:test` | 日志 `server.listen … port 8091`；`curl http://127.0.0.1:8091/healthz` → `ok:true` |
+| 2 | 服务端中继自检 | 另开终端：`npm run smoke` | **14 PASS / 0 FAIL** |
+| 3 | 内置管理面板 | 浏览器 `http://127.0.0.1:8091/admin` | 面板显示房间/连接/日志；未配 token 时标「仅环回可访问」 |
+| 4 | 面板鉴权（token 档） | `SB_ADMIN_TOKEN=secret1234 SB_PORT=8092 npm run start:test` → 无 token 访问 `/admin/api/summary` | **401**；带 `Authorization: Bearer secret1234` → **200** |
+| 5 | 生产档门禁演练（不改代码） | `SB_PORT=8093 node server.js --config config.prod.json` → 用明文 `ws` 连 | 收 `{"t":"err","code":"NEED_WSS"}` → 关闭 `1008` |
+| 6 | 造真实对局（看面板/GUI） | `node tools/demo_session.js --config config.test.json --hold=180` | 打印房间号/seed 并保持 180s |
+| 7 | **客户端层 + 确定性自检（Godot 内）** | ① 先做 ⓵（中继在 8091）② 编辑器 **F6** 打开 `verification/iter061_net_check.tscn` | **26 PASS / 0 FAIL**（中继未起时网络段会 FAIL 并提示） |
+| 8 | 客户端档位切换（test↔prod） | 编辑器「调试 → 自定义参数」加 `--net-profile=prod` | 打印 URL 变为 `wss://www.ourwangzhan.com:443/relay` |
+
+> **没有自动化测试的部分（如实登记，不硬编）**：`tools/update.sh`（部署脚本，只在真机/演练时用）· **检查点 4 的"呈现半"**（`BoardMirror` 接线尚未做，故无测试；逻辑半已有 3 条断言）· **检查点 8** 真机跨连 · `index.html`（可选状态页，**未实现**，`serve_index:true` 时会回 404 而不报错）。
+
 ## 四、部署到服务器（宝塔面板）
 
 1. **站点/项目**：在宝塔「Node 项目」中新建，**启动文件＝`server.js`**，启动参数 `--config config.prod.json`，端口取 `config.prod.json` 的 `port`（模板为 8090，绑 `127.0.0.1` 更安全）。
