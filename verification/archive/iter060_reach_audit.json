@@ -1,272 +1,311 @@
 ﻿[
     {
-        "文件":  "archive/legacy/scenes_battle/battle_action.gd",
+        "文件":  "archive/legacy/card-system/card_system/battle_ui.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_action.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/card-system/card_system/battle_ui.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/battle_ui.tscn",
+        "分类":  "candidate",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  58,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/card.gd",
+        "分类":  "deprecated",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  199,
+        "被引用者":  "archive/legacy/card-system/card_system/card.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/card_auto.gd",
+        "分类":  "deprecated",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  199,
+        "被引用者":  "archive/legacy/card-system/card_system/card_auto.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/card_auto.tscn",
+        "分类":  "candidate",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  58,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/card_base.tscn",
+        "分类":  "candidate",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  58,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/card_demo.gd",
+        "分类":  "deprecated",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  199,
+        "被引用者":  "archive/legacy/card-system/card_system/card_demo.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/card_demo.tscn",
+        "分类":  "candidate",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  58,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "archive/legacy/card-system/card_system/tools/bake_card_atlas.gd",
+        "分类":  "deprecated",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  199,
+        "被引用者":  "archive/legacy/card-system/card_system/tools/bake_card_atlas.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_action.gd",
+        "分类":  "deprecated",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_action.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_anim.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_anim.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_anim.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_bgfx.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_bgfx.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_bgfx.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_board_view.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_board_view.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_board_view.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_combat.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "verification/rename_deprecated.gd, archive/legacy/scenes_battle/battle_combat.gd.uid"
+        "被引用者":  "archive/legacy/scenes_battle/battle_combat.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_deck.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_deck.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_deck.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_defs.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_deploy.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "verification/rename_deprecated.gd, archive/legacy/scenes_battle/battle_deploy.gd.uid"
+        "被引用者":  "archive/legacy/scenes_battle/battle_deploy.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_detail_view.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_detail_view.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_detail_view.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_grid.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_grid.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_grid.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_hand_view.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_hand_view.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_hand_view.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_hud_view.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_hud_view.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_hud_view.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_input.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_input.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_input.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_interaction.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_interaction.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_interaction.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_pending.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_pending.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_pending.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_setup.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_setup.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_setup.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_skills.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_skills.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_skills.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_state.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_state.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_state.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_turn.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_turn.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_turn.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_victory.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scenes_battle/battle_victory.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scenes_battle/battle_victory.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/action_unit.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/action_unit.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/action_unit.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/anim_presets.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/anim_presets.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/anim_presets.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_action.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/battle_action.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/battle_action.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_anim_driver.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/battle_anim_driver.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/battle_anim_driver.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_combat.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/battle_combat.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/battle_combat.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_command.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/battle_command.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/battle_command.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_effects.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/battle_effects.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/battle_effects.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/board.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/board.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/board.gd.uid"
     },
     {
         "文件":  "archive/legacy/scripts_game/game_state.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  true,
         "字节":  199,
-        "被引用者":  "archive/legacy/scripts_game/game_state.gd.uid, verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/battle_ui.gd",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  199,
-        "被引用者":  "card-system/card_system/battle_ui.gd.uid, verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/battle_ui.tscn",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  58,
-        "被引用者":  "verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/card.gd",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  199,
-        "被引用者":  "card-system/card_system/card.gd.uid, verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/card_auto.gd",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  199,
-        "被引用者":  "verification/rename_deprecated.gd, card-system/card_system/card_auto.gd.uid"
-    },
-    {
-        "文件":  "card-system/card_system/card_auto.tscn",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  58,
-        "被引用者":  "verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/card_base.tscn",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  58,
-        "被引用者":  "verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/card_demo.gd",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  199,
-        "被引用者":  "card-system/card_system/card_demo.gd.uid, verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/card_demo.tscn",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  58,
-        "被引用者":  "verification/rename_deprecated.gd"
-    },
-    {
-        "文件":  "card-system/card_system/tools/bake_card_atlas.gd",
-        "可达":  false,
-        "归档区":  false,
-        "字节":  199,
-        "被引用者":  "card-system/card_system/tools/bake_card_atlas.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "archive/legacy/scripts_game/game_state.gd.uid"
     },
     {
         "文件":  "game_data/anims/部署落位.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  886,
@@ -274,6 +313,7 @@
     },
     {
         "文件":  "game_data/anims/单位退场.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  3631,
@@ -281,6 +321,7 @@
     },
     {
         "文件":  "game_data/anims/地图抖动.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  3576,
@@ -288,6 +329,7 @@
     },
     {
         "文件":  "game_data/anims/浮字上浮.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  14423,
@@ -295,6 +337,7 @@
     },
     {
         "文件":  "game_data/anims/减益脉冲.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  769,
@@ -302,6 +345,7 @@
     },
     {
         "文件":  "game_data/anims/卡牌登场.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1331,
@@ -309,6 +353,7 @@
     },
     {
         "文件":  "game_data/anims/卡牌退场.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  936,
@@ -316,6 +361,7 @@
     },
     {
         "文件":  "game_data/anims/施放闪白.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  727,
@@ -323,6 +369,7 @@
     },
     {
         "文件":  "game_data/anims/受击抖动.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  3960,
@@ -330,6 +377,7 @@
     },
     {
         "文件":  "game_data/anims/受伤闪红.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1075,
@@ -337,6 +385,7 @@
     },
     {
         "文件":  "game_data/anims/移动落位.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  886,
@@ -344,6 +393,7 @@
     },
     {
         "文件":  "game_data/anims/增益脉冲.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  768,
@@ -351,6 +401,7 @@
     },
     {
         "文件":  "game_data/cards/电击.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  983,
@@ -358,6 +409,7 @@
     },
     {
         "文件":  "game_data/cards/电击III.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  989,
@@ -365,6 +417,7 @@
     },
     {
         "文件":  "game_data/cards/蜂巢.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  895,
@@ -372,6 +425,7 @@
     },
     {
         "文件":  "game_data/cards/蜂巢III.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  901,
@@ -379,6 +433,7 @@
     },
     {
         "文件":  "game_data/cards/金刚蜂王.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1616,
@@ -386,6 +441,7 @@
     },
     {
         "文件":  "game_data/cards/泥蜂.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  842,
@@ -393,6 +449,7 @@
     },
     {
         "文件":  "game_data/cards/熊蜂.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1537,
@@ -400,6 +457,7 @@
     },
     {
         "文件":  "game_data/cards/巡航导弹.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  991,
@@ -407,6 +465,7 @@
     },
     {
         "文件":  "game_data/cards/叶蜂.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1205,
@@ -414,6 +473,7 @@
     },
     {
         "文件":  "game_data/cards/治疗.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  938,
@@ -421,6 +481,7 @@
     },
     {
         "文件":  "game_data/decks/示范卡组.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1394,
@@ -428,6 +489,7 @@
     },
     {
         "文件":  "game_data/maps/丰饶.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  797,
@@ -435,6 +497,7 @@
     },
     {
         "文件":  "game_data/maps/丰饶_地形效果.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  199,
@@ -442,6 +505,7 @@
     },
     {
         "文件":  "game_data/maps/寒潮.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  862,
@@ -449,6 +513,7 @@
     },
     {
         "文件":  "game_data/maps/寒潮_地形效果.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  199,
@@ -456,6 +521,7 @@
     },
     {
         "文件":  "game_data/maps/禁区.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  859,
@@ -463,6 +529,7 @@
     },
     {
         "文件":  "game_data/maps/禁区_地形效果.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  324,
@@ -470,6 +537,7 @@
     },
     {
         "文件":  "game_data/maps/默认.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  745,
@@ -477,6 +545,7 @@
     },
     {
         "文件":  "game_data/maps/默认_地形效果.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  199,
@@ -484,6 +553,7 @@
     },
     {
         "文件":  "game_data/maps/水没.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  865,
@@ -491,6 +561,7 @@
     },
     {
         "文件":  "game_data/maps/水没_地形效果.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  257,
@@ -498,6 +569,7 @@
     },
     {
         "文件":  "game_data/maps/铁锈.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  879,
@@ -505,6 +577,7 @@
     },
     {
         "文件":  "game_data/maps/铁锈_地形效果.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  581,
@@ -512,13 +585,15 @@
     },
     {
         "文件":  "scenes/battle_flow.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  false,
         "字节":  199,
-        "被引用者":  "scenes/battle_flow.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "scenes/battle_flow.gd.uid"
     },
     {
         "文件":  "scenes/ui/arena_view.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  46381,
@@ -526,20 +601,23 @@
     },
     {
         "文件":  "scenes/ui/battle_scene.tscn",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  8704,
-        "被引用者":  "verification/iter057_runtime_check.gd, verification/build_scene.gd, project.godot, verification/iter054_e2e_check.gd, verification/iter054_detail_shot.gd, tools/ui_probe.gd, verification/iter054_anim_detail_check.gd, verification/iter059_hand_stable_check.gd, verification/iter054_wiring_check.gd, tools/quick_shot.gd, verification/iter054_handprobe.gd, verification/iter059_bugfix_check.gd"
+        "被引用者":  "verification/iter057_runtime_check.gd, verification/build_scene.gd, verification/iter054_handprobe.gd, project.godot, verification/iter054_e2e_check.gd, verification/iter054_detail_shot.gd, tools/ui_probe.gd, verification/iter054_anim_detail_check.gd, verification/iter059_hand_stable_check.gd, verification/iter054_wiring_check.gd, tools/quick_shot.gd, verification/iter059_bugfix_check.gd"
     },
     {
         "文件":  "scenes/ui/battle_ui_alpha.tscn",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  28095,
-        "被引用者":  "tools/ui_anim_shot.gd, verification/build_scene.gd, scenes/ui/battle_scene.tscn, verification/apply_hand_container.gd, verification/iter054_anim_detail_check.gd, tools/fx_only.gd, tools/ui_screenshot.gd, tools/perf_probe.gd"
+        "被引用者":  "tools/ui_screenshot.gd, tools/ui_anim_shot.gd, verification/build_scene.gd, tools/fx_only.gd, scenes/ui/battle_scene.tscn, verification/apply_hand_container.gd, verification/iter054_anim_detail_check.gd, tools/perf_probe.gd"
     },
     {
         "文件":  "scenes/ui/board_cell.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3350,
@@ -547,6 +625,7 @@
     },
     {
         "文件":  "scenes/ui/card_hand.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  5494,
@@ -554,6 +633,7 @@
     },
     {
         "文件":  "scenes/ui/card_hand.tscn",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3400,
@@ -561,6 +641,7 @@
     },
     {
         "文件":  "scenes/ui/card_unit.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3245,
@@ -568,6 +649,7 @@
     },
     {
         "文件":  "scenes/ui/card_unit.tscn",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  13051,
@@ -575,13 +657,15 @@
     },
     {
         "文件":  "scenes/ui/cost_badge.tscn",
+        "分类":  "candidate",
         "可达":  false,
         "归档区":  false,
-        "字节":  1156,
-        "被引用者":  ""
+        "字节":  58,
+        "被引用者":  "verification/rename_deprecated.gd"
     },
     {
         "文件":  "scenes/ui/crt_fx_general.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1851,
@@ -589,6 +673,7 @@
     },
     {
         "文件":  "scenes/ui/float_text.tscn",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  361,
@@ -596,27 +681,31 @@
     },
     {
         "文件":  "scenes/unuseful_battle_card.tscn",
+        "分类":  "candidate",
         "可达":  false,
         "归档区":  false,
         "字节":  58,
-        "被引用者":  "verification/rename_deprecated.gd"
+        "被引用者":  ""
     },
     {
         "文件":  "scripts/anim/anim_clip.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2531,
-        "被引用者":  "scripts/anim/anim_clip.gd.uid, verification/gen_anims.gd, game_data/anims/地图抖动.tres, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, game_data/anims/浮字上浮.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres"
+        "被引用者":  "verification/gen_anims.gd, game_data/anims/地图抖动.tres, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, scripts/anim/anim_clip.gd.uid, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres, game_data/anims/浮字上浮.tres"
     },
     {
         "文件":  "scripts/anim/anim_pattern.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  1460,
-        "被引用者":  "verification/gen_anims.gd, game_data/anims/地图抖动.tres, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, game_data/anims/浮字上浮.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres, scripts/anim/anim_pattern.gd.uid"
+        "被引用者":  "verification/gen_anims.gd, game_data/anims/地图抖动.tres, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres, scripts/anim/anim_pattern.gd.uid, game_data/anims/浮字上浮.tres"
     },
     {
         "文件":  "scripts/anim/anim_player.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  12648,
@@ -624,13 +713,15 @@
     },
     {
         "文件":  "scripts/anim/anim_unit.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  788,
-        "被引用者":  "verification/gen_anims.gd, game_data/anims/地图抖动.tres, scripts/anim/anim_unit.gd.uid, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, game_data/anims/浮字上浮.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres"
+        "被引用者":  "verification/gen_anims.gd, game_data/anims/地图抖动.tres, scripts/anim/anim_unit.gd.uid, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres, game_data/anims/浮字上浮.tres"
     },
     {
         "文件":  "scripts/battle/arena_assets.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2464,
@@ -638,55 +729,63 @@
     },
     {
         "文件":  "scripts/battle/battle_config.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2645,
-        "被引用者":  "scripts/battle/battle_engine.gd, scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, scripts/battle/battle_config.gd.uid, verification/iter059_discard_check.gd"
+        "被引用者":  "verification/iter056_preview_check.gd, scripts/battle/battle_engine.gd, scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, scripts/battle/battle_config.gd.uid, verification/iter059_discard_check.gd"
     },
     {
         "文件":  "scripts/battle/battle_engine.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  34630,
-        "被引用者":  "scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, scripts/battle/battle_engine.gd.uid, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+        "被引用者":  "verification/iter056_preview_check.gd, scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter059_rules_check.gd, scripts/battle/battle_engine.gd.uid, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
     },
     {
         "文件":  "scripts/battle/battle_signal_bus.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  8987,
-        "被引用者":  "scripts/battle/battle_signal_bus.gd.uid, scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, scenes/ui/arena_view.gd, scripts/battle/rules_effects.gd, scripts/battle/rules_combat.gd, verification/iter056_preview_check.gd, scripts/battle/rules_preview.gd, verification/iter059_step3_check.gd, verification/iter059_discard_check.gd"
+        "被引用者":  "verification/iter056_preview_check.gd, scripts/battle/battle_signal_bus.gd.uid, scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, scenes/ui/arena_view.gd, scripts/battle/rules_effects.gd, scripts/battle/rules_combat.gd, scripts/battle/rules_preview.gd, verification/iter059_step3_check.gd, verification/iter059_discard_check.gd"
     },
     {
         "文件":  "scripts/battle/battle_state.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  4090,
-        "被引用者":  "scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, scripts/battle/rules_effects.gd, scripts/battle/rules_combat.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter059_hand_stable_check.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, scripts/battle/battle_state.gd.uid, scripts/battle/rules_preview.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+        "被引用者":  "verification/iter056_preview_check.gd, scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, scripts/battle/rules_effects.gd, scripts/battle/rules_combat.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter059_hand_stable_check.gd, verification/iter059_rules_check.gd, scripts/battle/battle_state.gd.uid, scripts/battle/rules_preview.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
     },
     {
         "文件":  "scripts/battle/board.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3819,
-        "被引用者":  "scripts/battle/board.gd.uid, verification/rename_deprecated.gd"
+        "被引用者":  "scripts/battle/board.gd.uid"
     },
     {
         "文件":  "scripts/battle/preview_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3725,
-        "被引用者":  "scripts/battle/preview_data.gd.uid, verification/iter056_preview_check.gd, scripts/battle/rules_preview.gd"
+        "被引用者":  "verification/iter056_preview_check.gd, scripts/battle/preview_data.gd.uid, scripts/battle/rules_preview.gd"
     },
     {
         "文件":  "scripts/battle/preview_kind.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2284,
-        "被引用者":  "verification/iter057_runtime_check.gd, scenes/ui/arena_view.gd, scripts/battle/preview_kind.gd.uid, verification/iter056_preview_check.gd, scripts/battle/rules_preview.gd, scripts/battle/preview_data.gd"
+        "被引用者":  "verification/iter057_runtime_check.gd, verification/iter056_preview_check.gd, scenes/ui/arena_view.gd, scripts/battle/preview_kind.gd.uid, scripts/battle/rules_preview.gd, scripts/battle/preview_data.gd"
     },
     {
         "文件":  "scripts/battle/rules_combat.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  8361,
@@ -694,6 +793,7 @@
     },
     {
         "文件":  "scripts/battle/rules_command.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  7007,
@@ -701,6 +801,7 @@
     },
     {
         "文件":  "scripts/battle/rules_effects.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  6413,
@@ -708,13 +809,15 @@
     },
     {
         "文件":  "scripts/battle/rules_preview.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  6542,
-        "被引用者":  "scripts/battle/battle_engine.gd, verification/iter059_rule_audit.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, scripts/battle/rules_preview.gd.uid, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+        "被引用者":  "verification/iter056_preview_check.gd, scripts/battle/battle_engine.gd, scripts/battle/rules_preview.gd.uid, verification/iter059_rule_audit.gd, verification/iter059_rules_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
     },
     {
         "文件":  "scripts/data/card_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2456,
@@ -722,13 +825,15 @@
     },
     {
         "文件":  "scripts/data/card_pool.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  12287,
-        "被引用者":  "verification/iter057_runtime_check.gd, scripts/battle/battle_engine.gd, scenes/ui/arena_view.gd, verification/build_scene.gd, verification/iter055_skill_check.gd, verification/iter054_e2e_check.gd, verification/iter059_rule_audit.gd, scripts/data/card_pool.gd.uid, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, verification/iter054_framework_check.gd, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/gen_resources.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+        "被引用者":  "verification/iter057_runtime_check.gd, verification/iter056_preview_check.gd, scripts/battle/battle_engine.gd, scenes/ui/arena_view.gd, verification/build_scene.gd, verification/iter055_skill_check.gd, verification/iter054_e2e_check.gd, verification/iter059_rule_audit.gd, scripts/data/card_pool.gd.uid, verification/iter059_schema_check.gd, verification/iter054_framework_check.gd, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/gen_resources.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
     },
     {
         "文件":  "scripts/data/card_visual.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  1389,
@@ -736,6 +841,7 @@
     },
     {
         "文件":  "scripts/data/command_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  1105,
@@ -743,6 +849,7 @@
     },
     {
         "文件":  "scripts/data/deck_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  1098,
@@ -750,6 +857,7 @@
     },
     {
         "文件":  "scripts/data/detail_params.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2593,
@@ -757,6 +865,7 @@
     },
     {
         "文件":  "scripts/data/effect_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3407,
@@ -764,6 +873,7 @@
     },
     {
         "文件":  "scripts/data/effect_runtime.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  429,
@@ -771,6 +881,7 @@
     },
     {
         "文件":  "scripts/data/hand_card_params.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2525,
@@ -778,6 +889,7 @@
     },
     {
         "文件":  "scripts/data/map_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2346,
@@ -785,6 +897,7 @@
     },
     {
         "文件":  "scripts/data/skill_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  1558,
@@ -792,6 +905,7 @@
     },
     {
         "文件":  "scripts/data/terrain_effect.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3163,
@@ -799,6 +913,7 @@
     },
     {
         "文件":  "scripts/data/terrain_params.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  2413,
@@ -806,6 +921,7 @@
     },
     {
         "文件":  "scripts/data/unit_data.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  1957,
@@ -813,6 +929,7 @@
     },
     {
         "文件":  "scripts/data/unit_instance.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  3826,
@@ -820,6 +937,7 @@
     },
     {
         "文件":  "scripts/data/uuid.gd",
+        "分类":  "reachable",
         "可达":  true,
         "归档区":  false,
         "字节":  1826,
@@ -827,6 +945,7 @@
     },
     {
         "文件":  "tools/font_demo.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  2366,
@@ -834,6 +953,7 @@
     },
     {
         "文件":  "tools/font_demo.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  253,
@@ -841,6 +961,7 @@
     },
     {
         "文件":  "tools/font_metrics.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1339,
@@ -848,6 +969,7 @@
     },
     {
         "文件":  "tools/font_metrics.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  259,
@@ -855,6 +977,7 @@
     },
     {
         "文件":  "tools/fx_only.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1073,
@@ -862,6 +985,7 @@
     },
     {
         "文件":  "tools/fx_only.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  168,
@@ -869,6 +993,7 @@
     },
     {
         "文件":  "tools/perf_probe.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1341,
@@ -876,6 +1001,7 @@
     },
     {
         "文件":  "tools/perf_probe.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  174,
@@ -883,6 +1009,7 @@
     },
     {
         "文件":  "tools/quick_shot.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  669,
@@ -890,6 +1017,7 @@
     },
     {
         "文件":  "tools/quick_shot.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  172,
@@ -897,6 +1025,7 @@
     },
     {
         "文件":  "tools/ui_anim_shot.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1555,
@@ -904,6 +1033,7 @@
     },
     {
         "文件":  "tools/ui_anim_shot.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  177,
@@ -911,6 +1041,7 @@
     },
     {
         "文件":  "tools/ui_probe.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  759,
@@ -918,6 +1049,7 @@
     },
     {
         "文件":  "tools/ui_probe.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  251,
@@ -925,6 +1057,7 @@
     },
     {
         "文件":  "tools/ui_screenshot.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1152,
@@ -932,6 +1065,7 @@
     },
     {
         "文件":  "tools/ui_screenshot.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  180,
@@ -939,6 +1073,7 @@
     },
     {
         "文件":  "verification/apply_hand_container.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  3009,
@@ -946,6 +1081,7 @@
     },
     {
         "文件":  "verification/archive/V-059-x费测试卡（测试用·已封存）.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  575,
@@ -953,6 +1089,7 @@
     },
     {
         "文件":  "verification/build_scene.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  8045,
@@ -960,6 +1097,7 @@
     },
     {
         "文件":  "verification/build_scene.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  181,
@@ -967,6 +1105,7 @@
     },
     {
         "文件":  "verification/editor_buffer_probe.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  174,
@@ -974,6 +1113,7 @@
     },
     {
         "文件":  "verification/editor_buffer_probe.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  231,
@@ -981,6 +1121,7 @@
     },
     {
         "文件":  "verification/gen_anims.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  10274,
@@ -988,6 +1129,7 @@
     },
     {
         "文件":  "verification/gen_anims.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  217,
@@ -995,6 +1137,7 @@
     },
     {
         "文件":  "verification/gen_resources.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  11274,
@@ -1002,6 +1145,7 @@
     },
     {
         "文件":  "verification/gen_resources.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  185,
@@ -1009,6 +1153,7 @@
     },
     {
         "文件":  "verification/iter054_anim_detail_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  9018,
@@ -1016,6 +1161,7 @@
     },
     {
         "文件":  "verification/iter054_anim_detail_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  207,
@@ -1023,6 +1169,7 @@
     },
     {
         "文件":  "verification/iter054_detail_shot.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  893,
@@ -1030,6 +1177,7 @@
     },
     {
         "文件":  "verification/iter054_detail_shot.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  196,
@@ -1037,6 +1185,7 @@
     },
     {
         "文件":  "verification/iter054_e2e_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  10755,
@@ -1044,6 +1193,7 @@
     },
     {
         "文件":  "verification/iter054_e2e_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  194,
@@ -1051,6 +1201,7 @@
     },
     {
         "文件":  "verification/iter054_fade_probe.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  3250,
@@ -1058,6 +1209,7 @@
     },
     {
         "文件":  "verification/iter054_fade_probe.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  194,
@@ -1065,6 +1217,7 @@
     },
     {
         "文件":  "verification/iter054_framework_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  19934,
@@ -1072,6 +1225,7 @@
     },
     {
         "文件":  "verification/iter054_framework_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  204,
@@ -1079,6 +1233,7 @@
     },
     {
         "文件":  "verification/iter054_handprobe.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  1344,
@@ -1086,6 +1241,7 @@
     },
     {
         "文件":  "verification/iter054_handprobe.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  193,
@@ -1093,6 +1249,7 @@
     },
     {
         "文件":  "verification/iter054_wiring_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  6547,
@@ -1100,6 +1257,7 @@
     },
     {
         "文件":  "verification/iter054_wiring_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  200,
@@ -1107,6 +1265,7 @@
     },
     {
         "文件":  "verification/iter055_skill_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  10194,
@@ -1114,6 +1273,7 @@
     },
     {
         "文件":  "verification/iter055_skill_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  194,
@@ -1121,6 +1281,7 @@
     },
     {
         "文件":  "verification/iter056_preview_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  9064,
@@ -1128,6 +1289,7 @@
     },
     {
         "文件":  "verification/iter056_preview_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  198,
@@ -1135,6 +1297,7 @@
     },
     {
         "文件":  "verification/iter057_runtime_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  6003,
@@ -1142,6 +1305,7 @@
     },
     {
         "文件":  "verification/iter057_runtime_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  198,
@@ -1149,6 +1313,7 @@
     },
     {
         "文件":  "verification/iter059_bugfix_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  18174,
@@ -1156,6 +1321,7 @@
     },
     {
         "文件":  "verification/iter059_bugfix_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  196,
@@ -1163,6 +1329,7 @@
     },
     {
         "文件":  "verification/iter059_discard_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  6218,
@@ -1170,6 +1337,7 @@
     },
     {
         "文件":  "verification/iter059_discard_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  198,
@@ -1177,6 +1345,7 @@
     },
     {
         "文件":  "verification/iter059_hand_stable_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  3855,
@@ -1184,6 +1353,7 @@
     },
     {
         "文件":  "verification/iter059_hand_stable_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  205,
@@ -1191,6 +1361,7 @@
     },
     {
         "文件":  "verification/iter059_rule_audit.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  12210,
@@ -1198,6 +1369,7 @@
     },
     {
         "文件":  "verification/iter059_rule_audit.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  192,
@@ -1205,6 +1377,7 @@
     },
     {
         "文件":  "verification/iter059_rules_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  10870,
@@ -1212,6 +1385,7 @@
     },
     {
         "文件":  "verification/iter059_rules_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  194,
@@ -1219,6 +1393,7 @@
     },
     {
         "文件":  "verification/iter059_schema_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  6268,
@@ -1226,6 +1401,7 @@
     },
     {
         "文件":  "verification/iter059_schema_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  196,
@@ -1233,6 +1409,7 @@
     },
     {
         "文件":  "verification/iter059_step3_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  8283,
@@ -1240,6 +1417,7 @@
     },
     {
         "文件":  "verification/iter059_step3_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  194,
@@ -1247,6 +1425,7 @@
     },
     {
         "文件":  "verification/iter060_anim_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  4395,
@@ -1254,6 +1433,7 @@
     },
     {
         "文件":  "verification/iter060_anim_check.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  234,
@@ -1261,20 +1441,23 @@
     },
     {
         "文件":  "verification/rename_deprecated.gd",
+        "分类":  "deprecated",
         "可达":  false,
         "归档区":  false,
-        "字节":  4979,
+        "字节":  2332,
         "被引用者":  "verification/rename_deprecated.tscn"
     },
     {
         "文件":  "verification/rename_deprecated.tscn",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  233,
-        "被引用者":  "verification/rename_deprecated.gd"
+        "被引用者":  ""
     },
     {
         "文件":  "verification/rule_check.gd",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  11875,
@@ -1282,6 +1465,7 @@
     },
     {
         "文件":  "verification/test_x_cost_card.tres",
+        "分类":  "keep",
         "可达":  false,
         "归档区":  false,
         "字节":  575,
