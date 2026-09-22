@@ -137,6 +137,18 @@ func stop_on_target(target: Node) -> int:
 	return n
 
 
+## 统计**作用在该目标上**的动画实例数（用于"等它播完再退场"的时序判断）
+func running_count_on(target: Node) -> int:
+	if target == null:
+		return 0
+	var n: int = 0
+	for k: String in _running.keys():
+		var tv = _running[k].get("target", null)
+		if tv != null and is_instance_valid(tv) and tv == target:
+			n += 1
+	return n
+
+
 func is_running(pname: StringName) -> bool:
 	var prefix: String = "%s#" % pname
 	for k: String in _running.keys():

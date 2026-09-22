@@ -56,6 +56,10 @@ var anim: Node = null
 var _fx_root: Control = null
 ## UI 锁定（§一之4 line 29）：`block_ui` 动画运行期间屏蔽交互
 var _ui_locked: bool = false
+## 待退场队列（instance_id → 幽灵节点）：等该单位身上动画播完再淡出（人 2026-09-21：致死也要看见抖动）
+var _pending_exit: Dictionary = {}
+## 抖动同帧去重（instance_id → 帧号）：event 信号 + unit_damaged 双来源只算一次
+var _shake_frame: Dictionary = {}
 
 # 节点引用
 @onready var _cells_root: Control = $Battle/MapView/MapCells
@@ -252,6 +256,7 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_MAP_ASSETS, _on_map_assets)
 	## 迭代060 v4 动画接线：地图抖动 / 回合色 / 阶段文本色
 	b.connect(Bus.SIG_COMMAND_RESOLVED, _on_command_resolved)
+	b.connect(Bus.SIG_ATTACK_RESOLVED, _on_attack_resolved)
 	b.connect(Bus.SIG_PHASE_STARTED, _on_phase_text_color)
 
 
@@ -450,7 +455,7 @@ func _on_unit_moved(inst: UnitInstance, _from: Vector2i, to: Vector2i) -> void:
 func _on_unit_damaged(inst: UnitInstance, dmg: int, hp_after: int, _src: String) -> void:
 	_update_unit(inst, hp_after)
 	_play("受伤闪红", inst)
-	_play("受击抖动", inst, dmg)
+	_shake(inst, dmg)
 	_float_at(_unit_nodes.get(inst.instance_id, null), "-%d" % dmg, COL_DAMAGE, dmg)
 
 
@@ -467,9 +472,18 @@ func _on_unit_removed(inst: UnitInstance, _reason: String) -> void:
 	## 退场：**动画播完才真正释放**（幽灵节点）—— 基础动画 §一「播完立即退场」
 	##   节点先立刻移出注册表 + 鼠标穿透（防吞点击），收尾在 `_on_anim_finished`
 	n.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	## ⚠️ 先清掉该单位身上还在跑的受击/闪红：否则它会在退场淡出后仍被写（迭代060 人报缺陷）
-	if anim != null:
-		anim.stop_on_target(n)
+	## ⚠️ 人 2026-09-21：**致死也要看得见「受击抖动」** → 不再掐掉它身上还在跑的受击/闪红，
+	##   而是**排队等它们播完再淡出**（否则抖动会在起播的同帧被退场掐掉，实测"看不到抖动"）
+	if anim != null and anim.running_count_on(n) > 0:
+		_pending_exit[n.get_instance_id()] = n
+	else:
+		_start_exit(n)
+
+
+## 开始退场（淡出 20 帧）；没有该 Pattern 时直接释放
+func _start_exit(n: Control) -> void:
+	if n == null or not is_instance_valid(n):
+		return
 	if anim != null and anim.has_pattern("单位退场"):
 		anim.action("单位退场", n)
 	else:
@@ -793,9 +807,25 @@ func _float_at(anchor: Control, text: String, color: Color, value: int) -> void:
 
 
 ## 地图抖动（§二之2 line 54「释放攻击 AOE 时整个地图/镜头抖动」；§六「指令技能命中 ≥2 处」）
-func _on_command_resolved(_side: int, _card, targets: Array, _damage: int, _healed: int) -> void:
+func _on_command_resolved(_side: int, _card, targets: Array, damage: int, _healed: int) -> void:
+	## ① **每个被命中单位都要抖**（无条件：被抵挡、致死都算"受到攻击"——人 2026-09-21）
+	##    指令伤害只给"总伤害"，按命中数均摊作为抖动强度
+	var per: int = maxi(1, int(damage / maxi(1, targets.size())))
+	for t in targets:
+		if t is UnitInstance:
+			_shake(t, per)
+	## ② 命中 ≥2 处 → 整图抖动（§六「指令技能命中 ≥2 处」；§二之2 line 54）
 	if anim != null and targets.size() >= 2:
 		anim.action("地图抖动", $Battle/MapView)
+
+
+## 攻击结算 —— `attack_resolved` 是**无条件广播**（rules_combat.gd:111），
+##   抖动量要挂在这里才能覆盖"被完全抵挡（dmg=0，不发 unit_damaged）"的攻击
+func _on_attack_resolved(attacker: UnitInstance, defender: UnitInstance,
+		dmg_def: int, dmg_atk: int, counter_valid: bool) -> void:
+	_shake(defender, dmg_def)
+	if counter_valid:
+		_shake(attacker, dmg_atk)
 
 
 ## 文本色表（§二之3 line 60-62）：结束部署/行动 = 白；回费阶段·等待行动 = 白 50%
@@ -804,6 +834,21 @@ func _on_phase_text_color(_side: int, phase: int, _round_no: int) -> void:
 	if lb == null:
 		return
 	lb.modulate = Color(1, 1, 1, 0.5) if (phase == PHASE_RECOVER or phase == PHASE_TERRAIN) else Color(1, 1, 1, 1)
+
+
+## 受击抖动（§二之2 line 54「单位受到攻击时抖动」+ line 55「数值越大越剧烈」）
+##   ⚠️ 触发条件是**"受到攻击/伤害的事件"**，不是"血量是否变化"（人 2026-09-21）：
+##     · 抵挡型效果（装甲/护盾/力场）**完全抵挡** → 引擎不发 `unit_damaged` → 仍要抖
+##     · **致死伤害** → 仍要抖（退场会排队等它播完，见 `_pending_exit`）
+##   同一帧多个来源（event 信号 + `unit_damaged`）只算一次 → 按帧号去重
+func _shake(inst: UnitInstance, value: int) -> void:
+	if anim == null or inst == null:
+		return
+	var fid: int = Engine.get_process_frames()
+	if int(_shake_frame.get(inst.instance_id, -1)) == fid:
+		return
+	_shake_frame[inst.instance_id] = fid
+	_play("受击抖动", inst, maxi(1, value))
 
 
 ## 播动画（迭代060 v4）—— 目标节点由 `instance_id` 解析；不在册则跳过（不报错、不吞）
@@ -826,6 +871,12 @@ func _on_anim_finished(pname: StringName, target: Node) -> void:
 	var n := String(pname)
 	if n == "单位退场" or n == "浮字上浮":
 		target.queue_free()
+		return
+	## 待退场排队：该单位身上动画**全部播完**后才开始淡出（人 2026-09-21）
+	var tid: int = target.get_instance_id()
+	if _pending_exit.has(tid) and anim != null and anim.running_count_on(target) == 0:
+		_pending_exit.erase(tid)
+		_start_exit(target)
 
 
 func _clear_preview_units_once() -> void:
