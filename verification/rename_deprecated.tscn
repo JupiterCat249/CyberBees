@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cd82qhvpa40nn"]
+
+[ext_resource type="Script" path="res://verification/rename_deprecated.gd" id="1_gpg1p"]
+
+[node name="RenameDeprecated" type="Node" unique_id=1211101538]
+script = ExtResource("1_gpg1p")

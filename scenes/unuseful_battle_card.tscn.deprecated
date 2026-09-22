@@ -1,0 +1,151 @@
+[gd_scene format=3 uid="uid://dmc4h2xendjpo"]
+
+[ext_resource type="Script" uid="uid://4spctfmf1s7r" path="res://scenes/battle_flow.gd" id="1_u25sk"]
+[ext_resource type="PackedScene" path="res://card-system/card_system/battle_ui.tscn" id="1_ui"]
+[ext_resource type="Texture2D" uid="uid://dyffhibh3y4pl" path="res://assets/background/bg_blurred.png" id="2_b5gog"]
+[ext_resource type="Texture2D" uid="uid://bdcjm7o7232sw" path="res://assets/background/bg_filter_tile.png" id="4_nay0s"]
+[ext_resource type="Script" uid="uid://cg4vl2bvsfd22" path="res://scenes/battle/battle_state.gd" id="5_30h02"]
+[ext_resource type="Script" uid="uid://i0x8qqy12ayy" path="res://scenes/battle/battle_combat.gd" id="6_im7xq"]
+[ext_resource type="Script" uid="uid://dr2iugskrlico" path="res://scenes/battle/battle_input.gd" id="7_5aynm"]
+[ext_resource type="Script" uid="uid://c4o5nutjjcbj6" path="res://scenes/battle/battle_bgfx.gd" id="8_gywsw"]
+[ext_resource type="Script" uid="uid://cqujnv01hql7u" path="res://scenes/battle/battle_board_view.gd" id="9_t8jia"]
+[ext_resource type="Script" uid="uid://mm644tp3k40t" path="res://scenes/battle/battle_hand_view.gd" id="10_v5ipb"]
+[ext_resource type="Script" uid="uid://cg44wa77uuuks" path="res://scenes/battle/battle_detail_view.gd" id="11_5bde7"]
+[ext_resource type="Script" uid="uid://coy0ycbi351es" path="res://scenes/battle/battle_hud_view.gd" id="12_res52"]
+
+[node name="Battle" type="Node2D" unique_id=1837945616]
+script = ExtResource("1_u25sk")
+
+[node name="BgLayer" type="Node2D" parent="." unique_id=355388199]
+visible = false
+
+[node name="BgBlur" type="TextureRect" parent="BgLayer" unique_id=1579240981]
+offset_bottom = 1080.0
+mouse_filter = 2
+texture = ExtResource("2_b5gog")
+
+[node name="BattleUI" parent="." unique_id=1818800244 instance=ExtResource("1_ui")]
+
+[node name="BoardView" type="Node2D" parent="." unique_id=1920209255]
+script = ExtResource("9_t8jia")
+[node name="HandView" type="Node2D" parent="." unique_id=738741888]
+script = ExtResource("10_v5ipb")
+[node name="DetailView" type="Node2D" parent="." unique_id=59177591]
+script = ExtResource("11_5bde7")
+
+[node name="Overlay" type="Node2D" parent="." unique_id=1901149892]
+
+[node name="InfoBar" type="Label" parent="Overlay" unique_id=1556655212]
+
+[node name="BtnText" type="Label" parent="Overlay" unique_id=1693760460]
+
+[node name="LogText" type="Label" parent="Overlay" unique_id=1317436002]
+
+[node name="StatAtk" type="Label" parent="Overlay" unique_id=890945234]
+
+[node name="StatHp" type="Label" parent="Overlay" unique_id=1123878607]
+
+[node name="StatSpd" type="Label" parent="Overlay" unique_id=2142849373]
+
+[node name="StatRange" type="Label" parent="Overlay" unique_id=1824496848]
+
+[node name="HelpText" type="Label" parent="Overlay" unique_id=1656724361]
+
+[node name="SkillBox" type="Node2D" parent="Overlay" unique_id=1371367749]
+position = Vector2(32, 556)
+
+[node name="SkillBg" type="ColorRect" parent="Overlay/SkillBox" unique_id=235026793]
+offset_right = 400.0
+offset_bottom = 196.0
+mouse_filter = 2
+color = Color(0.27, 0.27, 0.27, 0.92)
+
+[node name="SkillTitle" type="Label" parent="Overlay/SkillBox" unique_id=591794774]
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 13.0
+offset_bottom = 39.0
+theme_override_colors/font_color = Color(1, 0.82, 0.35, 1)
+theme_override_font_sizes/font_size = 22
+
+[node name="SkillDesc" type="Label" parent="Overlay/SkillBox" unique_id=1546565014]
+custom_minimum_size = Vector2(376, 0)
+offset_left = 12.0
+offset_top = 42.0
+offset_right = 388.0
+offset_bottom = 66.0
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 17
+autowrap_mode = 2
+
+[node name="SkillTags" type="Label" parent="Overlay/SkillBox" unique_id=422916683]
+offset_left = 12.0
+offset_top = 164.0
+offset_right = 13.0
+offset_bottom = 187.0
+theme_override_colors/font_color = Color(0.72, 0.85, 0.72, 1)
+theme_override_font_sizes/font_size = 15
+
+[node name="PopupBox" type="Node2D" parent="Overlay" unique_id=636858965]
+visible = false
+
+[node name="PopupMask" type="ColorRect" parent="Overlay/PopupBox" unique_id=1748518028]
+offset_right = 1920.0
+offset_bottom = 1080.0
+mouse_filter = 2
+color = Color(0, 0, 0, 0.62)
+
+[node name="PopupCard" type="Node2D" parent="Overlay/PopupBox" unique_id=916840200]
+position = Vector2(760, 190)
+
+[node name="PopupName" type="Label" parent="Overlay/PopupBox" unique_id=384893493]
+custom_minimum_size = Vector2(500, 0)
+offset_left = 710.0
+offset_top = 616.0
+offset_right = 711.0
+offset_bottom = 639.0
+theme_override_colors/font_color = Color(1, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+
+[node name="PopupDesc" type="Label" parent="Overlay/PopupBox" unique_id=182663055]
+custom_minimum_size = Vector2(920, 0)
+offset_left = 500.0
+offset_top = 672.0
+offset_right = 501.0
+offset_bottom = 695.0
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 2
+
+[node name="FxLayer" type="Node2D" parent="." unique_id=6863796]
+visible = false
+
+[node name="BgFilter" type="TextureRect" parent="FxLayer" unique_id=1563674030]
+modulate = Color(1, 1, 1, 0.05)
+texture_repeat = 1
+offset_top = -100.0
+offset_right = 1920.0
+offset_bottom = 1180.0
+mouse_filter = 2
+texture = ExtResource("4_nay0s")
+expand_mode = 1
+stretch_mode = 1
+
+[node name="State" type="Node" parent="." unique_id=1330497789]
+script = ExtResource("5_30h02")
+
+[node name="Combat" type="Node" parent="." unique_id=12742334]
+script = ExtResource("6_im7xq")
+
+[node name="InputRouter" type="Node" parent="." unique_id=472003611]
+script = ExtResource("7_5aynm")
+
+[node name="BgFx" type="Node2D" parent="." unique_id=492905699]
+script = ExtResource("8_gywsw")
+
+[node name="HudView" type="Node2D" parent="." unique_id=1375420282]
+script = ExtResource("12_res52")
+
+[node name="EffectsTop" type="Node2D" parent="Overlay" unique_id=2019042817]
+z_index = 100
