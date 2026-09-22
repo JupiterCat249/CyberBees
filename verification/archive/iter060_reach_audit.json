@@ -3,267 +3,267 @@
         "文件":  "archive/legacy/scenes_battle/battle_action.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  7751,
-        "被引用者":  "archive/legacy/scenes_battle/battle_action.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_action.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_anim.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  33832,
-        "被引用者":  "archive/legacy/scenes_battle/battle_anim.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_anim.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_bgfx.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  3941,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_bgfx.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_bgfx.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_board_view.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  10961,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_board_view.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_board_view.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_combat.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  13636,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_combat.gd.uid"
+        "字节":  199,
+        "被引用者":  "verification/rename_deprecated.gd, archive/legacy/scenes_battle/battle_combat.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_deck.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  4655,
-        "被引用者":  "archive/legacy/scenes_battle/battle_deck.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_deck.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_defs.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  37610,
-        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_deploy.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  5247,
-        "被引用者":  "archive/legacy/scenes_battle/battle_deploy.gd.uid"
+        "字节":  199,
+        "被引用者":  "verification/rename_deprecated.gd, archive/legacy/scenes_battle/battle_deploy.gd.uid"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_detail_view.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  8966,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_detail_view.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_detail_view.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_grid.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  3018,
-        "被引用者":  "archive/legacy/scenes_battle/battle_grid.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_grid.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_hand_view.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  3320,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_hand_view.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_hand_view.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_hud_view.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  9765,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_hud_view.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_hud_view.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_input.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  4426,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_input.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_input.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_interaction.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  6453,
-        "被引用者":  "archive/legacy/scenes_battle/battle_interaction.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_interaction.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_pending.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  4805,
-        "被引用者":  "archive/legacy/scenes_battle/battle_pending.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_pending.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_setup.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  4713,
-        "被引用者":  "archive/legacy/scenes_battle/battle_setup.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_setup.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_skills.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  18368,
-        "被引用者":  "archive/legacy/scenes_battle/battle_skills.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_skills.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_state.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  26438,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_state.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_state.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_turn.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  10415,
-        "被引用者":  "archive/legacy/scenes_battle/battle_turn.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_turn.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scenes_battle/battle_victory.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  2027,
-        "被引用者":  "archive/legacy/scenes_battle/battle_victory.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scenes_battle/battle_victory.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/action_unit.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  13352,
-        "被引用者":  "archive/legacy/scripts_game/action_unit.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/action_unit.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/anim_presets.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  9171,
-        "被引用者":  "archive/legacy/scripts_game/anim_presets.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/anim_presets.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_action.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  6174,
-        "被引用者":  "archive/legacy/scripts_game/battle_action.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/battle_action.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_anim_driver.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  5724,
-        "被引用者":  "archive/legacy/scripts_game/battle_anim_driver.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/battle_anim_driver.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_combat.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  6062,
-        "被引用者":  "archive/legacy/scripts_game/battle_combat.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/battle_combat.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_command.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  5902,
-        "被引用者":  "archive/legacy/scripts_game/battle_command.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/battle_command.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/battle_effects.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  3314,
-        "被引用者":  "archive/legacy/scripts_game/battle_effects.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/battle_effects.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/board.gd",
-        "可达":  true,
+        "可达":  false,
         "归档区":  true,
-        "字节":  3819,
-        "被引用者":  "archive/legacy/scripts_game/board.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/board.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "archive/legacy/scripts_game/game_state.gd",
         "可达":  false,
         "归档区":  true,
-        "字节":  24891,
-        "被引用者":  "archive/legacy/scripts_game/game_state.gd.uid"
+        "字节":  199,
+        "被引用者":  "archive/legacy/scripts_game/game_state.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/battle_ui.gd",
         "可达":  false,
         "归档区":  false,
-        "字节":  3150,
-        "被引用者":  "card-system/card_system/battle_ui.tscn, card-system/card_system/battle_ui.gd.uid"
+        "字节":  199,
+        "被引用者":  "card-system/card_system/battle_ui.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/battle_ui.tscn",
         "可达":  false,
         "归档区":  false,
-        "字节":  793,
-        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd, scenes/unuseful_battle_card.tscn, scenes/battle_flow.gd"
+        "字节":  58,
+        "被引用者":  "verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/card.gd",
         "可达":  false,
         "归档区":  false,
-        "字节":  10362,
-        "被引用者":  "card-system/card_system/card.gd.uid, card-system/card_system/card_base.tscn"
+        "字节":  199,
+        "被引用者":  "card-system/card_system/card.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/card_auto.gd",
         "可达":  false,
         "归档区":  false,
-        "字节":  6921,
-        "被引用者":  "card-system/card_system/card_auto.tscn, card-system/card_system/card_auto.gd.uid"
+        "字节":  199,
+        "被引用者":  "verification/rename_deprecated.gd, card-system/card_system/card_auto.gd.uid"
     },
     {
         "文件":  "card-system/card_system/card_auto.tscn",
         "可达":  false,
         "归档区":  false,
-        "字节":  2219,
-        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd, card-system/card_system/card_demo.gd"
+        "字节":  58,
+        "被引用者":  "verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/card_base.tscn",
         "可达":  false,
         "归档区":  false,
-        "字节":  7100,
-        "被引用者":  ""
+        "字节":  58,
+        "被引用者":  "verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/card_demo.gd",
         "可达":  false,
         "归档区":  false,
-        "字节":  6296,
-        "被引用者":  "card-system/card_system/card_demo.gd.uid, card-system/card_system/card_demo.tscn"
+        "字节":  199,
+        "被引用者":  "card-system/card_system/card_demo.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/card_demo.tscn",
         "可达":  false,
         "归档区":  false,
-        "字节":  192,
-        "被引用者":  ""
+        "字节":  58,
+        "被引用者":  "verification/rename_deprecated.gd"
     },
     {
         "文件":  "card-system/card_system/tools/bake_card_atlas.gd",
         "可达":  false,
         "归档区":  false,
-        "字节":  3474,
-        "被引用者":  "card-system/card_system/tools/bake_card_atlas.gd.uid"
+        "字节":  199,
+        "被引用者":  "card-system/card_system/tools/bake_card_atlas.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "game_data/anims/部署落位.tres",
@@ -514,8 +514,8 @@
         "文件":  "scenes/battle_flow.gd",
         "可达":  false,
         "归档区":  false,
-        "字节":  12489,
-        "被引用者":  "scenes/unuseful_battle_card.tscn, scenes/battle_flow.gd.uid"
+        "字节":  199,
+        "被引用者":  "scenes/battle_flow.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "scenes/ui/arena_view.gd",
@@ -536,7 +536,7 @@
         "可达":  true,
         "归档区":  false,
         "字节":  28095,
-        "被引用者":  "tools/ui_anim_shot.gd, verification/build_scene.gd, scenes/ui/battle_scene.tscn, verification/apply_hand_container.gd, verification/iter054_anim_detail_check.gd, tools/fx_only.gd, tools/perf_probe.gd, tools/ui_screenshot.gd"
+        "被引用者":  "tools/ui_anim_shot.gd, verification/build_scene.gd, scenes/ui/battle_scene.tscn, verification/apply_hand_container.gd, verification/iter054_anim_detail_check.gd, tools/fx_only.gd, tools/ui_screenshot.gd, tools/perf_probe.gd"
     },
     {
         "文件":  "scenes/ui/board_cell.gd",
@@ -598,8 +598,8 @@
         "文件":  "scenes/unuseful_battle_card.tscn",
         "可达":  false,
         "归档区":  false,
-        "字节":  5895,
-        "被引用者":  ""
+        "字节":  58,
+        "被引用者":  "verification/rename_deprecated.gd"
     },
     {
         "文件":  "scripts/anim/anim_clip.gd",
@@ -648,7 +648,7 @@
         "可达":  true,
         "归档区":  false,
         "字节":  34630,
-        "被引用者":  "scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, scripts/battle/battle_engine.gd.uid, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+        "被引用者":  "scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, scripts/battle/battle_engine.gd.uid, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
     },
     {
         "文件":  "scripts/battle/battle_signal_bus.gd",
@@ -663,6 +663,13 @@
         "归档区":  false,
         "字节":  4090,
         "被引用者":  "scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, scripts/battle/rules_effects.gd, scripts/battle/rules_combat.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter059_hand_stable_check.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, scripts/battle/battle_state.gd.uid, scripts/battle/rules_preview.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/board.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3819,
+        "被引用者":  "scripts/battle/board.gd.uid, verification/rename_deprecated.gd"
     },
     {
         "文件":  "scripts/battle/preview_data.gd",
@@ -1251,6 +1258,20 @@
         "归档区":  false,
         "字节":  234,
         "被引用者":  "verification/iter060_anim_check.gd"
+    },
+    {
+        "文件":  "verification/rename_deprecated.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  4979,
+        "被引用者":  "verification/rename_deprecated.tscn"
+    },
+    {
+        "文件":  "verification/rename_deprecated.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  233,
+        "被引用者":  "verification/rename_deprecated.gd"
     },
     {
         "文件":  "verification/rule_check.gd",
