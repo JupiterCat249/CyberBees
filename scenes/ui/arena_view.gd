@@ -524,8 +524,12 @@ func _on_battle_ended(result: int, reason: String) -> void:
 	var who := {0: "", 1: "绿方胜", 2: "红方胜", 3: "平局"}
 	$HUD/ActionBar/Label.text = "%s（%s）" % [str(who.get(result, "?")), reason]
 	$HUD/ActionBar/MainButton.disabled = true
-	if anim != null:
-		anim.stop_all()
+	## ⚠️ 人 2026-09-21 缺陷：**蜂王被击杀时不飘字、不受击抖动** —— 根因＝此处原有的 `anim.stop_all()`
+	##   在**同一帧**把刚起播的「受击抖动 / 受伤闪红 / 浮字上浮」全部清掉（`request_attack` 的顺序是
+	##   `resolve_attack`(起播) → `unit_damaged`(飘字) → `_cleanup_dead` → `_declare_queen_killed`(本回调)）。
+	##   只有**蜂王**死才触发对局结束，故只有它表现为"没有击杀反馈"。
+	##   → **不需要 stop_all**：对局结束后不会再产生新动画，让击杀反馈自然播完
+	##     （抖动 → `_pending_exit` 排队退场淡出 → 释放）
 
 
 ## 开局后主动同步一遗（信号可能早于本视图连线）
