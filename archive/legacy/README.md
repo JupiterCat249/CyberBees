@@ -1,8 +1,9 @@
 # 旧实现存档（已废弃）— 电子蜂 A5（Godot 版）
 
-> 最后更新：2026-09-20
-> 状态：**已封存（历史实现，禁止用作现行实现参考）**
-> 处置依据：人 2026-09-20 指示「旧实现单独存在新目录并移除引用，标记为废弃」。
+> 最后更新：2026-09-21
+> 状态：**已封存 + 已标注**（历史实现，禁止用作现行实现参考）
+> 处置依据：人 2026-09-20 指示「旧实现单独存在新目录并移除引用，标记为废弃」；
+> **2026-09-21 追加**：人指示做**废弃代码可达性审计**（判定＝是代码文件 且 从主场景直接/间接都不可达）→ 全量标注（内容移至同名 `.deprecated`、原文件转废弃桩），见 §三 / §五。
 
 ---
 
@@ -49,10 +50,11 @@
 
 | 受影响对象 | 情况 | 处置 |
 |---|---|---|
-| `project.godot` → `run/main_scene` = `res://scenes/unuseful_battle_card.tscn` | 该场景引用 `scenes/battle/*` 与 `battle_flow.gd`，**移动后 F5 运行旧入口会报缺脚本** | **人 2026-09-20 指示「主场景指向暂时不动」** → 保留现状；新系统请用 **F6「运行当前场景」** 打开 `scenes/ui/battle_scene.tscn` |
-| `scenes/battle_flow.gd` | 用 `load("res://scenes/battle/*.gd")` 动态加载 11 个模块，**引用已断开** | 未删（主场景仍引用它）；如需恢复旧入口：把本目录文件移回或改写这些 `load` 路径 |
-| `verification/iter054_*` · `iter055_skill_check.gd` 等 | 用 `preload("res://scripts/game/...")`，**路径已失效** | 属 T13 封存验证产物（历史取证），**不随代码演进维护**；如需复跑请改用现行 `scripts/battle/` 入口 |
-| Godot 全局类名（`class_name BattleDefs` / `ActionUnit` / `GameState` 等） | 随文件位置变更，全局类注册路径改变（仍注册，因本目录**未**放 `.gdignore`） | 若日后出现「类名缺失」报错，优先检查是否有代码仍在引用旧路径 |
+| `project.godot` → `run/main_scene` | 2026-09-21 **已解决**：人已在编辑器里改指 `res://scenes/ui/battle_scene.tscn` → **F5 直接跑当前战斗场景** | ✅ 关闭（原「指向暂时不动」指示已被本次切换取代） |
+| `scenes/battle_flow.gd` · `scenes/unuseful_battle_card.tscn` | 旧入口对；主场景切换后已无引用 | **2026-09-21 已标注**：内容移至 `*.deprecated`，原文件转**废弃桩**（`.gd`→纯注释 / `.tscn`→最小空场景） |
+| `verification/iter054_*` · `iter055_skill_check.gd` 等 | 用 `preload("res://scripts/game/...")`，**路径已失效** | 属 **T12** 封存验证产物（历史取证），**不随代码演进维护**；如需复跑请改用现行 `scripts/battle/` 入口 |
+| Godot 全局类名（`BattleDefs` / `ActionUnit` / `GameState` 等） | 归档 `.gd` 曾被解析 → 其 `class_name` 仍注册进全局类表（副作用：编辑器常驻 37 条旧脚本解析错误） | **2026-09-21 已注销**：归档 `.gd` 全部转桩 → 重扫后**全局类 124 → 115（-9）**，日志噪音随之消失 |
+| ⚠️ **`scripts_game/board.gd`（`class_name Board`）** | **承重**：它是**全仓唯一**声明 `Board` 的文件，而生产规则层（`scripts/battle/rules_preview.gd` 等）在用 `Board.ROWS/COLS` —— 归档区里躺着生产依赖 | **2026-09-21 已救出** → 复制进 `scripts/battle/board.gd`（自包含、零 preload），归档原件转桩；生产链路经动画冒烟 **10 PASS / 0 FAIL** 验证 |
 
 ---
 
@@ -74,3 +76,4 @@
 | 日期 | 事项 |
 |---|---|
 | 2026-09-20 | 建档：按人指示将 `scenes/battle/`（20 个）与 `scripts/game/`（9 个）移入 `archive/legacy/`，标记废弃并登记受影响面；`battle_flow.gd` 因主场景未切换而保留原位。 |
+| 2026-09-21 | **主场景已切换到 `scenes/ui/battle_scene.tscn`（人操作）→ §四 的"彻底封存"前置条件达成**。按人指示做**可达性审计**（工具 `系统维护/tools/audit_reach.ps1`，覆盖 res:// 字面量 / **UID 引用** / **class_name 全局类** / autoload；动态目录扫描类如 `game_data/**` 明确排除）→ 本目录 28 个 `.gd`（board 除外）与 `scenes/battle_flow.gd`、`scenes/unuseful_battle_card.tscn`、`card-system/**` 共 39 个文件**全量标注**：内容 → `<path>.deprecated`，原文件 → 废弃桩。**⚠️ 同时救出承重类 `Board`**（见 §三）—— 这是本轮审计最重要的发现：*归档区里躺着生产依赖*。全局类 124 → 115。 |
