@@ -1,0 +1,1269 @@
+﻿[
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_action.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  7751,
+        "被引用者":  "archive/legacy/scenes_battle/battle_action.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_anim.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  33832,
+        "被引用者":  "archive/legacy/scenes_battle/battle_anim.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_bgfx.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  3941,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_bgfx.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_board_view.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  10961,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_board_view.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_combat.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  13636,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_combat.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_deck.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  4655,
+        "被引用者":  "archive/legacy/scenes_battle/battle_deck.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_defs.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  37610,
+        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_deploy.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  5247,
+        "被引用者":  "archive/legacy/scenes_battle/battle_deploy.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_detail_view.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  8966,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_detail_view.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_grid.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  3018,
+        "被引用者":  "archive/legacy/scenes_battle/battle_grid.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_hand_view.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  3320,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_hand_view.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_hud_view.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  9765,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_hud_view.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_input.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  4426,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_input.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_interaction.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  6453,
+        "被引用者":  "archive/legacy/scenes_battle/battle_interaction.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_pending.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  4805,
+        "被引用者":  "archive/legacy/scenes_battle/battle_pending.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_setup.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  4713,
+        "被引用者":  "archive/legacy/scenes_battle/battle_setup.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_skills.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  18368,
+        "被引用者":  "archive/legacy/scenes_battle/battle_skills.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_state.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  26438,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, archive/legacy/scenes_battle/battle_state.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_turn.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  10415,
+        "被引用者":  "archive/legacy/scenes_battle/battle_turn.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scenes_battle/battle_victory.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  2027,
+        "被引用者":  "archive/legacy/scenes_battle/battle_victory.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/action_unit.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  13352,
+        "被引用者":  "archive/legacy/scripts_game/action_unit.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/anim_presets.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  9171,
+        "被引用者":  "archive/legacy/scripts_game/anim_presets.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/battle_action.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  6174,
+        "被引用者":  "archive/legacy/scripts_game/battle_action.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/battle_anim_driver.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  5724,
+        "被引用者":  "archive/legacy/scripts_game/battle_anim_driver.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/battle_combat.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  6062,
+        "被引用者":  "archive/legacy/scripts_game/battle_combat.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/battle_command.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  5902,
+        "被引用者":  "archive/legacy/scripts_game/battle_command.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/battle_effects.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  3314,
+        "被引用者":  "archive/legacy/scripts_game/battle_effects.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/board.gd",
+        "可达":  true,
+        "归档区":  true,
+        "字节":  3819,
+        "被引用者":  "archive/legacy/scripts_game/board.gd.uid"
+    },
+    {
+        "文件":  "archive/legacy/scripts_game/game_state.gd",
+        "可达":  false,
+        "归档区":  true,
+        "字节":  24891,
+        "被引用者":  "archive/legacy/scripts_game/game_state.gd.uid"
+    },
+    {
+        "文件":  "card-system/card_system/battle_ui.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3150,
+        "被引用者":  "card-system/card_system/battle_ui.tscn, card-system/card_system/battle_ui.gd.uid"
+    },
+    {
+        "文件":  "card-system/card_system/battle_ui.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  793,
+        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd, scenes/unuseful_battle_card.tscn, scenes/battle_flow.gd"
+    },
+    {
+        "文件":  "card-system/card_system/card.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  10362,
+        "被引用者":  "card-system/card_system/card.gd.uid, card-system/card_system/card_base.tscn"
+    },
+    {
+        "文件":  "card-system/card_system/card_auto.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  6921,
+        "被引用者":  "card-system/card_system/card_auto.tscn, card-system/card_system/card_auto.gd.uid"
+    },
+    {
+        "文件":  "card-system/card_system/card_auto.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  2219,
+        "被引用者":  "archive/legacy/scenes_battle/battle_defs.gd, card-system/card_system/card_demo.gd"
+    },
+    {
+        "文件":  "card-system/card_system/card_base.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  7100,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "card-system/card_system/card_demo.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  6296,
+        "被引用者":  "card-system/card_system/card_demo.gd.uid, card-system/card_system/card_demo.tscn"
+    },
+    {
+        "文件":  "card-system/card_system/card_demo.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  192,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "card-system/card_system/tools/bake_card_atlas.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3474,
+        "被引用者":  "card-system/card_system/tools/bake_card_atlas.gd.uid"
+    },
+    {
+        "文件":  "game_data/anims/部署落位.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  886,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/单位退场.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3631,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/地图抖动.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3576,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/浮字上浮.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  14423,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/减益脉冲.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  769,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/卡牌登场.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1331,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/卡牌退场.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  936,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/施放闪白.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  727,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/受击抖动.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3960,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/受伤闪红.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1075,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/移动落位.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  886,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/anims/增益脉冲.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  768,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/电击.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  983,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/电击III.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  989,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/蜂巢.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  895,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/蜂巢III.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  901,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/金刚蜂王.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1616,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/泥蜂.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  842,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/熊蜂.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1537,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/巡航导弹.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  991,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/叶蜂.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1205,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/cards/治疗.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  938,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/decks/示范卡组.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1394,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/丰饶.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  797,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/丰饶_地形效果.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  199,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/寒潮.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  862,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/寒潮_地形效果.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  199,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/禁区.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  859,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/禁区_地形效果.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  324,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/默认.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  745,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/默认_地形效果.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  199,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/水没.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  865,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/水没_地形效果.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  257,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/铁锈.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  879,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "game_data/maps/铁锈_地形效果.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  581,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "scenes/battle_flow.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  12489,
+        "被引用者":  "scenes/unuseful_battle_card.tscn, scenes/battle_flow.gd.uid"
+    },
+    {
+        "文件":  "scenes/ui/arena_view.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  46381,
+        "被引用者":  "verification/build_scene.gd, scenes/ui/battle_scene.tscn, scenes/ui/arena_view.gd.uid"
+    },
+    {
+        "文件":  "scenes/ui/battle_scene.tscn",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  8704,
+        "被引用者":  "verification/iter057_runtime_check.gd, verification/build_scene.gd, project.godot, verification/iter054_e2e_check.gd, verification/iter054_detail_shot.gd, tools/ui_probe.gd, verification/iter054_anim_detail_check.gd, verification/iter059_hand_stable_check.gd, verification/iter054_wiring_check.gd, tools/quick_shot.gd, verification/iter054_handprobe.gd, verification/iter059_bugfix_check.gd"
+    },
+    {
+        "文件":  "scenes/ui/battle_ui_alpha.tscn",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  28095,
+        "被引用者":  "tools/ui_anim_shot.gd, verification/build_scene.gd, scenes/ui/battle_scene.tscn, verification/apply_hand_container.gd, verification/iter054_anim_detail_check.gd, tools/fx_only.gd, tools/perf_probe.gd, tools/ui_screenshot.gd"
+    },
+    {
+        "文件":  "scenes/ui/board_cell.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3350,
+        "被引用者":  "scenes/ui/arena_view.gd, scenes/ui/board_cell.gd.uid"
+    },
+    {
+        "文件":  "scenes/ui/card_hand.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  5494,
+        "被引用者":  "scenes/ui/card_hand.tscn, scenes/ui/card_hand.gd.uid"
+    },
+    {
+        "文件":  "scenes/ui/card_hand.tscn",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3400,
+        "被引用者":  "scenes/ui/arena_view.gd, verification/build_scene.gd, scenes/ui/battle_scene.tscn"
+    },
+    {
+        "文件":  "scenes/ui/card_unit.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3245,
+        "被引用者":  "scenes/ui/card_unit.gd.uid, scenes/ui/card_unit.tscn"
+    },
+    {
+        "文件":  "scenes/ui/card_unit.tscn",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  13051,
+        "被引用者":  "scenes/ui/arena_view.gd, verification/build_scene.gd, scenes/ui/battle_scene.tscn"
+    },
+    {
+        "文件":  "scenes/ui/cost_badge.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1156,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "scenes/ui/crt_fx_general.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1851,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "scenes/ui/float_text.tscn",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  361,
+        "被引用者":  "scenes/ui/arena_view.gd"
+    },
+    {
+        "文件":  "scenes/unuseful_battle_card.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  5895,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "scripts/anim/anim_clip.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2531,
+        "被引用者":  "scripts/anim/anim_clip.gd.uid, verification/gen_anims.gd, game_data/anims/地图抖动.tres, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, game_data/anims/浮字上浮.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres"
+    },
+    {
+        "文件":  "scripts/anim/anim_pattern.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  1460,
+        "被引用者":  "verification/gen_anims.gd, game_data/anims/地图抖动.tres, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, game_data/anims/浮字上浮.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres, scripts/anim/anim_pattern.gd.uid"
+    },
+    {
+        "文件":  "scripts/anim/anim_player.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  12648,
+        "被引用者":  "scenes/ui/arena_view.gd, verification/iter060_anim_check.gd, scripts/anim/anim_player.gd.uid"
+    },
+    {
+        "文件":  "scripts/anim/anim_unit.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  788,
+        "被引用者":  "verification/gen_anims.gd, game_data/anims/地图抖动.tres, scripts/anim/anim_unit.gd.uid, game_data/anims/单位退场.tres, game_data/anims/施放闪白.tres, game_data/anims/移动落位.tres, game_data/anims/部署落位.tres, game_data/anims/浮字上浮.tres, verification/iter060_anim_check.gd, game_data/anims/受击抖动.tres, game_data/anims/减益脉冲.tres, game_data/anims/增益脉冲.tres, game_data/anims/受伤闪红.tres, game_data/anims/卡牌登场.tres, game_data/anims/卡牌退场.tres"
+    },
+    {
+        "文件":  "scripts/battle/arena_assets.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2464,
+        "被引用者":  "scripts/battle/battle_engine.gd, scripts/battle/arena_assets.gd.uid"
+    },
+    {
+        "文件":  "scripts/battle/battle_config.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2645,
+        "被引用者":  "scripts/battle/battle_engine.gd, scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, scripts/battle/battle_config.gd.uid, verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/battle_engine.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  34630,
+        "被引用者":  "scenes/ui/arena_view.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, scripts/battle/battle_engine.gd.uid, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/battle_signal_bus.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  8987,
+        "被引用者":  "scripts/battle/battle_signal_bus.gd.uid, scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, scenes/ui/arena_view.gd, scripts/battle/rules_effects.gd, scripts/battle/rules_combat.gd, verification/iter056_preview_check.gd, scripts/battle/rules_preview.gd, verification/iter059_step3_check.gd, verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/battle_state.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  4090,
+        "被引用者":  "scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, scripts/battle/rules_effects.gd, scripts/battle/rules_combat.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter059_hand_stable_check.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, scripts/battle/battle_state.gd.uid, scripts/battle/rules_preview.gd, verification/iter059_step3_check.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/preview_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3725,
+        "被引用者":  "scripts/battle/preview_data.gd.uid, verification/iter056_preview_check.gd, scripts/battle/rules_preview.gd"
+    },
+    {
+        "文件":  "scripts/battle/preview_kind.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2284,
+        "被引用者":  "verification/iter057_runtime_check.gd, scenes/ui/arena_view.gd, scripts/battle/preview_kind.gd.uid, verification/iter056_preview_check.gd, scripts/battle/rules_preview.gd, scripts/battle/preview_data.gd"
+    },
+    {
+        "文件":  "scripts/battle/rules_combat.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  8361,
+        "被引用者":  "scripts/battle/battle_engine.gd, scripts/battle/rules_command.gd, verification/iter059_rule_audit.gd, verification/iter059_schema_check.gd, verification/iter059_rules_check.gd, scripts/battle/rules_combat.gd.uid, verification/iter059_bugfix_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/rules_command.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  7007,
+        "被引用者":  "scripts/battle/battle_engine.gd, verification/iter059_rule_audit.gd, verification/iter059_rules_check.gd, scripts/battle/rules_command.gd.uid, verification/iter059_bugfix_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/rules_effects.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  6413,
+        "被引用者":  "scripts/battle/rules_effects.gd.uid, scripts/battle/battle_engine.gd, verification/iter059_rule_audit.gd, verification/iter059_rules_check.gd, verification/iter059_bugfix_check.gd"
+    },
+    {
+        "文件":  "scripts/battle/rules_preview.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  6542,
+        "被引用者":  "scripts/battle/battle_engine.gd, verification/iter059_rule_audit.gd, verification/iter056_preview_check.gd, verification/iter059_rules_check.gd, scripts/battle/rules_preview.gd.uid, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "scripts/data/card_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2456,
+        "被引用者":  "game_data/decks/示范卡组.tres, scripts/data/card_data.gd.uid"
+    },
+    {
+        "文件":  "scripts/data/card_pool.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  12287,
+        "被引用者":  "verification/iter057_runtime_check.gd, scripts/battle/battle_engine.gd, scenes/ui/arena_view.gd, verification/build_scene.gd, verification/iter055_skill_check.gd, verification/iter054_e2e_check.gd, verification/iter059_rule_audit.gd, scripts/data/card_pool.gd.uid, verification/iter059_schema_check.gd, verification/iter056_preview_check.gd, verification/iter054_framework_check.gd, verification/iter059_rules_check.gd, verification/iter059_step3_check.gd, verification/gen_resources.gd, verification/iter059_bugfix_check.gd, verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "scripts/data/card_visual.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  1389,
+        "被引用者":  "game_data/cards/熊蜂.tres, game_data/cards/金刚蜂王.tres, game_data/cards/电击III.tres, game_data/cards/治疗.tres, game_data/cards/蜂巢III.tres, scripts/data/card_visual.gd.uid, game_data/cards/蜂巢.tres, game_data/cards/电击.tres, game_data/cards/叶蜂.tres, game_data/cards/泥蜂.tres, game_data/cards/巡航导弹.tres"
+    },
+    {
+        "文件":  "scripts/data/command_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  1105,
+        "被引用者":  "game_data/cards/电击III.tres, game_data/cards/治疗.tres, game_data/cards/电击.tres, verification/test_x_cost_card.tres, game_data/cards/巡航导弹.tres, scripts/data/command_data.gd.uid, verification/archive/V-059-x费测试卡（测试用·已封存）.tres"
+    },
+    {
+        "文件":  "scripts/data/deck_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  1098,
+        "被引用者":  "game_data/decks/示范卡组.tres, scripts/data/deck_data.gd.uid"
+    },
+    {
+        "文件":  "scripts/data/detail_params.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2593,
+        "被引用者":  "scripts/data/detail_params.gd.uid, scenes/ui/arena_view.gd"
+    },
+    {
+        "文件":  "scripts/data/effect_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3407,
+        "被引用者":  "game_data/cards/熊蜂.tres, game_data/cards/金刚蜂王.tres, game_data/cards/电击III.tres, game_data/cards/治疗.tres, game_data/cards/蜂巢III.tres, game_data/maps/铁锈_地形效果.tres, game_data/cards/蜂巢.tres, game_data/cards/电击.tres, verification/test_x_cost_card.tres, game_data/cards/叶蜂.tres, game_data/cards/泥蜂.tres, game_data/cards/巡航导弹.tres, scripts/data/effect_data.gd.uid, verification/archive/V-059-x费测试卡（测试用·已封存）.tres"
+    },
+    {
+        "文件":  "scripts/data/effect_runtime.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  429,
+        "被引用者":  "scripts/data/effect_runtime.gd.uid"
+    },
+    {
+        "文件":  "scripts/data/hand_card_params.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2525,
+        "被引用者":  "scenes/ui/arena_view.gd, scripts/data/hand_card_params.gd.uid"
+    },
+    {
+        "文件":  "scripts/data/map_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2346,
+        "被引用者":  "game_data/maps/默认.tres, game_data/maps/水没.tres, game_data/maps/铁锈.tres, game_data/maps/禁区.tres, game_data/maps/寒潮.tres, game_data/maps/丰饶.tres, scripts/data/map_data.gd.uid"
+    },
+    {
+        "文件":  "scripts/data/skill_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  1558,
+        "被引用者":  "game_data/cards/熊蜂.tres, game_data/cards/金刚蜂王.tres, game_data/cards/电击III.tres, game_data/cards/治疗.tres, game_data/cards/蜂巢III.tres, game_data/cards/蜂巢.tres, game_data/cards/电击.tres, verification/test_x_cost_card.tres, game_data/cards/叶蜂.tres, game_data/cards/泥蜂.tres, game_data/cards/巡航导弹.tres, scripts/data/skill_data.gd.uid, verification/archive/V-059-x费测试卡（测试用·已封存）.tres"
+    },
+    {
+        "文件":  "scripts/data/terrain_effect.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3163,
+        "被引用者":  "game_data/maps/寒潮_地形效果.tres, scripts/battle/rules_effects.gd, game_data/maps/水没_地形效果.tres, game_data/maps/铁锈_地形效果.tres, game_data/maps/丰饶_地形效果.tres, game_data/maps/禁区_地形效果.tres, scripts/data/terrain_effect.gd.uid, game_data/maps/默认_地形效果.tres, verification/iter059_rules_check.gd, verification/gen_resources.gd"
+    },
+    {
+        "文件":  "scripts/data/terrain_params.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  2413,
+        "被引用者":  "scripts/data/terrain_params.gd.uid, scenes/ui/arena_view.gd, verification/iter059_step3_check.gd"
+    },
+    {
+        "文件":  "scripts/data/unit_data.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  1957,
+        "被引用者":  "game_data/cards/熊蜂.tres, game_data/cards/金刚蜂王.tres, game_data/cards/蜂巢III.tres, scripts/data/unit_data.gd.uid, game_data/cards/蜂巢.tres, game_data/cards/叶蜂.tres, game_data/cards/泥蜂.tres"
+    },
+    {
+        "文件":  "scripts/data/unit_instance.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  3826,
+        "被引用者":  "scripts/data/unit_instance.gd.uid"
+    },
+    {
+        "文件":  "scripts/data/uuid.gd",
+        "可达":  true,
+        "归档区":  false,
+        "字节":  1826,
+        "被引用者":  "scripts/data/uuid.gd.uid"
+    },
+    {
+        "文件":  "tools/font_demo.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  2366,
+        "被引用者":  "tools/font_demo.tscn, tools/font_demo.gd.uid"
+    },
+    {
+        "文件":  "tools/font_demo.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  253,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "tools/font_metrics.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1339,
+        "被引用者":  "tools/font_metrics.gd.uid, tools/font_metrics.tscn"
+    },
+    {
+        "文件":  "tools/font_metrics.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  259,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "tools/fx_only.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1073,
+        "被引用者":  "tools/fx_only.tscn, tools/fx_only.gd.uid"
+    },
+    {
+        "文件":  "tools/fx_only.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  168,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "tools/perf_probe.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1341,
+        "被引用者":  "tools/perf_probe.tscn, tools/perf_probe.gd.uid"
+    },
+    {
+        "文件":  "tools/perf_probe.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  174,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "tools/quick_shot.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  669,
+        "被引用者":  "tools/quick_shot.gd.uid, tools/quick_shot.tscn"
+    },
+    {
+        "文件":  "tools/quick_shot.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  172,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "tools/ui_anim_shot.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1555,
+        "被引用者":  "tools/ui_anim_shot.tscn, tools/ui_anim_shot.gd.uid"
+    },
+    {
+        "文件":  "tools/ui_anim_shot.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  177,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "tools/ui_probe.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  759,
+        "被引用者":  "tools/ui_probe.tscn, tools/ui_probe.gd.uid"
+    },
+    {
+        "文件":  "tools/ui_probe.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  251,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "tools/ui_screenshot.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1152,
+        "被引用者":  "tools/ui_screenshot.gd.uid, tools/ui_screenshot.tscn"
+    },
+    {
+        "文件":  "tools/ui_screenshot.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  180,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/apply_hand_container.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3009,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/archive/V-059-x费测试卡（测试用·已封存）.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  575,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/build_scene.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  8045,
+        "被引用者":  "verification/build_scene.tscn"
+    },
+    {
+        "文件":  "verification/build_scene.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  181,
+        "被引用者":  "verification/build_scene.gd"
+    },
+    {
+        "文件":  "verification/editor_buffer_probe.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  174,
+        "被引用者":  "verification/editor_buffer_probe.tscn"
+    },
+    {
+        "文件":  "verification/editor_buffer_probe.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  231,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/gen_anims.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  10274,
+        "被引用者":  "verification/gen_anims.tscn"
+    },
+    {
+        "文件":  "verification/gen_anims.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  217,
+        "被引用者":  "verification/gen_anims.gd"
+    },
+    {
+        "文件":  "verification/gen_resources.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  11274,
+        "被引用者":  "verification/gen_resources.tscn"
+    },
+    {
+        "文件":  "verification/gen_resources.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  185,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter054_anim_detail_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  9018,
+        "被引用者":  "verification/iter054_anim_detail_check.tscn"
+    },
+    {
+        "文件":  "verification/iter054_anim_detail_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  207,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter054_detail_shot.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  893,
+        "被引用者":  "verification/iter054_detail_shot.tscn"
+    },
+    {
+        "文件":  "verification/iter054_detail_shot.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  196,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter054_e2e_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  10755,
+        "被引用者":  "verification/iter054_e2e_check.tscn"
+    },
+    {
+        "文件":  "verification/iter054_e2e_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  194,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter054_fade_probe.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3250,
+        "被引用者":  "verification/iter054_fade_probe.tscn"
+    },
+    {
+        "文件":  "verification/iter054_fade_probe.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  194,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter054_framework_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  19934,
+        "被引用者":  "verification/iter054_framework_check.tscn"
+    },
+    {
+        "文件":  "verification/iter054_framework_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  204,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter054_handprobe.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  1344,
+        "被引用者":  "verification/iter054_handprobe.tscn"
+    },
+    {
+        "文件":  "verification/iter054_handprobe.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  193,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter054_wiring_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  6547,
+        "被引用者":  "verification/iter054_wiring_check.tscn"
+    },
+    {
+        "文件":  "verification/iter054_wiring_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  200,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter055_skill_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  10194,
+        "被引用者":  "verification/iter055_skill_check.tscn"
+    },
+    {
+        "文件":  "verification/iter055_skill_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  194,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter056_preview_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  9064,
+        "被引用者":  "verification/iter056_preview_check.tscn"
+    },
+    {
+        "文件":  "verification/iter056_preview_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  198,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter057_runtime_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  6003,
+        "被引用者":  "verification/iter057_runtime_check.tscn"
+    },
+    {
+        "文件":  "verification/iter057_runtime_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  198,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/iter059_bugfix_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  18174,
+        "被引用者":  "verification/iter059_bugfix_check.tscn"
+    },
+    {
+        "文件":  "verification/iter059_bugfix_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  196,
+        "被引用者":  "verification/iter059_bugfix_check.gd"
+    },
+    {
+        "文件":  "verification/iter059_discard_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  6218,
+        "被引用者":  "verification/iter059_discard_check.tscn"
+    },
+    {
+        "文件":  "verification/iter059_discard_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  198,
+        "被引用者":  "verification/iter059_discard_check.gd"
+    },
+    {
+        "文件":  "verification/iter059_hand_stable_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  3855,
+        "被引用者":  "verification/iter059_hand_stable_check.tscn"
+    },
+    {
+        "文件":  "verification/iter059_hand_stable_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  205,
+        "被引用者":  "verification/iter059_hand_stable_check.gd"
+    },
+    {
+        "文件":  "verification/iter059_rule_audit.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  12210,
+        "被引用者":  "verification/iter059_rule_audit.tscn"
+    },
+    {
+        "文件":  "verification/iter059_rule_audit.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  192,
+        "被引用者":  "verification/iter059_rule_audit.gd"
+    },
+    {
+        "文件":  "verification/iter059_rules_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  10870,
+        "被引用者":  "verification/iter059_rules_check.tscn"
+    },
+    {
+        "文件":  "verification/iter059_rules_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  194,
+        "被引用者":  "verification/iter059_rules_check.gd"
+    },
+    {
+        "文件":  "verification/iter059_schema_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  6268,
+        "被引用者":  "verification/iter059_schema_check.tscn"
+    },
+    {
+        "文件":  "verification/iter059_schema_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  196,
+        "被引用者":  "verification/iter059_schema_check.gd"
+    },
+    {
+        "文件":  "verification/iter059_step3_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  8283,
+        "被引用者":  "verification/iter059_step3_check.tscn"
+    },
+    {
+        "文件":  "verification/iter059_step3_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  194,
+        "被引用者":  "verification/iter059_step3_check.gd"
+    },
+    {
+        "文件":  "verification/iter060_anim_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  4395,
+        "被引用者":  "verification/iter060_anim_check.tscn"
+    },
+    {
+        "文件":  "verification/iter060_anim_check.tscn",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  234,
+        "被引用者":  "verification/iter060_anim_check.gd"
+    },
+    {
+        "文件":  "verification/rule_check.gd",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  11875,
+        "被引用者":  ""
+    },
+    {
+        "文件":  "verification/test_x_cost_card.tres",
+        "可达":  false,
+        "归档区":  false,
+        "字节":  575,
+        "被引用者":  ""
+    }
+]
