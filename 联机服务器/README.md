@@ -67,6 +67,49 @@ curl http://127.0.0.1:8080/healthz
 
 > **测试与生产的唯一差别＝参数**：`config.test.json` ↔ `config.prod.json`（端口/路径/wss/白名单/日志格式）。代码零改动（检查点 7 会做替换演练）。
 
+## 四之二、为什么「重定向」不行 & 正确配法（2026-09-23 实测）
+
+实测现状（`node tools/net_probe.js --host=www.ourwangzhan.com --port=8090 --path=/relay`）：
+
+| 探测项 | 结果 |
+|---|---|
+| DNS | `www.ourwangzhan.com → 121.36.34.150` ✅ |
+| TLS 证书 | **有效**（curl 默认校验通过，且带 `Strict-Transport-Security`）✅ → Godot 用默认 `TLSOptions` 即可，无需降级 |
+| `GET https://…/` · `/healthz` · `/relay` · `/admin` | **全部 301 → `http://127.0.0.1:8090/...`** ✗ |
+| `wss://…/relay` · `ws://…/relay` 握手 | ✗ `Unexpected server response: 301` |
+| 公网直连 `http://121.36.34.150:8090/healthz` | 超时 —— 该端口**未明文暴露** ✅（好事） |
+
+**为什么「重定向」不行**：面板里那条是**重定向**（3xx 让客户端自己去访问 `http://127.0.0.1:8090`）——
+① 远端玩家跟随后会去连**他自己**的 localhost ✗ ② WebSocket 握手必须是 `101`，遇 3xx 直接失败 ✗ ③ 顺带把 HTTPS 降级成 HTTP ✗
+
+**正确配法（反向代理）**：宝塔 → 站点 `www.ourwangzhan.com` → **「反向代理」→ 添加反向代理**：
+
+| 字段 | 值 |
+|---|---|
+| 代理名称 | `relay` |
+| 代理目录 | `/`（整站；或分 `/relay` + `/healthz` 两条） |
+| 目标 URL | `http://127.0.0.1:8090` |
+| 发送域名 | `$host` |
+| **WebSocket 支持** | **必须开启**（面板有开关；或手工加下面三行） |
+
+```nginx
+proxy_set_header Upgrade $http_upgrade;
+proxy_set_header Connection "upgrade";
+proxy_read_timeout 300s;      # 长连接/心跳不被掐断
+```
+
+然后**删除原来那条「重定向」**，复验：
+
+```bash
+node tools/net_probe.js --host=www.ourwangzhan.com --port=8090
+# 期望：wss://www.ourwangzhan.com/relay → 连接建立 → 收到 {"t":"welcome","proto":1,...}
+```
+
+> ⚠️ **安全**：若整站反代（`/`），`/admin` 会一并暴露到公网 → **必须**给 `config.prod.json` 填 `admin_token`（或只反代 `/relay` + `/healthz`）。
+> ⚠️ **Node 侧**：`config.prod.json` 的 `host` 保持 `127.0.0.1`（模板已如此），端口与面板「Node 项目」里的一致（模板 8090）。
+> 🔎 **判定服务器上跑的是哪份代码**：在服务器上执行 `curl -s http://127.0.0.1:8090/healthz`
+> —— 返回含 `"proto"`/`"build"`/`"config"` 的 JSON ＝ 本目录的 `server.js` ✅；返回别的内容 ＝ 原测试服务（需把本目录部署上去：上传 → `npm ci --omit=dev` → 面板重启）。
+
 ## 五、更新工具（本轮交付设计）
 
 ```bash
