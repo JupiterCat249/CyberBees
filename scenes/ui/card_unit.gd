@@ -60,6 +60,12 @@ func _set_text(path: String, value: String) -> void:
 	_set_prop(path, "text", value)
 
 
+## 视角换色（迭代062）：seat≠0 的玩家也应看到「自己=绿方」→ 只改两侧配色，不动任何数据
+func set_mine(m: bool) -> void:
+	_tint("SideLeft", SIDE_ALLY if m else SIDE_ENEMY)
+	_tint("SideRight", SIDE_ALLY if m else SIDE_ENEMY)
+
+
 ## 给 Panel 换底色（复制 StyleBoxFlat，避免改到共享资源）
 func _tint(path: String, color: Color) -> void:
 	var node := get_node_or_null(path) as Control

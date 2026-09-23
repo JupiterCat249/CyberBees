@@ -592,11 +592,15 @@ func set_my_seat(seat: int) -> void:
 		mv.rotation = PI if mirror else 0.0
 		## 单位卡自身反向旋转 → 位置随棋盘镜像，但**卡面文字保持正向可读**
 		## ⚠️ 必须先把轴心设到卡片中心（默认轴心=左上角，反向自转会把自己转出格外 —— 实测踩到）
+		## ⚠️ 同时**重涂阵营配色**：配色只在 spawn 时按 mine 上色，切座位必须补一次（实测踩到）
 		for k in _unit_nodes:
 			var un = _unit_nodes[k]
 			if un != null and is_instance_valid(un):
 				un.pivot_offset = Vector2(PITCH, PITCH) * 0.5
 				un.rotation = PI if mirror else 0.0
+				var inst_m = _find_unit(String(k))
+				if inst_m != null and un.has_method("set_mine"):
+					un.set_mine(int(inst_m.side) == my_seat)
 	print("[NET] 棋盘镜像 seat=%d（需镜像=%s）" % [my_seat, str(BoardMirror.needs_mirror(my_seat))])
 
 
