@@ -110,6 +110,42 @@ node tools/net_probe.js --host=www.ourwangzhan.com --port=8090
 > 🔎 **判定服务器上跑的是哪份代码**：在服务器上执行 `curl -s http://127.0.0.1:8090/healthz`
 > —— 返回含 `"proto"`/`"build"`/`"config"` 的 JSON ＝ 本目录的 `server.js` ✅；返回别的内容 ＝ 原测试服务（需把本目录部署上去：上传 → `npm ci --omit=dev` → 面板重启）。
 
+## 四之三、宝塔「两类资源不能叠加」下的三条可执行路径（2026-09-23）
+
+现状：`www.ourwangzhan.com` 归 **Node 项目**（域名/SSL 在项目内），而「反向代理」属**网站**类资源 →
+**无法给 Node 项目叠加反代**。于是：
+
+### 方案 A · 直连端口（最快打通联机，完全不碰 nginx）
+
+1. 云安全组放行 TCP **8090**（云控制台安全组 / 面板「外网映射」）
+2. 服务器上用**直连档**起服（端口 8090 · 无 wss · **admin_token 必填**，因端口面向公网）：
+   `npm ci --omit=dev && node server.js --config config.direct.json`
+3. 客户端 `net_config/net.prod.json`：`host=121.36.34.150` · `port=8090` · `wss=false`
+4. 复验：`node tools/net_probe.js --host=121.36.34.150 --port=8090` → 期望 WS 建立并收到 `welcome`
+
+- **优点**：今天就能打检查点 8；Godot 是原生客户端，**无浏览器混内容限制**，明文 `ws` 可用（只传操作数据、无账号密码）
+- **代价**：明文传输 + 端口公开 → 故 **admin_token 必须填**（实测：无 token 401 / 带 token 200）
+- 域名与证书此方案不参与（那条「重定向」建议删掉以免混淆）
+
+### 方案 B · 让「网站」承接域名（保留 wss 的正式形态）
+
+1. Node 项目里**解除域名绑定**（把 `www.ourwangzhan.com` 让出来）
+2. 新建/复用一个**网站**资源绑定该域名 + 申请 SSL 证书
+3. 在该**网站**里加**反向代理** → 目标 `http://127.0.0.1:8090` + **开启 WebSocket**（§四之二 那三行）
+4. Node 项目只负责跑进程监听 8090（`config.prod.json`）
+5. 复验：`node tools/net_probe.js --host=www.ourwangzhan.com --port=8090` → 期望 `wss` 收到 `welcome`
+
+### 方案 C · 先删掉「重定向」看看（Node 项目可能自带域名代理）
+
+BT 的 Node 项目绑定域名时通常会生成 `proxy_pass http://127.0.0.1:<port>`；那条**重定向**会把它盖掉
+（面板自述：「设置域名重定向后，该域名的 404 重定向将失效」）。
+
+1. 删掉「重定向」→ 直接跑探针
+2. 若 HTTP 已通（200/404）但 `wss` 仍失败 → 说明反代通了、只缺 WS 头 → 到 Node 项目「**配置文件**」tab 补 §四之二 三行并 reload
+
+> 三条路互不冲突：A 可立即验连通性与全部协议逻辑；B/C 是把域名与 wss 接上的正式形态。
+> 🔧 待补（编辑器离线，走 MCP 的补丁待办）：客户端 `net_config.gd` 的 `--net-url=<url>` / `SB_NET_URL` **临时覆盖**（不改文件切目标）——目前切目标请直接改 `net_config/net.prod.json`。
+
 ## 五、更新工具（本轮交付设计）
 
 ```bash

@@ -59,7 +59,10 @@ function loadConfig(argv) {
   if (i >= 0 && argv[i + 1]) file = argv[i + 1];
   const abs = path.isAbsolute(file) ? file : path.join(__dirname, file);
   const cfg = JSON.parse(fs.readFileSync(abs, 'utf8'));
-  const envMap = { SB_HOST: 'host', SB_PORT: 'port', SB_PATH: 'path', SB_PROTO: 'proto', SB_LOG_PRETTY: 'log_pretty', SB_ADMIN_TOKEN: 'admin_token' };
+  const envMap = {
+    SB_HOST: 'host', SB_PORT: 'port', SB_PATH: 'path', SB_PROTO: 'proto',
+    SB_LOG_PRETTY: 'log_pretty', SB_ADMIN_TOKEN: 'admin_token', SB_REQUIRE_WSS: 'require_wss'
+  };
   for (const [envKey, key] of Object.entries(envMap)) {
     const raw = process.env[envKey];
     if (raw === undefined || raw === '') continue;

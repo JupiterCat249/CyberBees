@@ -1,0 +1,19 @@
+{
+  "_comment": "直连档（方案 A）：域名/反代尚未就绪时的可用形态 —— 直接用「公网IP:端口」跑中继，不经过 nginx（客户端是原生 Godot，无浏览器混内容限制，ws 明文即可）",
+  "_note": "启用前必做：① 云服务器安全组放行 TCP 8090 ② 因端口对公网开放，admin_token 必须填写 ③ 客户端 net_config/net.prod.json 的 host 填公网 IP、wss=false（或用 --net-url=ws://<IP>:8090/relay 临时覆盖）",
+  "host": "0.0.0.0",
+  "port": 8090,
+  "path": "/relay",
+  "proto": 1,
+  "build": "direct-YYYYMMDD",
+  "room_max": 2,
+  "idle_timeout_ms": 60000,
+  "hb_interval_ms": 15000,
+  "max_msg_bytes": 32768,
+  "rate_limit": { "burst": 60, "per_sec": 30 },
+  "allow_origins": [],
+  "admin_token": "CHANGE_ME_REQUIRED__because_port_is_public",
+  "require_wss": false,
+  "log_pretty": false,
+  "serve_index": true
+}
