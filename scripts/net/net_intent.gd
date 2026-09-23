@@ -159,6 +159,10 @@ func apply_remote(seat: int, payload) -> bool:
 			if sk == null:
 				unsupported += 1
 				return false
+			## ⚠️ 引擎支援是**二次点击确认**：第一次只挂 pending 并返回 false（battle_engine.gd:486）
+			##    → 对端只收到最终 op、本地没有 pending → 必须**连调两次**才能执行
+			##      （否则支援在联机下恒失败 —— 迭代063 全谱自检实测发现）
+			engine.request_support(side, u, sk, _unit_at(p.get("target_cell")))
 			ok = engine.request_support(side, u, sk, _unit_at(p.get("target_cell")))
 		"discard":
 			ok = engine.request_discard(side, int(p.get("hand_index", -1)))

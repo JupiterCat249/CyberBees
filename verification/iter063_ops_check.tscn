@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d02e41nbedb4d"]
+
+[ext_resource type="Script" path="res://verification/iter063_ops_check.gd" id="1_prsko"]
+
+[node name="Iter063OpsCheck" type="Node" unique_id=943498091]
+script = ExtResource("1_prsko")
