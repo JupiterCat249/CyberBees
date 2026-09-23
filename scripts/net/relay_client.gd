@@ -53,6 +53,9 @@ var _seq: int = 0
 
 
 func start(p_url: String, p_build: String = "") -> Error:
+	## 已在使用则直接返回（双实例实测：切场景复用时 start() 会报 ERR_ALREADY_IN_USE —— 非致命但要挡住）
+	if state == St.CONNECTING or state == St.OPEN:
+		return OK
 	url = p_url
 	if p_build != "":
 		build = p_build

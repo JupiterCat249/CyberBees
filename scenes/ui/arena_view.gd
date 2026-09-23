@@ -124,6 +124,9 @@ func _ready() -> void:
 	intent = NetIntent.new(engine, null, net_seat)
 	if NetSession.active:
 		_setup_net()
+	NetSession.detect_auto()
+	if NetSession.auto:
+		_auto_start()
 	## 引擎就绪后才下发：UI 参数（含地表）
 	##   （手牌/费用的开局同步由 `_on_battle_started` → `_sync_all()` 负责）
 	apply_params()
@@ -133,7 +136,14 @@ func _ready() -> void:
 ## 联机接入（迭代062）：连中继 → 收 op 应用到本地引擎；套用座位视角（镜像 + 换色）
 func _setup_net() -> void:
 	set_my_seat(net_seat)
-	net_client = RelayClient.new()
+	## 复用大厅建立的**同一条连接**（房间/座位在连接上；重建会丢房间归属 —— 双实例实测教训）
+	if NetSession.client != null and NetSession.client.is_open():
+		net_client = NetSession.client
+		_flash_msg("复用大厅连接（%s）" % NetSession.describe())
+	else:
+		net_client = RelayClient.new()
+		net_client.start(NetSession.url, "godot-battle")
+		_flash_msg("重新连接中继（%s）" % NetSession.url)
 	intent.client = net_client
 	net_client.op_received.connect(func(seat: int, _seq: int, _frame: int, payload, _sseq: int) -> void:
 		if not intent.apply_remote(seat, payload):
@@ -150,6 +160,86 @@ func _setup_net() -> void:
 func _process(_dt: float) -> void:
 	if net_client != null:
 		net_client.poll()
+	if NetSession.auto:
+		_auto_tick()
+
+
+## ============================================================================
+##  dev / 双实例验收：自动出招（**确定性脚本**，两端同源；仅 --net-auto / SB_NET_AUTO / auto.flag 启用）
+##  只在自己行动侧出招（引擎 active 侧天然串行化 → 与另一实例互不抢）
+##  收尾：到达回合上限后**双方一致地停手**，静默 1.5s 排空在途 op，再各自打印终局 hash
+## ============================================================================
+const AUTO_ROUND_CAP := 12
+
+var _auto_timer := 0
+var _auto_stopped := false
+var _auto_quiet := 0.0
+var _auto_last_applied := 0
+
+
+func _auto_start() -> void:
+	print("[AUTO] 自动出招已开启 · seat=%d · url=%s" % [net_seat, NetSession.url])
+
+
+func _auto_tick() -> void:
+	if net_client == null or engine == null or engine.state == null:
+		return
+	if _auto_stopped:
+		_auto_quiet += get_process_delta_time()
+		if intent != null and intent.applied_remote != _auto_last_applied:
+			_auto_last_applied = intent.applied_remote
+			_auto_quiet = 0.0
+		if _auto_quiet > 1.5:
+			_auto_finish()
+		return
+	if int(engine.state.round_no) >= AUTO_ROUND_CAP:
+		_auto_stopped = true
+		_auto_quiet = 0.0
+		_auto_last_applied = intent.applied_remote if intent != null else 0
+		return
+	_auto_timer += 1
+	if _auto_timer < 12:
+		return
+	_auto_timer = 0
+	if int(engine.state.active) != net_seat:
+		return
+	if _auto_step():
+		NetSession.auto_steps += 1
+
+
+## 与自检脚本同源：部署优先 → 攻击次之 → 否则结束阶段（失败尝试不发 op、不消耗 RNG）
+func _auto_step() -> bool:
+	var side := net_seat
+	var phase: int = int(engine.state.phase)
+	if phase == 2:
+		for i in range(engine.state.hand(side).size()):
+			for x in 4:
+				for y in 4:
+					var c := Vector2i(x, y)
+					if engine.state.board.is_empty(c) and engine.state.board.is_own_territory(c, side):
+						if intent.request_deploy(side, i, c):
+							return true
+	if phase == 3:
+		for u in engine.state.units(side):
+			for v in engine.state.units(1 - side):
+				if intent.request_attack(side, u, v):
+					return true
+	return intent.request_end_phase()
+
+
+func _auto_finish() -> void:
+	_auto_stopped = true
+	NetSession.final_hash = StateHash.sha(engine.state)
+	print("[AUTO] FINAL round=%d result=%d seat=%d steps=%d hash=%s" % [
+		int(engine.state.round_no), int(engine.state.result), net_seat, NetSession.auto_steps, NetSession.final_hash])
+	var p := "user://auto_result_seat%d.txt" % net_seat
+	var f := FileAccess.open(p, FileAccess.WRITE)
+	if f != null:
+		f.store_line(NetSession.final_hash)
+		f.close()
+		print("[AUTO] 已写入 " + ProjectSettings.globalize_path(p))
+	await get_tree().create_timer(0.6).timeout
+	get_tree().quit(0)
 
 
 func _exit_tree() -> void:

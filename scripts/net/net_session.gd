@@ -22,6 +22,11 @@ static func set_match(p_url: String, p_code: String, p_seat: int, p_seed: int, p
 	active = true
 
 
+## ⚠️ **连接必须跨场景共享**（迭代062 双实例实测教训）：房间/座位都挂在**连接**上，
+##    若切场景时让大厅的连接被释放、战斗场景另起一条 → 新连接**不在房间里** → 两端各玩各的 ✗
+static var client: RelayClient = null
+
+
 static func clear() -> void:
 	url = ""
 	room_code = ""
@@ -29,6 +34,29 @@ static func clear() -> void:
 	seed_value = 0
 	first_side = 0
 	active = false
+
+
+## dev / 双实例验收用：自动匹配 + 自动出招
+## 三个来源任一命中即开：`--net-auto` · `SB_NET_AUTO=1` · 存在 `res://net_config/auto.flag`
+## （编辑器进程无法传 user args ↔ 环境变量也可能拿不到 → 用开关文件兜底）
+static var auto: bool = false
+static var final_hash: String = ""
+static var auto_steps: int = 0
+
+
+static func detect_auto() -> void:
+	for a in OS.get_cmdline_user_args():
+		if String(a) == "--net-auto":
+			auto = true
+	if OS.get_environment("SB_NET_AUTO") == "1":
+		auto = true
+	if FileAccess.file_exists("res://net_config/auto.flag"):
+		var f := FileAccess.open("res://net_config/auto.flag", FileAccess.READ)
+		if f != null:
+			var v := f.get_as_text().strip_edges().to_lower()
+			f.close()
+			if v == "1" or v == "true" or v == "on":
+				auto = true
 
 
 static func describe() -> String:

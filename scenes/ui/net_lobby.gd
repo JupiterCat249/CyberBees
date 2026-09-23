@@ -27,7 +27,10 @@ func _ready() -> void:
 
 	_client = RelayClient.new()
 	_client.opened.connect(func() -> void: _set_state("已连接中继，等待握手…"))
-	_client.welcomed.connect(func(_sid: String, _p: int, b: String) -> void: _set_state("已连接（服务器 build=%s）" % b))
+	_client.welcomed.connect(func(_sid: String, _p: int, b: String) -> void:
+		_set_state("已连接（服务器 build=%s）" % b)
+		if NetSession.auto:
+			_client.match_queue())
 	_client.lobby_stats.connect(func(online: int, waiting: int, playing: int) -> void:
 		_stats.text = "在线 %d 人 · 匹配中 %d 人 · 对局中 %d 人" % [online, waiting, playing])
 	_client.queued.connect(func(pos: int) -> void:
@@ -43,11 +46,18 @@ func _ready() -> void:
 	_client.match_started.connect(func(seed_value: int, first_side: int) -> void:
 		NetSession.set_match(_url, _client.room_code, _client.seat, seed_value, first_side)
 		_btn_enter.visible = true
-		_set_state("对局已就绪（%s）→ 点「进入对局」" % NetSession.describe()))
+		_set_state("对局已就绪（%s）→ 点「进入对局」" % NetSession.describe())
+		if NetSession.auto:
+			_on_enter_pressed())
 	_client.server_error.connect(func(code: String, msg: String) -> void: _set_state("错误：%s %s" % [code, msg]))
 	_client.closed.connect(func(c: int, r: String) -> void: _set_state("连接已关闭（%d %s）" % [c, r]))
 	_client.start(_url, "godot-lobby")
+	NetSession.client = _client      ## 交给 NetSession 持有 → 切场景时不被释放（房间/座位在连接上）
 	_set_state("正在连接 %s …" % _url)
+	NetSession.detect_auto()
+	if NetSession.auto:
+		_addr.text += "  · 自动模式"
+		print("[LOBBY] 自动模式：连上即入队、配对即进对局")
 
 
 func _process(_dt: float) -> void:

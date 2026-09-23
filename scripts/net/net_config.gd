@@ -36,6 +36,14 @@ static func default_profile() -> String:
 	var env := OS.get_environment("SB_NET_PROFILE")
 	if env != "":
 		return env
+	## dev 档位开关文件：给**编辑器内**运行的实例切档用（编辑器进程传不了 user args，环境变量也可能拿不到）
+	if FileAccess.file_exists(DIR + "/profile.flag"):
+		var f := FileAccess.open(DIR + "/profile.flag", FileAccess.READ)
+		if f != null:
+			var name := f.get_as_text().strip_edges()
+			f.close()
+			if name != "":
+				return name
 	return DEFAULT_PROFILE
 
 
