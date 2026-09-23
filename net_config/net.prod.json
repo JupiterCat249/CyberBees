@@ -1,8 +1,8 @@
 {
-  "_comment": "客户端联机参数（生产模板）：域名 + wss（宝塔反代 /relay 并开启 WebSocket）；与测试仅参数不同",
+  "_comment": "客户端联机参数（生产）：域名 + wss；宝塔反代 /relay 已实测 101+welcome",
   "host": "www.ourwangzhan.com",
   "port": 443,
   "path": "/relay",
   "wss": true,
-  "build": "godot-prod-YYYYMMDD"
+  "build": "godot-prod-20260923"
 }

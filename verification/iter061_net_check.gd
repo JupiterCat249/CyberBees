@@ -47,6 +47,7 @@ func _ready() -> void:
 	_mirror()
 	_determinism()
 	await _network()
+	await _live_check()
 	print("=== 结果：%d PASS / %d FAIL ===" % [_pass, _fail])
 	await get_tree().create_timer(0.4).timeout
 	get_tree().quit(1 if _fail > 0 else 0)
@@ -225,6 +226,55 @@ func _network() -> void:
 func bad_close() -> void:
 	if _bad != null and _bad.is_open():
 		_bad.close()
+
+
+## ⑥ 公网档真机检查：对**非默认档**（如 prod）各连一次 → 握手 + 建房
+## 这条就是「Godot 客户端 ↔ 生产域名（wss + 反代）」的实机证明
+var _live_wel := false
+var _live_code := ""
+var _live_err := ""
+
+
+func _live_check() -> void:
+	var def := NetConfig.default_profile()
+	var others: Array[String] = []
+	for p in NetConfig.profiles():
+		if p != def:
+			others.append(p)
+	if others.is_empty():
+		_chk(false, "⑥ 存在可用于公网检查的非默认档（如 prod）")
+		return
+	for p in others:
+		var cfg := NetConfig.load_profile(p)
+		var u := NetConfig.resolve_url(cfg)
+		if u == "":
+			_chk(false, "⑥ 档 [%s] 配置可读" % p)
+			continue
+		_live_wel = false
+		_live_code = ""
+		_live_err = ""
+		var c := RelayClient.new()
+		c.welcomed.connect(func(_s: String, _pr: int, _b: String) -> void:
+			_live_wel = true
+			c.create_room())   ## ← 收到 welcome 再建房（上一版漏了这步，白等 20s 超时）
+		c.room_state.connect(func(k: String, _s: int, _pl: Array) -> void: _live_code = k)
+		c.server_error.connect(func(code: String, _m: String) -> void: _live_err = code)
+		c.start(u, "godot-live-" + p)
+		await _wait_one(c, func() -> bool: return _live_wel and _live_code != "", 20.0)
+		_chk(_live_wel, "⑥ 公网档 [%s] 握手 welcome" % p, "%s%s" % [u, ("  err=" + _live_err) if _live_err != "" else ""])
+		_chk(_live_code.length() == 6, "⑥ 公网档 [%s] 建房成功（Godot 客户端 ↔ 生产域名）" % p, _live_code)
+		c.close()
+		await get_tree().create_timer(0.2).timeout
+
+
+func _wait_one(c: RelayClient, pred: Callable, timeout: float) -> void:
+	var t := 0.0
+	while t < timeout:
+		c.poll()
+		if pred.call():
+			return
+		await get_tree().process_frame
+		t += get_process_delta_time()
 
 
 func _wait(pred: Callable, timeout: float) -> void:

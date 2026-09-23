@@ -573,8 +573,35 @@ func _adopt_cells() -> void:
 			_cells[c] = node
 
 
+## 联机「棋盘镜像」（边界 T7）：seat≠0 的玩家把整块棋盘旋转 180° 呈现
+## 做法＝**旋转容器**（MapView 绕棋盘中心）→ 底图 / 格 / 单位 / FX 一次性全部对齐；
+## ⚠️ 数据仍是**规范 cell**（格节点保存规范 cell、点击回报规范 cell）→ 两端引擎状态天然一致
+var my_seat: int = 0
+const BOARD_PX := PITCH * 4.0
+
+
+## 切换座位视角（联机握手/入房后调用；seat 0 = 绿方 = 规范视角）
+func set_my_seat(seat: int) -> void:
+	if seat == my_seat:
+		return
+	my_seat = seat
+	var mv := get_node_or_null("Battle/MapView") as Control
+	if mv != null:
+		var mirror := BoardMirror.needs_mirror(my_seat)
+		mv.pivot_offset = Vector2(BOARD_PX * 0.5, BOARD_PX * 0.5)   ## 绕棋盘中心
+		mv.rotation = PI if mirror else 0.0
+		## 单位卡自身反向旋转 → 位置随棋盘镜像，但**卡面文字保持正向可读**
+		## ⚠️ 必须先把轴心设到卡片中心（默认轴心=左上角，反向自转会把自己转出格外 —— 实测踩到）
+		for k in _unit_nodes:
+			var un = _unit_nodes[k]
+			if un != null and is_instance_valid(un):
+				un.pivot_offset = Vector2(PITCH, PITCH) * 0.5
+				un.rotation = PI if mirror else 0.0
+	print("[NET] 棋盘镜像 seat=%d（需镜像=%s）" % [my_seat, str(BoardMirror.needs_mirror(my_seat))])
+
+
 func _cell_pos(cell: Vector2i) -> Vector2:
-	## ⚠️ 沿用项目坐标约定：cell.x = 行、cell.y = 列
+	## ⚠️ 沿用项目坐标约定：cell.x = 行、cell.y = 列（**规范坐标**，不随镜像变化）
 	return Vector2(cell.y * PITCH, cell.x * PITCH)
 
 
@@ -777,6 +804,10 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	var node: Control = UNIT_CARD_SCENE.instantiate()
 	node.name = "Unit_" + inst.instance_id.substr(0, 8)
 	node.position = _cell_pos(cell)
+	if BoardMirror.needs_mirror(my_seat):
+		## 镜像视角下反向自转：位置随棋盘翻转、卡面保持正向；轴心必须=卡片中心
+		node.pivot_offset = Vector2(PITCH, PITCH) * 0.5
+		node.rotation = PI
 	_units_root.add_child(node)
 	## ⭐ 运行时新建的单位卡也会带 CrtFx 叠加层 → 必须单独设鼠标穿透，
 	##    否则新部署的单位会**盖住整块棋盘**、吞掉所有点击（迭代058 实测教训）

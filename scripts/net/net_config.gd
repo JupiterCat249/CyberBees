@@ -54,8 +54,21 @@ static func load_profile(name: String) -> Dictionary:
 	return d
 
 
-## 组装 ws(s)://host:port/path
+## 临时覆盖（优先级最高）：命令行 `--net-url=ws://ip:port/relay` 或环境变量 `SB_NET_URL`
+## 用途：不改任何文件即可切换目标（联机排查、直连/域名切换、指到别人的测试服）
+static func url_override() -> String:
+	for a in OS.get_cmdline_user_args():
+		var s := String(a)
+		if s.begins_with("--net-url="):
+			return s.substr(10)
+	return OS.get_environment("SB_NET_URL")
+
+
+## 组装 ws(s)://host:port/path（url_override() 非空时优先）
 static func resolve_url(cfg: Dictionary) -> String:
+	var forced := url_override()
+	if forced != "":
+		return forced
 	if cfg.is_empty():
 		return ""
 	var scheme := "wss" if bool(cfg.get("wss", false)) else "ws"
