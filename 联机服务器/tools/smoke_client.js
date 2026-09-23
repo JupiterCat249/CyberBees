@@ -8,7 +8,9 @@ const WebSocket = require('ws');
 const { loadConfig } = require('../server.js');
 
 const cfg = loadConfig(process.argv.slice(2));
-const URL = `ws://127.0.0.1:${cfg.port}${cfg.path}`;
+// 目标 URL：默认本机测试档；用 `--url=wss://域名/relay` 可对**公网域名**跑同一套断言（跨机联机验证）
+const urlArg = process.argv.slice(2).find((a) => a.startsWith('--url='));
+const URL = urlArg ? urlArg.slice(6) : `ws://127.0.0.1:${cfg.port}${cfg.path}`;
 const PROTO = Number(cfg.proto) || 1;
 const results = [];
 let failed = 0;

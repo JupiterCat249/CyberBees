@@ -299,6 +299,16 @@ function createServer(cfg) {
   //        POST /admin/api/room/close · /admin/api/conn/kick · /admin/api/rooms/close_all
   // ========================================================================
   const ADMIN_TOKEN = String(cfg.admin_token || '');
+  // 管理口令必须是 **ASCII 可见字符**：HTTP 头只能承载 latin-1 → 含中文会在浏览器 / nginx 侧被拒或乱码
+  if (ADMIN_TOKEN !== '' && /[^\x20-\x7E]/.test(ADMIN_TOKEN)) {
+    log('error', 'admin_token.invalid', {
+      hint: 'admin_token 只能含 ASCII 可见字符；请改用随机 ASCII 串（例：openssl rand -hex 24）后重启'
+    });
+    throw new Error('admin_token 含非 ASCII 字符');
+  }
+  if (ADMIN_TOKEN !== '' && ADMIN_TOKEN.length < 12) {
+    log('warn', 'admin_token.weak', { len: ADMIN_TOKEN.length, hint: '建议 ≥24 位随机 ASCII' });
+  }
   const ADMIN_MAX_BODY = 4096;
 
   function timingEq(a, b) {
@@ -379,16 +389,17 @@ function createServer(cfg) {
   function handleAdmin(req, res, pathname) {
     let url;
     try { url = new URL(req.url, 'http://placeholder'); } catch (_) { return sendJson(res, 400, { ok: false, error: 'BAD_URL' }); }
-    const deny = adminAuth(req, url);
-    if (deny) {
-      log('warn', 'admin.denied', { path: pathname, reason: deny, ip: req.socket.remoteAddress });
-      return sendJson(res, deny === 'TOKEN_REQUIRED' ? 401 : 403, { ok: false, error: deny });
-    }
+    // 面板页本身不含机密 → **免鉴权**（API 一律鉴权）；否则浏览器打不开页面、也就没地方填 token
     if (pathname === '/admin' || pathname === '/admin.html') {
       const f = path.join(__dirname, 'admin.html');
       if (!fs.existsSync(f)) return sendJson(res, 404, { ok: false, error: 'admin.html missing' });
       res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
       return res.end(fs.readFileSync(f));
+    }
+    const deny = adminAuth(req, url);
+    if (deny) {
+      log('warn', 'admin.denied', { path: pathname, reason: deny, ip: req.socket.remoteAddress });
+      return sendJson(res, deny === 'TOKEN_REQUIRED' ? 401 : 403, { ok: false, error: deny });
     }
     const api = pathname.replace(/^\/admin\/api\/?/, '');
     if (req.method === 'GET') {

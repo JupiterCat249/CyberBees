@@ -133,7 +133,28 @@ location / {
 |---|---|---|
 | ① | 面板「重定向」tab（或该 extension 目录里的 conf） | **删除** `www.ourwangzhan.com → http://127.0.0.1:8090` 那条 |
 | ② | «配置文件»（或写进 extension conf） | 在 `location /` 内**加一行** `proxy_set_header X-Forwarded-Proto $scheme;` |
-| ③ | 面板 | reload nginx |
+| ③ | 面板 | **reload nginx**（做法见下） |
+
+**③ reload 到底在哪做（宝塔，三种任选）**：
+
+1. **往往不用单独做** —— 在「配置文件」tab 里**保存**、或在「重定向」tab 删除条目时，宝塔会**自动 reload** nginx
+2. 面板 → **软件商店 → 已安装 → nginx → 设置 → 「重载配置」/「重启」**
+3. 面板自带 **「终端」**（或 SSH）执行（**任意目录**都可以，nginx 读的是编译期配置路径）：
+   ```bash
+   nginx -t && nginx -s reload
+   # 若提示命令不存在（宝塔的 nginx 不在 PATH）：
+   /www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload
+   ```
+> ⚠️ **「重启 Node 项目」不会 reload nginx**（是两个服务）；反代/重定向的改动只有 nginx 侧 reload 后才生效。
+> ✅ **但先跑探针**：若 `wss://…/relay` 已能收到 `welcome`，说明早就生效、**无需任何 reload**（2026-09-23 实测即属此情况）。
+
+**管理口令（`admin_token`）硬要求**（同日实测加固）：
+
+- **只能 ASCII 可见字符** —— HTTP 头只能承载 latin-1，含中文会在浏览器/nginx 侧被拒或乱码；新版启动时会**明确报错并拒绝启动**（日志 `admin_token.invalid`）
+- 建议 **≥24 位随机**（`openssl rand -hex 24`）；**<12 位会告警**（`admin_token.weak`）
+- ⚠️ 口令若曾出现在聊天/截图里 → **请轮换**（换新的即可）
+- 打开方式：`https://www.ourwangzhan.com/admin` —— **页面本身免鉴权**（不含机密），进去后在右上角填 token 并保存；也可直接 `…/admin?token=你的口令`。**API 一律要 token**（`Authorization: Bearer` 或 `?token=`）✓
+- 实测：页面 200 · API 无 token 401 · Bearer 200 · `?token=` 200 ✓
 
 > ② **必需**：生产档 `require_wss:true` 靠 `X-Forwarded-Proto` 判定 TLS。实测——**不加该头 → 回 `{"t":"err","code":"NEED_WSS"}` 并断开 1008；加上该头 → 握手 `101` + 收到 `welcome`** ✓
 > （临时替代：`SB_REQUIRE_WSS=false` 起服；但建议补上那一行）

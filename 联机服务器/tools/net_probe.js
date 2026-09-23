@@ -56,7 +56,12 @@ function wsProbe(url) {
     let first = null;
     const timer = setTimeout(() => { try { w.terminate(); } catch (_) {} finish({ error: 'timeout', first }); }, 9000);
     w.on('open', () => w.send(JSON.stringify({ t: 'hello', proto: PROTO, build: 'probe' })));
-    w.on('message', (d) => { if (!first) first = d.toString().slice(0, 200); });
+    w.on('message', (d) => {
+      if (!first) {
+        first = d.toString().slice(0, 200);
+        try { w.close(); } catch (_) {}   // 收到首条报文即主动关闭（否则要等 9s 超时）
+      }
+    });
     w.on('close', (code, reason) => { clearTimeout(timer); finish({ closed: true, code, reason: String(reason || ''), first }); });
     w.on('error', (e) => { clearTimeout(timer); finish({ error: e.message, first }); });
   });
@@ -86,9 +91,12 @@ function wsProbe(url) {
 
   console.log('\n[3] WebSocket 握手');
   for (const url of [`wss://${HOST}${PATH}`, `ws://${HOST}${PATH}`]) {
+    const secure = url.startsWith('wss:');
     const r = await wsProbe(url);
     if (r.closed) {
       rec(!!r.first, `WS ${url}`, `连接建立 → 收到：${r.first || '(无消息)'} · 关闭 ${r.code} ${r.reason}`);
+    } else if (!secure && /30[12]/.test(String(r.error))) {
+      rec(null, `WS ${url}`, `${r.error} —— 明文 ws 被跳转到 https 属**预期行为**（客户端请用 wss）`);
     } else {
       rec(false, `WS ${url}`, `${r.error}${r.first ? ' · 收到过：' + r.first : ''}`);
     }
