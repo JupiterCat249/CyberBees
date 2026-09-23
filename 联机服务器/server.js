@@ -32,6 +32,7 @@ const ERR = {
   ROOM_NOT_FOUND: 'ROOM_NOT_FOUND',
   NEED_TWO_PLAYERS: 'NEED_TWO_PLAYERS',
   NOT_IN_ROOM: 'NOT_IN_ROOM',
+  IN_ROOM: 'IN_ROOM',
   NOT_HOST: 'NOT_HOST',
   NOT_STARTED: 'NOT_STARTED',
   RATE_LIMIT: 'RATE_LIMIT',
@@ -44,6 +45,8 @@ const SCHEMA = {
   hello: { proto: 'number', build: 'string?' },
   create: {},
   join: { code: 'string' },
+  queue: {},
+  cancel_queue: {},
   leave: {},
   start: {},
   op: { seq: 'number', frame: 'number', payload: 'any' },
@@ -125,6 +128,77 @@ function createServer(cfg) {
       for (let i = 0; i < 6; i++) s += alphabet[crypto.randomInt(alphabet.length)];
     } while (rooms.has(s));
     return s;
+  }
+
+  // ========================================================================
+  //  快速匹配（人 2026-09-23 裁定：大厅只需「在线/对局人数 + 匹配按钮」）
+  //  · 仍属**房间管理**：不裁决、不解释 payload（T7 安全）
+  //  · 配对成功即选定 seed/先手并**直接下发 start**（无需房主手按开始）
+  //  · lobby 广播只含**存在性统计**（online/waiting/playing），不含任何对局状态
+  // ========================================================================
+  const waiting = [];
+  let lobbyTimer = null;
+
+  function lobbyStats() {
+    let playing = 0;
+    for (const r of rooms.values()) if (r.state === 'playing') playing += r.peers.filter(Boolean).length;
+    return { online: conns.size, waiting: waiting.length, playing: playing };
+  }
+  function broadcastLobby() {
+    if (lobbyTimer) return;   // 200ms 去抖：避免高频刷屏
+    lobbyTimer = setTimeout(() => {
+      lobbyTimer = null;
+      const s = { t: 'lobby', ...lobbyStats() };
+      for (const c of conns) if (c.hello) send(c, s);
+    }, 200);
+  }
+  function onQueue(conn) {
+    if (conn.room) return fail(conn, ERR.IN_ROOM, '已在房间中');
+    if (!waiting.includes(conn)) {
+      waiting.push(conn);
+      log('info', 'queue.join', { sid: conn.sid, waiting: waiting.length, name: conn.name });
+    }
+    send(conn, { t: 'queued', pos: waiting.indexOf(conn) + 1 });
+    broadcastLobby();
+    tryPair();
+    return true;
+  }
+  function onCancelQueue(conn) {
+    const i = waiting.indexOf(conn);
+    if (i >= 0) { waiting.splice(i, 1); log('info', 'queue.cancel', { sid: conn.sid }); }
+    send(conn, { t: 'unqueued' });
+    broadcastLobby();
+    return true;
+  }
+  function tryPair() {
+    while (waiting.length >= 2) {
+      const a = waiting.shift(), b = waiting.shift();
+      if (!a || !b) continue;
+      if (a.ws.readyState !== a.ws.OPEN || b.ws.readyState !== b.ws.OPEN) continue;
+      const room = {
+        code: newCode(), state: 'playing', created_at: Date.now(), started_at: Date.now(),
+        ops_relayed: 0, payload_bytes: 0,
+        peers: new Array(roomMax).fill(null), seed: 0, first_side: 0
+      };
+      rooms.set(room.code, room);
+      stats.rooms_created++;
+      const pair = [a, b];
+      for (let i = 0; i < pair.length && i < roomMax; i++) {
+        room.peers[i] = pair[i];
+        pair[i].room = room;
+        pair[i].seat = i;
+      }
+      const seats = room.peers.map((p, i) => ({ seat: i, name: p ? p.name : null }));
+      room.seed = crypto.randomInt(1, 2147483647);
+      room.first_side = crypto.randomInt(0, 2);
+      for (const p of room.peers) {
+        if (!p) continue;
+        send(p, { t: 'matched', code: room.code, seat: p.seat, players: seats });
+        send(p, { t: 'start', seed: room.seed, first_side: room.first_side, proto });
+      }
+      log('info', 'queue.matched', { code: room.code, seats: seats, seed: room.seed, first_side: room.first_side });
+    }
+    broadcastLobby();
   }
 
   // ---- 发送 / 拒绝 ----
@@ -227,6 +301,8 @@ function createServer(cfg) {
     return true;
   }
   function detach(conn, reason) {
+    const qi = waiting.indexOf(conn);            // 匹配队列里的连接断开 → 出队
+    if (qi >= 0) { waiting.splice(qi, 1); broadcastLobby(); }
     const room = conn.room;
     if (!room) { conn.room = null; conn.seat = null; return; }
     const seat = conn.seat;
@@ -520,11 +596,14 @@ function createServer(cfg) {
           conn.name = String(msg.build || '').slice(0, 32) || null; // build 仅作展示名用途，不参与判定
           send(conn, { t: 'welcome', sid: conn.sid, proto, build: cfg.build || '', server_time: Date.now() });
           log('info', 'conn.hello', { sid: conn.sid, client_build: msg.build || '' });
+          broadcastLobby();   // 新玩家入座 → 向所有人推一次人数
           return;
         }
         case 'ping': return void send(conn, { t: 'pong', t: msg.t === undefined ? 0 : msg.t });
         case 'create': return void createRoom(conn);
         case 'join': return void joinRoom(conn, msg.code);
+        case 'queue': return void onQueue(conn);
+        case 'cancel_queue': return void onCancelQueue(conn);
         case 'leave': return void (detach(conn, 'leave'), send(conn, { t: 'left' }));
         case 'start': return void startMatch(conn);
         case 'op': return void relayOp(conn, msg);

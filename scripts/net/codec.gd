@@ -10,11 +10,12 @@ extends RefCounted
 const PROTO := 1
 
 ## 客户端 → 服务器
-const C2S: Array[String] = ["hello", "create", "join", "leave", "start", "op", "ping"]
+const C2S: Array[String] = ["hello", "create", "join", "leave", "start", "op", "ping", "queue", "cancel_queue"]
 ## 服务器 → 客户端（**白名单**：任何不在此表的类型都视为协议异常）
 const S2C: Array[String] = [
 	"welcome", "room", "peer_joined", "peer_left", "start", "left",
-	"op", "op_ack", "pong", "err"
+	"op", "op_ack", "pong", "err",
+	"queued", "unqueued", "matched", "lobby"
 ]
 
 

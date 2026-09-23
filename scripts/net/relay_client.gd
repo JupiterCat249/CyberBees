@@ -18,6 +18,11 @@ signal op_received(seat: int, seq: int, frame: int, payload: Variant, sseq: int)
 signal op_acked(seq: int, sseq: int)
 signal server_error(code: String, msg: String)
 signal closed(code: int, reason: String)
+## 快速匹配（迭代062 · 人裁定的大厅主流程）
+signal queued(pos: int)
+signal unqueued
+signal matched(code: String, seat: int, players: Array)
+signal lobby_stats(online: int, waiting: int, playing: int)
 
 enum St { IDLE, CONNECTING, OPEN, CLOSED, FAILED }
 
@@ -98,6 +103,17 @@ func join_room(code: String) -> void:
 
 func start_match() -> void:
 	_send(NetCodec.make("start"))
+
+
+## 快速匹配：入队（服务器配对成功后推 matched + start）
+func match_queue() -> void:
+	_send(NetCodec.make("queue"))
+
+
+## 取消匹配
+func cancel_queue() -> void:
+	_send(NetCodec.make("cancel_queue"))
+	# 迭代062：快速匹配入队/取消；配对成功由服务器推 matched + start
 
 
 func leave() -> void:
