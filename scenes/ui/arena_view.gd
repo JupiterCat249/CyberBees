@@ -49,6 +49,10 @@ const PITCH := 250.0
 @export var enemy_name := "玩家·红"
 
 var engine = null
+## 联机（迭代062）：操作闸门 + 客户端；单机时 net_client 为 null（intent 等价直连引擎）
+var intent: NetIntent = null
+var net_client: RelayClient = null
+var net_seat: int = 0
 ## 动画引擎（迭代060 v4）：Pattern→Unit→Clip **数据驱动**，数据在 `game_data/anims/*.tres`
 ##   帧数计时（T2）+ 确定性推进（回放一致）；实现见 `scripts/anim/anim_player.gd`
 var anim: Node = null
@@ -108,13 +112,44 @@ func _ready() -> void:
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
+	## 联机开局（迭代062）：**先按服务器下发的 seed 播种**再建引擎 ——
+	## 引擎唯一随机点＝牌库抽空重洗（dk.shuffle() 走全局 RNG），播种后两端重洗一致
+	if NetSession.active:
+		seed(NetSession.seed_value)
+		net_seat = NetSession.seat
 	engine = EngLib.new()
 	if auto_start and not engine.start(_config()):
 		push_warning("BattleEngine 启动失败（看上面的配置错误日志）")
+	## 操作闸门：单机时等价直接调引擎；联机时同时上行 op
+	intent = NetIntent.new(engine, null, net_seat)
+	if NetSession.active:
+		_setup_net()
 	## 引擎就绪后才下发：UI 参数（含地表）
 	##   （手牌/费用的开局同步由 `_on_battle_started` → `_sync_all()` 负责）
 	apply_params()
 	_apply_terrain_to_cells()
+
+
+## 联机接入（迭代062）：连中继 → 收 op 应用到本地引擎；套用座位视角（镜像 + 换色）
+func _setup_net() -> void:
+	set_my_seat(net_seat)
+	net_client = RelayClient.new()
+	intent.client = net_client
+	net_client.op_received.connect(func(seat: int, _seq: int, _frame: int, payload, _sseq: int) -> void:
+		if not intent.apply_remote(seat, payload):
+			_flash_msg("收到无法应用的操作（%s）" % intent.stats_text()))
+	net_client.peer_left.connect(func(_seat: int, reason: String, ended: bool) -> void:
+		if ended:
+			_flash_msg("对局结束：对手已离开（%s）" % reason))
+	net_client.closed.connect(func(_code: int, _r: String) -> void:
+		_flash_msg("与中继的连接已断开"))
+	net_client.start(NetSession.url, "godot-battle")
+	_flash_msg("联机中：%s" % NetSession.describe())
+
+
+func _process(_dt: float) -> void:
+	if net_client != null:
+		net_client.poll()
 
 
 func _exit_tree() -> void:
@@ -628,10 +663,10 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 	var side: int = engine.state.active
 	match kind:
 		K.Kind.DEPLOY:
-			if not engine.request_deploy(side, engine.sel_hand_index, cell):
+			if not intent.request_deploy(side, engine.sel_hand_index, cell):
 				_flash_msg("该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）")
 		K.Kind.MOVE:
-			if not engine.request_move(side, engine.sel_unit, cell):
+			if not intent.request_move(side, engine.sel_unit, cell):
 				_flash_msg("该格不可到达")
 		K.Kind.COMMAND, K.Kind.SUPPORT, K.Kind.ATTACK:
 			var target: UnitInstance = engine.state.board.unit_at(cell)
@@ -639,14 +674,14 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 				_flash_msg("该格没有目标单位")
 				return
 			if kind == K.Kind.COMMAND:
-				if not engine.request_use_command(side, engine.sel_hand_index, target):
+				if not intent.request_use_command(side, engine.sel_hand_index, target):
 					_flash_msg("指令目标不合法或费用不足")
 			elif kind == K.Kind.SUPPORT:
 				## 支援不针对特定单位（人澄清 Y-5）→ 点任意己方单位即进入待确认
-				if not engine.request_support(side, engine.sel_unit, engine.sel_support):
+				if not intent.request_support(side, engine.sel_unit, engine.sel_support):
 					_flash_msg("再次点击（或点主按钮「确认」）才执行【支援】")
 			else:
-				if not engine.request_attack(side, engine.sel_unit, target):
+				if not intent.request_attack(side, engine.sel_unit, target):
 					_flash_msg("不能攻击该目标（射程外 / 已行动过 / 非行动阶段）")
 		_:
 			## 无预览 → 尝试选中该格上的己方单位（并说明"为什么不能操作"）
@@ -671,11 +706,11 @@ func _execute_hand_on_cell(cell: Vector2i) -> void:
 	var side: int = engine.state.active
 	match int(engine.hand_mode):
 		int(EngLib.HandMode.DEPLOY):
-			if not engine.request_deploy(side, engine.sel_hand_index, cell):
+			if not intent.request_deploy(side, engine.sel_hand_index, cell):
 				_flash_msg("该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）")
 		int(EngLib.HandMode.TARGET):
 			var u: UnitInstance = engine.state.board.unit_at(cell)
-			if u == null or not engine.request_use_command(side, engine.sel_hand_index, u):
+			if u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
 				_flash_msg("该单位不是该指令的合法目标")
 		_:
 			pass
@@ -994,13 +1029,13 @@ func _on_unit_clicked(instance_id: String) -> void:
 		if int(engine.sel_kind) == 3 and engine.sel_unit != null and engine.sel_support != null \
 				and engine.sel_unit.instance_id != inst.instance_id:
 			## 支援不针对特定单位（Y-5）→ 点己方单位即确认/进入待确认
-			engine.request_support(side, engine.sel_unit, engine.sel_support)
+			intent.request_support(side, engine.sel_unit, engine.sel_support)
 			return
 		engine.select_unit(side, inst)
 		show_detail(inst.data)
 		_explain_actions(inst)
 	else:
-		if not engine.request_attack(side, engine.sel_unit, inst):
+		if not intent.request_attack(side, engine.sel_unit, inst):
 			_flash_msg("不能攻击 %s（需先选中自己的单位，且目标在射程内）" % inst.card_name())
 
 
@@ -1098,9 +1133,9 @@ func _on_main_pressed() -> void:
 		if int(engine.sel_hand_index) < hand.size():
 			card = hand[engine.sel_hand_index]
 		var dc: int = engine.discard_cost_of(card) if card != null else 0
-		if not engine.request_discard(engine.state.active, engine.sel_hand_index):
+		if not intent.request_discard(engine.state.active, engine.sel_hand_index):
 			_flash_msg("弃牌失败：需 %d 费，当前 %d" % [dc, engine.state.cost(engine.state.active)])
 		return
 	## 否则推进阶段
 	print("[VIEW] 主按钮被点击 → request_end_phase()；phase=", engine.state.phase)
-	engine.request_end_phase()
+	intent.request_end_phase()

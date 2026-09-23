@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://by8qohhxyqk1l"]
+
+[ext_resource type="Script" path="res://verification/iter062_flow_check.gd" id="1_ubejt"]
+
+[node name="Iter062FlowCheck" type="Node" unique_id=1693139159]
+script = ExtResource("1_ubejt")
