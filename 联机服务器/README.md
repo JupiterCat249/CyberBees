@@ -110,7 +110,46 @@ node tools/net_probe.js --host=www.ourwangzhan.com --port=8090
 > 🔎 **判定服务器上跑的是哪份代码**：在服务器上执行 `curl -s http://127.0.0.1:8090/healthz`
 > —— 返回含 `"proto"`/`"build"`/`"config"` 的 JSON ＝ 本目录的 `server.js` ✅；返回别的内容 ＝ 原测试服务（需把本目录部署上去：上传 → `npm ci --omit=dev` → 面板重启）。
 
-## 四之三、宝塔「两类资源不能叠加」下的三条可执行路径（2026-09-23）
+## 四之三、★首选：删掉「重定向」，用 Node 项目自带的域名反代（2026-09-23 实读 nginx 配置后确认）
+
+**关键事实**：宝塔给 Node 项目生成的 vhost **本来就带完整的 `/` 反向代理 + WebSocket 头** ——
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8090;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 86400s;
+}
+```
+
+而 `include /www/server/panel/vhost/nginx/extension/电子蜂测试用服务器/*.conf;` 位于 server 顶部 ——
+**那条「重定向」就是从这里插进去、把 `location /` 盖掉的**（面板自述「设置域名重定向后，该域名的 404 重定向将失效」）。
+
+**只需三处改动**：
+
+| # | 位置 | 改动 |
+|---|---|---|
+| ① | 面板「重定向」tab（或该 extension 目录里的 conf） | **删除** `www.ourwangzhan.com → http://127.0.0.1:8090` 那条 |
+| ② | «配置文件»（或写进 extension conf） | 在 `location /` 内**加一行** `proxy_set_header X-Forwarded-Proto $scheme;` |
+| ③ | 面板 | reload nginx |
+
+> ② **必需**：生产档 `require_wss:true` 靠 `X-Forwarded-Proto` 判定 TLS。实测——**不加该头 → 回 `{"t":"err","code":"NEED_WSS"}` 并断开 1008；加上该头 → 握手 `101` + 收到 `welcome`** ✓
+> （临时替代：`SB_REQUIRE_WSS=false` 起服；但建议补上那一行）
+> ③ 之后：`https://www.ourwangzhan.com/relay` → 反代到 `127.0.0.1:8090/relay`（带 WS 头）→ 客户端 `wss://www.ourwangzhan.com/relay` 即可用 ✓
+
+**为什么必须配 `admin_token`**：nginx 对 `/` **全量代理** → `/admin` 会公网可达。
+2026-09-23 顺带修掉一个真实安全缺陷：旧版 `isLoopback()` 读客户端**可伪造**的 `X-Forwarded-For`，且反代下 socket 恒为 `127.0.0.1` → **未配 token 时公网也能打开管理面板** ✗。
+现版本：**带代理头的请求在未配 token 时一律 `403 PROXY_DENIED`**（实测：直连 200 / 带 `X-Forwarded-For` 403 / 伪造 `XFF=127.0.0.1` 仍 403 / 配了 token + 反代头 → 200，无 token → 401）✓
+
+**复验**：`node tools/net_probe.js --host=www.ourwangzhan.com --port=8090` → 期望 `wss://…/relay` 连接建立并收到 `{"t":"welcome",…}`
+
+---
+
+## 四之四、备选：直连端口 / 网站承接域名
+
+（若上面的反代路径因面板限制走不通，再用下面两条 —— 两条都已实测可行）
 
 现状：`www.ourwangzhan.com` 归 **Node 项目**（域名/SSL 在项目内），而「反向代理」属**网站**类资源 →
 **无法给 Node 项目叠加反代**。于是：

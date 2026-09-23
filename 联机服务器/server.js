@@ -306,9 +306,14 @@ function createServer(cfg) {
     if (x.length !== y.length) return false;
     return crypto.timingSafeEqual(x, y);
   }
+  /** ⚠️ 判定必须**只看 socket 地址**：X-Forwarded-For 客户端可伪造（迭代061 修缺陷） */
   function isLoopback(req) {
-    const ip = String((req.headers['x-forwarded-for'] || '').split(',')[0].trim() || (req.socket.remoteAddress || ''));
+    const ip = String((req.socket && req.socket.remoteAddress) || '');
     return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+  }
+  /** 是否经过反向代理：宝塔 Node 项目默认对 `/` 做反代 → socket 恒为 127.0.0.1，光看地址判不出内外 */
+  function isProxied(req) {
+    return !!(req.headers['x-forwarded-for'] || req.headers['x-forwarded-proto'] || req.headers['x-real-ip']);
   }
   function adminAuth(req, url) {
     if (ADMIN_TOKEN !== '') {
@@ -318,6 +323,9 @@ function createServer(cfg) {
       const ok = (bearer !== '' && timingEq(bearer, ADMIN_TOKEN)) || (q !== '' && timingEq(q, ADMIN_TOKEN));
       return ok ? null : 'TOKEN_REQUIRED';
     }
+    // ⚠️ 关键修复（2026-09-23）：反代场景下 socket 恒为 127.0.0.1 —— 若未配 admin_token，
+    //    仅凭 socket 判定会让公网请求直接穿透到管理面板 → 带代理头的一律拒绝
+    if (isProxied(req)) return 'PROXY_DENIED';
     return isLoopback(req) ? null : 'LOOPBACK_ONLY';
   }
   function readBody(req, cb) {
