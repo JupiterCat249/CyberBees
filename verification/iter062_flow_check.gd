@@ -80,10 +80,13 @@ func _ready() -> void:
 	##    → 自检开启确定性重播；**生产（两进程）不启用**（已审计：运行时全局 RNG 只被引擎使用）
 	_i1.reseed_each_op = true
 	_i2.reseed_each_op = true
-	_i1.reseed_base = _seed
-	_i2.reseed_base = _seed
+	_i1.reseed_value = _seed
+	_i2.reseed_value = _seed
 
 	while _steps < 40 and not _e1.state.is_over():
+		## 两端**同一步同一个重播值**（单进程双引擎共用全局 RNG 的自检辅助；生产不启用）
+		_i1.reseed_value = _seed + _steps
+		_i2.reseed_value = _seed + _steps
 		var side: int = int(_e1.state.active)
 		if side == 0:
 			_scripted(_i1, _e1, 0)

@@ -23,7 +23,7 @@ var sent_payloads: Array = []        ## 上行 op 留痕（供「只传操作 / 
 ##    **生产不需要**：两进程各自 RNG，进程内全局 RNG 只被引擎使用 → 播种后自然同步
 ##    （已审计：运行时全局 RNG 消费者仅 battle_engine.gd:279；视图/动画的随机性已离线烤进 .tres）。
 var reseed_each_op: bool = false
-var reseed_base: int = 0
+var reseed_value: int = 0
 var _ops_by_sender := {0: 0, 1: 0}
 
 
@@ -37,11 +37,11 @@ func is_online() -> bool:
 	return client != null and client.is_open()
 
 
-## 自检用：按「发送方 + 该方第几个 op」确定性重播（两端同源 → 重洗一致）
-func _reseed_for(sender: int) -> void:
-	_ops_by_sender[sender] = int(_ops_by_sender.get(sender, 0)) + 1
+## 自检用：每次引擎调用前套用**同一个重播值**（两端必须同步一致）
+## ⚠️ 不能用「尝试次数」当索引：自检为找合法格会做大量**失败尝试**（不消耗 RNG，对端也看不到它）
+func _reseed_now() -> void:
 	if reseed_each_op:
-		seed(reseed_base + sender * 1000 + int(_ops_by_sender[sender]))
+		seed(reseed_value)
 
 
 func _ch(cell: Vector2i) -> Array:
@@ -83,7 +83,7 @@ func _find_skill(unit, _skill_id: String):
 
 ## 统一入口：本地执行（先确定性重播）→ 成功则上行
 func _do(sender: int, method: String, args: Array, payload: Dictionary) -> bool:
-	_reseed_for(sender)
+	_reseed_now()
 	var ok: bool = engine.callv(method, args)
 	if ok:
 		frame += 1
@@ -142,7 +142,7 @@ func apply_remote(seat: int, payload) -> bool:
 		return false
 	var p: Dictionary = payload
 	var side := int(seat)          ## 约定：seat ↔ 引擎 side
-	_reseed_for(side)
+	_reseed_now()
 	var ok := false
 	match String(p.get("k", "")):
 		"deploy":
