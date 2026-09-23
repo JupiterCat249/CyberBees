@@ -8,7 +8,9 @@ const WebSocket = require('ws');
 const { loadConfig } = require('../server.js');
 
 const cfg = loadConfig(process.argv.slice(2));
-const URL = `ws://127.0.0.1:${cfg.port}${cfg.path}`;
+// 目标 URL：默认本机；`--url=wss://域名/relay` 可对**公网**跑同一套匹配断言
+const urlArg = process.argv.slice(2).find((a) => a.startsWith('--url='));
+const URL = urlArg ? urlArg.slice(6) : `ws://127.0.0.1:${cfg.port}${cfg.path}`;
 const PROTO = Number(cfg.proto) || 1;
 let pass = 0, fail = 0;
 
@@ -23,7 +25,13 @@ function mk(name) {
   ws.on('error', (e) => console.log(`  [${name}] error ${e.message}`));
   return ws;
 }
-const open = (ws) => new Promise((r) => { ws.once('open', r); ws.once('error', r); });
+/** ⚠️ 必须先查 readyState：socket 在监听器挂上之前就可能已 open（事件错过 → await 永久挂起，实测踩到） */
+const open = (ws) => new Promise((r) => {
+  if (ws.readyState === 1) return r();
+  ws.once('open', r);
+  ws.once('error', r);
+  ws.once('close', r);
+});
 const wait = (ws, t, ms = 4000) => new Promise((res) => {
   const t0 = Date.now();
   const iv = setInterval(() => {

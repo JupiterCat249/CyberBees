@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://bj7m48na3e1mc"]
+
+[ext_resource type="Script" uid="uid://bysv4202750g" path="res://scenes/ui/net_lobby.gd" id="1_hgxbl"]
+
+[node name="NetLobby" type="Control" unique_id=1883302818]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_hgxbl")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1641521643]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.02, 0.035, 0.055, 1)
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=1991899224]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Title" type="Label" parent="VBox" unique_id=1766189476]
+layout_mode = 2
+text = "联机对战"
+horizontal_alignment = 1
+
+[node name="Stats" type="Label" parent="VBox" unique_id=1576859367]
+layout_mode = 2
+text = "在线 — 人 · 匹配中 — 人 · 对局中 — 人"
+horizontal_alignment = 1
+
+[node name="MatchButton" type="Button" parent="VBox" unique_id=1485482633]
+layout_mode = 2
+text = "开始匹配"
+
+[node name="EnterButton" type="Button" parent="VBox" unique_id=2003657258]
+visible = false
+layout_mode = 2
+text = "进入对局"
+
+[node name="Status" type="Label" parent="VBox" unique_id=645531057]
+layout_mode = 2
+text = "未连接"
+horizontal_alignment = 1
+
+[node name="Addr" type="Label" parent="VBox" unique_id=9236948]
+layout_mode = 2
+horizontal_alignment = 1

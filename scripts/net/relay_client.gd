@@ -185,6 +185,17 @@ func _handle(m: Dictionary) -> void:
 			op_received.emit(int(m.get("seat", -1)), int(m.get("seq", 0)), int(m.get("frame", 0)), m.get("payload", null), int(m.get("sseq", 0)))
 		"op_ack":
 			op_acked.emit(int(m.get("seq", 0)), int(m.get("sseq", 0)))
+		"queued":
+			queued.emit(int(m.get("pos", 0)))
+		"unqueued":
+			unqueued.emit()
+		"matched":
+			room_code = String(m.get("code", ""))
+			seat = int(m.get("seat", -1))
+			players = m.get("players", [])
+			matched.emit(room_code, seat, players)
+		"lobby":
+			lobby_stats.emit(int(m.get("online", 0)), int(m.get("waiting", 0)), int(m.get("playing", 0)))
 		"err":
 			last_error = String(m.get("code", ""))
 			server_error.emit(last_error, String(m.get("msg", "")))

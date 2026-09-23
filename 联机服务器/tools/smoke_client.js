@@ -38,7 +38,13 @@ function wait(ws, t, timeout = 2500) {
     }, 15);
   });
 }
-const open = (ws) => new Promise((r) => { ws.once('open', r); ws.once('error', () => r()); });
+/** ⚠️ 先查 readyState：socket 可能在监听器挂上前就已 open（事件错过 → await 永久挂起） */
+const open = (ws) => new Promise((r) => {
+  if (ws.readyState === 1) return r();
+  ws.once('open', r);
+  ws.once('error', () => r());
+  ws.once('close', () => r());
+});
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 (async () => {

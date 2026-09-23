@@ -951,7 +951,10 @@ func _unit_view(inst: UnitInstance, cell: Vector2i) -> Dictionary:
 		"hp": inst.current_hp,
 		"move": inst.move_range(),
 		"range": inst.attack_range(),
-		"mine": inst.side == SIDE_ALLY,
+		## 联机换色（人 2026-09-23 澄清）：**每个玩家看到自己都是绿方**
+		##   局部约定：seat 0 ↔ 引擎 SIDE_ALLY（绿）· seat 1 ↔ SIDE_ENEMY（红）
+		##   故 mine = (inst.side == my_seat)：seat1 玩家看到自己的红方单位被着成绿
+		"mine": int(inst.side) == int(my_seat),
 		"type": kind,
 		"art": art,
 	}
