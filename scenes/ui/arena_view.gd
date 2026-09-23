@@ -53,6 +53,10 @@ var engine = null
 var intent: NetIntent = null
 var net_client: RelayClient = null
 var net_seat: int = 0
+## 结算浮层（迭代063）：代码构建，不落场景（避开编辑器回退坑）
+const RESULT_PANEL := preload("res://scenes/ui/result_panel.gd")
+var _result_panel: Control = null
+var _leaving := false
 ## 动画引擎（迭代060 v4）：Pattern→Unit→Clip **数据驱动**，数据在 `game_data/anims/*.tres`
 ##   帧数计时（T2）+ 确定性推进（回放一致）；实现见 `scripts/anim/anim_player.gd`
 var anim: Node = null
@@ -109,6 +113,10 @@ func _ready() -> void:
 	_fx_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fx_root.z_index = 100
 	$HUD.add_child(_fx_root)
+	## ⚠️ 必须铺满：否则子节点（结算浮层）用 FULL_RECT 锚点会解析成 0×0、挤在左上角（实测踩到，同大厅那次）
+	_fx_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	## ⚠️ `$HUD` 是 CanvasLayer（无尺寸）→ 仅靠锚点仍是 0×0，必须**显式**给视口尺寸（实测踩到）
+	_fx_root.size = get_viewport_rect().size
 	_connect_bus()
 	_connect_static_ui()
 	_adopt_cells()
@@ -150,7 +158,8 @@ func _setup_net() -> void:
 			_flash_msg("收到无法应用的操作（%s）" % intent.stats_text()))
 	net_client.peer_left.connect(func(_seat: int, reason: String, ended: bool) -> void:
 		if ended:
-			_flash_msg("对局结束：对手已离开（%s）" % reason))
+			_flash_msg("对局结束：对手已离开（%s）" % reason)
+			_show_result(0, "对手已离开（%s）" % reason))   ## 人裁定：结算保留到手动返回
 	net_client.closed.connect(func(_code: int, _r: String) -> void:
 		_flash_msg("与中继的连接已断开"))
 	net_client.start(NetSession.url, "godot-battle")
@@ -173,6 +182,7 @@ const AUTO_ROUND_CAP := 12
 
 var _auto_timer := 0
 var _auto_stopped := false
+var _auto_recorded := false
 var _auto_quiet := 0.0
 var _auto_last_applied := 0
 
@@ -228,18 +238,71 @@ func _auto_step() -> bool:
 
 
 func _auto_finish() -> void:
+	if _auto_recorded:
+		return
+	_auto_recorded = true
 	_auto_stopped = true
 	NetSession.final_hash = StateHash.sha(engine.state)
-	print("[AUTO] FINAL round=%d result=%d seat=%d steps=%d hash=%s" % [
-		int(engine.state.round_no), int(engine.state.result), net_seat, NetSession.auto_steps, NetSession.final_hash])
-	var p := "user://auto_result_seat%d.txt" % net_seat
+	NetSession.games += 1
+	print("[AUTO] GAME %d FINAL round=%d result=%d seat=%d steps=%d hash=%s" % [
+		NetSession.games, int(engine.state.round_no), int(engine.state.result),
+		net_seat, NetSession.auto_steps, NetSession.final_hash])
+	var p := "user://auto_result_seat%d_g%d.txt" % [net_seat, NetSession.games]
 	var f := FileAccess.open(p, FileAccess.WRITE)
 	if f != null:
 		f.store_line(NetSession.final_hash)
 		f.close()
 		print("[AUTO] 已写入 " + ProjectSettings.globalize_path(p))
-	await get_tree().create_timer(0.6).timeout
-	get_tree().quit(0)
+	if NetSession.games < 2:
+		## 连打第二局：走**正式收尾流程**（leave → 回大厅 → 自动重新入队）—— 顺带验证收尾闭环 ✓
+		_leave_and_go(true)
+	else:
+		await get_tree().create_timer(0.6).timeout
+		get_tree().quit(0)
+
+
+## ============================================================================
+##  结算浮层与收尾去向（迭代063 · 人裁定：浮层保留战场画面 · 再来一局＝回大厅后再匹配 · 掉线随时可手动返回）
+## ============================================================================
+func _show_result(result: int, reason: String) -> void:
+	if _result_panel != null:
+		return
+	var title := "对局结束"
+	match int(result):
+		1: title = "绿方胜"
+		2: title = "红方胜"
+		3: title = "平局"
+	if int(result) == 1 or int(result) == 2:
+		var my_win: bool = (int(result) == 1 and net_seat == 0) or (int(result) == 2 and net_seat == 1)
+		title = ("胜利" if my_win else "失败") + "（" + title + "）"
+	var lines: Array[String] = []
+	lines.append("我的座位：%d（%s）" % [net_seat, "绿方" if net_seat == 0 else "红方"])
+	if engine != null and engine.state != null:
+		lines.append("回合数：%d" % int(engine.state.round_no))
+		lines.append("状态指纹：%s" % StateHash.sha(engine.state).substr(0, 12))
+	if NetSession.active:
+		lines.append("房间：%s" % NetSession.room_code)
+	_result_panel = Control.new()
+	_result_panel.set_script(RESULT_PANEL)
+	_result_panel.setup(title, reason, lines)      ## ⚠️ 必须在 add_child 之前（_ready 里要用这些字段建 UI）
+	_result_panel.rematch_pressed.connect(func() -> void: _leave_and_go(true))
+	_result_panel.lobby_pressed.connect(func() -> void: _leave_and_go(false))
+	_fx_root.add_child(_result_panel)
+
+
+## 收尾去向：**先 leave 再切场景**（保证房间不残留）；连接不断，回大厅直接复用
+func _leave_and_go(rematch_next: bool) -> void:
+	if _leaving:
+		return
+	_leaving = true
+	NetSession.rematch = rematch_next
+	if net_client != null and net_client.is_open():
+		net_client.leave()
+		_flash_msg("已退出房间，返回大厅…" if not rematch_next else "已退出房间，返回大厅并重新匹配…")
+		for _i in 30:                       ## ≈0.5s：给服务器处理 leave / 释放房间
+			net_client.poll()
+			await get_tree().process_frame
+	get_tree().change_scene_to_file("res://scenes/ui/net_lobby.tscn")
 
 
 func _exit_tree() -> void:
@@ -649,6 +712,7 @@ func _on_battle_ended(result: int, reason: String) -> void:
 	var who := {0: "", 1: "绿方胜", 2: "红方胜", 3: "平局"}
 	$HUD/ActionBar/Label.text = "%s（%s）" % [str(who.get(result, "?")), reason]
 	$HUD/ActionBar/MainButton.disabled = true
+	_show_result(result, reason)
 	## ⚠️ 人 2026-09-21 缺陷：**蜂王被击杀时不飘字、不受击抖动** —— 根因＝此处原有的 `anim.stop_all()`
 	##   在**同一帧**把刚起播的「受击抖动 / 受伤闪红 / 浮字上浮」全部清掉（`request_attack` 的顺序是
 	##   `resolve_attack`(起播) → `unit_damaged`(飘字) → `_cleanup_dead` → `_declare_queen_killed`(本回调)）。

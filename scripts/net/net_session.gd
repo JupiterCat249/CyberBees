@@ -25,6 +25,10 @@ static func set_match(p_url: String, p_code: String, p_seat: int, p_seed: int, p
 ## ⚠️ **连接必须跨场景共享**（迭代062 双实例实测教训）：房间/座位都挂在**连接**上，
 ##    若切场景时让大厅的连接被释放、战斗场景另起一条 → 新连接**不在房间里** → 两端各玩各的 ✗
 static var client: RelayClient = null
+## 结算后的去向（迭代063）：true = 回大厅后**自动重新入队**（«再来一局»）
+static var rematch: bool = false
+## 自动验收用：已完成的对局数（供自动模式连打两局）
+static var games: int = 0
 
 
 static func clear() -> void:

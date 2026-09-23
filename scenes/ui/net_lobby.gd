@@ -25,7 +25,10 @@ func _ready() -> void:
 	_btn_match.pressed.connect(_on_match_pressed)
 	_btn_enter.pressed.connect(_on_enter_pressed)
 
-	_client = RelayClient.new()
+	if NetSession.client != null and NetSession.client.is_open():
+		_client = NetSession.client      ## 从结算返回：**复用**未断开的连接（房间已 leave）
+	else:
+		_client = RelayClient.new()
 	_client.opened.connect(func() -> void: _set_state("已连接中继，等待握手…"))
 	_client.welcomed.connect(func(_sid: String, _p: int, b: String) -> void:
 		_set_state("已连接（服务器 build=%s）" % b)
@@ -51,13 +54,21 @@ func _ready() -> void:
 			_on_enter_pressed())
 	_client.server_error.connect(func(code: String, msg: String) -> void: _set_state("错误：%s %s" % [code, msg]))
 	_client.closed.connect(func(c: int, r: String) -> void: _set_state("连接已关闭（%d %s）" % [c, r]))
-	_client.start(_url, "godot-lobby")
+	if _client.is_open():
+		_set_state("已连接中继（复用连接）· %s" % _url)
+	else:
+		_client.start(_url, "godot-lobby")
+		_set_state("正在连接 %s …" % _url)
 	NetSession.client = _client      ## 交给 NetSession 持有 → 切场景时不被释放（房间/座位在连接上）
-	_set_state("正在连接 %s …" % _url)
 	NetSession.detect_auto()
 	if NetSession.auto:
 		_addr.text += "  · 自动模式"
 		print("[LOBBY] 自动模式：连上即入队、配对即进对局")
+	if NetSession.rematch:
+		NetSession.rematch = false
+		_addr.text += "  · 再来一局"
+		print("[LOBBY] 再来一局：回大厅后自动重新入队")
+		call_deferred("_on_match_pressed")
 
 
 func _process(_dt: float) -> void:
