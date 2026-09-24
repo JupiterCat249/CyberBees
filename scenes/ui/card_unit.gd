@@ -33,15 +33,12 @@ const TYPE_ICON := {
 }
 ## 效果徽标边长（`UnitEffects` 容器 158×40 → 4 个 36px + 默认间隔刚好放得下）
 const EFFECT_BADGE_SIZE := 36.0
-## ⚠️ 徽标**必须带暗底衬**：状态图标是**透明底单色描线**（如「装甲」= 灰 #808080），
-##    直接叠在浅色卡面（蜂王 #FFD07E / 兵蜂 #FFFFFF / 建筑 #DDC29B）上对比度不足、几乎看不见。
-##    这是迭代015 的既有做法（"暗底衬 + 图标"），此处沿用。
-const BADGE_BG := Color(0.06, 0.07, 0.08, 0.74)
-## 描边区分增益/减益（沿用迭代014 口径：减益红橙 / 增益青蓝）—— **语义**而非装饰
-const BADGE_LINE_BUFF := Color("#5FC8D8")
-const BADGE_LINE_DEBUFF := Color("#E8663C")
-## 图标相对底衬的内缩（留出描边与呼吸）
-const BADGE_INSET := 3.0
+## ⚠️ 2026-09-24 人实机反馈修正：**徽标不加任何底衬 / 描边 / 内缩**。
+##    曾用「`corner_radius = 18` 的圆形 Panel 底衬 + 四周 3px 内缩」，人实机看到的观感是
+##    「圆球状外圈 + 原图被裁小 + 多占一圈空间」——已移除。
+##    现在图标**满幅**画在自己那一格里：不裁剪、不多占空间；可读性靠
+##    ① 满幅（比内缩版大 ~20%）② 悬停提示（tooltip 带效果名与剩余回合）
+##    ③ 若日后仍嫌浅色卡面上偏淡，再考虑"与格子等大的**方形**底色"（同样零内缩、零额外空间）。
 ## 图标缓存（路径 → Texture2D；值为 null 表示"已查过但没有"）
 static var _icon_cache: Dictionary = {}
 
@@ -98,50 +95,31 @@ func _bind_effects(items) -> void:
 	## 少补
 	while box.get_child_count() < list.size():
 		box.add_child(_make_badge())
-	## 逐个填内容（底衬描边按 增益/减益 语义着色）
+	## 逐个填内容（**裸图标**：直接满幅挂上去，不做任何裁剪/内缩/底衬）
 	for i in list.size():
-		var badge := box.get_child(i) as Panel
+		var badge := box.get_child(i) as TextureRect
 		if badge == null:
 			continue
 		var d: Dictionary = list[i]
 		var tex: Texture2D = d.get("icon", null)
-		var icon := badge.get_node_or_null("Icon") as TextureRect
-		if icon != null:
-			icon.texture = tex
-		var sb := badge.get_theme_stylebox("panel")
-		if sb is StyleBoxFlat:
-			(sb as StyleBoxFlat).border_color = BADGE_LINE_DEBUFF if bool(d.get("debuff", false)) else BADGE_LINE_BUFF
+		badge.texture = tex
 		badge.visible = tex != null
 		badge.tooltip_text = _effect_tooltip(d)
 
 
-## 徽标节点：**暗底衬（Panel）+ 图标（TextureRect）**
+## 徽标节点：**裸图标满幅**（无底衬 / 无描边 / 无内缩）
+## ⚠️ 2026-09-24 人实机反馈：原先「圆形 `Panel` 底衬（`corner_radius = 18`）+ 四周 3px 内缩」的观感是
+##    "圆球状外圈 + 原图被裁小 + 多占一圈空间" → 已移除，改为直接把图标画满自己那一格。
 ## ⚠️ 局部名**不能叫 `tr`** —— 会触发 SHADOWED_VARIABLE_BASE_CLASS（`Object.tr()` 翻译方法），实测踩到
-## ⚠️ 底衬不可省：见 `BADGE_BG` 注释（透明底描线图标在浅色卡面上对比度不足）
-func _make_badge() -> Panel:
-	var badge := Panel.new()
+func _make_badge() -> TextureRect:
+	var badge := TextureRect.new()
 	badge.name = "EffectBadge"
 	badge.custom_minimum_size = Vector2(EFFECT_BADGE_SIZE, EFFECT_BADGE_SIZE)
-	## 容器高 40 > 徽标 36：竖向**居中不拉伸**，否则圆形底衬会被压成椭圆（实测 36×40）
+	## 容器高 40 > 徽标 36：竖向**居中不拉伸**，保持正方形（按比例居中，不裁剪原图）
 	badge.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = BADGE_BG
-	sb.set_corner_radius_all(int(EFFECT_BADGE_SIZE * 0.5))   ## 圆形底衬
-	sb.set_border_width_all(1)
-	sb.border_color = BADGE_LINE_BUFF
-	badge.add_theme_stylebox_override("panel", sb)
-	var icon := TextureRect.new()
-	icon.name = "Icon"
-	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	icon.offset_left = BADGE_INSET
-	icon.offset_top = BADGE_INSET
-	icon.offset_right = -BADGE_INSET
-	icon.offset_bottom = -BADGE_INSET
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_child(icon)
 	return badge
 
 
