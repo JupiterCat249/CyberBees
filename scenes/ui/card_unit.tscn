@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://cftew331eyj7"]
 
-[ext_resource type="Texture2D" uid="uid://cerkmlayin8js" path="res://card-system/card_system/icons/soldier.png" id="1_1n0xe"]
-[ext_resource type="Script" path="res://scenes/ui/card_unit.gd" id="1_hg6cp"]
-[ext_resource type="Texture2D" uid="uid://cs6chlhy7qtqr" path="res://card-system/card_system/art/卡牌c2-熊蜂.png" id="2_k5t5m"]
+[ext_resource type="Script" uid="uid://chucwtivyc48j" path="res://scenes/ui/card_unit.gd" id="1_hg6cp"]
+[ext_resource type="Texture2D" uid="uid://dk81qb7rdglue" path="res://assets/type_icons/soldier.png" id="2_hg6cp"]
+[ext_resource type="Texture2D" uid="uid://dilglfy5t7c5d" path="res://assets/card_art/熊蜂.png" id="3_hg6cp"]
 [ext_resource type="Texture2D" uid="uid://dmqbe4txap05g" path="res://assets/ui/fx/crt_scanline_tile.png" id="3_k5t5m"]
 [ext_resource type="Texture2D" uid="uid://c8gvpynuh5m8j" path="res://assets/ui/icon_attr_2.png" id="5_hg6cp"]
 [ext_resource type="Texture2D" uid="uid://nw7jcc05qese" path="res://assets/ui/icon_attr_4.png" id="6_bk7yx"]
@@ -122,6 +122,14 @@ offset_right = 250.0
 offset_bottom = 250.0
 script = ExtResource("1_hg6cp")
 
+[node name="UnitEffects" type="HBoxContainer" parent="." unique_id=1794076306]
+z_index = 1
+layout_mode = 0
+offset_left = 46.0
+offset_top = 200.0
+offset_right = 204.0
+offset_bottom = 240.0
+
 [node name="Body" type="Panel" parent="." unique_id=871252763]
 layout_mode = 0
 offset_right = 250.0
@@ -175,7 +183,7 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_xfbsg")
 layout_mode = 0
 offset_right = 39.0
 offset_bottom = 40.0
-texture = ExtResource("1_1n0xe")
+texture = ExtResource("2_hg6cp")
 expand_mode = 4
 
 [node name="Artwork" type="Control" parent="." unique_id=1671546105]
@@ -200,7 +208,7 @@ offset_left = -40.0
 offset_right = 460.0
 offset_bottom = 500.0
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("2_k5t5m")
+texture = ExtResource("3_hg6cp")
 
 [node name="CrtFx" type="Control" parent="Artwork/ArtPlane" unique_id=956340755]
 clip_contents = true

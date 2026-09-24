@@ -37,6 +37,11 @@ const COL_HEAL := Color("#00DD00")     ## 回血
 const PHASE_RECOVER := 0
 const PHASE_TERRAIN := 1
 const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
+## 状态图标目录：10 张图标**按中文效果名命名**（灼烧/装甲/护盾/力场/冻结/暴击/拦截/诱饵/速攻/启动）
+## → 视图按 `EffectData.display_name` 回退取图，规则实现即自动有图标（无需改渲染层）
+const STATUS_ICON_DIR := "res://assets/status_icons/"
+## 效果图标缓存（显示名 → Texture2D；值为 null 表示"已查过但没有"，避免每次刷新重试）
+static var _icon_cache: Dictionary = {}
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 
 const SIDE_ALLY := 0
@@ -1150,7 +1155,55 @@ func _unit_view(inst: UnitInstance, cell: Vector2i) -> Dictionary:
 		"mine": int(inst.side) == int(my_seat),
 		"type": kind,
 		"art": art,
+		## 持有效果（**只含运行态效果列表**；卡牌自带被动在 `UnitData.passives`，不在其中）
+		"effects": _effect_badges(inst),
 	}
+
+
+## ============================================================
+##  单位卡「持有效果徽标」数据装配（2026-09-24 · 迭代063 收尾）
+## ============================================================
+
+## 持有效果 → 徽标数据（供 `card_unit.gd` 渲染卡面小图标条）
+## ⚠️ 数据源**只取 `inst.effects`**（运行态效果，经 `UnitInstance.apply_effect()` 进入）。
+##    卡牌自带被动在 `UnitData.passives`（`unit_data.gd` 明确"不占用 T14 的效果槽、不入效果列表"），
+##    **故不会**在卡面刷出一排"固有被动"徽标 —— 这里正是两者分界的落点。
+## 图标来源优先级：① `EffectData.icon`（数据层显式设了就用它）
+##                ② 按**显示名**回退 `assets/status_icons/<显示名>.png`（那 10 张图标正是按中文效果名命名）
+##    ⇒ 规则实现即自动有图标，渲染层不必随效果种类增长而改（沿用迭代015 的 id→图标映射约定）。
+func _effect_badges(inst: UnitInstance) -> Array:
+	var out: Array = []
+	if inst == null:
+		return out
+	for e in inst.effects:
+		if e == null or e.data == null:
+			continue
+		out.append({
+			"name": String(e.data.display_name),
+			"icon": _effect_icon(e.data),
+			"debuff": bool(e.data.is_debuff),
+			"turns": int(e.turns),
+		})
+	return out
+
+
+## 效果图标解析（带缓存；`null` 也缓存，避免每帧重复 `ResourceLoader.exists`）
+func _effect_icon(d: EffectData) -> Texture2D:
+	if d == null:
+		return null
+	if d.icon != null:
+		return d.icon
+	var nm := String(d.display_name)
+	if nm == "":
+		return null
+	if _icon_cache.has(nm):
+		return _icon_cache[nm] as Texture2D
+	var tex: Texture2D = null
+	var p := STATUS_ICON_DIR + nm + ".png"
+	if ResourceLoader.exists(p):
+		tex = load(p) as Texture2D
+	_icon_cache[nm] = tex
+	return tex
 
 
 func _update_unit(inst: UnitInstance, hp_after: int) -> void:
