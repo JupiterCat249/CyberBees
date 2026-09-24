@@ -100,7 +100,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   check(!!oa && oa.seat === 1 && oa.frame === 2, 'B 的操作转发到 A', oa ? `seat=${oa.seat} frame=${oa.frame}` : '无');
 
   // 4) "只传操作"：收到的消息类型必须全在白名单内（服务器不得下发状态）
-  const allow = new Set(['welcome', 'room', 'peer_joined', 'peer_left', 'start', 'op', 'op_ack', 'pong', 'err', 'left']);
+  //    ⚠️ 2026-09-24 补：迭代062 新增的大厅/快速匹配消息此前漏登记 → 本断言对**本地与公网**都误报 FAIL。
+  //    其中 `lobby` **只含存在性统计**（online/waiting/playing），不含任何对局状态，符合 T7「服务器不持对局状态」；
+  //    `queued`/`unqueued`/`matched` 为房间管理与配对回执。
+  const allow = new Set([
+    'welcome', 'room', 'peer_joined', 'peer_left', 'start', 'op', 'op_ack', 'pong', 'err', 'left',
+    'queued', 'unqueued', 'matched', 'lobby',
+  ]);
   const weird = [...a.__inbox, ...b.__inbox].filter((m) => !allow.has(m.t));
   check(weird.length === 0, '消息类型全在白名单（无状态下发）', weird.length ? JSON.stringify(weird.slice(0, 3)) : '');
 
