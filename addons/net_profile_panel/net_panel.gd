@@ -99,7 +99,7 @@ func _build() -> void:
 	var duo_row := HBoxContainer.new()
 	var b_duo := Button.new()
 	b_duo.text = "本地双开"
-	b_duo.tooltip_text = "写 test 档 + 自动模式 → 起本地中继(联机服务器/server.js, 8091) → 再拉起第二个 Godot 实例。\n两端都会连上即入队、配对即进对局；人工测试结束后请手动把自动模式关掉。"
+	b_duo.tooltip_text = "写 test 档 → 起本地中继(联机服务器/server.js, 8091) → 起两个「联机大厅」窗口。\n两个窗口各点一次「开始匹配」即可配对进对局。\n不启用自动模式：自动模式＝脚本自动出招，仅供自动化验收（人工测试请保持关闭）。\n注意：编辑器 F5 跑的是项目主场景（战斗场景），不自带联机建立流程，别用它。"
 	b_duo.pressed.connect(_on_launch_duo)
 	duo_row.add_child(b_duo)
 	add_child(duo_row)
@@ -108,7 +108,7 @@ func _build() -> void:
 	_duo_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_duo_status.add_theme_font_size_override("font_size", 11)
 	_duo_status.modulate = Color(1, 1, 1, 0.75)
-	_duo_status.text = "「本地双开」= 测试档 + 自动模式 + 本地中继 + 两个联机大厅实例"
+	_duo_status.text = "「本地双开」= 测试档 + 本地中继 + 两个联机大厅窗口（不启用自动模式）"
 	add_child(_duo_status)
 
 	var hint := Label.new()
@@ -179,12 +179,13 @@ func _on_open_dir() -> void:
 ##      第二个实例用 `OS.get_executable_path()`（绝对路径）直起。
 func _on_launch_duo() -> void:
 	var notes: PackedStringArray = PackedStringArray()
-	# ① 档位 + 自动模式
+	# ① 只写**档位**（test）—— ⚠️ **不碰自动模式**：人 2026-10-05 明确
+	##   "插件现在在本地双开时会强制使用自动模式自动调用脚本" ⇒ 本地双开**不得**强制自动模式，
+	##   那两个窗口应留给人工在大厅点「开始匹配」正常联机（自动模式是给自动化验收用的脚本自动出招 ✗）。
 	ProjectSettings.set_setting(NC.SETTING, "test")
 	ProjectSettings.save()
 	_write_text_file(NC.DIR + "/profile.flag", "test")
-	_write_text_file(NC.DIR + "/auto.flag", "1")
-	notes.append("已写 test 档 + 自动模式")
+	notes.append("已写 test 档（未改动自动模式）")
 	# ② 本地中继
 	## ⚠️ 三次实测教训（保留备查）：`OS.create_process` **不做 PATH 解析、不带工作目录**，
 	##   且会对**每个参数加引号** ✗ ⇒
@@ -209,15 +210,16 @@ func _on_launch_duo() -> void:
 	# ③ 两个实例 —— **都进「联机大厅」**（大厅原生自动：连上即入队、配对即进对局）
 	## ⚠️ 人 2026-10-05 指正 + 本轮实测：**编辑器 F5 跑的是项目主场景（战斗场景）**，
 	##   而战斗场景不自带联机建立流程 ✗ ⇒ "本实例按 F5"这个说法也是错的 ✗。
-	##   ✅ 正确做法＝**直接起两个大厅实例**，二者自动入队 → 配对 → 各自进战斗，全程无需人工点击 ✓
-	##   （实测：大厅实例日志出现 "已连接中继" → "匹配中…（队列第 1 位）" ✓）
+	##   ✅ 正确做法＝起两个大厅实例（**不带 `--net-auto`** —— 人 2026-10-05：本地双开不得强制自动模式，
+	##   留给人工在各自窗口点「开始匹配」；自动模式＝脚本自动出招，仅供自动化验收 ✗）
+	##   实测参考：大厅实例会打印 [LOBBY] 正在连接 … / 已连接 / 匹配中…
 	var exe := OS.get_executable_path()
 	var proj := ProjectSettings.globalize_path("res://")
 	var lobby_scene := proj + "scenes/ui/net_lobby.tscn"
-	var pid_a := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test", "--net-auto"], false)
-	var pid_b := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test", "--net-auto"], false)
+	var pid_a := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test"], false)
+	var pid_b := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test"], false)
 	if pid_a > 0 and pid_b > 0:
-		notes.append("两个大厅实例 pid=%d / %d" % [pid_a, pid_b])
+		notes.append("两个大厅实例 pid=%d / %d（请在各窗口点「开始匹配」）" % [pid_a, pid_b])
 	else:
 		notes.append("大厅实例启动异常(exe=%s)" % exe)
 	# ④ 反馈（把命令实况也打出来，便于取证）
