@@ -419,6 +419,25 @@ func _fit_text_labels() -> void:
 	var se := $HUD/MatchInfo/SiteEffect as Label
 	if se != null:
 		se.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	## ⭐ 迭代064 B7（修 P-11 = 清单 UI-7「主按钮存在文本不对齐问题（在一些情况下如添加额外的文字）」）
+	## 根因（**实测**，不是猜）：主按钮 `Label` 的框只有 **240px**，而 **Control 会按"最小尺寸"把自己撑大** ——
+	##   文案一长（实测 `绿方胜（蜂王被击杀）` = **420px**）框就长到 420，但它的 `position` **固定 x=80 不动**
+	##   ⇒ 文字从框左边缘起排、直接冲出屏幕右缘。所以**改 `horizontal_alignment` 无效**（它本来就是居中 1）。
+	## 修法：监听 Label 的 `resized`，每次按**按钮实际宽度重新水平居中** —— 不动字号、不动按钮尺寸。
+	var lb := $HUD/ActionBar/Label as Control
+	if lb != null and not lb.resized.is_connected(_center_main_button_label):
+		lb.resized.connect(_center_main_button_label)
+		_center_main_button_label()
+
+
+## 把主按钮文案**水平居中**到 ActionBar 宽度内（供 `resized` 回调；幂等）
+func _center_main_button_label() -> void:
+	var lb := $HUD/ActionBar/Label as Control
+	var bar := $HUD/ActionBar as Control
+	if lb == null or bar == null:
+		return
+	## 不夹到 0：文案比按钮还宽时，宁可两侧各溢出一点也要**保持居中**
+	lb.position.x = (bar.size.x - lb.size.x) * 0.5
 
 
 ## ⚠️ 人 2026-09-19 明确：**橙色提示文本省略**（可省设计），需要时作为**控制台输出**存在。
@@ -486,10 +505,11 @@ func _on_map_assets(assets: Resource) -> void:
 		var nm := $HUD/MatchInfo/MapName
 		if nm != null:
 			nm.text = assets.map_name
-	if assets.map_desc != "":
-		var se := $HUD/MatchInfo/SiteEffect
-		if se != null:
-			se.text = assets.map_desc
+	## 地图机制文本（`MapData.description`）——⭐ 迭代064 B7（清单 UI-6）：**始终写入**
+	##   （无文案则清空，避免换图后残留上一张的说明；此前只在非空时写）
+	var se := $HUD/MatchInfo/SiteEffect
+	if se != null:
+		se.text = assets.map_desc
 	## 换图后地形格视觉同步（地形效果随地图变化）
 	_apply_terrain_to_cells()
 
@@ -622,9 +642,14 @@ func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
 		2: "部署阶段：点手牌部署单位/使用指令，准备好后点右侧按钮进入行动阶段",
 		3: "行动阶段：点自己的单位可移动/攻击/支援（每单位每回合 1 次行动）",
 	}
-	$HUD/MatchInfo/SiteEffect.text = "%s阶段（%s）｜%s" % [
+	## ⚠️ 迭代064 B7（人 2026-09-27 清单 **UI-6**「UI 面板右下角的**信息显示面板显示的应该是地图机制信息**，
+	##   而不是其他如回合阶段解释信息」）：此处**不再覆写** `SiteEffect` ——
+	##   该标签已由 `_on_map_assets()` 填入 `ArenaAssets.map_desc`（＝ `MapData.description`，
+	##   即地图机制；实测 6 张地图**都有**该文案，如「场地效果：第 3、9 回合玩家额外回复 4 点费用。」）。
+	##   阶段提示按 **2026-09-19 既定裁决**（「橙色提示文本省略 → 需要时作为控制台输出存在」）走 `_flash_msg()`。
+	_flash_msg("%s阶段（%s）｜%s" % [
 		str(names.get(phase, "?")), "绿" if side == SIDE_ALLY else "红",
-		str(tips.get(phase, ""))]
+		str(tips.get(phase, ""))])
 	## ⭐ 阶段切换也刷新手牌亮/灰（幂等；保证任何时刻显示都跟当前费用一致）
 	refresh_hand_affordability()
 
