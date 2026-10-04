@@ -654,22 +654,23 @@ func _apply_one_hand_params(node, p) -> void:
 	if img != null and node.get("card_data") != null:
 		var cd: CardData = node.get("card_data") as CardData
 		var vis: CardVisual = cd.visual
-		## ⭐ 迭代064 **回归修复**（人 2026-10-05 指示：「问题清单讲的是调整 UI 参数，而不是直接动逻辑本身」）：
-		##   UI-8 曾在此**写死**"按贴图实际尺寸取窗 + 居中" ✗ —— 那是**绕过了 UI 参数**直接改逻辑。
-		##   正确口径：**UI 参数说了算** ——
-		##     · 兵蜂（SOLDIER）→ `p.final_art_offset/scale(vis)` **原样**（人：兵蜂 UI 参数不变）
-		##     · 蜂王/建筑/指令 → 按参数表 `kind_art_scale` **缩放 50%**，并在裁剪窗内**居中展示**
-		##   （卡种键在此转换后传入；参数类不引用 `CardData`，避免 Resource 间 class_name 依赖）
+		## ⭐ 迭代064 **回归修复 v2**（人 2026-10-05 指出"回退后的效果和按问题清单修改前不同…可能没有回到原始正确版本"）：
+		##   以下逐字恢复**原始正确版本**（`254d42a~1`）：
+		##     · 基准窗**固定 `Vector2(400, 454)`**（源图量级），**不是**贴图实际尺寸 —— UI-8 与 Stage1 都错在这里
+		##     · 裁剪靠 **`ArtPlane.clip_contents = true`（UI 控件自带裁剪）**，不靠整图缩放
+		##     · 偏移 = `p.final_art_offset(vis)`（兵蜂即"头部居中、多出部分裁掉"的原始构图）
+		##   仅在此基础上加**清单要求的那一条**修正：蜂王/建筑/指令按参数表 `kind_art_scale` 缩到 **50%**
+		##   并在裁剪窗内**居中**（原方案直接套用兵蜂参数 ⇒ 水平居中但垂直偏上、缩放系数过大 ✗）。
 		var key := _hand_kind_key(cd)
-		var sz: Vector2 = img.texture.get_size() if img.texture != null else Vector2(400, 454)
+		var sz := Vector2(400, 454)
 		var sc: Vector2 = p.art_scale_for_key(key, vis)
-		var draw: Vector2 = Vector2(sz.x * sc.x, sz.y * sc.y)
 		var off: Vector2 = p.final_art_offset(vis)
 		if p.should_center_key(key):
-			var pw: Vector2 = Vector2(200, 200)
 			var plane: Control = img.get_parent()
+			var pw: Vector2 = Vector2(194, 196)
 			if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
 				pw = plane.size
+			var draw: Vector2 = Vector2(sz.x * sc.x, sz.y * sc.y)
 			off = (pw - draw) * 0.5
 		img.offset_left = off.x
 		img.offset_top = off.y

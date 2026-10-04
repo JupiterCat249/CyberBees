@@ -62,34 +62,11 @@ func bind(data: CardData) -> void:
 	var bg := _badge()
 	if bg != null:
 		bg.text = str(data.cost) if data.cost >= 0 else "X"
-		## ⚠️ **修正（人 2026-10-05 实测：手牌左上角费用数字完全不显示）**：
-		##   根因＝UI-11 把数字改成亮橙 `#FFA300`，而**手牌费用底板本身就是亮橙六边形** ⇒ **橙底橙字、看不见** ✗。
-		##   （信息栏那侧底板是**深色六边形**，故同样的橙色在那里清晰可读 ✓ —— 实测截图确认。）
-		##   ⇒ 手牌改用**深色**：在橙底上高对比、且**不是白色**（仍符合人「费用颜色不应该是白色」的要求 ✓）。
-		bg.add_theme_color_override("font_color", Color("#2A2118"))
+		## ⭐ 迭代064 UI-11：设计色卡「亮橙 `#FFA300` = 默认部署费用」
+		## ⚠️ 人 2026-10-05 修正：手牌六边形底板本身就是**亮橙**，数字须为**黑色**才可读
+		##   （"手牌区费用数字是白色的而不是黑色的" ⇒ 目标色＝黑）
+		bg.add_theme_color_override("font_color", Color("#000000"))
 	_apply_type_color(data)
-	## ⭐ 迭代064 机制-3（清单「手牌区域…没有单位类型区分色」的真相）：
-	##   类型底色**已经上了**（`_apply_type_color`），但**被立绘盖住** —— 手牌卡的立绘窗口
-	##   （Artwork 0..200）与卡面等大 ⇒ 类型色只在边角留几像素毛边，观感即"没有类型区分色"。
-	##   ⇒ 与单位卡同法：再给**立绘框**描一圈类型色，保证类型色真的看得见。
-	var tc0 := Color("#FFFFFF")
-	match int(data.kind):
-		CardData.CardKind.QUEEN:
-			tc0 = Color("#FFD07E")
-		CardData.CardKind.BUILDING:
-			tc0 = Color("#5D5D5D")
-		CardData.CardKind.COMMAND, CardData.CardKind.COMMAND_X:
-			tc0 = Color("#A84331")
-		_:
-			tc0 = Color("#3B816D")
-	var ap := get_node_or_null("Artwork/ArtPlane") as Panel
-	if ap != null:
-		var sb0 := StyleBoxFlat.new()
-		sb0.bg_color = Color(0, 0, 0, 0)
-		sb0.border_color = tc0
-		sb0.set_border_width_all(6)
-		sb0.set_corner_radius_all(8)
-		ap.add_theme_stylebox_override("panel", sb0)
 	_apply_artwork(data)
 	_apply_crop(data.visual)
 
