@@ -83,6 +83,17 @@ func bind(data: Dictionary) -> void:
 	_tint("SideRight", side_color)
 	# 卡牌类型底色（本体＝卡面底色）
 	_tint("Body", Color(TYPE_COLOR.get(String(data.get("type", "unit")), "#FFFFFF")))
+	## ⚠️ 人 2026-10-05 实测"卡面底色依然是默认白色"的**真因（与手牌同源）**：
+	##   `Artwork/ArtPlane` 的 stylebox 是不透明色（场景 R3/R4）且铺满卡面
+	##   ⇒ 把 `Body` 的类型底色整个盖住 ✗。立绘窗只该做裁剪容器 ⇒ 背景置**全透明**，
+	##   让 Body 的类型底色真正透出来 ✓。
+	var plane := get_node_or_null("Artwork/ArtPlane") as Panel
+	if plane != null:
+		var psb := plane.get_theme_stylebox("panel")
+		if psb is StyleBoxFlat:
+			var psb2: StyleBoxFlat = (psb as StyleBoxFlat).duplicate()
+			psb2.bg_color = Color(0, 0, 0, 0)
+			plane.add_theme_stylebox_override("panel", psb2)
 	## ⚠️ 迭代064 机制-3 曾在此给**立绘框**描一圈 6px 类型色 —— 人 2026-10-05 明确纠正：
 	##   类型底色**就该在卡面底色上**（`Body` 本体），**不是刷在边框上**；且当时三个颜色自造有误
 	##   （建筑用灰 / 指令用阵营红 / 普通用阵营绿，与策划案 §五 颜色图鉴不符）⇒ **该描边已删除**。

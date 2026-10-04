@@ -662,7 +662,13 @@ func _apply_one_hand_params(node, p) -> void:
 		##   仅在此基础上加**清单要求的那一条**修正：蜂王/建筑/指令按参数表 `kind_art_scale` 缩到 **50%**
 		##   并在裁剪窗内**居中**（原方案直接套用兵蜂参数 ⇒ 水平居中但垂直偏上、缩放系数过大 ✗）。
 		var key := _hand_kind_key(cd)
-		var sz := Vector2(400, 454)
+		## ⚠️ 人 2026-10-05 实测"指令卡等部分卡：横向纵向压缩程度不同、整体偏瘦"的**真因**：
+		##   `Image` 是 `TextureRect` 且**未设 `stretch_mode`**（默认＝拉伸填满控件）——
+		##   贴图实际 **250×258** 被硬拉进 **400×454** 的窗：横向 400/250=1.60×、纵向 454/258=1.76×
+		##   ⇒ **宽高比被破坏**，卡片内容看起来被压瘦 ✗。
+		##   修法：窗高按**贴图自身宽高比**推导（基准宽仍取原始版本的 400，保持偏移语义不变）。
+		var tsz: Vector2 = img.texture.get_size() if img.texture != null else Vector2(400, 454)
+		var sz := Vector2(400, 400.0 * tsz.y / maxf(tsz.x, 1.0))
 		var sc: Vector2 = p.art_scale_for_key(key, vis)
 		var off: Vector2 = p.final_art_offset(vis)
 		if p.should_center_key(key):

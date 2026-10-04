@@ -81,6 +81,18 @@ func _apply_type_color(data: CardData) -> void:
 	sb = sb.duplicate()
 	sb.bg_color = CardData.type_color_of(data.kind)
 	body.add_theme_stylebox_override("panel", sb)
+	## ⚠️ 人 2026-10-05 实测"卡面底色依然是默认白色"的**真因**：
+	##   `Artwork/ArtPlane` 的 stylebox（场景 `R2`）是**不透明白色** `Color(1,1,1,1)`，
+	##   且它几乎铺满卡面（anchor 0.015~0.985）⇒ **把 `Body` 上的类型底色整个盖住** ✗。
+	##   立绘窗（带 `clip_contents`）本就只该做**裁剪容器** ⇒ 背景置**全透明**，
+	##   让类型底色真正透出来 ✓。
+	var plane := get_node_or_null("Artwork/ArtPlane") as Panel
+	if plane != null:
+		var psb := plane.get_theme_stylebox("panel")
+		if psb is StyleBoxFlat:
+			var psb2: StyleBoxFlat = (psb as StyleBoxFlat).duplicate()
+			psb2.bg_color = Color(0, 0, 0, 0)
+			plane.add_theme_stylebox_override("panel", psb2)
 
 
 func _apply_artwork(data: CardData) -> void:
