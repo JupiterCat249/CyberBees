@@ -1337,8 +1337,12 @@ func _render_preview() -> void:
 	for c in _cells.keys():
 		_cells[c].set_highlight("")
 		_cells[c].set_selected(false)
-	if _preview == null:
-		return
+	## ⚠️ 卡上"标框"必须**每次先清**再按新预览重打 —— 否则预览消失（取消选中/操作结束）后标框残留。
+	##   （迭代064 B4 实测踩到：只在 `_preview != null` 分支里打标、却没在开头清 → 清空后红框不退。）
+	for k in _unit_nodes.keys():
+		var un = _unit_nodes[k]
+		if un != null and is_instance_valid(un) and un.has_method("set_mark"):
+			un.set_mark("")
 	var style := {
 		K.Kind.DEPLOY: "deploy",
 		K.Kind.MOVE: "move",
@@ -1346,9 +1350,21 @@ func _render_preview() -> void:
 		K.Kind.COMMAND: "attack",
 		K.Kind.SUPPORT: "deploy",
 	}
+	## ⭐ 迭代064 B4（修 P-13 = 清单 UI-17）：**被占格的标记改画在"卡上"**
+	##   原因：`PITCH = 250` 而单位卡正好 250×250 → 卡把自己那格**整片盖住**，
+	##   格上的高亮在"有单位"的格上根本看不见，而攻击/支援目标恰恰都是有单位的格。
+	##   这里按 `PreviewData.units`（受影响单位，见 `preview_data.gd:38`）给对应卡片打标；
+	##   `kind → 样式` 复用下面同一张 `style` 映射表，**视图不额外判断规则**。
+	if _preview == null:
+		return
+	var mark_kind := String(style.get(_preview.kind, ""))
 	for pc in _preview.cells:
 		if _cells.has(pc.cell):
 			_cells[pc.cell].set_highlight(String(style.get(pc.kind, "")))
+	for u in _preview.units:
+		var un = _unit_nodes.get(u.instance_id, null)
+		if un != null and is_instance_valid(un) and un.has_method("set_mark"):
+			un.set_mark(mark_kind)
 
 
 # ============================================================

@@ -157,6 +157,44 @@ func _set_text(path: String, value: String) -> void:
 
 
 ## 视角换色（迭代062）：seat≠0 的玩家也应看到「自己=绿方」→ 只改两侧配色，不动任何数据
+## ⭐ 迭代064 B4：**可选/目标标框**（修 P-13 = 清单 UI-17「移动/攻击的可选对象 UI 标记没有看到」）
+##
+## 为什么必须**画在卡上**：`PITCH = 250` 而单位卡正好 **250×250** ⟹ 卡把它所在格**整片盖住**，
+##   规则层给的格子高亮（`board_cell.set_highlight`）在**有单位的格上根本看不见** ——
+##   而"攻击/支援目标"恰恰都是有单位的格。故被占格改用**卡上标框**表达（空格仍走格子高亮）。
+##
+## 实现：懒创建一个 `Panel` 子节点（`z_index = 2` 压在所有卡面内容之上），
+##   透明底 + 彩色描边 + 与卡面（圆角 10）贴合的圆角；`kind == ""` 即隐藏。
+const MARK_COLOR := {
+	"attack": Color("#E8663C"),        ## 可攻击目标（沿用迭代014「减益红橙」）
+	"move": Color("#3B816D"),          ## 可移动到位（沿用阵营绿）
+	"deploy": Color("#4FB3E8"),        ## 可部署 / 可支援
+	"deny": Color(0.6, 0.6, 0.6, 0.85),
+}
+
+
+func set_mark(kind: String) -> void:
+	var mark := get_node_or_null("Mark") as Panel
+	if kind == "" or not MARK_COLOR.has(kind):
+		if mark != null:
+			mark.visible = false
+		return
+	if mark == null:
+		mark = Panel.new()
+		mark.name = "Mark"
+		mark.set_anchors_preset(Control.PRESET_FULL_RECT)
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mark.z_index = 2
+		add_child(mark)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.set_border_width_all(4)
+	sb.border_color = MARK_COLOR[kind]
+	sb.set_corner_radius_all(12)
+	mark.add_theme_stylebox_override("panel", sb)
+	mark.visible = true
+
+
 func set_mine(m: bool) -> void:
 	_tint("SideLeft", SIDE_ALLY if m else SIDE_ENEMY)
 	_tint("SideRight", SIDE_ALLY if m else SIDE_ENEMY)

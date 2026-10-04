@@ -21,10 +21,19 @@ var terrain_icon: Texture2D = null
 var terrain_params: TerrainParams = null
 var terrain_name: String = ""
 
-const _COL_MOVE := Color(0.25, 0.85, 0.45, 0.28)
-const _COL_ATTACK := Color(0.95, 0.30, 0.25, 0.30)
-const _COL_DEPLOY := Color(0.30, 0.70, 0.95, 0.28)
-const _COL_SEL := Color(1.0, 1.0, 1.0, 0.35)
+## ⚠️ 迭代064 B4（修 P-13 = 清单 UI-17「移动/攻击的可选对象 UI 标记没有看到」）：
+##   原 alpha 仅 **0.28~0.35**，叠在**橄榄绿地形贴图**上几乎不可辨 —— 提高不透明度并**加内描边**，
+##   使其在花哨地形上也能一眼分辨。
+##   （"有单位"的格不靠这里：`PITCH = 250` 而单位卡正好 250×250，会把格上的高亮**整片盖住** ——
+##     故攻击/支援目标改用**卡上标框** `card_unit.gd::set_mark()`。）
+const _COL_MOVE := Color(0.25, 0.95, 0.50, 0.46)
+const _COL_ATTACK := Color(1.0, 0.36, 0.28, 0.48)
+const _COL_DEPLOY := Color(0.30, 0.75, 1.0, 0.46)
+const _COL_SEL := Color(1.0, 1.0, 1.0, 0.50)
+## 内描边色（比填充更亮，避免在同类色地形上糊在一起）
+const _COL_MOVE_EDGE := Color(0.45, 1.0, 0.65, 0.95)
+const _COL_ATTACK_EDGE := Color(1.0, 0.55, 0.45, 0.95)
+const _COL_DEPLOY_EDGE := Color(0.55, 0.85, 1.0, 0.95)
 
 
 func _ready() -> void:
@@ -87,8 +96,18 @@ func _draw() -> void:
 	## ② 选中/高亮
 	if selected:
 		draw_rect(Rect2(Vector2.ZERO, size), _COL_SEL, true)
+	## ⚠️ 迭代064 B4：单靠半透明填充在花哨地形上看不出来 → **填充 + 3px 内描边**
+	var rc := Rect2(Vector2.ZERO, size)
 	match highlight:
-		"move":   draw_rect(Rect2(Vector2.ZERO, size), _COL_MOVE, true)
-		"attack": draw_rect(Rect2(Vector2.ZERO, size), _COL_ATTACK, true)
-		"deploy": draw_rect(Rect2(Vector2.ZERO, size), _COL_DEPLOY, true)
-		"deny":   draw_rect(Rect2(Vector2.ZERO, size), Color(0.5, 0.5, 0.5, 0.22), true)
+		"move":
+			draw_rect(rc, _COL_MOVE, true)
+			draw_rect(rc, _COL_MOVE_EDGE, false, 3.0)
+		"attack":
+			draw_rect(rc, _COL_ATTACK, true)
+			draw_rect(rc, _COL_ATTACK_EDGE, false, 3.0)
+		"deploy":
+			draw_rect(rc, _COL_DEPLOY, true)
+			draw_rect(rc, _COL_DEPLOY_EDGE, false, 3.0)
+		"deny":
+			draw_rect(rc, Color(0.5, 0.5, 0.5, 0.22), true)
+			draw_rect(rc, Color(0.5, 0.5, 0.5, 0.5), false, 3.0)
