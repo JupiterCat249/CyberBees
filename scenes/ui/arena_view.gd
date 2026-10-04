@@ -945,6 +945,18 @@ func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: A
 	## ⚠️ 预览范围**由规则层算好装在 PreviewData 里** —— 视图只读不重算
 	_preview = preview
 	_render_preview()
+	## ⭐ ③ 迭代064 遗留修复（目标轮8）：**把"本地选中"广播给对端**（`sel` op）。
+	##   实测根因（双端真机定位）：`NetIntent.send_selection()` **全项目 0 处调用**（死代码 ✗）——
+	##   接收侧（`apply_remote` → `SIG_REMOTE_SELECT` → `_on_remote_select`）完整，但**永远收不到东西** ⟹
+	##   实机观感即"看不到对手选了什么" ✗。
+	##   ⇒ 在此处（**本地**选中变化信号）发送：选中的是单位则发其格；否则发 null（= 取消广播）。
+	##   ⚠️ 不会回环：对端收到的是 `SIG_REMOTE_SELECT`（另一条信号），**不会**再触发本函数 ✓
+	##   ⚠️ 离线时 `send_selection` 内部已用 `is_online()` 直接返回 ⇒ 单机无副作用 ✓
+	if intent != null:
+		var sc := Vector2i(-1, -1)
+		if engine != null and engine.sel_unit != null:
+			sc = engine.sel_unit.cell
+		intent.send_selection(sc if sc.x >= 0 else null)
 
 
 func _on_main_button(text: String, enabled: bool, _hint: String = "") -> void:
