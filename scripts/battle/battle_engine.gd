@@ -683,6 +683,14 @@ func hand_range_has_cell(cell: Vector2i) -> bool:
 		var cd := sel_hand_card as CommandData
 		if cd == null:
 			return false
+		## ⭐ 迭代064 P-19 修正（真机追踪定位）：**AOE 指令卡是"以格为中心"** ⇒
+		##   任何**盘内格**都属合法交互范围（空地也能放）。
+		##   ⚠️ 此前这里对空格直接 `return false` ⇒ 视图 `_on_cell_clicked` 的闸门
+		##      （`if engine.hand_range_has_cell(cell): _execute_hand_on_cell(cell)`）
+		##      会把空格的点击**整条挡掉** ⇒ AOE 永远落不到空地、双步骤与效果范围预览也就无从触发 ✗
+		##      （真机现象：只见"敌方单位被套红框"＝预览里唯一的合法目标，正是这个原因 ✓）
+		if cd.aoe_span > 0:
+			return cell.x >= 0 and cell.x < Board.ROWS and cell.y >= 0 and cell.y < Board.COLS
 		var u: UnitInstance = state.board.unit_at(cell)
 		if u == null:
 			return false
