@@ -840,7 +840,38 @@ func set_my_seat(seat: int) -> void:
 				var inst_m = _find_unit(String(k))
 				if inst_m != null and un.has_method("set_mine"):
 					un.set_mine(int(inst_m.side) == my_seat)
+	_place_hud(BoardMirror.needs_mirror(my_seat))
 	print("[NET] 棋盘镜像 seat=%d（需镜像=%s）" % [my_seat, str(BoardMirror.needs_mirror(my_seat))])
+
+
+## ⭐ 迭代064 B2：**HUD 也要跟着座位换边**（人 2026-09-27 清单 **UI-13**「自己的手牌无论如何都应该默认在玩家视图的右边」
+##   与 **UI-14**「手牌区域、玩家信息等基本 UI 在联机中都应该对齐默认绿方/玩家自己的视角」）
+##
+## 现状与根因：面板的**静态映射**是 `HandPanelRight`/`PlayerBesaInfoRight` = 我方 `SIDE_ALLY`（绿），
+##   `HandPanelLeft`/`PlayerBesaInfoLift` = 敌方 `SIDE_ENEMY`（红）—— **与 `my_seat` 无关**。
+##   可联机里 seat=1 的玩家在引擎中就是 `SIDE_ENEMY` ⇒ 他的"自己"其实画在**左边**，
+##   "自己的手牌在右手边"于是不成立（实测截图：seat=1 时红方手牌与信息仍钉在左侧）。
+##   而 `set_my_seat()` 此前**只动 `Battle/MapView`**，完全没碰 HUD。
+##
+## 做法：**只把左右两组面板的 x 坐标对调**，内容映射一律不动 —— 最小改动、不必改任何索引语义。
+##   ⚠️ 原始 x 用 `set_meta("home_x")` 缓存**一次** → 反复调用幂等，且 seat 切回 0 时能精确还原。
+func _place_hud(mirror: bool) -> void:
+	var pairs := [
+		["Battle/HandPanelLeft", "Battle/HandPanelRight"],
+		["Battle/PlayerBesaInfoLift", "Battle/PlayerBesaInfoRight"],
+	]
+	for p in pairs:
+		var a := get_node_or_null(String(p[0])) as Control
+		var b := get_node_or_null(String(p[1])) as Control
+		if a == null or b == null:
+			continue
+		if not a.has_meta("home_x"):
+			a.set_meta("home_x", a.position.x)
+			b.set_meta("home_x", b.position.x)
+		var ax := float(a.get_meta("home_x"))
+		var bx := float(b.get_meta("home_x"))
+		a.position.x = bx if mirror else ax
+		b.position.x = ax if mirror else bx
 
 
 func _cell_pos(cell: Vector2i) -> Vector2:
