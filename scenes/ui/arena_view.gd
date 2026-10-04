@@ -532,12 +532,22 @@ func _connect_bus() -> void:
 ## ⭐ 迭代064 UI-15：**对端选中**的呈现 —— 不改规则、不进引擎状态
 ##   · 复用 `board_cell.set_selected()`（白框通道**此前未被使用**，正好归"对端选中"）
 ##   · `_render_preview()` 会清掉所有格子的 selected ⇒ 本标记由那边**记下并重打**（不新增变量）
-func _on_remote_select(_side: int, cell: Vector2i) -> void:
+func _on_remote_select(side: int, cell: Vector2i) -> void:
 	for c in _cells.keys():
 		if _cells[c].selected:
 			_cells[c].set_selected(false)
 	if cell.x >= 0 and _cells.has(cell):
 		_cells[cell].set_selected(true)
+	## ⭐ ③ 新目标：若对端选中的格上有**对端单位** ⇒ 本地**纯计算**它的可作用范围，
+	##   并用**既有范围样式**渲染 ✓（"事前提醒"的核心视觉：对手在看哪、能打到哪）
+	##   ⚠️ 只读计算、不改本地选中态；`side` 是**发送方**的 side（故 `side != my_seat` 即对端 ✓）
+	var rp: Resource = null
+	if side != my_seat and engine != null and cell.x >= 0:
+		var ru: UnitInstance = engine.state.board.unit_at(cell)
+		if ru != null and ru.side != my_seat:
+			rp = engine.remote_preview_of(ru)
+	if rp != null:
+		_preview = rp
 	_render_preview()
 
 
@@ -563,10 +573,15 @@ func _flash_remote_panel(side: int) -> void:
 	if mark == null:
 		mark = Panel.new()
 		mark.name = "RemoteMark"
-		mark.set_anchors_preset(Control.PRESET_FULL_RECT)
+		## ⚠️ 实测根因：`PlayerBesaInfo*` 是 **HBoxContainer** ⇒ 子节点会被容器重排（宽度归零 [0,99] ✗）。
+		##   ⇒ 用 `top_level = true` 让描边**脱离父级布局**，再按面板的**全局矩形**显式定位 ✓（容器免疫 ✓）
+		mark.top_level = true
 		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		mark.z_index = 2
 		panel.add_child(mark)
+	var gr := panel.get_global_rect()
+	mark.global_position = gr.position
+	mark.size = gr.size
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color(0, 0, 0, 0)
 	sb.set_border_width_all(5)

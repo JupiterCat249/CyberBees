@@ -897,6 +897,16 @@ func availability_preview():
 	return Preview.availability(state)
 
 
+## ⭐ ③ 新目标：**对端单位的可作用范围**（**纯计算**，不改本地选中态）——
+##   供视图在"对手选中某单位"时，用**既有范围样式**渲染对手的可作用范围（"事前提醒"的核心视觉 ✓）。
+##   `Preview.build` 为纯函数（只读 state）⇒ 传对端单位求值安全 ✓
+##   `sel_kind`：0=无 / 1=手牌 / 2=单位 / 3=支援（见 `sel_kind` 声明处）
+func remote_preview_of(u: UnitInstance):
+	if state == null or u == null:
+		return null
+	return Preview.build(state, 2, -1, u, null, false, Vector2i(-1, -1))
+
+
 func _emit_action_availability() -> void:
 	var can_deploy: bool = state.phase == state.Phase.DEPLOY
 	var can_act: bool = state.phase == state.Phase.ACTION
