@@ -97,10 +97,15 @@ func _do(sender: int, method: String, args: Array, payload: Dictionary) -> bool:
 ## ⭐ 迭代064 UI-15：**选中存在性广播**（**不是操作** —— 不改引擎状态、无需对端引擎执行）
 ##   op 铁律：**不带 instance_id** ⇒ 用**规范 cell** 传递；`cell == null` = 取消选中（空 cell）
 ##   与 `request_*` 的区别：不调引擎、不校验成败，只发一个"我在看哪一格"的存在性消息。
-func send_selection(cell) -> void:
+func send_selection(cell, hand_index: int = -1, card_name: String = "") -> void:
 	if not is_online():
 		return
 	var p: Dictionary = {"k": "sel", "cell": [] if cell == null else _ch(cell)}
+	## ⭐ 新目标 ①（对手"选中了哪张手牌"）：**可选字段** —— 旧端忽略未知键 ⇒ 协议向前兼容 ✓
+	if hand_index >= 0:
+		p["hi"] = hand_index
+	if card_name != "":
+		p["nm"] = card_name
 	frame += 1
 	sent_ops += 1
 	sent_payloads.append(p.duplicate(true))
@@ -237,8 +242,13 @@ func apply_remote(seat: int, payload) -> bool:
 			## ⭐ 迭代064 UI-15：对端**选中存在性** —— **纯呈现**（不改引擎状态、不参与规则）
 			##   经总线转给视图渲染"对手选中"标记；空 cell（`_cell([])` → (-1,-1)）表示对端已取消选中。
 			##   ⚠️ 不参与 ok/拒绝 计数，直接返回（它没有"执行失败"这回事）。
+			##   ⭐ 新目标 ①：若带 `nm`（对端**选中的是哪张手牌**）⇒ 再播一条动作提示（复用 ④ 的常驻条 ✓）
 			var b = engine.bus()
-			b.emit_signal(b.SIG_REMOTE_SELECT, side, _cell(p.get("cell", [])))
+			var scell := _cell(p.get("cell", []))
+			b.emit_signal(b.SIG_REMOTE_SELECT, side, scell)
+			var snm := String(p.get("nm", ""))
+			if snm != "":
+				b.emit_signal(b.SIG_REMOTE_ACTION, side, "选中手牌 %s" % snm, scell)
 			applied_remote += 1
 			return true
 		_:

@@ -1000,9 +1000,19 @@ func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: A
 	##   ⚠️ 离线时 `send_selection` 内部已用 `is_online()` 直接返回 ⇒ 单机无副作用 ✓
 	if intent != null:
 		var sc := Vector2i(-1, -1)
-		if engine != null and engine.sel_unit != null:
-			sc = engine.sel_unit.cell
-		intent.send_selection(sc if sc.x >= 0 else null)
+		var hi := -1
+		var nm := ""
+		if engine != null:
+			if engine.sel_unit != null:
+				sc = engine.sel_unit.cell
+			## ⭐ 新目标 ①：选中的是**手牌**时，把卡号与卡名一并广播
+			##   （对手据此在常驻提示条看到"选中手牌 <卡名>"；旧端忽略未知键 ⇒ 兼容 ✓）
+			if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:
+				var h: Array = engine.state.sides[engine.state.active]["hand"]
+				if int(engine.sel_hand_index) < h.size():
+					hi = int(engine.sel_hand_index)
+					nm = String(h[hi].display_name)
+		intent.send_selection(sc if sc.x >= 0 else null, hi, nm)
 
 
 func _on_main_button(text: String, enabled: bool, _hint: String = "") -> void:
