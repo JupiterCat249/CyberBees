@@ -1640,10 +1640,21 @@ func _render_preview() -> void:
 	for pc in _preview.cells:
 		if _cells.has(pc.cell):
 			_cells[pc.cell].set_highlight(String(style.get(pc.kind, "")))
-	for u in _preview.units:
-		var un = _unit_nodes.get(u.instance_id, null)
-		if un != null and is_instance_valid(un) and un.has_method("set_mark"):
-			un.set_mark(mark_kind)
+	## ⚠️ 人 2026-10-05：「在敌方单位上套红框（这个不需要额外显示）」 ✗
+	##   AOE 指令卡要的是**效果范围**（格高亮），不是逐单位红框 ⇒ 选中的是 AOE 卡时**跳过单位打标**。
+	var skip_unit_marks := false
+	if engine != null and int(engine.sel_kind) == 1:
+		var hc: CardData = null
+		var hh: Array = engine.state.sides[engine.state.active]["hand"]
+		if engine.sel_hand_index >= 0 and engine.sel_hand_index < hh.size():
+			hc = hh[engine.sel_hand_index]
+		if hc is CommandData and (hc as CommandData).aoe_span > 0:
+			skip_unit_marks = true
+	if not skip_unit_marks:
+		for u in _preview.units:
+			var un = _unit_nodes.get(u.instance_id, null)
+			if un != null and is_instance_valid(un) and un.has_method("set_mark"):
+				un.set_mark(mark_kind)
 
 
 # ============================================================
