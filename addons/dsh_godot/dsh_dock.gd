@@ -45,7 +45,13 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	custom_minimum_size = Vector2(380, 520)
+	## ⚠️ 迭代064 环境修复（2026-10-04）：原来是 `Vector2(380, 520)` ——
+	##   强制要求本面板**最小高度 520px**。它与「联机档位」面板同处**右列上下叠放**，
+	##   两者的最小高度**累加**，再叠加菜单栏 / 底部面板带 / 状态栏的自身最小高度，
+	##   在 150% 缩放下（逻辑窗口仅约 1067px）**总和溢出** ⇒ **编辑器底部页签条与状态栏被顶出窗口**
+	##   （表现：底部信息栏永远看不到、侧边栏下部被吞、"重置默认布局"无效 —— 因为这是**最小尺寸**问题不是排布问题）。
+	##   故：**宽度保留合理下限，高度不再设下限**（面板内容自身会撑开，超出时由停靠区裁剪）。
+	custom_minimum_size = Vector2(320, 0)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
