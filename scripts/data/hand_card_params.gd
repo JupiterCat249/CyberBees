@@ -25,6 +25,9 @@ extends Resource
 
 ## ============ 徽章（费用数字）============
 @export var badge_size: Vector2 = Vector2(60, 65)
+## ⚠️ **已废弃（人 2026-10-05 裁定「标记废弃」）**：全项目**无任何代码消费本字段** ——
+##   `arena_view._apply_one_hand_params()` 只读 `badge_size` 与 `badge_font_size`。
+##   保留字段仅为兼容既有 `.tres` 的反序列化；**新代码勿用**。
 @export var badge_pos: Vector2 = Vector2(0, 0)
 ## ⚠️ 0 = 沿用素材场景原值（当前 48）。人 2026-09-19：不要改字号（曾被覆盖成 26 → 变小）
 @export var badge_font_size: int = 0
