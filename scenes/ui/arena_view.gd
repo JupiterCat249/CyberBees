@@ -86,6 +86,9 @@ var _unit_nodes := {}                 ## instance_id -> UnitCard
 var _hand_nodes := {SIDE_ALLY: {}, SIDE_ENEMY: {}}   ## side -> {card_id: HandCard}
 var _hand_order := {SIDE_ALLY: [], SIDE_ENEMY: []}
 var _preview: Resource = null
+## ⭐ ② 修正（人 2026-10-05）：当前 `_preview` 是否来自**对端**（远端预览）——
+##   远端预览**只渲染范围格，绝不给单位打 attack 标记** ✗（实测：选指令卡时对手单位套红框）
+var _preview_is_remote := false
 var _preview_cleared := false
 
 ## 两套 UI 参数（**各自独立**，人要求：详情区 / 手牌卡不共用）
@@ -548,6 +551,12 @@ func _on_remote_select(side: int, cell: Vector2i) -> void:
 			rp = engine.remote_preview_of(ru)
 	if rp != null:
 		_preview = rp
+		## ⭐ ② 修正（人 2026-10-05）：**远端预览只渲染范围格，绝不给单位打 attack 标记** ✗
+		##   实测现象：选指令卡时对手单位套红框（MARK_COLOR["attack"]=#E8663C）—— 正是这里把远端
+		##   PreviewData 交给 _render_preview 后，它按 `_preview.units` 给单位卡打了 attack 标 ✓
+		_preview_is_remote = true
+	else:
+		_preview_is_remote = false
 	_render_preview()
 
 
@@ -636,7 +645,9 @@ func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 	if cell.x < 0:
 		_flash_opponent_hand(side)
 	else:
-		_flash_remote_panel(side)
+		## ⭐ ⑤ 修正（人 2026-10-05）：**不得围绕"玩家基本信息框"** ✗
+		##   ⇒ 去掉 `_flash_remote_panel()`（PlayerBesaInfo* 面板描边），
+		##     只保留**具体对象**上的标记：目标格高亮 + 该格单位卡标框（既有通道 ✓）
 		_on_remote_select(side, cell)
 
 
@@ -1777,7 +1788,7 @@ func _render_preview() -> void:
 			hc = hh[engine.sel_hand_index]
 		if hc is CommandData and (hc as CommandData).aoe_span > 0:
 			skip_unit_marks = true
-	if not skip_unit_marks:
+	if not skip_unit_marks and not _preview_is_remote:
 		for u in _preview.units:
 			var un = _unit_nodes.get(u.instance_id, null)
 			if un != null and is_instance_valid(un) and un.has_method("set_mark"):
