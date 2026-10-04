@@ -62,6 +62,8 @@ func bind(data: CardData) -> void:
 	var bg := _badge()
 	if bg != null:
 		bg.text = str(data.cost) if data.cost >= 0 else "X"
+		## ⭐ 迭代064 UI-11：设计色卡「亮橙 `#FFA300` = 默认部署费用」（原为白色白字）
+		bg.add_theme_color_override("font_color", Color("#FFA300"))
 	_apply_type_color(data)
 	_apply_artwork(data)
 	_apply_crop(data.visual)

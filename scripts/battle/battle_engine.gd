@@ -418,6 +418,11 @@ func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -
 	## ⚠️ 结算必须先做（迭代059 曾因 patch 误删这两行 → 攻击"命中"却不掉血）
 	Combat.resolve_attack(attacker, defender, state.board)
 	attacker.mark_acted()                      ## 行动机会 4：攻击后自动结束行动
+	## ⭐ 迭代064 UI-16（清单「双方单位需要有是否行动过的 UI 差分」）：
+	##   `mark_acted()` 只发**实例级** `acted_changed`（`unit_instance.gd`），**总线无信号** ⇒
+	##   视图不会重绑卡面 ⇒ "已行动"的视觉差分**永远不生效**（实测踩到：卡面 modulate 始终全白）。
+	##   故借既有 `SIG_UNIT_STATS`（"单位状态变化"；视图已在 B1 订阅并重绑该卡）广播一次。
+	bus().emit_signal(Bus.SIG_UNIT_STATS, attacker)
 	var killed_queen: int = -1
 	var _is_q: bool = defender.data != null and defender.data.kind == CardData.CardKind.QUEEN
 	## ⭐ 迭代059 修缺陷：**必须在 _cleanup_dead 之前判定胜负** ——
@@ -529,6 +534,8 @@ func _resolve_support(side: int, unit: UnitInstance, skill: SkillData) -> bool:
 	if refunded > 0:
 		extra = "回费 +%d" % refunded
 	unit.mark_acted()                           ## 行动机会 4：使用支援后自动结束行动
+	## ⭐ 迭代064 UI-16：同上 —— 支援后也要让视图重绑该卡（否则"已行动"差分不生效）
+	bus().emit_signal(Bus.SIG_UNIT_STATS, unit)
 	_log("%s 使用【支援】%s（%s%s）" % [
 		unit.card_name(), skill.display_name, extra,
 		"，生效 %d 个效果" % applied if applied > 0 else ""])

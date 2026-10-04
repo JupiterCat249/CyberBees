@@ -48,10 +48,31 @@ var unit_id := ""
 ## ⚠️ 每次绑定都**重置为正常显示** ——
 ##   否则烤入场景里遗留的暗色 modulate（历史运行时状态）会让可出的牌也显示为灰。
 ##   可出性由 `set_playable()` 单独控制，不依赖 modulate 的历史值。
+## ⭐ 迭代064 UI-11：设计色卡（`电子蜂A5策划案.md`）——亮橙 = 部署费用；深灰 = 蜂王回费量
+const COST_COLOR := Color("#FFA300")
+const REFUND_COLOR := Color("#5D5D5D")
+## ⭐ 迭代064 UI-16：已行动的单位卡做视觉差分（冷灰蓝压暗）
+##   ⚠️ 刻意不用 `Color(0.65,0.65,0.65)` —— 那是**手牌"不可用"的中性灰**，语义不同，避免撞色
+const ACTED_TINT := Color(0.62, 0.68, 0.78, 1)
+
+
 func bind(data: Dictionary) -> void:
 	unit_id = String(data.get("id", ""))
-	modulate = Color(1, 1, 1, 1)
-	_set_text("CostPlate/Cost", str(data.get("cost", 0)))
+	## ⭐ 迭代064 UI-11（清单「单位费用颜色不该是白色」）——按设计色卡上色：
+	##   · 普通单位：**亮橙 `#FFA300`** ＝ 部署费用
+	##   · **蜂王：深灰 `#5D5D5D`** ＝ 每回合回费量
+	##     （设计明文：「蜂王单位左上角**不显示部署费用**，取而代之是**灰色的每回合回复费用**」）
+	##   原实现一律写白色 `cost`（蜂王 cost = 0 ⇒ 蜂王卡左上角一直显示白色 "0"）⇒ 颜色与数值**两处都不对**。
+	var is_queen := String(data.get("type", "unit")) == "queen"
+	if is_queen:
+		_set_text("CostPlate/Cost", str(data.get("refund", 0)))
+		_set_prop("CostPlate/Cost", "theme_override_colors/font_color", REFUND_COLOR)
+	else:
+		_set_text("CostPlate/Cost", str(data.get("cost", 0)))
+		_set_prop("CostPlate/Cost", "theme_override_colors/font_color", COST_COLOR)
+	## ⭐ 迭代064 UI-16（清单「双方单位需要有是否行动过的 UI 差分」）：
+	##   已行动（a500：使用主动攻击/支援后行动结束）→ 冷灰蓝压暗，一眼看出它本回合已用完。
+	modulate = ACTED_TINT if bool(data.get("acted", false)) else Color(1, 1, 1, 1)
 	_set_text("Attr_Attack/Value", str(data.get("atk", 0)))
 	_set_text("Attr_Health/Value", str(data.get("hp", 0)))
 	_set_text("Attr_Speed/Value", str(data.get("move", 0)))
