@@ -68,9 +68,17 @@ func _build() -> void:
 	add_child(_src_label)
 
 	_auto_check = CheckBox.new()
-	_auto_check.text = "自动模式（连上即入队、配对即进对局）"
+	## ⚠️ 迭代064 环境修复（2026-10-04 根因修复）：原来文案是
+	##   「自动模式（连上即入队、配对即进对局）」── **24 字且 CheckBox 不换行**
+	##   ⇒ 该控件的**最小宽度≈340px** ⇒ 迫使右侧停靠列变宽 ⇒ 吃掉主区水平空间 ⇒
+	##   **编辑器底部面板带（输出/调试器/动画… 页签条 + 状态栏）被挤掉**
+	##   （人实测：专注模式隐藏两侧栏后底部栏即回归 ✓；单开任一元凶插件都复现 ✓）
+	##   ⇒ 文案缩短、解释放已有 tooltip；并显式允许换行、不设最小宽度。
+	_auto_check.text = "自动模式"
+	_auto_check.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_auto_check.custom_minimum_size = Vector2(0, 0)
 	_auto_check.add_theme_font_size_override("font_size", 11)
-	_auto_check.tooltip_text = "写 net_config/auto.flag；双实例自动验收用，人工测试请保持关闭"
+	_auto_check.tooltip_text = "写 net_config/auto.flag；双实例自动验收用，人工测试请保持关闭（连上即入队、配对即进对局）"
 	_auto_check.toggled.connect(_on_auto_toggled)
 	add_child(_auto_check)
 
