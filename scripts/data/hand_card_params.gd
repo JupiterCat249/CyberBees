@@ -35,6 +35,41 @@ extends Resource
 
 
 ## 由卡视觉数据 + 本参数算出最终立绘位置（视图直接拿去设 offset）
+## ============ 共通：卡面类型底色与条纹（人 2026-10-05 修正口径）============
+## ⚠️ **底色＝「单位类型底色」，不是阵营色**（人明确修正："阵营底色不用搞，这个是我的口误"）。
+##   类型色的**唯一真值来源＝`CardData.type_color_of(kind)`**，与策划案 §五 颜色图鉴逐字一致：
+##     蜂王 `#FFD07E` · 建筑 `#DDC29B` · 指令 `#D9D9D9` · 兵蜂/普通 `#FFFFFF`
+##   （⚠️ 迭代064 机制-3 曾在这四个里自造三个错色：建筑用灰 `#5D5D5D`、指令用阵营红 `#A84331`、
+##     普通用阵营绿 `#3B816D` —— 与策划案冲突，已被本参数口径取代。）
+##   条纹＝**白色条纹 10% 透明度**，原色复用素材 `assets/ui/fx/crt_scanline_tile.png`
+##   （单位卡 `CrtFx` 已在用同一素材）。路径由使用方 `load()`，本类不做 preload。
+@export_range(0.0, 1.0) var type_base_alpha: float = 1.0   ## 类型底色不透明度（策划案：100%）
+@export_range(0.0, 1.0) var stripe_alpha: float = 0.1      ## 白色条纹不透明度（策划案：10%）
+const STRIPE_TEXTURE_PATH := "res://assets/ui/fx/crt_scanline_tile.png"
+
+## ============ 按卡种的手牌立绘参数（人 2026-10-05 指示）============
+##   兵蜂（`SOLDIER`，键 `"unit"`）= **UI 参数不变** → 沿用 `art_base_offset` / `art_base_scale` / 逐卡 crop
+##   其余三型（蜂王 `"queen"` / 建筑 `"building"` / 指令 `"order"`）= **缩放 50% 并居中展示**
+##   ⚠️ 键用**字符串**（由调用方 `arena_view` 从 `CardData.kind` 转好传入）——
+##      参数类**不得**引用 `CardData`，否则 Resource 间 class_name 依赖会导致 reload 失败（实测 ✗）。
+@export var kind_art_scale: Dictionary = {"queen": 0.5, "building": 0.5, "order": 0.5}
+@export var kind_center: bool = true
+
+
+## 该卡种的立绘缩放：命中 `kind_art_scale` → 用表值；否则（兵蜂/未知）→ 沿用原参数链
+func art_scale_for_key(kind_key: String, vis: CardVisual) -> Vector2:
+	if kind_key != "" and kind_art_scale.has(kind_key):
+		var v := float(kind_art_scale[kind_key])
+		if v > 0.0:
+			return Vector2(v, v)
+	return final_art_scale(vis)
+
+
+## 该卡种是否"缩放后居中展示"（兵蜂不居中、保持原偏移链）
+func should_center_key(kind_key: String) -> bool:
+	return kind_center and kind_key != "" and kind_art_scale.has(kind_key)
+
+
 func final_art_offset(vis: CardVisual) -> Vector2:
 	var off := art_base_offset + crop_offset
 	if vis != null:

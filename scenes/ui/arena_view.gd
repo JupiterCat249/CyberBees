@@ -652,24 +652,47 @@ func _apply_one_hand_params(node, p) -> void:
 		line.size = p.inner_line_size
 	var img: TextureRect = node.get_node_or_null("Artwork/ArtPlane/Image")
 	if img != null and node.get("card_data") != null:
-		var vis: CardVisual = (node.get("card_data") as CardData).visual
-		## ⭐ 迭代064 UI-8（清单「指令卡建筑卡的**UI参数**需要调整以确保**主体部分居中**」）
-		##   —— **真因（实测）**：原实现把窗口写死成 `Vector2(400, 454)`（注释称"源图量级"），
-		##   而实际卡图是 **250×258**，立绘框实测 **194×196**；offset 又按 400×454 取值（-100,-100）
-		##   ⇒ 竖直方向应为 -129 ⇒ **偏 29px**，且窗口远大于图 ⇒ 观感即"主体没居中"。
-		##   改为：**按实际贴图尺寸取窗 + 在立绘框里居中**（仍保留 scale / crop 的语义）。
+		var cd: CardData = node.get("card_data") as CardData
+		var vis: CardVisual = cd.visual
+		## ⭐ 迭代064 **回归修复**（人 2026-10-05 指示：「问题清单讲的是调整 UI 参数，而不是直接动逻辑本身」）：
+		##   UI-8 曾在此**写死**"按贴图实际尺寸取窗 + 居中" ✗ —— 那是**绕过了 UI 参数**直接改逻辑。
+		##   正确口径：**UI 参数说了算** ——
+		##     · 兵蜂（SOLDIER）→ `p.final_art_offset/scale(vis)` **原样**（人：兵蜂 UI 参数不变）
+		##     · 蜂王/建筑/指令 → 按参数表 `kind_art_scale` **缩放 50%**，并在裁剪窗内**居中展示**
+		##   （卡种键在此转换后传入；参数类不引用 `CardData`，避免 Resource 间 class_name 依赖）
+		var key := _hand_kind_key(cd)
 		var sz: Vector2 = img.texture.get_size() if img.texture != null else Vector2(400, 454)
-		var sc: Vector2 = p.final_art_scale(vis)
-		var plane: Control = img.get_parent()
-		var pw: Vector2 = Vector2(194, 196)
-		if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
-			pw = plane.size
+		var sc: Vector2 = p.art_scale_for_key(key, vis)
 		var draw: Vector2 = Vector2(sz.x * sc.x, sz.y * sc.y)
-		img.offset_left = (pw.x - draw.x) * 0.5
-		img.offset_top = (pw.y - draw.y) * 0.5
-		img.offset_right = img.offset_left + sz.x
-		img.offset_bottom = img.offset_top + sz.y
+		var off: Vector2 = p.final_art_offset(vis)
+		if p.should_center_key(key):
+			var pw: Vector2 = Vector2(200, 200)
+			var plane: Control = img.get_parent()
+			if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
+				pw = plane.size
+			off = (pw - draw) * 0.5
+		img.offset_left = off.x
+		img.offset_top = off.y
+		img.offset_right = off.x + sz.x
+		img.offset_bottom = off.y + sz.y
 		img.scale = sc
+
+
+## 手牌卡种键（供 UI 参数查表）—— 参数类不得引用 `CardData`，故转换放在视图侧
+func _hand_kind_key(cd: CardData) -> String:
+	if cd == null:
+		return ""
+	match cd.kind:
+		CardData.CardKind.QUEEN:
+			return "queen"
+		CardData.CardKind.BUILDING:
+			return "building"
+		CardData.CardKind.COMMAND, CardData.CardKind.COMMAND_X:
+			return "order"
+		CardData.CardKind.SOLDIER:
+			return "unit"
+		_:
+			return ""
 
 
 func _on_battle_started(first_side: int, round_no: int, an: String, en: String) -> void:
