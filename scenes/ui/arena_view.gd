@@ -511,6 +511,8 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_EFFECT_GRANTED, _on_effect_granted)
 	b.connect(Bus.SIG_EFFECT_EXPIRED, _on_effect_expired)
 	b.connect(Bus.SIG_UNIT_STATS, _on_unit_stats_changed)
+	## ⭐ 迭代064 B7（清单 UI-20）：**单位回费**单独一条 → 飘字落在那只回费的单位身上
+	b.connect(Bus.SIG_REFUND, _on_refund_gained)
 
 
 ## 地图与背景资产变化
@@ -698,6 +700,23 @@ func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
 	##      · 发射点 `battle_engine.gd:503`（`_resolve_support(side, unit, skill)` 里**确实持有 `unit`**）
 	##      · 发射点 `:222`（`_do_recover` 是**侧级合计** `recover_gain(side)`，无单一单位）
 	##      ⇒ 需规则层加参数或新信号（**T10，待授权**）—— 详见迭代064 修复记录 B7。
+	##   ✅ **已解决（迭代064 B7 二批 · 人已授权动规则层）**：规则层新增 `SIG_REFUND`
+	##      （只由"**持有施法单位的回费**"发出，发射点 `battle_engine.gd:503` `_resolve_support`）
+	##      → 见下方 `_on_refund_gained()`：飘字落在**那只回费的单位**身上。
+	##      ⚠️ **侧级回费不飘字** —— 回合回费（`_do_recover`）与丰饶场地效果（`rules_effects.gd`）
+	##      都没有"某一个单位"，正是人说的"**一个回费的单位就一个回费文本特效**"。
+
+
+## ⭐ 迭代064 B7（清单 UI-20）：**单位回费飘字** —— 落在真正回费的那只单位上
+##   · 一次单位回费 = **一个**飘字（人明确"一个回费的单位就一个回费文本特效"）
+##   · **手牌与费用图标处都不出现**回费特效（前者从未有过；后者已在上一批移除）
+func _on_refund_gained(_side: int, unit: UnitInstance, amount: int) -> void:
+	if unit == null or amount <= 0:
+		return
+	var card: Control = _unit_nodes.get(unit.instance_id, null)
+	if card == null or not is_instance_valid(card):
+		return
+	_float_at(card, "+%d" % amount, COL_COST, amount)
 
 
 func _on_hand_changed(side: int, hand: Array, playable: Array) -> void:

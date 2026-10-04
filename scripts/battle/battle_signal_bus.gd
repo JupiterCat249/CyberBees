@@ -29,6 +29,8 @@ const SIG_PHASE_STARTED := "phase_started"
 const SIG_PHASE_ENDED := "phase_ended"
 const SIG_BATTLE_ENDED := "battle_ended"
 const SIG_COST_CHANGED := "cost_changed"
+## 单位回费（迭代064 B7 · 清单 UI-20）——**只由持有施法单位的回费发出**（见下方 signal 注释）
+const SIG_REFUND := "refund_gained"
 const SIG_CARD_DRAWN := "card_drawn"
 const SIG_HAND_CHANGED := "hand_changed"
 const SIG_DECK_RESHUFFLED := "deck_reshuffled"
@@ -74,7 +76,14 @@ signal battle_ended(result: int, reason: String)
 # ============================================================
 
 ## 费用变化（a500 费用 1~3）
+## ⚠️ `delta > 0` 其实是**两类**回费，语义不同、视图表现也应不同（迭代064 B7 / 清单 UI-20 定案）：
+##   · **侧级回费** —— 回合回费（`_do_recover`）与丰饶场地效果（`rules_effects.gd`）→ **无单一单位** ⇒ 不飘字
+##   · **单位回费** —— 支援技能（`_resolve_support`，`skill.refund > 0`）→ **有施法单位** ⇒ 飘在该单位上
+## 故本信号**保持原样、不增参数**（不动既有订阅方），单位回费另走下面的 `refund_gained`。
 signal cost_changed(side: int, cost: int, delta: int)
+## 单位回费（迭代064 B7 · 人 2026-09-27 清单 **UI-20**「**一个回费的单位就一个回费文本特效**」）
+## 只由**持有施法单位的回费**发出 → 视图据此把飘字落在该单位卡上（而非费用图标 / 手牌）
+signal refund_gained(side: int, unit: UnitInstance, amount: int)
 ## 抽到一张卡（a500 抽卡 4）
 signal card_drawn(side: int, card: CardData, hand_size: int)
 ## 手牌整体变化（供视图重建手牌）

@@ -501,6 +501,9 @@ func _resolve_support(side: int, unit: UnitInstance, skill: SkillData) -> bool:
 		state.sides[side]["cost"] = mini(state.MAX_COST, before + skill.refund)
 		refunded = state.cost(side) - before
 		bus().emit_signal(Bus.SIG_COST_CHANGED, side, state.cost(side), refunded)
+		## ⭐ 迭代064 B7（清单 UI-20）：**单位回费单独广播** —— 飘字要落在**施法单位**身上，
+		##   而 `cost_changed` 是**侧级**的（视图无从知道是哪个单位回费）。此处**确实持有 `unit`**。
+		bus().emit_signal(Bus.SIG_REFUND, side, unit, refunded)
 	var extra := ""
 	if refunded > 0:
 		extra = "回费 +%d" % refunded
