@@ -672,7 +672,25 @@ func _set_turn(side: int, round_no: int) -> void:
 	## ⭐ 回合切换也刷新手牌亮/灰（人要求「轮换等情况下依然稳定显示是否可用」）
 	##   与费用变化 / 手牌变化三条路径**互相幂等**（都只读当前 state），不会打架。
 	refresh_hand_affordability()
-	$HUD/MatchInfo/TurnInfo.text = "回合%d--%s" % [round_no, "绿方" if side == SIDE_ALLY else "红方"]
+	_refresh_zone_info(side, round_no)
+
+
+## ⭐ 迭代064 P-15（清单 **机制-7**「没有做完善的 手牌-备卡-墓地 轮换机制」）：
+##   轮换规则本身按 a500 已完整（见 `修复记录` 逐条对照：使用→墓地 / 回合末补到 4 /
+##   牌库空→墓地前 4 张洗回 / 丢弃按部署费 / 单位阵亡**直接删除**不入墓地），
+##   但**玩家看不见「备卡」与「墓地」两个区** ⇒ 轮换成了黑箱。
+##   故把三个区的数量并进回合信息行（**不改场景结构、不动字号**，纯文本口径）。
+func _refresh_zone_info(side: int, round_no: int) -> void:
+	var ti := $HUD/MatchInfo/TurnInfo as Label
+	if ti == null or engine == null or engine.state == null:
+		return
+	var s: int = side
+	var hand: Array = engine.state.sides[s]["hand"]
+	var dk: Array = engine.state.sides[s]["deck"]
+	var dis: Array = engine.state.sides[s]["discard"]
+	ti.text = "回合%d--%s ｜ 手牌%d · 备卡%d · 墓地%d" % [
+		round_no, "绿方" if s == SIDE_ALLY else "红方",
+		hand.size(), dk.size(), dis.size()]
 
 
 func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
@@ -1131,6 +1149,12 @@ func _render_hand(side: int, hand: Array, playable: Array) -> void:
 	## ⭐ 每次渲染后都把子卡内部节点设为鼠标透明（**保留卡根节点可点**）
 	##   （`_ready` 里那次跑在首次渲染之前 → 容器还是空的，等于没跑）
 	_ignore_descendants(parent)
+	## ⭐ 迭代064 P-15：**手牌变化也是三区数量的刷新时机** ——
+	##   ⚠️ 不能只靠费用信号：部署代码是「先扣费并发 `SIG_COST_CHANGED`、**之后**才 `hand.remove_at`
+	##   + 进墓地」⇒ 费用信号那一刻手牌还是旧数量（实测文本停在「手牌4·墓地0」）。
+	##   手牌变化（`_emit_hand` → 本函数）才是"三区已定"的汇聚点。
+	if engine != null and engine.state != null:
+		_refresh_zone_info(int(engine.state.active), int(engine.state.round_no))
 
 
 ## ⭐ 稳定刷新手牌亮/灰（费用口径）——人要求「轮换等情况下依然稳定显示是否可用」
@@ -1148,6 +1172,10 @@ func refresh_hand_affordability() -> void:
 			if node == null or not is_instance_valid(node):
 				continue
 			_call_opt(node, "set_playable", [engine.hand_affordable(side, i)])
+	## ⭐ 迭代064 P-15：轮换三区数量一并刷新（**幂等**；与上面的亮/灰共用同一批刷新时机 ——
+	##   费用变化 / 阶段变化 / 回合切换 / 卡入牌库墓地，四条路径都会到）
+	if engine.state != null:
+		_refresh_zone_info(int(engine.state.active), int(engine.state.round_no))
 
 
 func _on_hand_clicked(card_id: String, side: int) -> void:
