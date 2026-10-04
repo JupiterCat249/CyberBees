@@ -162,6 +162,10 @@ func load_map(md: MapData) -> void:
 # ============================================================
 
 func _enter_phase(phase: int) -> void:
+	## ⭐ 关键修复（同上）：**进入任何新阶段都清除"待确认"** —— 否则跨阶段/跨回合残留的
+	##   `command_cell`/`pending_action` 会让主按钮一直走「确认」分支，卡死"完成部署/结束回合" ✗
+	command_cell = Vector2i(-1, -1)
+	pending_action = ""
 	state.phase = phase
 	bus().emit_signal(Bus.SIG_PHASE_STARTED, state.active, phase, state.round_no)
 	_emit_button()
@@ -788,6 +792,13 @@ func cancel_selection() -> void:
 
 func _cancel_selection() -> void:
 	support_pending = null
+	## ⭐ 关键修复（联机后手方第一回合无法「完成部署」）：**待确认状态必须在这里一并清除** ——
+	##   `request_end_phase()` 会先调本函数；而此前 `command_cell`/`pending_action` **只在阶段2 执行时**
+	##   才被清 ⇒ **先手在部署阶段留下的待确认会活到后手的部署阶段** ✗ ⟹ 后手点主按钮时被
+	##   视图的「待确认 ⇒ 确认」分支吞掉（`if command_cell.x >= 0: … return`）⇒ **永远到不了
+	##   request_end_phase()**，表现为"始终无法完成部署" ✓（已定位并修）
+	command_cell = Vector2i(-1, -1)
+	pending_action = ""
 	sel_kind = 0
 	sel_hand_index = -1
 	sel_hand_card = null
