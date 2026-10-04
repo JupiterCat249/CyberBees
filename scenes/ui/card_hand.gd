@@ -63,9 +63,8 @@ func bind(data: CardData) -> void:
 	if bg != null:
 		bg.text = str(data.cost) if data.cost >= 0 else "X"
 		## ⭐ 迭代064 UI-11：设计色卡「亮橙 `#FFA300` = 默认部署费用」
-		## ⚠️ 人 2026-10-05 修正：手牌六边形底板本身就是**亮橙**，数字须为**黑色**才可读
-		##   （"手牌区费用数字是白色的而不是黑色的" ⇒ 目标色＝黑）
-		bg.add_theme_color_override("font_color", Color("#000000"))
+		## ⚠️ 人 2026-10-05 明确：手牌费用图标上的**文字应为白色**（此前的黑字判断作废）
+		bg.add_theme_color_override("font_color", Color("#FFFFFF"))
 	_apply_type_color(data)
 	_apply_artwork(data)
 	_apply_crop(data.visual)
@@ -111,8 +110,15 @@ func _ensure_stripe_overlay() -> void:
 	s.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	s.modulate = Color(1, 1, 1, 0.1)
 	s.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	s.z_index = 1
-	add_child(s)
+	## ⭐ 层级（人 2026-10-05 明确）：**类型底色 → 白色条纹 → 单位图像**
+	##   `Body` 是类型底色的承载节点（Panel）。Godot 绘制顺序＝"父自身底 → 父的子节点 → 父的后续兄弟"，
+	##   故把条纹挂到 `Body` 下，正好得到「底色 → 条纹 → Artwork(单位图像)」✓
+	##   （此前挂在卡根且 z_index=1 ⇒ 条纹压在图像之上 ✗，与要求相反）
+	var body := _body()
+	if body != null:
+		body.add_child(s)
+	else:
+		add_child(s)
 
 
 func _apply_artwork(data: CardData) -> void:

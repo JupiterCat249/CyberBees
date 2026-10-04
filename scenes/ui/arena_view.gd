@@ -641,7 +641,15 @@ func _apply_hand_params() -> void:
 func _apply_one_hand_params(node, p) -> void:
 	var badge: TextureRect = node.get_node_or_null("BadgeImage")
 	if badge != null:
-		badge.size = p.badge_size
+		## ⚠️ 人 2026-10-05：费用图标"疑似横向被压缩" —— 与立绘窗**同一类问题**：
+		##   徽章贴图被硬拉进固定 `60×65` 矩形 ⇒ 宽高比被破坏 ✗。
+		##   修法同立绘：宽取参数值，**高按贴图自身宽高比推导** ✓（参数仍是被尊重的"宽"基准）。
+		var bsz: Vector2 = p.badge_size
+		if badge.texture != null:
+			var bt: Vector2 = badge.texture.get_size()
+			if bt.x > 1.0 and bt.y > 1.0:
+				bsz = Vector2(p.badge_size.x, p.badge_size.x * bt.y / bt.x)
+		badge.size = bsz
 		var bv: Label = badge.get_node_or_null("Value")
 		## ⚠️ 只在显式给正数时覆盖字号（人 2026-09-19：不要改字号）
 		##    素材原值 48；之前这里覆盖成 26 → 变小
