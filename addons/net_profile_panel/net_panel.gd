@@ -21,6 +21,7 @@ var _src_label: Label = null
 var _auto_check: CheckBox = null
 var _last_key: String = ""
 var _loading: bool = false
+var _duo_status: Label = null      ## ⭐ 迭代064「本地双开」状态行
 
 
 func _ready() -> void:
@@ -94,6 +95,22 @@ func _build() -> void:
 	btns.add_child(b_open)
 	add_child(btns)
 
+	## ⭐ 迭代064 新增（人 2026-10-05 选 A）：「本地双开」—— 一键把本地联机验收环境拉起来
+	var duo_row := HBoxContainer.new()
+	var b_duo := Button.new()
+	b_duo.text = "本地双开"
+	b_duo.tooltip_text = "写 test 档 + 自动模式 → 起本地中继(联机服务器/server.js, 8091) → 再拉起第二个 Godot 实例。\n两端都会连上即入队、配对即进对局；人工测试结束后请手动把自动模式关掉。"
+	b_duo.pressed.connect(_on_launch_duo)
+	duo_row.add_child(b_duo)
+	add_child(duo_row)
+
+	_duo_status = Label.new()
+	_duo_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_duo_status.add_theme_font_size_override("font_size", 11)
+	_duo_status.modulate = Color(1, 1, 1, 0.75)
+	_duo_status.text = "「本地双开」= 测试档 + 自动模式 + 本地中继 + 第二实例"
+	add_child(_duo_status)
+
 	var hint := Label.new()
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 10)
@@ -150,6 +167,46 @@ func _on_refresh_pressed() -> void:
 
 func _on_open_dir() -> void:
 	OS.shell_open(ProjectSettings.globalize_path(NC.DIR))
+
+
+## ⭐ 迭代064 新增（人 2026-10-05 裁定方案 A）：「本地双开」一键拉起本地联机验收环境
+##   ① 写 **test 档 + 自动模式**（与 NetConfig 口径一致的两处来源：ProjectSettings + flag 文件）
+##   ② 起**本地中继**（`联机服务器/server.js --config config.test.json`，测试端口 8091）
+##   ③ 拉起**第二个 Godot 实例**（`--net-profile=test --net-auto`）
+##   ④ 本实例自己按 F5/F6 运行即可（同样读到 `auto.flag` ⇒ **连上即入队、配对即进对局**）
+##   ⚠️ 人工测试结束后请把面板「自动模式」关掉（否则下次运行仍会自动入队）。
+##   ⚠️ `OS.create_process` **不解析 PATH、也不带工作目录** ⇒ 中继统一交给 `cmd /C cd /d … && start node …`；
+##      第二个实例用 `OS.get_executable_path()`（绝对路径）直起。
+func _on_launch_duo() -> void:
+	var notes: PackedStringArray = PackedStringArray()
+	# ① 档位 + 自动模式
+	ProjectSettings.set_setting(NC.SETTING, "test")
+	ProjectSettings.save()
+	_write_text_file(NC.DIR + "/profile.flag", "test")
+	_write_text_file(NC.DIR + "/auto.flag", "1")
+	notes.append("已写 test 档 + 自动模式")
+	# ② 本地中继
+	var relay_dir := ProjectSettings.globalize_path("res://联机服务器")
+	if FileAccess.file_exists(relay_dir + "/server.js"):
+		var relay_cmd := "cd /d \"%s\" && start \"bees-relay\" node server.js --config config.test.json"
+		OS.create_process("cmd.exe", ["/C", relay_cmd % relay_dir], false)
+		notes.append("已起本地中继(8091)")
+	else:
+		notes.append("缺 联机服务器/server.js，中继未起")
+	# ③ 第二个实例
+	var exe := OS.get_executable_path()
+	var proj := ProjectSettings.globalize_path("res://")
+	var pid := OS.create_process(exe, ["--path", proj, "--net-profile=test", "--net-auto"], false)
+	if pid > 0:
+		notes.append("第二实例 pid=%d" % pid)
+	else:
+		notes.append("第二实例启动失败")
+	# ④ 反馈
+	var msg := "本地双开：" + " · ".join(notes) + " → 本实例请按 F5/F6 运行"
+	if _duo_status != null:
+		_duo_status.text = msg
+	print("[NET-PANEL] %s" % msg)
+	_refresh(true)
 
 
 func _on_selected(idx: int) -> void:
