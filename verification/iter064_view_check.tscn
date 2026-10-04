@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://ctixhhlvet75"]
+
+[ext_resource type="Script" path="res://verification/iter064_view_check.gd" id="1_4aai8"]
+
+[node name="Iter064ViewCheck" type="Node" unique_id=1494696584]
+script = ExtResource("1_4aai8")
