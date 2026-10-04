@@ -160,11 +160,6 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="R19"]
-bg_color = Color(0, 0, 0, 0.2)
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-
 [sub_resource type="SystemFont" id="R21"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
 font_weight = 700
@@ -427,13 +422,13 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("R4")
 
 [node name="HandLeft" type="GridContainer" parent="Battle/HandPanelLeft" unique_id=1568755482]
-columns = 2
-theme_override_constants/h_separation = 0
-theme_override_constants/v_separation = 0
 layout_mode = 0
 offset_right = 400.0
 offset_bottom = 400.0
 mouse_filter = 2
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
+columns = 2
 
 [node name="HandPanelRight" type="Panel" parent="Battle" unique_id=588827031]
 layout_mode = 0
@@ -445,13 +440,13 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("R5")
 
 [node name="HandRight" type="GridContainer" parent="Battle/HandPanelRight" unique_id=1622828235]
-columns = 2
-theme_override_constants/h_separation = 0
-theme_override_constants/v_separation = 0
 layout_mode = 0
 offset_right = 400.0
 offset_bottom = 400.0
 mouse_filter = 2
+theme_override_constants/h_separation = 0
+theme_override_constants/v_separation = 0
+columns = 2
 
 [node name="PlayerBesaInfoRight" type="HBoxContainer" parent="Battle" unique_id=1377072214]
 layout_mode = 0
@@ -692,14 +687,6 @@ mouse_default_cursor_shape = 2
 theme_override_styles/normal = SubResource("R17")
 theme_override_styles/pressed = SubResource("R18")
 theme_override_styles/hover = SubResource("R18")
-
-[node name="MainButtonSeg" type="Panel" parent="HUD/ActionBar" unique_id=1228356069]
-layout_mode = 0
-offset_left = 262.0
-offset_right = 400.0
-offset_bottom = 100.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("R19")
 
 [node name="Label" type="Label" parent="HUD/ActionBar" unique_id=1206815651]
 layout_mode = 0

@@ -629,7 +629,7 @@ func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
 	refresh_hand_affordability()
 
 
-func _on_cost_changed(side: int, cost: int, delta: int) -> void:
+func _on_cost_changed(side: int, cost: int, _delta: int) -> void:
 	## ⚠️ 左右与阵营的对应（迭代059 小修补：原实现左右反了）
 	##   左侧面板 `PlayerBesaInfoLift` = **敌方**（与 `HandPanelLeft`/`EnemyHand_*` 同侧）
 	##   右侧面板 `PlayerBesaInfoRight` = **我方**（与 `HandPanelRight`/`AllyHand_*` 同侧）
@@ -639,10 +639,14 @@ func _on_cost_changed(side: int, cost: int, delta: int) -> void:
 		lb.text = str(cost)
 	## ⭐ 费用一变，双方手牌的亮/灰立刻按**费用口径**重算（幂等）
 	refresh_hand_affordability()
-	## 回费文本（§二之1 line 42「回费文本」；§二之2 line 48 回费 = #FFA300）
-	if delta > 0:
-		var badge: Control = node.get_node_or_null("BadgeImage")
-		_float_at(badge, "+%d" % delta, COL_COST, delta)
+	## ⚠️ 迭代064 B7（人 2026-09-27 清单 UI-20）：
+	##   **回费飘字不再挂费用图标** —— 人明确「回费文本特效发生在费用图标上是错的（正确做法是
+	##   **一个回费的单位就一个回费文本特效**，而且手牌等地方不该出现回费特效）」。
+	##   本处原实现把飘字挂在**玩家信息面板的 `BadgeImage`** 上 → 属错位，**先移除**。
+	##   ⏳ 正位（挂在**真正回费的那个单位**上）需引擎把单位一并传出：
+	##      · 发射点 `battle_engine.gd:503`（`_resolve_support(side, unit, skill)` 里**确实持有 `unit`**）
+	##      · 发射点 `:222`（`_do_recover` 是**侧级合计** `recover_gain(side)`，无单一单位）
+	##      ⇒ 需规则层加参数或新信号（**T10，待授权**）—— 详见迭代064 修复记录 B7。
 
 
 func _on_hand_changed(side: int, hand: Array, playable: Array) -> void:
@@ -1324,10 +1328,11 @@ func show_detail(data: CardData) -> void:
 	if data == null:
 		return
 	$HUD/InfoPanel/CardName.text = data.display_name
-	var head := ""
-	if data.glossary != "" or data.skill_name != "":
-		head = "[%s] %s\n" % [data.glossary, data.skill_name]
-	$HUD/InfoPanel/SkillDesc.text = head + data.description
+	## ⚠️ 迭代064 B7（人 2026-09-27 清单 UI-5「**任何技能都不需要名字描述**」）：
+	##   此处原先会把 `[glossary] skill_name` 拼成描述头（即"卡名下再挂一行技能名"）——**已移除**。
+	##   理由：**描述正文自带类型前缀**（如「[被动]在敌方领地时，攻击造成[2]倍伤害」），
+	##   再挂一行技能名纯属冗余。保留 `CardName` + `description` 两项即可。
+	$HUD/InfoPanel/SkillDesc.text = data.description
 	var portrait := $HUD/InfoPanel/DetailBlock/Artwork/Portrait as TextureRect
 	if portrait != null:
 		portrait.texture = data.visual.artwork if data.visual != null else null
