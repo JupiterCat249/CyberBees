@@ -122,8 +122,16 @@ func _ensure_stripe_overlay() -> void:
 	s.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	s.modulate = Color(1, 1, 1, 0.1)
 	s.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	s.z_index = 1
-	add_child(s)
+	## ⭐ 层级（人 2026-10-05 明确，与手牌同口径）：**类型底色 → 白色条纹 → 单位图像**
+	##   ⚠️ 实测（game_eval 真值）：此前挂在**卡根且排在 children 最后** ⇒ 条纹压在图像之上 ✗，
+	##   10% 白纹铺满整卡最上层、观感几乎无变化（人反馈"没有变化"即此）。
+	##   `Body` 是类型底色承载节点；Godot 绘制顺序＝"父自身底 → 父的子节点 → 父的后续兄弟"，
+	##   故挂到 `Body` 下正好得到「底色 → 条纹 → Artwork(单位图像)」✓
+	var body := get_node_or_null("Body")
+	if body != null:
+		body.add_child(s)
+	else:
+		add_child(s)
 
 
 ## 类型图标：按单位类型切换；无素材则**整块隐藏**（不留上一张的残影）
