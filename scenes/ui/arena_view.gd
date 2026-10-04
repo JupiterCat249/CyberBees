@@ -642,15 +642,23 @@ func _apply_one_hand_params(node, p) -> void:
 	var img: TextureRect = node.get_node_or_null("Artwork/ArtPlane/Image")
 	if img != null and node.get("card_data") != null:
 		var vis: CardVisual = (node.get("card_data") as CardData).visual
-		var off: Vector2 = p.final_art_offset(vis)
-		var base: Vector2 = p.art_base_offset
-		## Image 基准尺寸为 400x454（源图量级）→ 用 offset 控制裁剪窗里显示哪一块
-		var sz := Vector2(400, 454)
-		img.offset_left = off.x
-		img.offset_top = off.y
-		img.offset_right = off.x + sz.x
-		img.offset_bottom = off.y + sz.y
-		img.scale = p.final_art_scale(vis)
+		## ⭐ 迭代064 UI-8（清单「指令卡建筑卡的**UI参数**需要调整以确保**主体部分居中**」）
+		##   —— **真因（实测）**：原实现把窗口写死成 `Vector2(400, 454)`（注释称"源图量级"），
+		##   而实际卡图是 **250×258**，立绘框实测 **194×196**；offset 又按 400×454 取值（-100,-100）
+		##   ⇒ 竖直方向应为 -129 ⇒ **偏 29px**，且窗口远大于图 ⇒ 观感即"主体没居中"。
+		##   改为：**按实际贴图尺寸取窗 + 在立绘框里居中**（仍保留 scale / crop 的语义）。
+		var sz: Vector2 = img.texture.get_size() if img.texture != null else Vector2(400, 454)
+		var sc: Vector2 = p.final_art_scale(vis)
+		var plane: Control = img.get_parent()
+		var pw: Vector2 = Vector2(194, 196)
+		if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
+			pw = plane.size
+		var draw: Vector2 = Vector2(sz.x * sc.x, sz.y * sc.y)
+		img.offset_left = (pw.x - draw.x) * 0.5
+		img.offset_top = (pw.y - draw.y) * 0.5
+		img.offset_right = img.offset_left + sz.x
+		img.offset_bottom = img.offset_top + sz.y
+		img.scale = sc
 
 
 func _on_battle_started(first_side: int, round_no: int, an: String, en: String) -> void:
