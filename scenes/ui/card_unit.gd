@@ -109,7 +109,11 @@ func bind(data: Dictionary) -> void:
 ##   条纹＝**原色复用**素材 `assets/ui/fx/crt_scanline_tile.png`（本卡的 `CrtFx` 已在用同一素材）。
 ##   以 TILE 模式铺满整卡 + `modulate.a = 0.1`（白色条纹 10% 不透明度）。
 func _ensure_stripe_overlay() -> void:
-	if has_node("TypeStripe"):
+	## ⚠️ 幂等守卫必须查**真正挂载的父节点**（`Body`）—— 曾写成 `has_node("TypeStripe")`（只查卡根 ✗），
+	##   而条纹已改挂到 `Body` 下 ⇒ 守卫永远失效 ⇒ 每次 bind 都再挂一层 ✗（叠加会冲淡底色、溢出边界）。
+	var body := get_node_or_null("Body")
+	var host: Node = body if body != null else self
+	if host.has_node("TypeStripe"):
 		return
 	var t := load("res://assets/ui/fx/crt_scanline_tile.png") as Texture2D
 	if t == null:
@@ -117,21 +121,17 @@ func _ensure_stripe_overlay() -> void:
 	var s := TextureRect.new()
 	s.name = "TypeStripe"
 	s.texture = t
+	## 尺寸/位置：按卡面**内缩 10px** 铺放（人 2026-10-05 指出的渲染范围口径），避免超出边界 ✓
 	s.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	s.offset_left = 10.0
+	s.offset_top = 10.0
+	s.offset_right = -10.0
+	s.offset_bottom = -10.0
 	s.stretch_mode = TextureRect.STRETCH_TILE
 	s.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	s.modulate = Color(1, 1, 1, 0.1)
 	s.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	## ⭐ 层级（人 2026-10-05 明确，与手牌同口径）：**类型底色 → 白色条纹 → 单位图像**
-	##   ⚠️ 实测（game_eval 真值）：此前挂在**卡根且排在 children 最后** ⇒ 条纹压在图像之上 ✗，
-	##   10% 白纹铺满整卡最上层、观感几乎无变化（人反馈"没有变化"即此）。
-	##   `Body` 是类型底色承载节点；Godot 绘制顺序＝"父自身底 → 父的子节点 → 父的后续兄弟"，
-	##   故挂到 `Body` 下正好得到「底色 → 条纹 → Artwork(单位图像)」✓
-	var body := get_node_or_null("Body")
-	if body != null:
-		body.add_child(s)
-	else:
-		add_child(s)
+	host.add_child(s)
 
 
 ## 类型图标：按单位类型切换；无素材则**整块隐藏**（不留上一张的残影）
