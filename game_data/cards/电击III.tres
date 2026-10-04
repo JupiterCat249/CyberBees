@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CommandData" format=3]
+[gd_resource type="Resource" script_class="CommandData" format=3 uid="uid://klcialhj45df"]
 
-[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_nrxq2"]
-[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_e8iu8"]
-[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_cnq85"]
-[ext_resource type="Texture2D" path="res://assets/card_art/电击III.png" id="4_jgg0b"]
-[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_hq67u"]
+[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_nrxq2"]
+[ext_resource type="Script" uid="uid://bjnl0nbhp36pe" path="res://scripts/data/command_data.gd" id="2_e8iu8"]
+[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_cnq85"]
+[ext_resource type="Texture2D" uid="uid://bk2lopygt7ael" path="res://assets/card_art/电击III.png" id="4_jgg0b"]
+[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_hq67u"]
 
 [sub_resource type="Resource" id="Resource_q40rh"]
 script = ExtResource("5_hq67u")
