@@ -1,13 +1,13 @@
 extends Node
-## 【验证用 · 非生产】迭代064 遗留项 · **视觉取证**探针（AI 自动截图）
-## 目的：把「联机信息透明」的结果（对端看到我方选中单位的攻击范围 + 攻击目标框）
-##       与「鬼影范围消失」的现场自动截成 PNG，供 read_image 复核（不依赖真实鼠标）。
+## 【验证用 · 非生产】详情栏**换行能力**对照取证（用确定会溢出的长文案压测）
+## 为何需要：本批卡面描述都偏短（最长行 < 300px 框宽）⇒ 实机截图无法暴露换行能力。
+## 做法：给 `SkillDesc` 灌一段长中文（模拟“超过 300px 的技能说明”），采样
+##       rect / 行数 / 最长行宽 —— 换行开启后行数↑、最长行宽 ≤ 框宽。
 ## 运行：project_run(mode="custom", scene="res://verification/iter064_leak_shot.tscn")
-## 产物：user://shot_remote_info.png · user://shot_ghost.png
+## 产物：user://shot_wrap_pressure.png
 ## ---------------------------------------------------------------------------
 const BATTLE := preload("res://scenes/ui/battle_scene.tscn")
 var _view: Node = null
-var _eng = null
 
 
 func _idle(n: int = 2) -> void:
@@ -16,47 +16,39 @@ func _idle(n: int = 2) -> void:
 
 
 func _ready() -> void:
-	print("=== 遗留项修复 · 视觉取证开始 ===")
+	print("=== 详情栏换行 · 长文案压测 ===")
 	_view = BATTLE.instantiate()
 	add_child(_view)
 	await _idle(6)
-	_eng = _view.get("engine")
-	var i := 0
-	while int(_eng.state.phase) != 3 and i < 12:
-		_eng.call("request_end_phase", 0)
-		await _idle(2)
-		i += 1
-
-	## ── ① 对端视图：信息透明（范围 + 所选攻击目标）──
-	var mine = _pick(0)
-	var foe = _pick(1)
-	var t := Vector2i(mine.cell.x, mine.cell.y + 1)
-	if _eng.state.board.unit_at(t) != null:
-		t = Vector2i(mine.cell.x + 1, mine.cell.y)
-	_eng.state.board.move_unit(foe, t)
-	_view.call("set_my_seat", 1)
-	_eng.state.active = 0
-	_eng.state.phase = 3
-	_eng.call("request_clear_selection")
-	await _idle(2)
-	_view.call("_on_remote_select", 0, mine.cell)
-	await _idle(8)
-	await _shot("user://shot_remote_info.png")
-
-	## ── ③ 鬼影：对端无人单位死亡后，范围/高亮/选中框必须全空 ──
-	_eng.state.active = 0
-	_eng.state.phase = 3
-	_eng.call("request_clear_selection")
-	await _idle(2)
-	_view.call("_on_remote_select", 0, mine.cell)
-	await _idle(6)
-	await _shot("user://shot_ghost_before.png")
-	mine.current_hp = 0
-	_eng.call("_cleanup_dead")
-	await _idle(10)
-	await _shot("user://shot_ghost_after.png")
-
-	print("=== 视觉取证完成 ===")
+	var ds := _view.get_node_or_null("HUD/InfoPanel/SkillDesc") as Label
+	var panel := _view.get_node_or_null("HUD/InfoPanel") as Control
+	if ds == null or panel == null:
+		print("跳过：取不到节点")
+		get_tree().quit()
+		return
+	var long_text := "[被动]在敌方领地时，攻击造成两倍伤害；若目标为蜂王则额外获得一层护盾，并在下次受击时优先抵挡全部伤害。"
+	print("压测文案长=%d 字 · 框宽=%.0f · 面板右缘=%.0f" % [
+		long_text.length(), ds.size.x, panel.get_global_rect().end.x])
+	ds.text = long_text
+	await _idle(4)
+	## ⚠️ Label 没有 `get_line()`（实测踩到：Invalid call → 游戏被停进断点）
+	##   判据改用：① 行数（换行后 > 1）② **所需高度**（Word 换行时高度会随行数增长）；
+	##   同时用「单行渲染所需宽度 vs 框宽」给出一条可判真伪的读数。
+	var need_w := ds.get_theme_font("font").get_string_size(
+		long_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, ds.get_theme_font_size("font_size")).x
+	var no_wrap_h := ds.get_theme_font_size("font_size")
+	var lines: int = ds.get_line_count()
+	var actual_h: float = ds.size.y
+	print("判定A：autowrap=%d · 行数=%d · 所需单行宽=%.1f · 框宽=%.1f · 单行必溢出=%s" % [
+		int(ds.autowrap_mode), lines, need_w, ds.size.x, str(need_w > ds.size.x)])
+	## Word Smart 换行后的近似行数（按框宽整除，用于验证"行数确实随换行增长"）
+	var approx_lines: int = int(ceil(need_w / maxf(1.0, ds.size.x - 4.0)))
+	print("判定B：按框宽估算应折行数=%d · 实际行数=%d · 行数≥估算=%s" % [
+		approx_lines, lines, str(lines >= approx_lines - 1)])
+	print("判定C：控件实际高度=%.1f（换行开启后高度会随行数增长；单行时约=字号 %d）" % [
+		actual_h, no_wrap_h])
+	await _shot("user://shot_wrap_pressure.png")
+	print("=== 压测完成 ===")
 	get_tree().quit()
 
 
@@ -64,11 +56,4 @@ func _shot(path: String) -> void:
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	var e := img.save_png(path)
-	print("SHOT %s err=%d size=%dx%d" % [path, e, img.get_width(), img.get_height()])
-
-
-func _pick(side: int):
-	for u in _eng.state.board.all_units():
-		if u.side == side:
-			return u
-	return null
+	print("SHOT %s err=%d" % [path, e])

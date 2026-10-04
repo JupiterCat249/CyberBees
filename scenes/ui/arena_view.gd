@@ -430,6 +430,16 @@ func _fit_text_labels() -> void:
 	var se := $HUD/MatchInfo/SiteEffect as Label
 	if se != null:
 		se.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	## ⭐ 迭代064 遗留修复（人 2026-10-05「左侧单位技能详细信息栏存在文本超出边框来到战斗地图而没有自动换行」）：
+	##   **实测根因**：`HUD/InfoPanel/SkillDesc` 的框宽 **300px**，而技能描述**单行文本宽 444px**、
+	##   `autowrap_mode = 0`（无换行）且 `clip_text = false` ⇒ 文字**直接画出框外**、
+	##   越过面板右缘（面板右缘 430）压到战斗地图上 ✗。
+	##   修法：与右下面板 `SiteEffect` **同一口径** —— 只开**自动换行**，**不改字号**（守 2026-09-19 硬约束）。
+	##   `CardName` 同理补上（当前卡名未溢出，但卡名长度由数据决定，属同类隐患；换行只对更长的卡名生效）。
+	for dp in ["HUD/InfoPanel/SkillDesc", "HUD/InfoPanel/CardName"]:
+		var dl := get_node_or_null(dp) as Label
+		if dl != null:
+			dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	## ⭐ 迭代064 B7（修 P-11 = 清单 UI-7「主按钮存在文本不对齐问题（在一些情况下如添加额外的文字）」）
 	## 根因（**实测**，不是猜）：主按钮 `Label` 的框只有 **240px**，而 **Control 会按"最小尺寸"把自己撑大** ——
 	##   文案一长（实测 `绿方胜（蜂王被击杀）` = **420px**）框就长到 420，但它的 `position` **固定 x=80 不动**

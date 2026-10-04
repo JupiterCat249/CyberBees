@@ -73,6 +73,12 @@ func bind(data: Dictionary) -> void:
 	## ⭐ 迭代064 UI-16（清单「双方单位需要有是否行动过的 UI 差分」）：
 	##   已行动（a500：使用主动攻击/支援后行动结束）→ 冷灰蓝压暗，一眼看出它本回合已用完。
 	modulate = ACTED_TINT if bool(data.get("acted", false)) else Color(1, 1, 1, 1)
+	## ⭐ 迭代064 遗留修复（人 2026-10-05「第一回合第一个发起攻击的单位有时会奇怪的变黑」）防复发：
+	##   `modulate` 会被**动画系统**（淡入/闪红/退场）临时改写，而 `self_modulate` 是**本节点单独**乘子 ——
+	##   场景里曾烤入 `self_modulate = Color(0,0,0,1)`（纯黑，见 B8 的 `Mover` 同源坑），
+	##   两者相乘会让卡面**整体变黑**，且 `modulate` 读数一切正常（最难查的一类）。
+	##   本卡全部视觉状态都由 `modulate` 表达 ⇒ `self_modulate` 每次 `bind()` 显式重置为白。
+	self_modulate = Color(1, 1, 1, 1)
 	_set_text("Attr_Attack/Value", str(data.get("atk", 0)))
 	_set_text("Attr_Health/Value", str(data.get("hp", 0)))
 	_set_text("Attr_Speed/Value", str(data.get("move", 0)))

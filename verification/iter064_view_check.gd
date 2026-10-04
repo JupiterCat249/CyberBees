@@ -86,8 +86,72 @@ func _ready() -> void:
 	await _check_regression_cell_click()
 	await _check_remote_target_marks()
 	await _check_remote_ghost()
+	## ⭐ 迭代064 遗留（人 2026-10-05 补充两问）
+	await _check_tint_preserves_bind_color()
+	await _check_detail_autowrap()
 
 	print("=== 结果：%d PASS / %d FAIL ===" % [_pass, _fail])
+
+
+## ⭐ 遗留修复（人 2026-10-05「第一回合第一个发起攻击的单位有时会奇怪的变黑」）：
+##   `TINT` 类动画（卡牌登场淡入 / 受伤闪红 / 单位退场）**不得改写卡面语义色**——
+##   卡面颜色由 `card_unit.bind()`（白 / 已行动冷灰蓝）决定，动画只允许叠色 + 淡入淡出。
+##   修前：淡入第 1 帧写 `(1,1,1,0.25)`（＝"变黑"），闪红末帧把已行动色覆盖回纯白（实测）。
+func _check_tint_preserves_bind_color() -> void:
+	var u := _first_unit_card()
+	if u == null:
+		_ok("TINT 不覆盖 · 取到单位卡", false)
+		return
+	## 造一个"语义色"：已行动冷灰蓝（与 card_unit.ACTED_TINT 一致），随后交给**绑定期之外**的动画
+	var acted := Color(0.62, 0.68, 0.78, 1)
+	u.modulate = acted
+	## ⚠️ `anim` 是 arena_view 的**成员变量**（不是方法）⇒ 必须先 get() 取到对象再 call()
+	##   （实测踩到：`_view.call("anim")` → Invalid call → 游戏被停进断点）
+	var ap = _view.get("anim")
+	if ap == null:
+		_ok("TINT 不覆盖 · 取到动画播放器", false)
+		return
+	ap.call("action", "受伤闪红", u, 3)
+	await _idle(10)                       ## 闪红共 6 帧，等它播完
+	var m: Color = u.modulate
+	_ok("TINT 动画不抹掉卡面语义色（受伤闪红后仍为已行动色）",
+		absf(m.r - acted.r) < 0.02 and absf(m.g - acted.g) < 0.02 and absf(m.b - acted.b) < 0.02,
+		" %s（期望 ≈%s）" % [str(m), str(acted)])
+	_ok("TINT 动画不把 alpha 留在中途", is_equal_approx(m.a, 1.0), " a=%.2f" % m.a)
+	## 卡牌登场（淡入）只动 alpha：播完必须回到语义色
+	ap.call("action", "卡牌登场", u, 0)
+	await _idle(8)
+	var m2: Color = u.modulate
+	_ok("卡牌登场淡入结束后回到语义色",
+		absf(m2.r - acted.r) < 0.02 and absf(m2.b - acted.b) < 0.02 and is_equal_approx(m2.a, 1.0),
+		" %s" % str(m2))
+	u.modulate = Color(1, 1, 1, 1)
+
+
+## ⭐ 遗留修复（人 2026-10-05「左侧单位技能详细信息栏文本超出边框来到战斗地图而没有自动换行」）：
+##   实测根因：`SkillDesc` 框宽 **300px**、技能描述单行可达 **444px+**、`autowrap=0` ⇒ 直接画出框外。
+##   判据用**压测文案**（确定会溢出）：换行开启后行数 > 1，且**所需高度随行数增长**（实测 25 → 162）。
+func _check_detail_autowrap() -> void:
+	var ds := _view.get_node_or_null("HUD/InfoPanel/SkillDesc") as Label
+	var panel := _view.get_node_or_null("HUD/InfoPanel") as Control
+	if ds == null or panel == null:
+		_ok("详情栏换行 · 取到 SkillDesc/InfoPanel", false)
+		return
+	_ok("详情栏 SkillDesc 已开自动换行",
+		int(ds.autowrap_mode) != int(TextServer.AUTOWRAP_OFF), " autowrap=%d" % int(ds.autowrap_mode))
+	var keep := ds.text
+	ds.text = "[被动]在敌方领地时，攻击造成两倍伤害；若目标为蜂王则额外获得一层护盾，并在下次受击时优先抵挡全部伤害。"
+	await _idle(4)
+	var need_w := ds.get_theme_font("font").get_string_size(
+		ds.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, ds.get_theme_font_size("font_size")).x
+	var lines: int = ds.get_line_count()
+	_ok("详情栏长文案确实折行（行数 > 1）", lines > 1,
+		" 行数=%d · 单行所需宽=%.0f · 框宽=%.0f" % [lines, need_w, ds.size.x])
+	_ok("详情栏长文案所需高度随行数增长（未被单行高度夹住）",
+		ds.size.y > float(ds.get_theme_font_size("font_size")) * 1.5,
+		" 高度=%.1f" % ds.size.y)
+	ds.text = keep
+	await _idle(2)
 
 
 ## ⭐ 迭代064 遗留②（人 2026-10-05）：手牌选中态的**取消出口必须齐全**。

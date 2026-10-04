@@ -243,7 +243,21 @@ func _apply(clip: AnimClip, target: Node, st: Dictionary, done_frames: int, want
 				if tn is Node2D and target is Node2D:
 					target.rotation = ((tn as Node2D).global_position - (target as Node2D).global_position).angle()
 		AnimClip.Kind.TINT:
-			target.modulate = clip.tint
+			## ⭐ 迭代064 遗留修复（人 2026-10-05「第一回合第一个发起攻击的单位有时会奇怪的变黑」）：
+			##   根因＝**TINT 整条覆盖 `target.modulate`**，把卡面自己的**语义色一并抹掉**：
+			##     · `卡牌登场`（淡入）第 1 帧就是 `Color(1,1,1,0.25)` ⇒ 与它同时发生的
+			##       `bind()`（已行动色 / 受伤闪红收尾）会被**下一帧的淡入帧盖掉**，观感即"变黑/变色"；
+			##     · `受伤闪红` 末帧写 `Color(1,1,1,1)` ⇒ **把"已行动"的冷灰蓝（0.62,0.68,0.78）覆盖回纯白** ✗。
+			##   修法：把动画色**叠加在动画开始时的基础色 `base_mod` 上**（`base_mod` 早已在 `action()` 里存下），
+			##   并把"淡入/闪白"用的**白色视为恒等元**（不动 base 的 RGB，只取它的 alpha 做淡入淡出）。
+			##   ⇒ 动画只做"淡入淡出 + 叠加染色"，**不再改写卡面语义色**；动画结束仍由 `_finish()` 归位。
+			var base_mod: Color = st.get("base_mod", Color(1, 1, 1, 1))
+			var tint_c: Color = clip.tint
+			var is_white: bool = tint_c.r >= 0.999 and tint_c.g >= 0.999 and tint_c.b >= 0.999
+			var rgb: Color = base_mod if is_white else Color(
+				base_mod.r * tint_c.r, base_mod.g * tint_c.g, base_mod.b * tint_c.b, 1.0)
+			## alpha 两条语义都保留：① 动画自带淡入淡出（tint_c.a < 1）② 基础色自身的透明度
+			target.modulate = Color(rgb.r, rgb.g, rgb.b, base_mod.a * tint_c.a)
 		AnimClip.Kind.SPAWN_FX:
 			if done_frames == 0 and clip.fx_scene != null:
 				var host: Node = fx_parent if fx_parent != null else target.get_parent()
@@ -298,6 +312,11 @@ func _finish(key: String, restore: bool) -> void:
 		if restore:
 			_set_pos(target, st["base_pos"])
 			target.rotation = st["base_rot"]
+			## ⭐ 迭代064 遗留修复（人 2026-10-05）：**回位也要带回卡面色** ——
+			##   此前只归位位移/旋转、**不管 modulate**：`TINT` 动画（淡入 / 闪红 / 退场）最后写下的颜色
+			##   会永久留在卡上，把 `bind()` 给的**语义色**（已行动冷灰蓝）盖掉 ⇒ 观感"变黑 / 变色"（实测）。
+			##   现在与 `base_pos`/`base_rot` 同源：动画收尾把 `base_mod` 一并还原（动画不拥有卡面颜色）。
+			target.modulate = st.get("base_mod", target.modulate)
 		var pat: AnimPattern = st["pat"]
 		if not pat.trigger_on_stop.is_empty():
 			action(pat.trigger_on_stop, target, int(st["value"]))

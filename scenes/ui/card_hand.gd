@@ -186,6 +186,11 @@ func set_playable(can_play: bool, dim_black: bool = false) -> void:
 		modulate = Color(0.22, 0.22, 0.22, 1)
 	else:
 		modulate = Color(0.65, 0.65, 0.65, 1)
+	## ⭐ 迭代064 遗留修复（人 2026-10-05「单位会奇怪的变黑」）防复发：
+	##   `modulate` 是**级联**的，但 `self_modulate` 是**本节点单独**的乘子 —— 若它残留非白值，
+	##   会把 modulate 的灰/黑**再乘一层**（0.22 × 残留 ⇒ 近乎全黑），且**排查时在 modulate 上看不出来**。
+	##   本卡全部视觉状态都由 `modulate` 表达 ⇒ `self_modulate` 永远保持白（显式重置，不依赖场景烤值）。
+	self_modulate = Color(1, 1, 1, 1)
 
 
 func set_selected(sel: bool) -> void:
