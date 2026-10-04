@@ -108,7 +108,7 @@ func _build() -> void:
 	_duo_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_duo_status.add_theme_font_size_override("font_size", 11)
 	_duo_status.modulate = Color(1, 1, 1, 0.75)
-	_duo_status.text = "「本地双开」= 测试档 + 自动模式 + 本地中继 + 第二实例"
+	_duo_status.text = "「本地双开」= 测试档 + 自动模式 + 本地中继 + 两个联机大厅实例"
 	add_child(_duo_status)
 
 	var hint := Label.new()
@@ -221,7 +221,7 @@ func _on_launch_duo() -> void:
 	else:
 		notes.append("大厅实例启动异常(exe=%s)" % exe)
 	# ④ 反馈（把命令实况也打出来，便于取证）
-	var msg := "本地双开：" + " · ".join(notes) + " → 本实例请按 F5/F6 运行"
+	var msg := "本地双开：" + " · ".join(notes)
 	if _duo_status != null:
 		_duo_status.text = msg
 	print("[NET-PANEL] %s" % msg)
