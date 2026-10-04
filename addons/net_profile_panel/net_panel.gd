@@ -206,14 +206,20 @@ func _on_launch_duo() -> void:
 		notes.append("已请求启动中继(8091)")
 	else:
 		notes.append("缺 联机服务器/server.js，中继未起")
-	# ③ 第二个实例
+	# ③ 两个实例 —— **都进「联机大厅」**（大厅原生自动：连上即入队、配对即进对局）
+	## ⚠️ 人 2026-10-05 指正 + 本轮实测：**编辑器 F5 跑的是项目主场景（战斗场景）**，
+	##   而战斗场景不自带联机建立流程 ✗ ⇒ "本实例按 F5"这个说法也是错的 ✗。
+	##   ✅ 正确做法＝**直接起两个大厅实例**，二者自动入队 → 配对 → 各自进战斗，全程无需人工点击 ✓
+	##   （实测：大厅实例日志出现 "已连接中继" → "匹配中…（队列第 1 位）" ✓）
 	var exe := OS.get_executable_path()
 	var proj := ProjectSettings.globalize_path("res://")
-	var pid := OS.create_process(exe, ["--path", proj, "--net-profile=test", "--net-auto"], false)
-	if pid > 0:
-		notes.append("第二实例 pid=%d" % pid)
+	var lobby_scene := proj + "scenes/ui/net_lobby.tscn"
+	var pid_a := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test", "--net-auto"], false)
+	var pid_b := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test", "--net-auto"], false)
+	if pid_a > 0 and pid_b > 0:
+		notes.append("两个大厅实例 pid=%d / %d" % [pid_a, pid_b])
 	else:
-		notes.append("第二实例启动失败(exe=%s)" % exe)
+		notes.append("大厅实例启动异常(exe=%s)" % exe)
 	# ④ 反馈（把命令实况也打出来，便于取证）
 	var msg := "本地双开：" + " · ".join(notes) + " → 本实例请按 F5/F6 运行"
 	if _duo_status != null:
