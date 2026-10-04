@@ -208,6 +208,12 @@ func apply_remote(seat: int, payload) -> bool:
 			var mv_to := _cell(p.get("to"))
 			var mv_nm := String(mv_u.card_name()) if mv_u != null else "单位"
 			ok = engine.request_move(side, mv_u, mv_to)
+			## ⚠️⚠️ 恶性 BUG 修复（人 2026-10-05）：引擎的 move/attack 现在是**双步确认**
+			##   （阶段1 只挂待确认并返回 false），而对端只能通过 op 复原 ⇒ **必须连调两次**才真正执行 ✓
+			##   （与支援/AOE 的既有范式一致：第一次挂 pending 返 false、第二次执行）
+			##   否则对端只挂了个待确认、单位**永远不动** ⇒ 表现为"后手操作不同步、单位没有任何动作" ✗
+			if not ok:
+				ok = engine.request_move(side, mv_u, mv_to)
 			if ok:
 				var mb = engine.bus()
 				mb.emit_signal(mb.SIG_REMOTE_ACTION, side, "移动 %s" % mv_nm, mv_to)
@@ -217,6 +223,9 @@ func apply_remote(seat: int, payload) -> bool:
 			var at_to := _cell(p.get("to"))
 			var at_nm := String(at_u.card_name()) if at_u != null else "单位"
 			ok = engine.request_attack(side, at_u, _unit_at(p.get("to")))
+			## ⚠️⚠️ 同上（人 2026-10-05 恶性 BUG）：攻击也是双步确认 ⇒ 对端必须**连调两次**才真正结算 ✓
+			if not ok:
+				ok = engine.request_attack(side, at_u, _unit_at(p.get("to")))
 			if ok:
 				var ab = engine.bus()
 				ab.emit_signal(ab.SIG_REMOTE_ACTION, side, "攻击 %s" % at_nm, at_to)
