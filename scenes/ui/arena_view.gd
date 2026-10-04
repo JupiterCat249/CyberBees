@@ -1364,6 +1364,12 @@ func _execute_hand_on_cell(cell: Vector2i) -> void:
 				intent.request_use_command_at(side, engine.sel_hand_index, cell)
 			elif u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
 				_flash_msg("该单位不是该指令的合法目标")
+		int(EngLib.HandMode.DISCARD):
+			## ⭐ 弃牌 BUG 修复：弃牌态点"手牌区以外任意处" ⇒ **执行弃牌** ✓
+			##   （此前 `_execute_hand_on_cell` 无 DISCARD 分支、且 `hand_range_has_cell` 先把它挡掉 ✗）
+			var dc: int = engine.discard_cost_of(engine.sel_hand_card) if engine.sel_hand_card != null else 0
+			if not intent.request_discard(side, engine.sel_hand_index):
+				_flash_msg("弃牌失败：需 %d 费，当前 %d" % [dc, engine.state.cost(side)])
 		_:
 			pass
 
@@ -1485,6 +1491,11 @@ func _on_hand_clicked(card_id: String, side: int) -> void:
 	if side != engine.state.active:
 		_flash_msg("现在不是%s的回合" % ("绿方" if side == SIDE_ALLY else "红方"))
 		return
+	## ⭐ 弃牌 BUG 修复（人 2026-10-05）：处于**弃牌态**时，**点另一张手牌 = 对当前选中的那张执行弃牌** ✓
+	##   （此前这里只会 `select_hand(idx)` ⇒ 只是换了个选中，永远弃不掉 ✗）；随后仍选中被点的这张 ✓
+	if int(engine.hand_mode) == int(EngLib.HandMode.DISCARD) and int(engine.sel_hand_index) >= 0 \
+			and int(engine.sel_hand_index) != idx:
+		intent.request_discard(side, engine.sel_hand_index)
 	engine.select_hand(side, idx)
 	var hand: Array = engine.state.sides[side]["hand"]
 	if idx < hand.size():

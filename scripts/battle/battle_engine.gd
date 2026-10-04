@@ -731,6 +731,12 @@ func hand_range_has_cell(cell: Vector2i) -> bool:
 		##   引擎不认可时给出**明确提示**（而不是"点了没反应" ⇒ 观感即"不可选"）✓。
 		##   AOE 的"以格为中心 + 阶段1挂待确认 + 阶段2执行"在 `request_use_command_at` 内处理 ✓。
 		return cell.x >= 0 and cell.x < Board.ROWS and cell.y >= 0 and cell.y < Board.COLS
+	if hand_mode == HandMode.DISCARD:
+		## ⭐ 弃牌 BUG 修复（人 2026-10-05「无法顺利的通过点击其他手牌或其他区域（地图之外的区域）来执行弃牌」）：
+		##   弃牌态的**交互范围 = 手牌区以外任意处** ⇒ 盘内格一律放行 ✓
+		##   此前本函数**没有 DISCARD 分支** ⇒ 返回 false ⇒ 视图 `_on_cell_clicked` 走
+		##   `engine.hand_range_leave()`（只退出选中 ✗）⇒ **点地图任何地方都不弃牌** ✓（根因）
+		return cell.x >= 0 and cell.x < Board.ROWS and cell.y >= 0 and cell.y < Board.COLS
 	return false
 
 
