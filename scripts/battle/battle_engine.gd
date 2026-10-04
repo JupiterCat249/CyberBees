@@ -474,6 +474,62 @@ func _declare_queen_killed(side_of_killed: int) -> void:
 	bus().emit_signal(Bus.SIG_BATTLE_ENDED, state.result, state.result_reason)
 
 
+## ⭐ 迭代064 P-19：**空地 AOE** 的待确认中心格（`(-1,-1)` = 无）。
+##   阶段1 = 点格 → 记下中心 + 刷新选中（预览据此显示**效果范围**）+ **返回 false（不发 op）**；
+##   阶段2 = 视图点「确认」→ 再调一次同一入口 → 执行（`ok=true` ⇒ op 随 `command` 的 `target_cell` 发出）。
+##   ⚠️ 与支援 `support_pending` **同一范式**；联机下行连调两次即可（见 `NetIntent.apply_remote`）。
+var command_cell := Vector2i(-1, -1)
+
+
+## ⭐ 迭代064 P-19：**以格为中心施放指令**（AOE / 轰炸）—— **空格也可放**（策划案「效果范围」口径）
+func request_use_command_at(side: int, hand_index: int, cell: Vector2i) -> bool:
+	if state == null or state.is_over() or side != state.active:
+		return false
+	if state.phase != state.Phase.DEPLOY and state.phase != state.Phase.ACTION:
+		return false
+	var hand: Array = state.sides[side]["hand"]
+	if hand_index < 0 or hand_index >= hand.size():
+		return false
+	var card: CardData = hand[hand_index]
+	if card == null or not (card is CommandData):
+		return false
+	var cd := card as CommandData
+	if cd.aoe_span <= 0:
+		return false                      ## 非 AOE 卡不走空地路径（仍走单位目标）
+	if cell.x < 0 or cell.x >= Board.ROWS or cell.y < 0 or cell.y >= Board.COLS:
+		return false
+	if cd.cost > state.cost(side):
+		_log("费用不足", 1)
+		return false
+	## ---------------- 阶段 1：只挂待确认 + 让预览显示效果范围 ----------------
+	if command_cell != cell:
+		command_cell = cell
+		sel_kind = 1
+		sel_hand_index = hand_index
+		_emit_selection()
+		_emit_button()
+		return false                      ## ⚠️ false ⇒ **不发 op**（阶段 2 才发）
+	## ---------------- 阶段 2：执行 ----------------
+	var res := Command.execute(state, cd, side, null, cell)
+	command_cell = Vector2i(-1, -1)
+	if not res["ok"]:
+		_log("指令目标不合法", 1)
+		_emit_selection()
+		_emit_button()
+		return false
+	state.sides[side]["cost"] -= maxi(0, cd.cost)
+	bus().emit_signal(Bus.SIG_COST_CHANGED, side, state.cost(side), -maxi(0, cd.cost))
+	hand.remove_at(hand_index)
+	state.sides[side]["discard"].append(card)   ## 抽卡 1：用完进墓地
+	_log("%s 使用指令 %s（目标格 %d,%d）" % [config.name_of(side), cd.display_name, cell.x, cell.y])
+	_cleanup_dead()
+	_cancel_selection()
+	_emit_hand(side)
+	_emit_selection()
+	_check_win()
+	return true
+
+
 func request_use_command(side: int, hand_index: int, target: UnitInstance) -> bool:
 	if state == null or state.is_over():
 		return false
@@ -811,7 +867,7 @@ func _emit_selection() -> void:
 	## ⭐ 迭代064 P-03（清单 UI-4）：把**手牌可用性**交给预览 —— 唯一权威口径仍是 `can_play_hand()`，
 	##   规则层不重复实现（避免口径漂移）。`sel_kind == 1` 短路保护，避免 index=-1 时越界。
 	var pv: Resource = Preview.build(state, sel_kind, sel_hand_index, sel_unit, sel_support,
-		sel_kind == 1 and can_play_hand(state.active, sel_hand_index))
+		sel_kind == 1 and can_play_hand(state.active, sel_hand_index), command_cell)
 	var units: Array = []
 	if pv != null:
 		units = pv.units
@@ -821,7 +877,8 @@ func _emit_selection() -> void:
 
 ## 供视图/测试直接索取预览资源（不必等信号）
 func current_preview():
-	return Preview.build(state, sel_kind, sel_hand_index, sel_unit, sel_support)
+	return Preview.build(state, sel_kind, sel_hand_index, sel_unit, sel_support,
+		sel_kind == 1 and can_play_hand(state.active, sel_hand_index), command_cell)
 
 
 ## 某单位可操作范围预览（无选中时的"我的单位能做什么"提示）

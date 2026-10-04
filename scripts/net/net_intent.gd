@@ -107,6 +107,24 @@ func send_selection(cell) -> void:
 	client.send_op(frame, p)
 
 
+## ⭐ 迭代064 P-19：**以格为中心的指令**（空地 AOE）—— 复用同一个 `k: "command"`，
+##   只是把 `target_cell` 换成显式格（**不加协议字段**，对端据此复原中心）。
+##   阶段1（挂待确认）返回 false ⇒ **不发 op**；阶段2（确认）返回 true ⇒ 发出 ✓
+func request_use_command_at(side: int, hand_index: int, cell: Vector2i) -> bool:
+	if engine == null:
+		return false
+	_reseed_now()
+	var ok: bool = engine.request_use_command_at(side, hand_index, cell)
+	if ok:
+		frame += 1
+		sent_ops += 1
+		var payload: Dictionary = {"k": "command", "hand_index": hand_index, "target_cell": _ch(cell)}
+		sent_payloads.append(payload.duplicate(true))
+		if is_online():
+			client.send_op(frame, payload)
+	return ok
+
+
 ## ⭐ 迭代064 UI-15/联机-1：**取消选中**（本地 + 广播）。选中态是**视图/引擎的本地态**，
 ##   故清空后照常经 `SIG_SELECTION` 走一遍 → 视图的广播逻辑会自动把"空选中"发给对端。
 func request_clear_selection() -> void:
@@ -173,7 +191,21 @@ func apply_remote(seat: int, payload) -> bool:
 		"attack":
 			ok = engine.request_attack(side, _unit_at(p.get("from")), _unit_at(p.get("to")))
 		"command":
-			ok = engine.request_use_command(side, int(p.get("hand_index", -1)), _unit_at(p.get("target_cell")))
+			## ⭐ 迭代064 P-19：**AOE（aoe_span > 0）走"以格为中心"入口，且必须连调两次** ——
+			##   阶段1 只挂待确认并返回 false、阶段2 才执行（与支援同理；否则联机下 AOE 恒失败）。
+			var hi := int(p.get("hand_index", -1))
+			var u0 = _unit_at(p.get("target_cell"))
+			var is_aoe := false
+			if engine.state != null:
+				var hh: Array = engine.state.sides[side]["hand"]
+				if hi >= 0 and hi < hh.size() and hh[hi] is CommandData:
+					is_aoe = (hh[hi] as CommandData).aoe_span > 0
+			if is_aoe:
+				var cc := _cell(p.get("target_cell"))
+				engine.request_use_command_at(side, hi, cc)
+				ok = engine.request_use_command_at(side, hi, cc)
+			else:
+				ok = engine.request_use_command(side, hi, u0)
 		"support":
 			var u = _unit_at(p.get("from"))
 			var sk = _find_skill(u, String(p.get("skill_id", "")))

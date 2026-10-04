@@ -38,11 +38,22 @@ static func target_legal(card: CommandData, target: UnitInstance, caster_side: i
 
 
 ## 结算指令卡。返回 {"ok", "damage":[{unit, amount, blocked}], "healed":[{unit, amount}]}
-static func execute(state, card: CommandData, caster_side: int, target: UnitInstance) -> Dictionary:
+## ⭐ 迭代064 P-19（清单 **机制-4**「AOE法术在空地也可以释放且应该能显示效果范围（而且还应该有一个确定环节）」）
+##   策划案依据：AOE 卡描述为「[指令]对**效果范围**内所有单位造成伤害」，且卡面「范围」一列为 **—**
+##   ⟹ **效果范围不以单位为中心** ⇒ 允许在**空格**施放。
+##   故 `center` 可显式给格（空地 AOE 路径）；单位目标路径保持不变（治疗/链式/单体仍走单位）。
+static func execute(state, card: CommandData, caster_side: int, target: UnitInstance,
+		center := Vector2i(-1, -1)) -> Dictionary:
 	var out := {"ok": false, "damage": [], "healed": []}
-	if state == null or card == null or target == null:
+	if state == null or card == null:
 		return out
-	if state.board == null or not target_legal(card, target, caster_side):
+	if state.board == null:
+		return out
+	## 需要"单位目标"或"显式格"其一；空地 AOE 只校验格，不走单位合法性
+	if center.x >= 0 and card.aoe_span > 0:
+		if center.x >= Board.ROWS or center.y >= Board.COLS:
+			return out
+	elif target == null or not target_legal(card, target, caster_side):
 		return out
 
 	# ---------------- 治疗指令 ----------------
@@ -65,7 +76,17 @@ static func execute(state, card: CommandData, caster_side: int, target: UnitInst
 	if amount <= 0:
 		return out
 
-	var targets := collect_targets(state, card, target)
+	## ⭐ 迭代064 P-19：**空地 AOE**（显式给格）→ 以**格**为中心收集效果范围内单位（不含蜂王）；
+	##   其余（单体 / 治疗 / 链式）沿用单位目标路径，语义不变。
+	var targets: Array = []
+	if center.x >= 0 and card.aoe_span > 0:
+		for u0 in state.board.all_units():
+			if is_queen(u0):
+				continue
+			if state.board.manhattan(u0.cell, center) <= card.aoe_span:
+				targets.append(u0)
+	else:
+		targets = collect_targets(state, card, target)
 	for u in targets:
 		## 传入地图数据 → 应用地形减免（迭代059 G-5：水没地形格 -2 指令伤害）
 		var had_defense: bool = Combat.has_defense_effect(u)

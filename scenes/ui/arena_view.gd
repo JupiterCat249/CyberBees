@@ -1081,7 +1081,15 @@ func _execute_hand_on_cell(cell: Vector2i) -> void:
 				_flash_msg("该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）")
 		int(EngLib.HandMode.TARGET):
 			var u: UnitInstance = engine.state.board.unit_at(cell)
-			if u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
+			## ⭐ 迭代064 P-19（清单 机制-4）：**AOE 卡改走"以格为中心"** —— 空地也能放；
+			##   阶段1 只挂待确认（引擎返回 false ⇒ 不发 op），预览随即显示**效果范围**，按钮变「确认」。
+			var hcard: CardData = null
+			var hh: Array = engine.state.sides[side]["hand"]
+			if engine.sel_hand_index >= 0 and engine.sel_hand_index < hh.size():
+				hcard = hh[engine.sel_hand_index]
+			if hcard is CommandData and (hcard as CommandData).aoe_span > 0:
+				intent.request_use_command_at(side, engine.sel_hand_index, cell)
+			elif u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
 				_flash_msg("该单位不是该指令的合法目标")
 		_:
 			pass
@@ -1601,6 +1609,11 @@ func _call_opt(node: Object, method: String, args: Array) -> void:
 func _on_main_pressed() -> void:
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
+		return
+	## ⭐ 迭代064 P-19（清单 机制-4「还应该有一个确定环节」）：待确认的**空地 AOE** →
+	##   按钮「确认」= 再调一次同一入口 ⇒ 执行（`ok=true` ⇒ op 随 `command` 的 `target_cell` 发出）
+	if engine.command_cell.x >= 0:
+		intent.request_use_command_at(engine.state.active, engine.sel_hand_index, engine.command_cell)
 		return
 	## 待确认支援 → 按钮「确认」执行（迭代059 步3：恢复原设计）
 	if engine.support_pending != null:

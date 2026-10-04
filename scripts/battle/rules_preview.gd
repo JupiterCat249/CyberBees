@@ -33,7 +33,8 @@ const K := preload("res://scripts/battle/preview_kind.gd")
 ##   `hand_playable` 由**引擎**传入（`BattleEngine.can_play_hand()` 是唯一权威口径）——
 ##   规则层**不重复实现**可用性判断，避免口径漂移（本项目既定原则："**预览与试算同源**"）。
 static func build(state, sel_kind: int, hand_index: int, sel_unit: UnitInstance,
-		sel_support: SkillData = null, hand_playable: bool = true) -> PreviewData:
+		sel_support: SkillData = null, hand_playable: bool = true,
+		pending_cell := Vector2i(-1, -1)) -> PreviewData:
 	if state == null or state.board == null:
 		return PV.make(K.Kind.NONE)
 	## 只有**行动阶段**才谈得上"移动 / 攻击 / 支援"；部署阶段点单位只应出**详细信息**
@@ -42,6 +43,19 @@ static func build(state, sel_kind: int, hand_index: int, sel_unit: UnitInstance,
 		1:
 			if not hand_playable:
 				return PV.make(K.Kind.NONE)
+			## ⭐ 迭代064 P-19（清单 机制-4「应该能显示效果范围」）：**AOE 待确认**时给出「效果范围」——
+			##   以 `pending_cell` 为中心、`aoe_span` 为曼哈顿半径的**格子**（几何范围，纯预览）。
+			if pending_cell.x >= 0:
+				var h: Array = state.sides[state.active]["hand"]
+				var cd0 = h[hand_index] if hand_index >= 0 and hand_index < h.size() else null
+				if cd0 is CommandData and cd0.aoe_span > 0:
+					var pv_a: Resource = PV.make(K.Kind.COMMAND, "轰炸效果范围")
+					for ax in Board.ROWS:
+						for ay in Board.COLS:
+							var ac := Vector2i(ax, ay)
+							if state.board.manhattan(ac, pending_cell) <= cd0.aoe_span:
+								pv_a.add_cell(ac, K.Kind.COMMAND)
+					return pv_a
 			return _hand_preview(state, hand_index)
 		2:
 			if not can_act:
