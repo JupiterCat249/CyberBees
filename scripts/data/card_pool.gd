@@ -288,7 +288,17 @@ static func build(deck_name: String = "示范卡组") -> DeckData:
 			dd.queen = c
 	for nm in DECK_NAMES:
 		if by_name.has(nm):
-			dd.cards.append(by_name[nm])
+			var c: CardData = by_name[nm]
+			## ⚠️ 既有缺陷修复（2026-10-05 本轮回归时抓到）：蜂王**已单独挂在 `dd.queen`**，
+			##   而 `DECK_NAMES` 里也写着"金刚蜂王" ⇒ 原实现把它**又塞进了 `dd.cards`**，
+			##   导致常规卡变 9 张、违反 a500 构筑 1「1 蜂王 + **8** 张常规卡」：
+			##     · `BattleConfig.validate()` 必报「常规卡应为 8 张（实际 9）」
+			##     · `BattleState` 侧的两个牌堆各多一张蜂王（等于**牌库里还能再抽出一张蜂王** ✗）
+			##   判据：人钉死的顺序把它写作"卡组第一"，指的是**卡组列表的展示顺序**，
+			##   而蜂王的归属位置始终是 `dd.queen`（不是 `dd.cards`）。
+			if c.kind == CardData.CardKind.QUEEN:
+				continue
+			dd.cards.append(c)
 	return dd
 
 

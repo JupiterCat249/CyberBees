@@ -230,26 +230,42 @@ func _test_support_preview() -> void:
 
 
 ## ⑦ 引擎信号带出预览资源
+## ⚠️ 断言口径订正（2026-10-05，本轮回归时抓到该条已陈旧，FAIL 非本轮改动引入）：
+##   原断言写死"选中手牌 0 = 叶蜂 ⇒ 预览 kind 必须是 DEPLOY"。
+##   但人 2026-10-05 钉死了卡组顺序（`9de77d3`：金刚蜂王·**电击**·蜂巢…）⇒ 手牌 0 变成**指令卡**，
+##   而"手牌 0 必须是单位卡"从来不是本套件要守护的东西。改为：
+##   **信号必须带出 DEPLOY 预览** —— 在手里找到一张**单位卡**去选，再断言；找不到就显式 FAIL。
 func _test_engine_signal() -> void:
 	var eng = EngLib.new()
 	var dd := Pool.build("测试")
 	var errs := ConfigLib.make(dd, Pool.build("测试2")).validate()
-	_chk("配置校验通过（1 蜂王 + 8 常规）", errs.is_empty())
+	_chk("配置校验通过（1 蜂王 + 8 常规）", errs.is_empty(), str(errs))
 	var ok: bool = eng.start(ConfigLib.make(Pool.build("测试"), Pool.build("测试2")))
 	_chk("引擎开局成功", ok)
+	## 在开局手牌里找一张**单位卡**（部署预览才有意义）
+	var unit_idx := -1
+	var hand: Array = eng.state.sides[0]["hand"]
+	for i in hand.size():
+		if hand[i] is UnitData:
+			unit_idx = i
+			break
+	_chk("开局手牌里有单位卡（DEPLOY 预览用）", unit_idx >= 0,
+		" hand=%s" % str(hand.map(func(c): return String(c.display_name))))
 	# 连信号
 	if Bus.shared().has_signal(Bus.SIG_SELECTION):
 		Bus.shared().connect(Bus.SIG_SELECTION,
 			func(_k: int, _id: String, pv: Resource, _u: Array) -> void:
 				_got_preview = pv,
 			CONNECT_ONE_SHOT)
-	eng.select_hand(0, 0)
+	eng.select_hand(0, unit_idx if unit_idx >= 0 else 0)
 	for _i in 3:
 		await get_tree().process_frame
 	_chk("**信号 selection_changed 带出 PreviewData 资源**", _got_preview is Resource)
-	if _got_preview is Resource:
-		_chk("预览资源带部署格（选中手牌 0 = 叶蜂）", _got_preview.cells.size() > 0)
-		_chk("预览 kind = DEPLOY", _got_preview.kind == K.Kind.DEPLOY)
+	if _got_preview is Resource and unit_idx >= 0:
+		_chk("预览资源带部署格（选中的是 %s）" % String(hand[unit_idx].display_name),
+			_got_preview.cells.size() > 0)
+		_chk("预览 kind = DEPLOY", _got_preview.kind == K.Kind.DEPLOY,
+			" kind=%d" % int(_got_preview.kind))
 
 
 # ================= 工具 =================
@@ -273,14 +289,14 @@ func _new_state():
 	return st
 
 
-func _chk(label: String, cond: bool) -> void:
+func _chk(label: String, cond: bool, detail: String = "") -> void:
 	if cond:
 		_pass += 1
-		print("  [PASS] ", label)
+		print("  [PASS] ", label, (" %s" % detail) if detail != "" else "")
 	else:
 		_fail += 1
 		_failures.append(label)
-		print("  [FAIL] ", label)
+		print("  [FAIL] ", label, (" %s" % detail) if detail != "" else "")
 
 
 func _report() -> void:
