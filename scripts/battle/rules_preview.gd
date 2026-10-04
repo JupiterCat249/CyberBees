@@ -25,16 +25,31 @@ const K := preload("res://scripts/battle/preview_kind.gd")
 
 ## 主入口：按当前选中算出预览资源
 ## sel_kind: 0=无 1=手牌 2=单位 3=支援
+## ⭐ 迭代064 批次 P-03（人 2026-09-27 清单 **UI-3 / UI-4 / UI-18**）：
+##   **预览必须与"此刻真的能做什么"同源** —— 否则会高亮出玩家**做不到**的操作。三种必须为空的情形：
+##     · **部署阶段点单位** ⇒ 该阶段只能部署/用指令，**不显示移动与攻击范围**（UI-3 / UI-18）
+##     · **手牌此刻不可用**（非本方回合 / 费用不够 / 阶段不符）⇒ **不显示部署格与指令目标**（UI-4）
+##     · **支援技能**同理**只在行动阶段**显示（UI-18）
+##   `hand_playable` 由**引擎**传入（`BattleEngine.can_play_hand()` 是唯一权威口径）——
+##   规则层**不重复实现**可用性判断，避免口径漂移（本项目既定原则："**预览与试算同源**"）。
 static func build(state, sel_kind: int, hand_index: int, sel_unit: UnitInstance,
-		sel_support: SkillData = null) -> PreviewData:
+		sel_support: SkillData = null, hand_playable: bool = true) -> PreviewData:
 	if state == null or state.board == null:
 		return PV.make(K.Kind.NONE)
+	## 只有**行动阶段**才谈得上"移动 / 攻击 / 支援"；部署阶段点单位只应出**详细信息**
+	var can_act: bool = state.phase == StateLib.Phase.ACTION
 	match sel_kind:
 		1:
+			if not hand_playable:
+				return PV.make(K.Kind.NONE)
 			return _hand_preview(state, hand_index)
 		2:
+			if not can_act:
+				return PV.make(K.Kind.NONE)
 			return _unit_preview(state, sel_unit)
 		3:
+			if not can_act:
+				return PV.make(K.Kind.NONE)
 			return _support_preview(state, sel_unit, sel_support)
 	return PV.make(K.Kind.NONE)
 

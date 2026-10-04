@@ -77,8 +77,61 @@ func _ready() -> void:
 	await _check_b8()
 	await _check_b2()
 	_check_p12()
+	await _check_p03()
 
 	print("=== 结果：%d PASS / %d FAIL ===" % [_pass, _fail])
+
+
+## P-03（清单 UI-3/UI-4/UI-18）：**部署阶段点单位不给范围**（视图侧应为零高亮）；
+## 而**可用的手牌**在部署阶段应给出部署格 —— 两条对照，确保不是"一律不显示"。
+func _check_p03() -> void:
+	var eng = _view.get("engine")
+	var nodes = _view.get("_unit_nodes")
+	var cells = _view.get("_cells")
+	if eng == null or nodes == null or cells == null:
+		_ok("P-03 取到引擎/单位表/格子表", false)
+		return
+	var u = null
+	for k in nodes.keys():
+		var iu = _view.call("_find_unit", String(k))
+		if iu != null:
+			u = iu
+			break
+	if u == null:
+		_ok("P-03 取到场上单位", false)
+		return
+	## 回合 1 开局应为**部署阶段**（phase=2）；若已被推进则明确报出，避免误判
+	if int(eng.state.phase) != 2:
+		_ok("P-03 开局处于部署阶段", false, " phase=%d" % int(eng.state.phase))
+		return
+	eng.call("select_unit", 0, u)
+	await _idle(3)
+	var pv = _view.get("_preview")
+	_ok("P-03 部署阶段选单位 → 预览为空（UI-3/UI-18）",
+		pv == null or pv.cells.size() == 0,
+		" cells=%d" % (0 if pv == null else pv.cells.size()))
+	var any_hl := false
+	for c in cells.keys():
+		if cells[c].highlight != "":
+			any_hl = true
+			break
+	_ok("P-03 部署阶段选单位 → 棋盘零高亮（UI-3）", not any_hl)
+	## 对照组：可用的手牌必须仍给部署格（否则说明把该显示的也关掉了）
+	var idx := -1
+	var hand: Array = eng.state.sides[0]["hand"]
+	for i in hand.size():
+		if eng.call("can_play_hand", 0, i):
+			idx = i
+			break
+	if idx < 0:
+		_ok("P-03 找到一张可用手牌（对照组）", false)
+		return
+	eng.call("select_hand", 0, idx)
+	await _idle(3)
+	var pv2 = _view.get("_preview")
+	_ok("P-03 对照：可用手牌仍给部署格（UI-4 反向）",
+		pv2 != null and pv2.cells.size() > 0,
+		" cells=%d" % (0 if pv2 == null else pv2.cells.size()))
 
 
 ## B1：效果类三条信号必须已接线（否则"引擎变了界面没变"会复发）

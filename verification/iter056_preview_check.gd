@@ -25,8 +25,40 @@ var _failures: Array[String] = []
 var _got_preview: Resource = null
 
 
+## ⭐ 迭代064 P-03 新口径（清单 UI-3 / UI-4 / UI-18）：**做不到的事不给范围** ——
+##   部署阶段点单位/支援不给范围；手牌不可用不给部署格。
+func _test_phase_gate() -> void:
+	var st = _new_state()
+	var leaf: UnitData = Pool.card("叶蜂") as UnitData
+	var u := UnitInstance.create(leaf, 0, Vector2i(2, 1))
+	u.instance_id = "u_gate"
+	st.board.place(u)
+	st.phase = st.Phase.ACTION
+	_chk("行动阶段：单位预览非空", Preview.build(st, 2, -1, u).cells.size() > 0)
+	st.phase = st.Phase.DEPLOY
+	_chk("**部署阶段点单位：不给移动/攻击范围**（UI-3/UI-18）",
+		Preview.build(st, 2, -1, u).cells.size() == 0)
+	var bumble: UnitData = Pool.card("熊蜂") as UnitData
+	var bu := UnitInstance.create(bumble, 0, Vector2i(3, 0))
+	bu.instance_id = "u_gate_sup"
+	st.board.place(bu)
+	var sk: SkillData = null
+	for s in bumble.skills:
+		if s.kind == SkillData.Kind.SUPPORT:
+			sk = s
+	_chk("**部署阶段不给支援范围**（UI-18）", Preview.build(st, 3, -1, bu, sk).cells.size() == 0)
+	## 手牌可用性门（`hand_playable`）——⚠️ 本套件的 state **未发牌**，故先手动放一张，
+	##   否则索引 0 越界 → 两种取值都得到空预览，断言会失去意义（写测试时踩到）
+	st.sides[0]["hand"] = [Pool.card("叶蜂")]
+	_chk("手牌可用（hand_playable=true）→ 给部署格",
+		Preview.build(st, 1, 0, null, null, true).cells.size() > 0)
+	_chk("**手牌不可用（hand_playable=false）→ 不给部署格**（UI-4）",
+		Preview.build(st, 1, 0, null, null, false).cells.size() == 0)
+
+
 func _ready() -> void:
 	_test_is_resource()
+	_test_phase_gate()
 	_test_deploy_preview()
 	_test_move_preview()
 	_test_attack_preview()
@@ -208,6 +240,10 @@ func _new_state():
 	q1.instance_id = "q1"
 	st.sides[1]["queen"] = q1
 	st.board.place(q1)
+	## ⭐ 迭代064 P-03（清单 UI-3/UI-4/UI-18）**口径变更**：移动/攻击/支援预览**只在行动阶段成立**。
+	##   本套件的单位与支援断言测的是"范围算得对不对"，故默认状态设为**行动阶段**；
+	##   部署阶段的新行为另有 `_test_phase_gate()` 专门断言。
+	st.phase = st.Phase.ACTION
 	return st
 
 

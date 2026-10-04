@@ -765,7 +765,10 @@ func can_play_hand(side: int, index: int) -> bool:
 ## ⚠️ 人指示（迭代056）：范围预览是**资源类**（PreviewData），视图直接读它渲染，不自己算规则。
 ## 这也保证「预览与试算同源」—— 视图看到的范围与实际可执行集合来自同一处计算。
 func _emit_selection() -> void:
-	var pv: Resource = Preview.build(state, sel_kind, sel_hand_index, sel_unit, sel_support)
+	## ⭐ 迭代064 P-03（清单 UI-4）：把**手牌可用性**交给预览 —— 唯一权威口径仍是 `can_play_hand()`，
+	##   规则层不重复实现（避免口径漂移）。`sel_kind == 1` 短路保护，避免 index=-1 时越界。
+	var pv: Resource = Preview.build(state, sel_kind, sel_hand_index, sel_unit, sel_support,
+		sel_kind == 1 and can_play_hand(state.active, sel_hand_index))
 	var units: Array = []
 	if pv != null:
 		units = pv.units
