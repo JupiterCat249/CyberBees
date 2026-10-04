@@ -127,7 +127,13 @@ func set_image_offset(new_offset: Vector2, new_scale: Vector2 = Vector2.ZERO) ->
 # ---------------- ③ 可出牌态（逻辑层下发，视图只表现） ----------------
 
 func set_playable(can_play: bool) -> void:
-	modulate = Color(1, 1, 1, 1) if can_play else Color(0.65, 0.65, 0.65, 0.85)
+	## ⚠️ 迭代064 批次 B3（人 2026-09-27 问题清单 UI-9 / UI-12）：
+	##   **灰化只压 RGB，绝不压 alpha**。原实现是 `Color(0.65,0.65,0.65,0.85)` ——
+	##   那个 0.85 会经 `modulate` **级联到全部子节点**，把**费用图标与费用数字也一并变成半透明**
+	##   （人明确：「费用标记不应该在任何情况下变半透明」「不可选时应该是整体变灰，
+	##     而不是变灰的同时费用图标和费用数字（甚至卡面本身）变半透明」）。
+	##   现在：整卡统一变灰（RGB × 0.65），费用标记保持**完全不透明**。
+	modulate = Color(1, 1, 1, 1) if can_play else Color(0.65, 0.65, 0.65, 1)
 
 
 func set_selected(sel: bool) -> void:
