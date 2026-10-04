@@ -458,6 +458,14 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_COMMAND_RESOLVED, _on_command_resolved)
 	b.connect(Bus.SIG_ATTACK_RESOLVED, _on_attack_resolved)
 	b.connect(Bus.SIG_PHASE_STARTED, _on_phase_text_color)
+	## ⭐ 迭代064 B1（修 P-21）：**效果类信号此前全仓无人订阅**，而规则层一直在发 ——
+	##    `rules_effects.gd:67` 发 effect_granted · `:39/:155` 与 `rules_combat.gd:137` 发 effect_expired
+	##    （装甲抵挡后即在此消失）· `rules_effects.gd:64/68` 与 `rules_combat.gd:139` 发 unit_stats_changed。
+	##    视图不接 → 效果被消耗/移除后**卡面从不重绑**，徽标残存（人 2026-09-27 问题清单 联机-3）。
+	##    ⚠️ 旁证：总线那批 `UNUSED_SIGNAL` 警告不是噪音，正是"未接线信号"的清单。
+	b.connect(Bus.SIG_EFFECT_GRANTED, _on_effect_granted)
+	b.connect(Bus.SIG_EFFECT_EXPIRED, _on_effect_expired)
+	b.connect(Bus.SIG_UNIT_STATS, _on_unit_stats_changed)
 
 
 ## 地图与背景资产变化
@@ -650,6 +658,39 @@ func _on_unit_moved(inst: UnitInstance, _from: Vector2i, to: Vector2i) -> void:
 	if n != null and is_instance_valid(n):
 		n.position = _cell_pos(to)
 		_play("移动落位", inst)
+
+
+## ============================================================
+##  迭代064 B1：效果 / 数值变化 → **只重绑该单位卡**（修 P-21 徽标残存）
+##  人 2026-09-27 反馈「持有效果实际状态不实时更新，典型如金刚蜂王的装甲明明触发并消失了图标还残存」。
+##  根因＝效果类信号无人订阅（见 `_connect_bus()` 尾部注释），三条信号都改由这里落地。
+## ============================================================
+
+## 重绑单个单位卡：现取 `_unit_view()` 现绑 → **与 `_update_unit()` 同源**，避免两处数据口径漂移；
+## 缺节点（未出场/已移除）则跳过，不崩、也不整盘重绘。
+func _rebind_unit(inst: UnitInstance) -> void:
+	if inst == null:
+		return
+	var n: Control = _unit_nodes.get(inst.instance_id, null)
+	if n == null or not is_instance_valid(n):
+		return
+	n.bind(_unit_view(inst, inst.cell))
+
+
+## 效果被授予（发射点：`rules_effects.gd:67`）
+func _on_effect_granted(inst: UnitInstance, _effect: EffectData, _source: String) -> void:
+	_rebind_unit(inst)
+
+
+## 效果到期 / 被消耗（发射点：`rules_effects.gd:39` / `:155` / `rules_combat.gd:137`
+## —— **装甲抵挡一次攻击后正是从这里消失**，即人反馈的那条）
+func _on_effect_expired(inst: UnitInstance, _effect: EffectData) -> void:
+	_rebind_unit(inst)
+
+
+## 单位数值/状态变化（发射点：`rules_effects.gd:64` / `:68` / `rules_combat.gd:139`）
+func _on_unit_stats_changed(inst: UnitInstance) -> void:
+	_rebind_unit(inst)
 
 
 func _on_unit_damaged(inst: UnitInstance, dmg: int, hp_after: int, _src: String) -> void:
