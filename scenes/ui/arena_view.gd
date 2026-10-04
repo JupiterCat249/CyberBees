@@ -526,6 +526,7 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_REFUND, _on_refund_gained)
 	## ⭐ 迭代064 UI-15（对手选中同步）：订阅对端**选中存在性**（纯呈现，不改引擎状态）
 	b.connect(Bus.SIG_REMOTE_SELECT, _on_remote_select)
+	b.connect(Bus.SIG_REMOTE_ACTION, _on_remote_action)   ## ⭐ 迭代064 ④：对手动作提示
 
 
 ## ⭐ 迭代064 UI-15：**对端选中**的呈现 —— 不改规则、不进引擎状态
@@ -538,6 +539,18 @@ func _on_remote_select(_side: int, cell: Vector2i) -> void:
 	if cell.x >= 0 and _cells.has(cell):
 		_cells[cell].set_selected(true)
 	_render_preview()
+
+
+## ⭐ 迭代064 ④（目标轮10）：**对手行动可视化** —— 对手用了什么、落在哪。
+##   提示条：主按钮左上的浮动提示（`_flash_msg`），让玩家一眼看到"对手在干什么"；
+##   落点标记：复用 ③ 的 remote 选中通道（格高亮 + 该格单位卡标框）✓
+func _on_remote_action(_side: int, text: String, cell: Vector2i) -> void:
+	if text != "":
+		var where := ""
+		if cell.x >= 0:
+			where = " → (%d,%d)" % [cell.x, cell.y]
+		_flash_msg("对手：%s%s" % [text, where])
+	_on_remote_select(_side, cell)
 
 
 ## 地图与背景资产变化

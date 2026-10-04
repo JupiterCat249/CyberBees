@@ -35,6 +35,12 @@ const SIG_REFUND := "refund_gained"
 ##   纯**呈现**信号 —— **不改引擎状态**、不参与规则；只把"对端选中了哪个格"告诉视图。
 ##   发射点：`NetIntent.apply_remote()` 收到 `{"k":"sel"}` 时（经总线转给视图渲染）。
 const SIG_REMOTE_SELECT := "remote_selection_changed"
+## ⭐ 迭代064 ④（目标轮10）：**对手动作**广播 —— 呈现"对手用哪张牌、落在哪"。
+##   发射点：`NetIntent.apply_remote()` 成功应用对端 deploy/command/move/attack 之后。
+##   **不改协议**：op 本就带 `hand_index` 与落点格，且接收端持有**双方手牌** ⇒ 卡名可在本地复原 ✓。
+##   视图据此提示"对手：部署 金刚蜂王 → (1,2)"，并在落点复用 remote 标框通道。
+const SIG_REMOTE_ACTION := "remote_action"
+signal remote_action(side: int, text: String, cell: Vector2i)
 ## 对端选中变化（cell 非法 x<0 表示**对端已取消选中**）
 signal remote_selection_changed(side: int, cell: Vector2i)
 const SIG_CARD_DRAWN := "card_drawn"

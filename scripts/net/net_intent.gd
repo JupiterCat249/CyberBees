@@ -185,7 +185,18 @@ func apply_remote(seat: int, payload) -> bool:
 	var ok := false
 	match String(p.get("k", "")):
 		"deploy":
-			ok = engine.request_deploy(side, int(p.get("hand_index", -1)), _cell(p.get("cell")))
+			## ⭐ 迭代064 ④（目标轮10）：**对手行动可视化** —— 在应用对端部署的同时播一条可读提示。
+			##   ⚠️ 卡名必须在 `request_deploy` **之前**取：部署成功会把该牌移出手牌（下标即失效）✗
+			var dcell := _cell(p.get("cell"))
+			var dhi := int(p.get("hand_index", -1))
+			var dname := "?"
+			var dhand: Array = engine.state.sides[side]["hand"]
+			if dhi >= 0 and dhi < dhand.size():
+				dname = String(dhand[dhi].display_name)
+			ok = engine.request_deploy(side, dhi, dcell)
+			if ok:
+				var dbus = engine.bus()
+				dbus.emit_signal(dbus.SIG_REMOTE_ACTION, side, "部署 %s" % dname, dcell)
 		"move":
 			ok = engine.request_move(side, _unit_at(p.get("from")), _cell(p.get("to")))
 		"attack":
