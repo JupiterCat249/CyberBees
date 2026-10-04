@@ -503,8 +503,9 @@ func request_use_command_at(side: int, hand_index: int, cell: Vector2i) -> bool:
 	if card == null or not (card is CommandData):
 		return false
 	var cd := card as CommandData
-	if cd.aoe_span <= 0:
-		return false                      ## 非 AOE 卡不走空地路径（仍走单位目标）
+	## ⭐ ③ 修正（人 2026-10-05）：**把双步确认从"仅 AOE"扩展到全部指令卡** ——
+	##   电击等特殊法术此前走单步（无确认步骤、无待确认落点 ✗）⇒ 现在一律走
+	##   "阶段1 挂待确认 / 阶段2 确认执行" ✓（原 `if cd.aoe_span <= 0: return false` 已移除）
 	if cell.x < 0 or cell.x >= Board.ROWS or cell.y < 0 or cell.y >= Board.COLS:
 		return false
 	if cd.cost > state.cost(side):
@@ -519,7 +520,7 @@ func request_use_command_at(side: int, hand_index: int, cell: Vector2i) -> bool:
 		_emit_button()
 		return false                      ## ⚠️ false ⇒ **不发 op**（阶段 2 才发）
 	## ---------------- 阶段 2：执行 ----------------
-	var res := Command.execute(state, cd, side, null, cell)
+	var res := Command.execute(state, cd, side, state.board.unit_at(cell), cell)
 	command_cell = Vector2i(-1, -1)
 	if not res["ok"]:
 		_log("指令目标不合法", 1)
@@ -905,6 +906,15 @@ func remote_preview_of(u: UnitInstance):
 	if state == null or u == null:
 		return null
 	return Preview.build(state, 2, -1, u, null, false, Vector2i(-1, -1))
+
+
+## ⭐ ③ 修正：**对端指令卡的"效果范围"**（阶段1 待确认时）—— 纯计算 ✓
+##   `sel_kind=1`（手牌）+ `sel_hand_index=hi` + `command_cell=cell`
+##   ⇒ 得到"那张指令卡以该格为中心"的效果范围 ✓（此前只显示落点、不显示范围 ✗）
+func remote_command_preview(hand_index: int, cell: Vector2i):
+	if state == null or hand_index < 0:
+		return null
+	return Preview.build(state, 1, hand_index, null, null, true, cell)
 
 
 func _emit_action_availability() -> void:

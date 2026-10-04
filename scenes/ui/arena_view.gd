@@ -689,6 +689,20 @@ func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 	else:
 		## ⭐ ⑤ 修正（人 2026-10-05）：**不得围绕"玩家基本信息框"** ✗ ⇒ 只标具体对象 ✓
 		_on_remote_select(side, cell)
+		## ⭐ ③ 修正（人 2026-10-05）：对端**指令卡**（文本＝"选中手牌 <卡名>"）带**待确认格** ⇒
+		##   本地**纯算出该卡在该中心格上的效果范围**并用既有样式渲染 ✓
+		##   （此前只显示落点、不显示范围 ✗）；放在 _on_remote_select 之后 ⇒ 范围优先生效 ✓
+		if text.begins_with("选中手牌 ") and engine != null and engine.state != null:
+			var nm := text.replace("选中手牌 ", "")
+			var hh: Array = engine.state.sides[side]["hand"]
+			for i in hh.size():
+				if String(hh[i].display_name) == nm:
+					var rp: Resource = engine.remote_command_preview(i, cell)
+					if rp != null:
+						_preview = rp
+						_preview_is_remote = true
+						_render_preview()
+					break
 
 
 ## 地图与背景资产变化
@@ -1346,7 +1360,7 @@ func _execute_hand_on_cell(cell: Vector2i) -> void:
 			var hh: Array = engine.state.sides[side]["hand"]
 			if engine.sel_hand_index >= 0 and engine.sel_hand_index < hh.size():
 				hcard = hh[engine.sel_hand_index]
-			if hcard is CommandData and (hcard as CommandData).aoe_span > 0:
+			if hcard is CommandData:
 				intent.request_use_command_at(side, engine.sel_hand_index, cell)
 			elif u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
 				_flash_msg("该单位不是该指令的合法目标")
