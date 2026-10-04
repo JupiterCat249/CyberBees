@@ -544,12 +544,45 @@ func _on_remote_select(_side: int, cell: Vector2i) -> void:
 ## ⭐ 迭代064 ④（目标轮10）：**对手行动可视化** —— 对手用了什么、落在哪。
 ##   提示条：主按钮左上的浮动提示（`_flash_msg`），让玩家一眼看到"对手在干什么"；
 ##   落点标记：复用 ③ 的 remote 选中通道（格高亮 + 该格单位卡标框）✓
+## ⭐ 迭代064 ④ 增强（新目标）：**对手行动**——常驻可见提示条。
+##   ⚠️ 实测发现：`_flash_msg` **只 print 到控制台**（其上方注释："HUD 提示已按人要求省略" ✗）
+##      ⇒ 此前"对手动作提示"玩家**根本看不见** ✗。此处建一个挂 `$HUD` 下的常驻 Label（运行时创建，
+##      挂容器下、不落盘 ✓），有对手动作时显示，若干帧后淡出（不遮挡操作）。
+var _remote_bar: Label = null
+var _remote_bar_until := 0
+
+func _show_remote_bar(text: String) -> void:
+	if _remote_bar == null or not is_instance_valid(_remote_bar):
+		var hud := get_node_or_null("HUD")
+		if hud == null:
+			return
+		_remote_bar = Label.new()
+		_remote_bar.name = "RemoteActionBar"
+		## 不覆盖字号（人硬约束：不要改字号）—— 用主题默认 ✓
+		_remote_bar.modulate = Color(1, 0.86, 0.45, 1.0)   ## 暖黄：与"我方"提示区分
+		## ⚠️ 实测两次踩坑：① `$HUD` 自身带变换 ⇒ 带负偏移的 preset 会算到屏幕外 ✗；
+		##   ② 更关键：**`$HUD` 自身 size 为 0**（子节点全是绝对定位）⇒ 按 HUD 尺寸算仍是 -420 ✗。
+		##   ⇒ 用**视口尺寸**定位（1920 宽 → 居中 840 宽条）✓
+		var vw: float = get_viewport_rect().size.x
+		_remote_bar.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		_remote_bar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_remote_bar.size = Vector2(840, 30)
+		_remote_bar.position = Vector2(vw * 0.5 - 420.0, 96.0)
+		_remote_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hud.add_child(_remote_bar)
+	_remote_bar.text = "对手：%s" % text
+	_remote_bar.visible = true
+	## 记住显示截止帧（由 _process 淡出；视图已有 _process，这里不另起 Timer）
+	_remote_bar_until = Engine.get_process_frames() + 210
+
+
+## 对手动作（④）：提示条 + 落点标记
 func _on_remote_action(_side: int, text: String, cell: Vector2i) -> void:
 	if text != "":
 		var where := ""
 		if cell.x >= 0:
 			where = " → (%d,%d)" % [cell.x, cell.y]
-		_flash_msg("对手：%s%s" % [text, where])
+		_show_remote_bar("%s%s" % [text, where])
 	_on_remote_select(_side, cell)
 
 
