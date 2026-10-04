@@ -56,9 +56,35 @@ func _test_phase_gate() -> void:
 		Preview.build(st, 1, 0, null, null, false).cells.size() == 0)
 
 
+## ⭐ 迭代064 P-16（清单 机制-1）：a500《行动机会》第 4 条 =「**1 次移动** + 1 次攻击/支援，用后自动结束行动」
+##   ⟹ 预览的"移动格"必须同时受 **`has_moved`** 与 **`has_acted`** 两个门约束（原实现只挡前者 →
+##   攻击后移动范围仍高亮，点下去被 `_can_act_with()` 拒 = 白点）。
+func _test_action_ledger() -> void:
+	var st = _new_state()
+	var leaf: UnitData = Pool.card("叶蜂") as UnitData
+	var u := UnitInstance.create(leaf, 0, Vector2i(2, 1))
+	u.instance_id = "u_ledger"
+	st.board.place(u)
+	_chk("未行动：单位预览非空（含移动格）", Preview.build(st, 2, -1, u).cells.size() > 0)
+	u.mark_moved()
+	var n_moved := 0
+	for c in Preview.build(st, 2, -1, u).cells:
+		if c.kind == K.Kind.MOVE:
+			n_moved += 1
+	_chk("**已移动 → 不再显示移动格**（机制-1）", n_moved == 0)
+	u.reset_turn_flags()
+	u.mark_acted()
+	var n_acted := 0
+	for c in Preview.build(st, 2, -1, u).cells:
+		if c.kind == K.Kind.MOVE:
+			n_acted += 1
+	_chk("**已行动（攻击/支援后）→ 不再显示移动格**（机制-1）", n_acted == 0)
+
+
 func _ready() -> void:
 	_test_is_resource()
 	_test_phase_gate()
+	_test_action_ledger()
 	_test_deploy_preview()
 	_test_move_preview()
 	_test_attack_preview()

@@ -155,7 +155,11 @@ static func _unit_preview(state, inst: UnitInstance) -> PreviewData:
 		return PV.make(K.Kind.NONE)
 	var pv: Resource = PV.make(K.Kind.MOVE, "移动或攻击")
 	# 移动可达（走格子 + 被单位阻挡 —— a500 范围 1/3）
-	if not inst.has_moved:
+	## ⭐ 迭代064 P-16（清单 机制-1）：a500《行动机会》第 4 条 = **1 次移动** + 1 次攻击/支援，
+	##   且「使用[主动攻击]或[支援技能]后**自动结束行动**」
+	##   ⟹ **已移动过、或已行动过，都不该再显示移动格**。
+	##   原实现只挡 `has_moved` ⇒ **攻击后移动范围仍高亮**，玩家点下去被 `_can_act_with()` 拒（"点了没反应"）。
+	if not inst.has_moved and not inst.has_acted:
 		for c in state.board.move_range(inst).keys():
 			pv.add_cell(c, K.Kind.MOVE)
 	# 攻击目标（曼哈顿射程 + 不被阻挡 —— a500 范围 2）

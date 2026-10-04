@@ -373,6 +373,12 @@ func terrain_blocks_deploy(cell: Vector2i) -> bool:
 func request_move(side: int, unit: UnitInstance, cell: Vector2i) -> bool:
 	if not _can_act_with(side, unit):
 		return false
+	## ⭐ 迭代064 P-16（清单 **机制-1**「单位攻击后仍可以移动」）：查 a500《行动机会》第 4 条——
+	##   「行动包括 **1 次移动**，1 次[主动攻击]或[支援技能]，使用[主动攻击]或[支援技能]后**自动结束行动**」。
+	##   ⟹ **移动每回合只能一次**。而 `_can_act_with()` 只查 `has_acted`（它是移动/攻击/支援共用的门），
+	##   所以"1 次移动"必须**在这里**单独把关 —— 原实现漏了这一步，一个单位可以**反复移动**。
+	if unit.has_moved:
+		return false
 	var allow: Dictionary = state.board.move_range(unit)
 	if not allow.has(cell):
 		return false
@@ -381,10 +387,25 @@ func request_move(side: int, unit: UnitInstance, cell: Vector2i) -> bool:
 	unit.mark_moved()
 	bus().emit_signal(Bus.SIG_UNIT_MOVED, unit, from, cell)
 	_log("%s 移动到 (%d,%d)" % [unit.card_name(), cell.x, cell.y])
-	_cancel_selection()
+	## ⭐ 迭代064 P-20（清单 **机制-5**）：行动后**自动切到"可攻击目标"选中**（前提：射程内确实有目标）。
+	##   原实现在此**无条件 `_cancel_selection()`** ⇒ 玩家移动后必须**重新点一次**单位才能攻击
+	##   （人反馈"单位行动结束后不自动切换到攻击对象选中"）。
+	##   现在：移动后若该单位**射程内存在可攻击目标** → **保持选中它**（预览随即只剩攻击目标）；
+	##   否则才取消选中（无事可做时不强留选中态）。
+	if _has_attackable(unit):
+		select_unit(side, unit)
+	else:
+		_cancel_selection()
 	_emit_selection()
 	_emit_action_availability()
 	return true
+
+
+## 该单位此刻射程内是否有可攻击目标（供"行动后自动切目标"判定；与预览同源 —— 都用 `attackable()`）
+func _has_attackable(unit: UnitInstance) -> bool:
+	if unit == null or unit.has_acted:
+		return false
+	return not state.board.attackable(unit, state.board.all_units()).is_empty()
 
 
 func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -> bool:
