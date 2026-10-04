@@ -383,10 +383,10 @@ texture = ExtResource("3_3i30t")
 
 [node name="MapMask" type="TextureRect" parent="Battle/MapView" unique_id=1796032471]
 layout_mode = 0
-offset_left = -2.0
-offset_top = -2.0
-offset_right = 1002.0
-offset_bottom = 1002.0
+offset_left = -5.0
+offset_top = -5.0
+offset_right = 1005.0
+offset_bottom = 1005.0
 mouse_filter = 2
 texture = ExtResource("1_cyhb0")
 expand_mode = 1

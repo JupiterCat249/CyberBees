@@ -42,27 +42,6 @@ corner_radius_top_right = 10
 [sub_resource type="StyleBoxFlat" id="R6"]
 bg_color = Color(1, 1, 1, 1)
 
-[sub_resource type="Animation" id="Animation_tvb1q"]
-length = 20.0
-loop_mode = 1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Mover:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 20),
-"transitions": PackedFloat32Array(1, 1),
-"update": 0,
-"values": [Vector2(0, 0), Vector2(0, 1080)]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_jr2ln"]
-_data = {
-&"scan": SubResource("Animation_tvb1q")
-}
-
 [sub_resource type="StyleBoxFlat" id="R7"]
 bg_color = Color(1, 1, 1, 0.8)
 
@@ -221,38 +200,12 @@ anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 
-[node name="CrtAnim" type="AnimationPlayer" parent="Artwork/ArtPlane/CrtFx" unique_id=1281255564]
-libraries/ = SubResource("AnimationLibrary_jr2ln")
-
-[node name="Mover" type="Control" parent="Artwork/ArtPlane/CrtFx" unique_id=959550007]
-anchors_preset = 0
-
-[node name="Sheet1" type="TextureRect" parent="Artwork/ArtPlane/CrtFx/Mover" unique_id=238556656]
-texture_repeat = 1
-layout_mode = 0
-offset_top = -1080.0
-offset_right = 2020.0
-mouse_filter = 2
-texture = ExtResource("3_k5t5m")
-expand_mode = 1
-stretch_mode = 1
-
-[node name="Sheet2" type="TextureRect" parent="Artwork/ArtPlane/CrtFx/Mover" unique_id=1878158003]
+[node name="Sheet2" type="TextureRect" parent="Artwork/ArtPlane/CrtFx" unique_id=1878158003]
+modulate = Color(1, 1, 1, 0.1)
 texture_repeat = 1
 layout_mode = 0
 offset_right = 2020.0
 offset_bottom = 1080.0
-mouse_filter = 2
-texture = ExtResource("3_k5t5m")
-expand_mode = 1
-stretch_mode = 1
-
-[node name="Sheet3" type="TextureRect" parent="Artwork/ArtPlane/CrtFx/Mover" unique_id=131961531]
-texture_repeat = 1
-layout_mode = 0
-offset_top = 1080.0
-offset_right = 2020.0
-offset_bottom = 2160.0
 mouse_filter = 2
 texture = ExtResource("3_k5t5m")
 expand_mode = 1

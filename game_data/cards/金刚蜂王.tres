@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="UnitData" format=3]
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://i8vg8ar5t4n1"]
 
-[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_5tybm"]
-[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_t05sb"]
-[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_b07ur"]
-[ext_resource type="Texture2D" path="res://assets/card_art/金刚蜂王.png" id="4_3v5yk"]
-[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_7om1r"]
+[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_5tybm"]
+[ext_resource type="Script" uid="uid://bicfsabbatgeh" path="res://scripts/data/unit_data.gd" id="2_t05sb"]
+[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_b07ur"]
+[ext_resource type="Texture2D" uid="uid://d13otxvrm8ot8" path="res://assets/card_art/金刚蜂王.png" id="4_3v5yk"]
+[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_7om1r"]
 
 [sub_resource type="Resource" id="Resource_t7ryj"]
 script = ExtResource("1_5tybm")
