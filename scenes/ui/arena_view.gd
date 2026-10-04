@@ -668,11 +668,29 @@ func _on_round_started(round_no: int) -> void:
 		_set_turn(engine.state.active, round_no)
 
 
+## 玩家信息面板的压暗口径（清单 21）：**我方** → 轮到自己正常 / 否则灰；**敌方** → 一律**变黑**
+func _info_tint(side: int) -> Color:
+	if int(side) != my_seat:
+		return Color(0.22, 0.22, 0.22, 1)
+	if engine != null and engine.state != null and int(engine.state.active) == my_seat:
+		return Color(1, 1, 1, 1)
+	return Color(0.65, 0.65, 0.65, 1)
+
+
 func _set_turn(side: int, round_no: int) -> void:
 	## ⭐ 回合切换也刷新手牌亮/灰（人要求「轮换等情况下依然稳定显示是否可用」）
 	##   与费用变化 / 手牌变化三条路径**互相幂等**（都只读当前 state），不会打架。
 	refresh_hand_affordability()
 	_refresh_zone_info(side, round_no)
+	## ⭐ 迭代064 UI-21（清单 21 的后半：「玩家基本信息」同样分灰/黑）：
+	##   `PlayerBesaInfoLift` = 绿方信息 · `PlayerBesaInfoRight` = 红方信息（场景命名与阵营绑定，
+	##   B2 的镜像只交换**位置**、不改变含义）。
+	var lift := get_node_or_null("Battle/PlayerBesaInfoLift") as Control
+	if lift != null:
+		lift.modulate = _info_tint(SIDE_ALLY)
+	var right := get_node_or_null("Battle/PlayerBesaInfoRight") as Control
+	if right != null:
+		right.modulate = _info_tint(SIDE_ENEMY)
 
 
 ## ⭐ 迭代064 P-15（清单 **机制-7**「没有做完善的 手牌-备卡-墓地 轮换机制」）：
@@ -688,9 +706,12 @@ func _refresh_zone_info(side: int, round_no: int) -> void:
 	var hand: Array = engine.state.sides[s]["hand"]
 	var dk: Array = engine.state.sides[s]["deck"]
 	var dis: Array = engine.state.sides[s]["discard"]
-	ti.text = "回合%d--%s ｜ 手牌%d · 备卡%d · 墓地%d" % [
-		round_no, "绿方" if s == SIDE_ALLY else "红方",
-		hand.size(), dk.size(), dis.size()]
+##   ⚠️ **三区计数暂不并入该行**（R17 曾尝试，已实测回退）：该面板宽约 230px，而
+##   `"回合1--绿方 ｜ 手牌4 · 备卡4 · 墓地0"` 实测文本宽 **721px** —— 压缩成
+##   `"回合1--绿方 ｜ 手4 备4 墓0"` **仍被面板截断**（截图两次实测）；而人 2026-09-19
+##   硬约束「**不要改字号**」⇒ 既不能缩字号、也不宜硬撑面板。故**只保留原文案**，
+##   函数与调用点仍在（一旦有布局位可直接启用）。详见 迭代064 P-15 修复记录。
+	ti.text = "回合%d--%s" % [round_no, "绿方" if s == SIDE_ALLY else "红方"]
 
 
 func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
@@ -1151,9 +1172,15 @@ func _render_hand(side: int, hand: Array, playable: Array) -> void:
 		var aff: bool = engine.hand_affordable(side, i) if engine != null else false
 		if i < playable.size():
 			aff = bool(playable[i])
+		## ⭐ 迭代064 UI-21（清单 21「敌人回合自己的手牌和玩家基本信息是默认灰色不可选中…
+		##   敌人手牌与基本信息直接变黑而不是变灰」）—— **以清单为准**（覆盖 2026-09-19
+		##   「亮/灰只看费用、不看阶段、不看是否当前行动方」的旧裁决）。
+		var my_turn0: bool = engine != null and int(engine.state.active) == my_seat
+		if not my_turn0 or int(side) != my_seat:
+			aff = false
 		if hand_params != null:
 			_apply_one_hand_params(node, hand_params)
-		_call_opt(node, "set_playable", [aff])
+		_call_opt(node, "set_playable", [aff, int(side) != my_seat])
 	## ⭐ 每次渲染后都把子卡内部节点设为鼠标透明（**保留卡根节点可点**）
 	##   （`_ready` 里那次跑在首次渲染之前 → 容器还是空的，等于没跑）
 	_ignore_descendants(parent)
@@ -1179,7 +1206,11 @@ func refresh_hand_affordability() -> void:
 			var node: Control = _hand_nodes[side].get(cid)
 			if node == null or not is_instance_valid(node):
 				continue
-			_call_opt(node, "set_playable", [engine.hand_affordable(side, i)])
+			## ⭐ 迭代064 UI-21（与 `_render_hand` 同一口径，**以清单为准**）：
+			##   非本回合 / 非本方 → 一律不可用；**敌方手牌走 `dim_black`（变黑）**，本方不可用走灰。
+			var my_turn1: bool = int(engine.state.active) == my_seat
+			var aff1: bool = engine.hand_affordable(side, i) and my_turn1 and (int(side) == my_seat)
+			_call_opt(node, "set_playable", [aff1, int(side) != my_seat])
 	## ⭐ 迭代064 P-15：轮换三区数量一并刷新（**幂等**；与上面的亮/灰共用同一批刷新时机 ——
 	##   费用变化 / 阶段变化 / 回合切换 / 卡入牌库墓地，四条路径都会到）
 	if engine.state != null:

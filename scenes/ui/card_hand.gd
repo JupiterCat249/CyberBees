@@ -65,6 +65,28 @@ func bind(data: CardData) -> void:
 		## ⭐ 迭代064 UI-11：设计色卡「亮橙 `#FFA300` = 默认部署费用」（原为白色白字）
 		bg.add_theme_color_override("font_color", Color("#FFA300"))
 	_apply_type_color(data)
+	## ⭐ 迭代064 机制-3（清单「手牌区域…没有单位类型区分色」的真相）：
+	##   类型底色**已经上了**（`_apply_type_color`），但**被立绘盖住** —— 手牌卡的立绘窗口
+	##   （Artwork 0..200）与卡面等大 ⇒ 类型色只在边角留几像素毛边，观感即"没有类型区分色"。
+	##   ⇒ 与单位卡同法：再给**立绘框**描一圈类型色，保证类型色真的看得见。
+	var tc0 := Color("#FFFFFF")
+	match int(data.kind):
+		CardData.CardKind.QUEEN:
+			tc0 = Color("#FFD07E")
+		CardData.CardKind.BUILDING:
+			tc0 = Color("#5D5D5D")
+		CardData.CardKind.COMMAND, CardData.CardKind.COMMAND_X:
+			tc0 = Color("#A84331")
+		_:
+			tc0 = Color("#3B816D")
+	var ap := get_node_or_null("Artwork/ArtPlane") as Panel
+	if ap != null:
+		var sb0 := StyleBoxFlat.new()
+		sb0.bg_color = Color(0, 0, 0, 0)
+		sb0.border_color = tc0
+		sb0.set_border_width_all(6)
+		sb0.set_corner_radius_all(8)
+		ap.add_theme_stylebox_override("panel", sb0)
 	_apply_artwork(data)
 	_apply_crop(data.visual)
 
@@ -128,14 +150,21 @@ func set_image_offset(new_offset: Vector2, new_scale: Vector2 = Vector2.ZERO) ->
 
 # ---------------- ③ 可出牌态（逻辑层下发，视图只表现） ----------------
 
-func set_playable(can_play: bool) -> void:
+func set_playable(can_play: bool, dim_black: bool = false) -> void:
 	## ⚠️ 迭代064 批次 B3（人 2026-09-27 问题清单 UI-9 / UI-12）：
 	##   **灰化只压 RGB，绝不压 alpha**。原实现是 `Color(0.65,0.65,0.65,0.85)` ——
 	##   那个 0.85 会经 `modulate` **级联到全部子节点**，把**费用图标与费用数字也一并变成半透明**
 	##   （人明确：「费用标记不应该在任何情况下变半透明」「不可选时应该是整体变灰，
 	##     而不是变灰的同时费用图标和费用数字（甚至卡面本身）变半透明」）。
 	##   现在：整卡统一变灰（RGB × 0.65），费用标记保持**完全不透明**。
-	modulate = Color(1, 1, 1, 1) if can_play else Color(0.65, 0.65, 0.65, 1)
+	## ⭐ 迭代064 UI-21：`dim_black` = **非本方**手牌 → 直接变黑（0.22）；本方"不可用" → 中性灰（0.65）。
+	##   两者都**只压 RGB、不压 alpha**（守 UI-9 / UI-12 口径）。
+	if can_play:
+		modulate = Color(1, 1, 1, 1)
+	elif dim_black:
+		modulate = Color(0.22, 0.22, 0.22, 1)
+	else:
+		modulate = Color(0.65, 0.65, 0.65, 1)
 
 
 func set_selected(sel: bool) -> void:

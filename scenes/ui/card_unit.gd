@@ -83,6 +83,17 @@ func bind(data: Dictionary) -> void:
 	_tint("SideRight", side_color)
 	# 卡牌类型底色（本体）
 	_tint("Body", Color(TYPE_COLOR.get(String(data.get("type", "unit")), "#FFFFFF")))
+	## ⭐ 迭代064 机制-3（清单「单位卡卡面背景没有单位类型区分色」的真相）：
+	##   上面那层类型底色**被立绘盖住了** —— 立绘窗口（Artwork 40..210 × 40..210）几乎占满卡面，
+	##   Body 的类型色只在边缘留一圈几像素的毛边，观感即"没有类型区分色"。
+	##   ⇒ 再给**立绘框**描一圈类型色（6px），保证类型色真的看得见。
+	var tc := Color(TYPE_COLOR.get(String(data.get("type", "unit")), "#FFFFFF"))
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.border_color = tc
+	sb.set_border_width_all(6)
+	sb.set_corner_radius_all(8)
+	_set_prop("Artwork/ArtPlane", "theme_override_styles/panel", sb)
 	# **立绘同步**：按实际卡数据的立绘刷新
 	var tex = data.get("art", null)
 	if tex is Texture2D:
