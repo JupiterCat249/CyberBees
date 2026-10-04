@@ -638,16 +638,56 @@ func _flash_opponent_hand(side: int) -> void:
 	tw.tween_property(mark, "modulate:a", 0.0, 0.6)
 
 
+## ⭐ ① 修正（人 2026-10-05）：在**对手手牌区里标记具体那张卡**（不再描整片 HandPanel ✗），
+##   且**常驻**（不做 Tween 淡出 ✗）。定位方式＝按**卡名**在对手手牌里找下标
+##   （接收端持有对手手牌 ✓ ⇒ 无需改协议 ✓）。清除时机：text 无卡名（对端取消选中）✓
+func _mark_opponent_hand(side: int, text: String) -> void:
+	var container: Control = _hand_r if side == SIDE_ALLY else _hand_l
+	if container == null:
+		return
+	for ch in container.get_children():
+		var old := ch.get_node_or_null("RemoteHandMark") as Panel
+		if old != null:
+			old.queue_free()
+	if text == "" or engine == null or engine.state == null:
+		return
+	var nm := text.replace("选中手牌 ", "")
+	var hand: Array = engine.state.sides[side]["hand"]
+	var idx := -1
+	for i in hand.size():
+		if String(hand[i].display_name) == nm:
+			idx = i
+			break
+	if idx < 0 or idx >= container.get_child_count():
+		return
+	var card := container.get_child(idx) as Control
+	if card == null:
+		return
+	var mk := Panel.new()
+	mk.name = "RemoteHandMark"
+	mk.top_level = true
+	mk.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mk.z_index = 3
+	card.add_child(mk)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.set_border_width_all(4)
+	sb.border_color = Color(0.55, 0.85, 1.0, 1.0)   ## 冷蓝：与"出牌/行动"的暖橙区分
+	sb.set_corner_radius_all(10)
+	mk.add_theme_stylebox_override("panel", sb)
+	var gr := card.get_global_rect()
+	mk.global_position = gr.position
+	mk.size = gr.size
+
+
 ## 对手动作：**视觉方案**（描边 + 目标标记）—— 不做文本条 ✗
-##   ⭐ 按 cell 语义分流：cell.x < 0 ⇒ 纯"选中手牌"（描对手手牌区）；cell ≥ 0 ⇒ 行动+落点（描对手信息面板 + 目标标记）
+##   ⭐ 按 cell 语义分流：cell.x < 0 ⇒ **具体手牌**（①：标那张牌、常驻）；cell ≥ 0 ⇒ 行动+落点（标具体对象 ✓）
 func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 	print("[REMOTE] ", text)
 	if cell.x < 0:
-		_flash_opponent_hand(side)
+		_mark_opponent_hand(side, text)
 	else:
-		## ⭐ ⑤ 修正（人 2026-10-05）：**不得围绕"玩家基本信息框"** ✗
-		##   ⇒ 去掉 `_flash_remote_panel()`（PlayerBesaInfo* 面板描边），
-		##     只保留**具体对象**上的标记：目标格高亮 + 该格单位卡标框（既有通道 ✓）
+		## ⭐ ⑤ 修正（人 2026-10-05）：**不得围绕"玩家基本信息框"** ✗ ⇒ 只标具体对象 ✓
 		_on_remote_select(side, cell)
 
 

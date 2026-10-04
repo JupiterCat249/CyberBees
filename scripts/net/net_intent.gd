@@ -268,8 +268,9 @@ func apply_remote(seat: int, payload) -> bool:
 			var scell := _cell(p.get("cell", []))
 			b.emit_signal(b.SIG_REMOTE_SELECT, side, scell)
 			var snm := String(p.get("nm", ""))
-			if snm != "":
-				b.emit_signal(b.SIG_REMOTE_ACTION, side, "选中手牌 %s" % snm, scell)
+			## ⭐ ① 修正（人 2026-10-05）：**总是**播报 —— 无卡名（snm==""）＝对端**已取消选中手牌**
+			##   ⇒ 视图据此**清除**那个常驻标记 ✓（否则标记会永远留着 ✗）
+			b.emit_signal(b.SIG_REMOTE_ACTION, side, ("选中手牌 %s" % snm) if snm != "" else "", scell)
 			applied_remote += 1
 			return true
 		_:
