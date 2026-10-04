@@ -203,9 +203,23 @@ func apply_remote(seat: int, payload) -> bool:
 				var dbus = engine.bus()
 				dbus.emit_signal(dbus.SIG_REMOTE_ACTION, side, "部署 %s" % dname, dcell)
 		"move":
-			ok = engine.request_move(side, _unit_at(p.get("from")), _cell(p.get("to")))
+			## ⭐ 新目标 ②：对手**移动**播报（复用 ④ 的 SIG_REMOTE_ACTION 通道 ⇒ 面板描边 + 目标格标记 ✓）
+			var mv_u = _unit_at(p.get("from"))
+			var mv_to := _cell(p.get("to"))
+			var mv_nm := String(mv_u.card_name()) if mv_u != null else "单位"
+			ok = engine.request_move(side, mv_u, mv_to)
+			if ok:
+				var mb = engine.bus()
+				mb.emit_signal(mb.SIG_REMOTE_ACTION, side, "移动 %s" % mv_nm, mv_to)
 		"attack":
-			ok = engine.request_attack(side, _unit_at(p.get("from")), _unit_at(p.get("to")))
+			## ⭐ 新目标 ②：对手**攻击**播报（含攻击者名与目标格 ⇒ 视觉提示"谁打谁、打哪里"）
+			var at_u = _unit_at(p.get("from"))
+			var at_to := _cell(p.get("to"))
+			var at_nm := String(at_u.card_name()) if at_u != null else "单位"
+			ok = engine.request_attack(side, at_u, _unit_at(p.get("to")))
+			if ok:
+				var ab = engine.bus()
+				ab.emit_signal(ab.SIG_REMOTE_ACTION, side, "攻击 %s" % at_nm, at_to)
 		"command":
 			## ⭐ 迭代064 P-19：**AOE（aoe_span > 0）走"以格为中心"入口，且必须连调两次** ——
 			##   阶段1 只挂待确认并返回 false、阶段2 才执行（与支援同理；否则联机下 AOE 恒失败）。
@@ -233,6 +247,13 @@ func apply_remote(seat: int, payload) -> bool:
 			##      （否则支援在联机下恒失败 —— 迭代063 全谱自检实测发现）
 			engine.request_support(side, u, sk, _unit_at(p.get("target_cell")))
 			ok = engine.request_support(side, u, sk, _unit_at(p.get("target_cell")))
+			if ok:
+				## ⭐ 新目标 ②：对手**支援/技能**播报（单位名 + 技能名 + 目标格 ⇒ 视觉提示 ✓）
+				var sb = engine.bus()
+				var sk_nm := String(sk.display_name) if sk != null else "技能"
+				var su_nm := String(u.card_name()) if u != null else "单位"
+				sb.emit_signal(sb.SIG_REMOTE_ACTION, side,
+					"支援 %s·%s" % [su_nm, sk_nm], _cell(p.get("target_cell")))
 		"discard":
 			ok = engine.request_discard(side, int(p.get("hand_index", -1)))
 		"end_phase":
