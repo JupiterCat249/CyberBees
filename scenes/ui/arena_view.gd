@@ -448,12 +448,23 @@ func _fit_text_labels() -> void:
 ## 把费用数字**水平居中到徽章宽度内**（供 `Value.resized` 回调；幂等）
 ## ⚠️ 与 `_center_main_button_label()` 同一套思路：**只挪位置、不动字号/尺寸**
 func _center_badge_value(badge: Control) -> void:
+	## ⚠️ **修正（人 2026-10-05 实测：费用数字普遍**向右偏移**、而模板场景本身是正确居中的）**：
+	##   原实现 `lb.position.x = (badge.size.x - lb.size.x) * 0.5` **是错的** ——
+	##   模板里 `Value` 本来就是居中的 38px 文本框（`offset 30.9..68.9`，锚点在父左上），
+	##   我又按"父左上角 + 当前框宽"重算了一遍 `position` ⇒ **叠加了一次偏移** ⇒ 整体右移。
+	##   正确做法（**与模板单数字时的视觉完全等价**，且两位数也永远居中）：
+	##   让文本框**覆盖整个徽章** + 文本水平/垂直居中 ⇒ 任意位数都居中、也不会因最小尺寸被撑大而偏移。
+	##   （对齐中心 (30.9+68.9)/2 = 49.9 ≈ 徽章中心 ⇒ 单数字结果与模板一致 ✓）
 	if badge == null:
 		return
 	var lb := badge.get_node_or_null("Value") as Control
 	if lb == null:
 		return
-	lb.position.x = (badge.size.x - lb.size.x) * 0.5
+	lb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	if lb is Label:
+		var l := lb as Label
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 
 
 ## 把主按钮文案**水平居中**到 ActionBar 宽度内（供 `resized` 回调；幂等）
@@ -691,14 +702,17 @@ func _set_turn(side: int, round_no: int) -> void:
 	refresh_hand_affordability()
 	_refresh_zone_info(side, round_no)
 	## ⭐ 迭代064 UI-21（清单 21 的后半：「玩家基本信息」同样分灰/黑）：
-	##   `PlayerBesaInfoLift` = 绿方信息 · `PlayerBesaInfoRight` = 红方信息（场景命名与阵营绑定，
-	##   B2 的镜像只交换**位置**、不改变含义）。
+	## ⚠️ **修正（人 2026-10-05 实测：自己回合变灰、敌方不变黑 ⟹ 左右写反了）**：
+	##   以本文件 `_on_cost_changed()` 的**既有正确口径**为准（迭代059 小修补已定）——
+	##     `PlayerBesaInfoRight` = **我方 `SIDE_ALLY`**（与 `HandPanelRight`/`AllyHand_*` 同侧）
+	##     `PlayerBesaInfoLift`  = **敌方 `SIDE_ENEMY`**（与 `HandPanelLeft`/`EnemyHand_*` 同侧）
+	##   B2 的镜像只交换两者**位置**、不改变各自代表的阵营 ⇒ 压暗必须**按名字映射到阵营**。
 	var lift := get_node_or_null("Battle/PlayerBesaInfoLift") as Control
 	if lift != null:
-		lift.modulate = _info_tint(SIDE_ALLY)
+		lift.modulate = _info_tint(SIDE_ENEMY)
 	var right := get_node_or_null("Battle/PlayerBesaInfoRight") as Control
 	if right != null:
-		right.modulate = _info_tint(SIDE_ENEMY)
+		right.modulate = _info_tint(SIDE_ALLY)
 
 
 ## ⭐ 迭代064 P-15（清单 **机制-7**「没有做完善的 手牌-备卡-墓地 轮换机制」）：
