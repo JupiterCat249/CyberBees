@@ -223,6 +223,12 @@ func request_end_phase(side: int = -1) -> bool:
 #  回费阶段（a500 费用 1~3 + 行动机会 2）
 # ============================================================
 
+## 行动机会 2：己方回费阶段重置每个单位的行动机会
+## ⭐ ② 迭代064 遗留修复（目标轮2 · 真机实测项）：**每只回费单位单独广播 `SIG_REFUND`** ——
+##   飘字才能落在**该单位卡**上（视图 `_on_refund_gained` 已按单位卡生成飘字 ✓，此前无人发射 ⇒ 实机"哪里都看不到" ✗）。
+##   依据：`state.recover_gain(side)` 就是**逐单位累加 `u.data.refund`**（见 `battle_state.gd:107`）——
+##   即蜂巢 1 / 蜂巢III 3 / 蜂王 4 都是"单位回费"，理应有各自飘字 ✓。
+##   （此前 `SIG_REFUND` **全项目只有一处发射**：蜂熊【支援】的 `_resolve_support` ✗。）
 func _do_recover(side: int) -> void:
 	var before: int = state.cost(side)
 	var gain := state.recover_gain(side)
@@ -231,6 +237,9 @@ func _do_recover(side: int) -> void:
 	# 行动机会 2：己方回费阶段重置每个单位的行动机会
 	for u in state.units(side):
 		u.reset_turn_flags()
+		var r: int = int(u.data.refund) if u.data != null else 0
+		if r > 0:
+			bus().emit_signal(Bus.SIG_REFUND, side, u, r)
 	var delta: int = state.cost(side) - before
 	if delta > 0:
 		_log("%s 回费 +%d（现 %d）" % [config.name_of(side), delta, state.cost(side)])
