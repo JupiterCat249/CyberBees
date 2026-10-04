@@ -20,6 +20,8 @@ extends Node
 ## ---------------------------------------------------------------------------
 const BATTLE := preload("res://scenes/ui/battle_scene.tscn")
 const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
+## 预览类型枚举（新断言要判"是否含 ATTACK 格"）
+const K := preload("res://scripts/battle/preview_kind.gd")
 
 var _pass := 0
 var _fail := 0
@@ -77,9 +79,192 @@ func _ready() -> void:
 	await _check_b8()
 	await _check_b2()
 	_check_p12()
+	## ⚠️ P-03 必须**在任何修改 phase 的新用例之前**跑（它依赖"开局＝部署阶段"，见下）
 	await _check_p03()
+	## ⭐ 迭代064 遗留四项（人 2026-10-05 报告）—— 顺序：先跑"点自己单位"的防回归，最后才跑"杀死单位"的用例
+	await _check_cancel_paths()
+	await _check_regression_cell_click()
+	await _check_remote_target_marks()
+	await _check_remote_ghost()
 
 	print("=== 结果：%d PASS / %d FAIL ===" % [_pass, _fail])
+
+
+## ⭐ 迭代064 遗留②（人 2026-10-05）：手牌选中态的**取消出口必须齐全**。
+##   三个入口：① 点战斗地图之外（`_unhandled_input`）② 点敌方手牌（非交互区域）③ 点地图内空格。
+##   背景：④ 曾因**全屏背景层吃掉左键**而完全收不到事件（已用 mouse_filter=2 修）、
+##        ② 曾因"对手手牌不可点"的权限门直接 return 而卡死。
+func _check_cancel_paths() -> void:
+	var eng = _view.get("engine")
+	if eng == null:
+		_ok("取消出口 · 取到引擎", false)
+		return
+	eng.call("select_hand", 0, 0)
+	await _idle(2)
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = Vector2(10, 10)
+	ev.global_position = Vector2(10, 10)
+	_view.call("_unhandled_input", ev)
+	await _idle(2)
+	_ok("取消出口 ①点战斗地图之外 → 取消选中", int(eng.sel_kind) == 0,
+		" sel_kind=%d" % int(eng.sel_kind))
+	## ② 点敌方手牌 = 非交互区域 ⇒ 同样取消（权限门保持不变：仍不可操作）
+	eng.call("select_hand", 0, 0)
+	await _idle(2)
+	var eid := ""
+	var hn = _view.get("_hand_nodes")
+	if hn != null and hn.has(1):
+		for k in hn[1].keys():
+			eid = String(k)
+			break
+	if eid == "":
+		_ok("取消出口 ②取到敌方手牌", false)
+	else:
+		_view.call("_on_hand_clicked", eid, 1)
+		await _idle(2)
+		_ok("取消出口 ②点敌方手牌 → 取消选中（且仍未选中该牌）",
+			int(eng.sel_kind) == 0, " sel_kind=%d" % int(eng.sel_kind))
+	## ③ 点地图内空格（原设计稿 §5.1：点击不可交互区域取消选中）
+	eng.call("select_hand", 0, 0)
+	await _idle(2)
+	_view.call("_on_cell_clicked", Vector2i(2, 3))
+	await _idle(2)
+	_ok("取消出口 ③点地图内空格 → 取消选中", int(eng.sel_kind) == 0,
+		" sel_kind=%d" % int(eng.sel_kind))
+
+
+## ⭐ 防回归（与上面同批改动强相关）：棋盘格仍是"点自己单位"的有效入口。
+##   曾担心把全屏背景层设为 mouse_filter=2 会连带削掉棋盘点击 —— 这条就是那个守卫。
+func _check_regression_cell_click() -> void:
+	var eng = _view.get("engine")
+	var mine = _first_ally_unit()
+	if eng == null or mine == null:
+		_ok("防回归 · 取到引擎与我方单位", false)
+		return
+	eng.state.phase = 3              ## ACTION
+	eng.state.active = 0
+	eng.call("request_clear_selection")
+	await _idle(2)
+	_view.call("_on_cell_clicked", mine.cell)
+	await _idle(3)
+	_ok("防回归：点地图内我方单位格 → 进入选中态（sel_kind=2）",
+		int(eng.sel_kind) == 2, " sel_kind=%d" % int(eng.sel_kind))
+
+
+## ⭐ 迭代064 遗留①（**人口径：这是「应该」**）：联机信息透明 ——
+##   对端视图必须看到「我方选中单位进入攻击状态后的**攻击范围**」+「**所选攻击目标**（卡上标框）」。
+func _check_remote_target_marks() -> void:
+	var eng = _view.get("engine")
+	var mine = _first_ally_unit()
+	var foe = _first_enemy_unit()
+	if eng == null or mine == null or foe == null:
+		_ok("① · 取到双方单位", false)
+		return
+	## 造"贴脸"（只挪位置，不改规则）⇒ 攻击范围内确有目标，预览才会含 attack 格
+	var t := Vector2i(mine.cell.x, mine.cell.y + 1)
+	if eng.state.board.unit_at(t) != null:
+		t = Vector2i(mine.cell.x + 1, mine.cell.y)
+	eng.state.board.move_unit(foe, t)
+	_view.call("set_my_seat", 1)          ## 我 = 红方 ⇒ 绿方就是"对端"
+	eng.state.active = 0
+	eng.state.phase = 3
+	eng.call("request_clear_selection")
+	await _idle(2)
+	_view.call("_on_remote_select", 0, mine.cell)
+	await _idle(4)
+	var pv = _view.get("_preview")
+	var has_attack := false
+	if pv != null:
+		for pc in pv.cells:
+			if int(pc.kind) == K.Kind.ATTACK:
+				has_attack = true
+	_ok("① 对端视图含**攻击范围**格", has_attack,
+		" cells=%d" % (0 if pv == null else pv.cells.size()))
+	_ok("① 对端视图含**所选攻击目标**的单位卡标框", _visible_mark_count() >= 1,
+		" marks=%d" % _visible_mark_count())
+	_view.call("set_my_seat", 0)
+
+
+## ⭐ 迭代064 遗留③（人 2026-10-05）：对端远端预览挂在某单位上时，
+##   该单位在本方回合死亡 ⇒ **范围/高亮/对端选中框必须立即全部消失**（不得有幽灵残留）。
+func _check_remote_ghost() -> void:
+	var eng = _view.get("engine")
+	var opp = _first_ally_unit()
+	if eng == null or opp == null:
+		_ok("③ · 取到引擎与我方单位", false)
+		return
+	_view.call("set_my_seat", 1)          ## 我 = 红方 ⇒ 绿方(0) 是"对端"
+	eng.state.active = 0
+	eng.state.phase = 3
+	eng.call("request_clear_selection")
+	await _idle(2)
+	_view.call("_on_remote_select", 0, opp.cell)
+	await _idle(3)
+	var before := _highlight_count()
+	opp.current_hp = 0
+	eng.call("_cleanup_dead")
+	await _idle(6)
+	_ok("③ 远端预览的单位死亡前确有范围高亮（对照）", before > 0, " before=%d" % before)
+	_ok("③ 死亡后：预览被作废", _view.get("_preview") == null)
+	_ok("③ 死亡后：棋盘零残留高亮", _highlight_count() == 0,
+		" 残留=%d" % _highlight_count())
+	_ok("③ 死亡后：对端选中框也清掉", _selected_cell_count() == 0,
+		" 残留选中格=%d" % _selected_cell_count())
+	_view.call("set_my_seat", 0)
+
+
+# ---------------- 读数工具（新断言专用） ----------------
+func _first_ally_unit():
+	return _view.call("_find_unit", _first_unit_id_of_side(0))
+
+
+func _first_enemy_unit():
+	return _view.call("_find_unit", _first_unit_id_of_side(1))
+
+
+func _first_unit_id_of_side(side: int) -> String:
+	var eng = _view.get("engine")
+	if eng == null:
+		return ""
+	for u in eng.state.board.all_units():
+		if int(u.side) == side:
+			return String(u.instance_id)
+	return ""
+
+
+func _visible_mark_count() -> int:
+	var un = _view.get("_unit_nodes")
+	var n := 0
+	if un != null:
+		for k in un.keys():
+			var node = un[k]
+			if node != null and is_instance_valid(node):
+				var mk = node.get_node_or_null("Mark")
+				if mk != null and mk.visible:
+					n += 1
+	return n
+
+
+func _highlight_count() -> int:
+	var cells = _view.get("_cells")
+	var n := 0
+	if cells != null:
+		for c in cells.keys():
+			if String(cells[c].highlight) != "":
+				n += 1
+	return n
+
+
+func _selected_cell_count() -> int:
+	var cells = _view.get("_cells")
+	var n := 0
+	if cells != null:
+		for c in cells.keys():
+			if bool(cells[c].selected):
+				n += 1
+	return n
 
 
 ## P-03（清单 UI-3/UI-4/UI-18）：**部署阶段点单位不给范围**（视图侧应为零高亮）；
@@ -239,26 +424,57 @@ func _check_b7() -> void:
 			" text_end=%.1f badge_end=%.1f" % [v.get_global_rect().end.x, badge.get_global_rect().end.x])
 
 
-## B8：单位卡电子管特效 —— 不自动播放、不运动、无颜色变换
+## B8：单位卡电子管/扫描线叠加层 —— **静止 + 无色变**（P-02 = 清单 UI-2）
+## ⚠️ 断言已按**现行场景结构**更新（2026-10-05，本次遗留修复时发现该条已陈旧）：
+##   人工提交 `e5f78f6`「单位卡移除旧 CrtFx 扫描线子树」把 `CrtFx/{CrtAnim,Mover,Sheet1..3}`
+##   改成 **`CrtFx/Sheet2`（单个静态 TextureRect，`modulate.a = 0.1`）**；本断言原查
+##   `CrtFx/CrtAnim` + `CrtFx/Mover` ⇒ 在当前 HEAD 上**必然 FAIL**（不是我本轮改动引入的回归）。
+##   新口径（仍守住 P-02 的语义）：**叠加层存在、静止、无颜色变换、且没有自动播放的动画子树**。
 func _check_b8() -> void:
 	var u := _first_unit_card()
 	if u == null:
 		_ok("B8 取到单位卡", false)
 		return
-	var anim := u.get_node_or_null("Artwork/ArtPlane/CrtFx/CrtAnim") as AnimationPlayer
-	var mover := u.get_node_or_null("Artwork/ArtPlane/CrtFx/Mover") as Control
-	if anim == null or mover == null:
-		_ok("B8 取到 CrtFx 子节点", false)
+	var crt := u.get_node_or_null("Artwork/ArtPlane/CrtFx") as Control
+	if crt == null:
+		_ok("B8 取到 CrtFx 叠加层", false, " card=%s" % str(u.name))
 		return
-	_ok("B8 电子管动画未自动播放", not anim.is_playing() and String(anim.autoplay) == "",
-		" autoplay=「%s」playing=%s" % [String(anim.autoplay), str(anim.is_playing())])
-	var p0 := mover.position
-	await _idle(10)
-	_ok("B8 电子管特效不运动", (mover.position - p0).length() < 0.01,
-		" Δ=%.3f" % (mover.position - p0).length())
-	_ok("B8 电子管特效无颜色变换（self_modulate 为白）",
-		mover.self_modulate.is_equal_approx(Color(1, 1, 1, 1)),
-		" %s" % str(mover.self_modulate))
+	_ok("B8 CrtFx 叠加层存在（P-02 前提）", crt != null)
+	## ① **不得残留自动播放的动画节点**（旧结构里 `CrtAnim.autoplay = "scan"` 正是"运动"的来源）
+	var anim_nodes: Array[String] = []
+	_collect_anim_players(crt, anim_nodes)
+	var playing := false
+	for path in anim_nodes:
+		var ap = crt.get_node_or_null(path) as AnimationPlayer
+		if ap != null and ap.is_playing():
+			playing = true
+	_ok("B8 叠加层内无运动动画（无 AnimationPlayer 或均未播放）",
+		not playing, " anim_players=%s" % str(anim_nodes))
+	## ② **静止**：叠加层自身与其纹理子节点位置在若干帧内不变
+	var sheet := crt.get_node_or_null("Sheet2") as TextureRect
+	if sheet != null:
+		var p0 := sheet.position
+		var m0 := sheet.modulate
+		await _idle(10)
+		_ok("B8 扫描线叠加层不运动",
+			(sheet.position - p0).length() < 0.01,
+			" Δ=%.3f" % (sheet.position - p0).length())
+		## ③ **无颜色变换**：颜色由**美术参数**（0.1 透明度条纹）决定，运行期不得再被改写 ⇒ 保持恒定
+		_ok("B8 扫描线叠加层颜色稳定（无色变换）",
+			sheet.modulate.is_equal_approx(m0),
+			" %s → %s" % [str(m0), str(sheet.modulate)])
+	else:
+		_ok("B8 取到扫描线叠加层 Sheet2", false,
+			" children=%d" % crt.get_child_count())
+
+
+## 收集某节点下的所有 AnimationPlayer 相对路径（判"有没有会自动播放的动画子树"）
+func _collect_anim_players(n: Node, out: Array[String], prefix: String = "") -> void:
+	for ch in n.get_children():
+		var p: String = prefix + String(ch.name)
+		if ch is AnimationPlayer:
+			out.append(p)
+		_collect_anim_players(ch, out, p + "/")
 
 
 ## B2：HUD 随座位换边，且切回座位 0 能精确还原

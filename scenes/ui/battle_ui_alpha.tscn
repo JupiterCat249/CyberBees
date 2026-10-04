@@ -292,6 +292,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
+mouse_filter = 2
 
 [node name="Background" type="Panel" parent="." unique_id=1049886299]
 layout_mode = 0
@@ -307,6 +308,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 texture = ExtResource("1_tvb1q")
 
 [node name="CrtFx" type="Control" parent="Background" unique_id=956340755]
@@ -314,6 +316,7 @@ clip_contents = true
 anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
+mouse_filter = 2
 
 [node name="CrtAnim" type="AnimationPlayer" parent="Background/CrtFx" unique_id=1281255564]
 libraries/ = SubResource("AnimationLibrary_jr2ln")

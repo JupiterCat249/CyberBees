@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dqhprj0gflfex"]
+
+[ext_resource type="Script" path="res://verification/iter064_leak_shot.gd" id="1_wuwvj"]
+
+[node name="Iter064LeakShot" type="Node" unique_id=1775210048]
+script = ExtResource("1_wuwvj")

@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://difidjwwcpwve"]
+
+[ext_resource type="Script" path="res://verification/iter064_leak_probe.gd" id="1_6ptcp"]
+
+[node name="Iter064LeakProbe" type="Node" unique_id=777564359]
+script = ExtResource("1_6ptcp")
