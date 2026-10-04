@@ -125,9 +125,9 @@ script = ExtResource("1_hg6cp")
 [node name="UnitEffects" type="HBoxContainer" parent="." unique_id=1794076306]
 z_index = 1
 layout_mode = 0
-offset_left = 46.0
+offset_left = 45.0
 offset_top = 200.0
-offset_right = 204.0
+offset_right = 205.0
 offset_bottom = 240.0
 
 [node name="Body" type="Panel" parent="." unique_id=871252763]
