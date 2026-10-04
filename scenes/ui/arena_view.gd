@@ -428,6 +428,32 @@ func _fit_text_labels() -> void:
 	if lb != null and not lb.resized.is_connected(_center_main_button_label):
 		lb.resized.connect(_center_main_button_label)
 		_center_main_button_label()
+	## ⭐ 迭代064 B7（修 P-06 = 清单 UI-12「文本达到两位数时没居中」/ UI-19「费用为 10 时 UI 文本溢出」）
+	## 根因与主按钮**完全同源**（实测）：费用 `Label` 的框只有 **38px**，而 **`Control` 会按最小尺寸
+	##   被文案撑大** —— "10" 实测 **77px** ⇒ 框长到 77，但 `position` 不动 ⇒ 文字**中心偏离徽章约 20px**、
+	##   右端**溢出徽章**（截图实测那个 "0" 探出徽章右缘）。
+	## 修法：按**徽章实际宽度**重新水平居中；**绝不动字号**（人 2026-09-19 硬约束：不得覆写素材字号 ——
+	##   历史上正是"手牌费用徽章 48→26"这类覆写被否）。
+	for bp in ["Battle/PlayerBesaInfoRight/BadgeImage", "Battle/PlayerBesaInfoLift/BadgeImage"]:
+		var badge := get_node_or_null(bp) as Control
+		if badge == null or badge.has_meta("b7_badge_centered"):
+			continue
+		badge.set_meta("b7_badge_centered", true)
+		var v := badge.get_node_or_null("Value") as Control
+		if v != null:
+			v.resized.connect(_center_badge_value.bind(badge))
+			_center_badge_value(badge)
+
+
+## 把费用数字**水平居中到徽章宽度内**（供 `Value.resized` 回调；幂等）
+## ⚠️ 与 `_center_main_button_label()` 同一套思路：**只挪位置、不动字号/尺寸**
+func _center_badge_value(badge: Control) -> void:
+	if badge == null:
+		return
+	var lb := badge.get_node_or_null("Value") as Control
+	if lb == null:
+		return
+	lb.position.x = (badge.size.x - lb.size.x) * 0.5
 
 
 ## 把主按钮文案**水平居中**到 ActionBar 宽度内（供 `resized` 回调；幂等）
