@@ -94,6 +94,26 @@ func _do(sender: int, method: String, args: Array, payload: Dictionary) -> bool:
 	return ok
 
 
+## ⭐ 迭代064 UI-15：**选中存在性广播**（**不是操作** —— 不改引擎状态、无需对端引擎执行）
+##   op 铁律：**不带 instance_id** ⇒ 用**规范 cell** 传递；`cell == null` = 取消选中（空 cell）
+##   与 `request_*` 的区别：不调引擎、不校验成败，只发一个"我在看哪一格"的存在性消息。
+func send_selection(cell) -> void:
+	if not is_online():
+		return
+	var p: Dictionary = {"k": "sel", "cell": [] if cell == null else _ch(cell)}
+	frame += 1
+	sent_ops += 1
+	sent_payloads.append(p.duplicate(true))
+	client.send_op(frame, p)
+
+
+## ⭐ 迭代064 UI-15/联机-1：**取消选中**（本地 + 广播）。选中态是**视图/引擎的本地态**，
+##   故清空后照常经 `SIG_SELECTION` 走一遍 → 视图的广播逻辑会自动把"空选中"发给对端。
+func request_clear_selection() -> void:
+	if engine != null:
+		engine.request_clear_selection()
+
+
 # ============================ 上行（与引擎同名） ============================
 func request_deploy(side: int, hand_index: int, cell: Vector2i) -> bool:
 	return _do(my_side, "request_deploy", [side, hand_index, cell],
@@ -168,6 +188,14 @@ func apply_remote(seat: int, payload) -> bool:
 			ok = engine.request_discard(side, int(p.get("hand_index", -1)))
 		"end_phase":
 			ok = engine.request_end_phase()
+		"sel":
+			## ⭐ 迭代064 UI-15：对端**选中存在性** —— **纯呈现**（不改引擎状态、不参与规则）
+			##   经总线转给视图渲染"对手选中"标记；空 cell（`_cell([])` → (-1,-1)）表示对端已取消选中。
+			##   ⚠️ 不参与 ok/拒绝 计数，直接返回（它没有"执行失败"这回事）。
+			var b = engine.bus()
+			b.emit_signal(b.SIG_REMOTE_SELECT, side, _cell(p.get("cell", [])))
+			applied_remote += 1
+			return true
 		_:
 			unsupported += 1
 			return false

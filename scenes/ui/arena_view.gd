@@ -513,6 +513,20 @@ func _connect_bus() -> void:
 	b.connect(Bus.SIG_UNIT_STATS, _on_unit_stats_changed)
 	## ⭐ 迭代064 B7（清单 UI-20）：**单位回费**单独一条 → 飘字落在那只回费的单位身上
 	b.connect(Bus.SIG_REFUND, _on_refund_gained)
+	## ⭐ 迭代064 UI-15（对手选中同步）：订阅对端**选中存在性**（纯呈现，不改引擎状态）
+	b.connect(Bus.SIG_REMOTE_SELECT, _on_remote_select)
+
+
+## ⭐ 迭代064 UI-15：**对端选中**的呈现 —— 不改规则、不进引擎状态
+##   · 复用 `board_cell.set_selected()`（白框通道**此前未被使用**，正好归"对端选中"）
+##   · `_render_preview()` 会清掉所有格子的 selected ⇒ 本标记由那边**记下并重打**（不新增变量）
+func _on_remote_select(_side: int, cell: Vector2i) -> void:
+	for c in _cells.keys():
+		if _cells[c].selected:
+			_cells[c].set_selected(false)
+	if cell.x >= 0 and _cells.has(cell):
+		_cells[cell].set_selected(true)
+	_render_preview()
 
 
 ## 地图与背景资产变化
@@ -1409,6 +1423,13 @@ func _find_unit(instance_id: String) -> UnitInstance:
 # ============================================================
 
 func _render_preview() -> void:
+	## ⭐ 迭代064 UI-15：先把**对端选中**的格子记下来 —— 下面会清空所有格子的 selected，
+	##   而对端选中**不属于预览**、不能被预览清掉（否则对手选中会一帧就被自己的预览刷没）。
+	var rsel := Vector2i(-1, -1)
+	for c in _cells.keys():
+		if _cells[c].selected:
+			rsel = c
+			break
 	for c in _cells.keys():
 		_cells[c].set_highlight("")
 		_cells[c].set_selected(false)
@@ -1417,7 +1438,21 @@ func _render_preview() -> void:
 	for k in _unit_nodes.keys():
 		var un = _unit_nodes[k]
 		if un != null and is_instance_valid(un) and un.has_method("set_mark"):
-			un.set_mark("")
+			## ⭐ 迭代064 UI-15：清标框时**顺带**把"对端选中"打在对应卡上。
+			##   为什么必须打在卡上：单位卡正好 250×250（＝`PITCH`）会把**格子填充整片盖住** ——
+			##   实测截图中"对手选中"在有单位的格上完全看不见（与 P-13 同一类坑）。
+			##   为什么在**这里**打：放函数末尾会被上面的 `_preview == null: return` 跳过；
+			##   放在预览打标之前则会被 preview 覆盖 —— 本循环是唯一"既清又打、且不会被跳过"的位置。
+			##   （若该单位同时是我方预览的可攻击目标，预览的红橙标框会覆盖它 —— 可接受：攻击提示优先）
+			var mark_kind := ""
+			if rsel.x >= 0:
+				var iu = _find_unit(String(k))
+				if iu != null and iu.cell == rsel:
+					mark_kind = "remote"
+			un.set_mark(mark_kind)
+	## ⭐ 迭代064 UI-15：重打对端选中标记（与本地预览互不干扰）
+	if rsel.x >= 0 and _cells.has(rsel):
+		_cells[rsel].set_selected(true)
 	var style := {
 		K.Kind.DEPLOY: "deploy",
 		K.Kind.MOVE: "move",

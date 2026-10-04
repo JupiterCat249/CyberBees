@@ -31,6 +31,12 @@ const SIG_BATTLE_ENDED := "battle_ended"
 const SIG_COST_CHANGED := "cost_changed"
 ## 单位回费（迭代064 B7 · 清单 UI-20）——**只由持有施法单位的回费发出**（见下方 signal 注释）
 const SIG_REFUND := "refund_gained"
+## ⭐ 迭代064 UI-15（清单「对手选中/行动同步」的**选中**部分）：**对端选中存在性**
+##   纯**呈现**信号 —— **不改引擎状态**、不参与规则；只把"对端选中了哪个格"告诉视图。
+##   发射点：`NetIntent.apply_remote()` 收到 `{"k":"sel"}` 时（经总线转给视图渲染）。
+const SIG_REMOTE_SELECT := "remote_selection_changed"
+## 对端选中变化（cell 非法 x<0 表示**对端已取消选中**）
+signal remote_selection_changed(side: int, cell: Vector2i)
 const SIG_CARD_DRAWN := "card_drawn"
 const SIG_HAND_CHANGED := "hand_changed"
 const SIG_DECK_RESHUFFLED := "deck_reshuffled"

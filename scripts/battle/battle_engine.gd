@@ -194,6 +194,16 @@ func _end_phase() -> void:
 
 
 ## 玩家请求：推进阶段（部署 → 行动 / 行动 → 换手）
+## ⭐ 迭代064 UI-15 / 联机-1：**取消选中**（公开口径）
+##   人 2026-09-27 清单 联机-1「点地图外取消选中在联机下无反应」⟹ "取消选中"需要成为一个
+##   **可下发的意图**（否则对端的"对手选中"标记永远清不掉）。选中态是**本地态、不参与规则**，
+##   故本方法只清本地选中并广播；对端据 `SIG_SELECTION` → `{"k":"sel", cell:[]}` 清标记。
+func request_clear_selection() -> void:
+	_cancel_selection()
+	_emit_selection()
+	_emit_action_availability()
+
+
 func request_end_phase() -> bool:
 	if state == null or state.is_over():
 		return false
