@@ -75,24 +75,44 @@ func _apply_type_color(data: CardData) -> void:
 	var body := _body()
 	if body == null:
 		return
+	var tc := CardData.type_color_of(data.kind)
 	var sb := body.get_theme_stylebox("panel") as StyleBoxFlat
-	if sb == null:
-		return
-	sb = sb.duplicate()
-	sb.bg_color = CardData.type_color_of(data.kind)
-	body.add_theme_stylebox_override("panel", sb)
-	## ⚠️ 人 2026-10-05 实测"卡面底色依然是默认白色"的**真因**：
-	##   `Artwork/ArtPlane` 的 stylebox（场景 `R2`）是**不透明白色** `Color(1,1,1,1)`，
-	##   且它几乎铺满卡面（anchor 0.015~0.985）⇒ **把 `Body` 上的类型底色整个盖住** ✗。
-	##   立绘窗（带 `clip_contents`）本就只该做**裁剪容器** ⇒ 背景置**全透明**，
-	##   让类型底色真正透出来 ✓。
+	if sb != null:
+		sb = sb.duplicate()
+		sb.bg_color = tc
+		body.add_theme_stylebox_override("panel", sb)
+	## ⭐ 人 2026-10-05 口径：**类型底色直接替换默认白色**（不是"白底上再叠一层"⇒ 避免叠加影响）。
+	##   立绘窗 `Artwork/ArtPlane`（场景 `R2`，原本是不透明白 `Color(1,1,1,1)` 且几乎铺满卡面）
+	##   ⇒ **直接把它也换成类型底色**（而不是仅置透明），确保**全卡面**都是类型色、没有白底残留 ✓。
 	var plane := get_node_or_null("Artwork/ArtPlane") as Panel
 	if plane != null:
 		var psb := plane.get_theme_stylebox("panel")
 		if psb is StyleBoxFlat:
 			var psb2: StyleBoxFlat = (psb as StyleBoxFlat).duplicate()
-			psb2.bg_color = Color(0, 0, 0, 0)
+			psb2.bg_color = tc
 			plane.add_theme_stylebox_override("panel", psb2)
+	_ensure_stripe_overlay()
+
+
+## ⭐ 迭代064 Stage2（人 2026-10-05）：卡面＝**类型底色 100%** ＋ **白色条纹 10%**
+##   条纹＝**原色复用**素材 `assets/ui/fx/crt_scanline_tile.png`（单位卡 `CrtFx` 已在用同一素材）。
+##   以 TILE 模式铺满整卡 + `modulate.a = 0.1`（白色条纹 10% 不透明度）。
+func _ensure_stripe_overlay() -> void:
+	if has_node("TypeStripe"):
+		return
+	var tex := load("res://assets/ui/fx/crt_scanline_tile.png") as Texture2D
+	if tex == null:
+		return
+	var s := TextureRect.new()
+	s.name = "TypeStripe"
+	s.texture = tex
+	s.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	s.stretch_mode = TextureRect.STRETCH_TILE
+	s.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	s.modulate = Color(1, 1, 1, 0.1)
+	s.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	s.z_index = 1
+	add_child(s)
 
 
 func _apply_artwork(data: CardData) -> void:
