@@ -186,17 +186,24 @@ func _on_launch_duo() -> void:
 	_write_text_file(NC.DIR + "/auto.flag", "1")
 	notes.append("已写 test 档 + 自动模式")
 	# ② 本地中继
-	## ⚠️ 关键坑：`OS.create_process` 会**对每个参数自动加引号** ✗ ——
-	##   早前把整条 `cmd` 串（内含 `\"` 内层引号）当**一个参数**传入 ⇒ 引号被二次转义、cmd 解析失败
-	##   （现象：开关文件写成功 ✓ 但中继与第二实例都没起来 ✗）。
-	##   改为**每个参数独立**：start 的 `/D <目录>` 各占一个参数，Godot 加引号后 cmd 能正确解析 ✓。
+	## ⚠️ 引号坑（两次实测教训）：`OS.create_process` 会对**每个参数自动加引号** ✗ ⇒
+	##   ① 把整条 cmd 串（内含 `\"`）当**一个参数** → 二次转义 ⇒ 失败 ✗
+	##   ② `start <title> /D <含空格中文路径> node …` 的多参数形式 → 实测 8091 未监听 ✗
+	##   ⇒ 改为**先生成 .bat 再执行**：引号写在**文件内容里**（不受参数转义影响 ✓），
+	##     调用时只传一个**绝对路径参数**（无内嵌引号 ✓）—— 这是最稳的形式。
 	var relay_dir := ProjectSettings.globalize_path("res://联机服务器")
 	if FileAccess.file_exists(relay_dir + "/server.js"):
-		OS.create_process("cmd.exe", [
-			"/C", "start", "bees-relay", "/D", relay_dir,
-			"node", "server.js", "--config", "config.test.json",
-		], false)
-		notes.append("已起本地中继(8091)")
+		var bat_path := ProjectSettings.globalize_path(NC.DIR) + "/_duo_relay.bat"
+		var bf := FileAccess.open(bat_path, FileAccess.WRITE)
+		if bf != null:
+			bf.store_line("@echo off")
+			bf.store_line("cd /d \"%s\"" % relay_dir)
+			bf.store_line("start \"bees-relay\" node server.js --config config.test.json")
+			bf.close()
+			OS.create_process("cmd.exe", ["/C", bat_path], false)
+			notes.append("已起本地中继(8091)")
+		else:
+			notes.append("写 _duo_relay.bat 失败")
 	else:
 		notes.append("缺 联机服务器/server.js，中继未起")
 	# ③ 第二个实例
