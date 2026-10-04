@@ -596,11 +596,48 @@ func _flash_remote_panel(side: int) -> void:
 	tw.tween_property(mark, "modulate:a", 0.0, 0.7)
 
 
-## 对手动作：**视觉方案**（对手面板描边 + 目标格/单位标记）—— 不做文本条 ✗
+## ⭐ ① 的视觉表达（人授权"都想办法提示" + 明确**禁用文本** ✗）：
+##   对手**选中手牌**（无目标）⇒ 描**对手手牌区**（HandPanelLeft=敌方 / HandPanelRight=我方）
+##   —— **零新增 UI 空间** ✓，且**无需改协议/信号**（复用现有 SIG_REMOTE_ACTION 的 cell 语义：
+##   有目标/落点时 cell ≥ 0，纯选牌时 cell 为 (-1,-1) ✓）
+func _flash_opponent_hand(side: int) -> void:
+	var path := "Battle/HandPanelRight" if side == SIDE_ALLY else "Battle/HandPanelLeft"
+	var panel := get_node_or_null(path) as Control
+	if panel == null:
+		return
+	var mark := panel.get_node_or_null("RemoteHandMark") as Panel
+	if mark == null:
+		mark = Panel.new()
+		mark.name = "RemoteHandMark"
+		mark.top_level = true
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mark.z_index = 2
+		panel.add_child(mark)
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0, 0, 0, 0)
+	sb.set_border_width_all(4)
+	sb.border_color = Color(0.55, 0.85, 1.0, 1.0)   ## 冷蓝：与"出牌/行动"的暖橙区分
+	sb.set_corner_radius_all(12)
+	mark.add_theme_stylebox_override("panel", sb)
+	var gr := panel.get_global_rect()
+	mark.global_position = gr.position
+	mark.size = gr.size
+	mark.modulate.a = 1.0
+	mark.visible = true
+	var tw := create_tween()
+	tw.tween_interval(1.0)
+	tw.tween_property(mark, "modulate:a", 0.0, 0.6)
+
+
+## 对手动作：**视觉方案**（描边 + 目标标记）—— 不做文本条 ✗
+##   ⭐ 按 cell 语义分流：cell.x < 0 ⇒ 纯"选中手牌"（描对手手牌区）；cell ≥ 0 ⇒ 行动+落点（描对手信息面板 + 目标标记）
 func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 	print("[REMOTE] ", text)
-	_flash_remote_panel(side)
-	_on_remote_select(side, cell)
+	if cell.x < 0:
+		_flash_opponent_hand(side)
+	else:
+		_flash_remote_panel(side)
+		_on_remote_select(side, cell)
 
 
 ## 地图与背景资产变化
