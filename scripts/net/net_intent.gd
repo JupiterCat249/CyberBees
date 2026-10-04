@@ -153,7 +153,8 @@ func request_discard(side: int, hand_index: int) -> bool:
 
 
 func request_end_phase() -> bool:
-	return _do(my_side, "request_end_phase", [], {"k": "end_phase"})
+	## ⭐ 迭代064 联机-2：把 `my_side` 一并传出 ⇒ 引擎据此拒绝"不是我回合的结束阶段"
+	return _do(my_side, "request_end_phase", [my_side], {"k": "end_phase"})
 
 
 # ============================ 下行：应用对端 op ============================
@@ -187,7 +188,8 @@ func apply_remote(seat: int, payload) -> bool:
 		"discard":
 			ok = engine.request_discard(side, int(p.get("hand_index", -1)))
 		"end_phase":
-			ok = engine.request_end_phase()
+			## ⭐ 迭代064 联机-2：把**发送方 seat** 传进去 ⇒ 引擎校验"结束阶段的到底是不是当前行动方"
+			ok = engine.request_end_phase(side)
 		"sel":
 			## ⭐ 迭代064 UI-15：对端**选中存在性** —— **纯呈现**（不改引擎状态、不参与规则）
 			##   经总线转给视图渲染"对手选中"标记；空 cell（`_cell([])` → (-1,-1)）表示对端已取消选中。

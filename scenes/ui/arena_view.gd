@@ -819,6 +819,29 @@ func _start_exit(n: Control) -> void:
 		n.queue_free()
 
 
+## ⭐ 迭代064 联机-1：**右键任意棋盘格 = 取消选中**（本地清 + 经 `sel` op 广播）
+func _on_cell_right_clicked(_cell: Vector2i) -> void:
+	if _ui_locked: return
+	if intent != null:
+		intent.request_clear_selection()
+
+
+## ⭐ 迭代064 联机-1：**点地图外（未被任何控件消费的左键）= 取消选中**
+##   依赖 `_unhandled_input` 的语义：HUD 与棋格的点击都被各自的 Control 吃掉 ⇒
+##   只有真正"点在空处/地图外"的事件才会落到这里 —— 正合人说的"点地图外取消选中"。
+func _unhandled_input(event: InputEvent) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb := event as InputEventMouseButton
+	if not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if engine == null or engine.state == null or intent == null:
+		return
+	if int(engine.sel_kind) == 0:
+		return                     ## 本来就没选中 ⇒ 不做无谓广播
+	intent.request_clear_selection()
+
+
 func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: Array) -> void:
 	## ⚠️ 预览范围**由规则层算好装在 PreviewData 里** —— 视图只读不重算
 	_preview = preview
@@ -893,6 +916,12 @@ func _adopt_cells() -> void:
 			node.set("mouse_filter", Control.MOUSE_FILTER_STOP)
 			if node.has_signal("cell_clicked") and not node.cell_clicked.is_connected(_on_cell_clicked):
 				node.cell_clicked.connect(_on_cell_clicked)
+			## ⭐ 迭代064 联机-1（清单「点地图外取消选中在联机下无反应」）：**右键 = 取消选中**
+			##   走 `intent.request_clear_selection()` ⇒ 本地清 + 引擎发 `SIG_SELECTION`
+			##   ⇒ 视图据此经 `sel` op 广播 ⇒ 对端的"对手选中"紫框同步清除（两端一致）。
+			if node.has_signal("cell_right_clicked") \
+					and not node.cell_right_clicked.is_connected(_on_cell_right_clicked):
+				node.cell_right_clicked.connect(_on_cell_right_clicked)
 			_cells[c] = node
 
 
@@ -967,6 +996,11 @@ func _cell_pos(cell: Vector2i) -> Vector2:
 func _on_cell_clicked(cell: Vector2i) -> void:
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
+		return
+	## ⭐ 迭代064 联机-2（清单「可以操控对方的回合」）：**不是自己回合就不接受棋盘操作**
+	##   （落子 / 移动 / 攻击 / 指令目标）。引擎的 `_can_act_with()` 最终也会拒，但视图先别"邀请"
+	##   —— 否则玩家会看到范围高亮、点下去却毫无反应，观感即"能操控对方回合"。
+	if int(engine.state.active) != my_seat:
 		return
 	## ⭐ 手牌状态机（人 2026-09-19）：
 	##   在交互范围内 → 执行该卡的交互（部署 / 指定指令目标）
@@ -1119,6 +1153,11 @@ func refresh_hand_affordability() -> void:
 func _on_hand_clicked(card_id: String, side: int) -> void:
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null:
+		return
+	## ⭐ 迭代064 联机-2（清单 **联机-2**「可以操控对方的回合和手牌」）：**对手的手牌不可点**。
+	##   HUD 同时显示双方手牌（左＝敌方 / 右＝我方）⇒ 不做这道门，玩家能直接点对手的牌去选中/部署
+	##   （引擎最终会拒，但 UI 先"邀请"了 —— 正是人反馈的"操控对方手牌"）。
+	if side != my_seat:
 		return
 	var idx: int = _hand_order[side].find(card_id)
 	if idx < 0:
@@ -1385,6 +1424,9 @@ func _update_unit(inst: UnitInstance, hp_after: int) -> void:
 func _on_unit_clicked(instance_id: String) -> void:
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
+		return
+	## ⭐ 迭代064 联机-2：**不是自己回合就不接受单位操作**（同上 —— 别先邀请）
+	if int(engine.state.active) != my_seat:
 		return
 	var inst := _find_unit(instance_id)
 	if inst == null:

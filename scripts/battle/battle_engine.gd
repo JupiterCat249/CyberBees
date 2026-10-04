@@ -204,8 +204,13 @@ func request_clear_selection() -> void:
 	_emit_action_availability()
 
 
-func request_end_phase() -> bool:
+func request_end_phase(side: int = -1) -> bool:
 	if state == null or state.is_over():
+		return false
+	## ⭐ 迭代064 联机-2（清单「可以操控对方的回合」）：**只有行动方可以结束自己的阶段**。
+	##   原实现**不校验行动方** ⇒ 联机时在对手回合点一下「结束回合」，就会把**对方**的阶段结束掉
+	##   （并以自己的 op 发出 ⇒ 两端状态错乱）。`side < 0` 表示"调用方未声明"，为向后兼容**不校验**。
+	if side >= 0 and int(side) != int(state.active):
 		return false
 	if state.phase != state.Phase.DEPLOY and state.phase != state.Phase.ACTION:
 		return false                          ## 回费/场地由引擎自动推进
