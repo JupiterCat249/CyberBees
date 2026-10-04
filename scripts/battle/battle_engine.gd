@@ -406,6 +406,19 @@ func request_move(side: int, unit: UnitInstance, cell: Vector2i) -> bool:
 	var allow: Dictionary = state.board.move_range(unit)
 	if not allow.has(cell):
 		return false
+	## ⭐ ④ 修正（人 2026-10-05）：**单位移动也要双步骤** ——
+	##   阶段1：只挂"待确认格"（并把该单位保持选中 ⇒ 预览/我方的 sel 广播随之显示"他打算去哪个格" ✓）
+	##          且**返回 false ⇒ 不发 op**（让对手先在视觉上看到意图 ✓）
+	##   阶段2：同一入口再调一次（或按主按钮「确认」）⇒ 真正执行 ✓
+	if command_cell != cell or pending_action != "move":
+		command_cell = cell
+		pending_action = "move"
+		select_unit(side, unit)
+		_emit_selection()
+		_emit_button()
+		return false
+	command_cell = Vector2i(-1, -1)
+	pending_action = ""
 	var from := unit.cell
 	state.board.move_unit(unit, cell)
 	unit.mark_moved()
@@ -439,6 +452,17 @@ func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -
 		return false
 	if state.board.manhattan(attacker.cell, defender.cell) > attacker.attack_range():
 		return false
+	## ⭐ ④ 修正（人 2026-10-05）：**单位攻击也要双步骤**（阶段1 挂待确认 → 阶段2 执行 ✓），
+	##   让对手能在**结算之前**从视觉上看到"谁要打谁"（待确认格 + 双方标记 ✓）
+	if command_cell != defender.cell or pending_action != "attack":
+		command_cell = defender.cell
+		pending_action = "attack"
+		select_unit(side, attacker)
+		_emit_selection()
+		_emit_button()
+		return false
+	command_cell = Vector2i(-1, -1)
+	pending_action = ""
 	## ⚠️ 结算必须先做（迭代059 曾因 patch 误删这两行 → 攻击"命中"却不掉血）
 	Combat.resolve_attack(attacker, defender, state.board)
 	attacker.mark_acted()                      ## 行动机会 4：攻击后自动结束行动
@@ -488,6 +512,10 @@ func _declare_queen_killed(side_of_killed: int) -> void:
 ##   阶段2 = 视图点「确认」→ 再调一次同一入口 → 执行（`ok=true` ⇒ op 随 `command` 的 `target_cell` 发出）。
 ##   ⚠️ 与支援 `support_pending` **同一范式**；联机下行连调两次即可（见 `NetIntent.apply_remote`）。
 var command_cell := Vector2i(-1, -1)
+## ⭐ ④ 修正（人 2026-10-05）：「**单位行动（移动/攻击）也要双步骤**（待确认 → 确认执行），
+##   确保视觉上尽量让对手能知对方的意图」。与 `command_cell` 共用"待确认格"，用本字段区分动作类型：
+##   ""=无 / "move"=待确认移动 / "attack"=待确认攻击（指令卡仍由 command_cell + sel_hand_index 表达 ✓）
+var pending_action := ""
 
 
 ## ⭐ 迭代064 P-19：**以格为中心施放指令**（AOE / 轰炸）—— **空格也可放**（策划案「效果范围」口径）

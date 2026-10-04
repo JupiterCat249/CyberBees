@@ -1907,7 +1907,17 @@ func _on_main_pressed() -> void:
 	## ⭐ 迭代064 P-19（清单 机制-4「还应该有一个确定环节」）：待确认的**空地 AOE** →
 	##   按钮「确认」= 再调一次同一入口 ⇒ 执行（`ok=true` ⇒ op 随 `command` 的 `target_cell` 发出）
 	if engine.command_cell.x >= 0:
-		intent.request_use_command_at(engine.state.active, engine.sel_hand_index, engine.command_cell)
+		## ⭐ ④ 修正（人 2026-10-05）：待确认的**单位行动**（移动/攻击）也要能从这里「确认」执行 ——
+		##   与指令卡共用"待确认格"，按 `pending_action` 分流 ✓
+		var pa := String(engine.pending_action)
+		if pa == "move" and engine.sel_unit != null:
+			intent.request_move(engine.state.active, engine.sel_unit, engine.command_cell)
+		elif pa == "attack" and engine.sel_unit != null:
+			var tgt: UnitInstance = engine.state.board.unit_at(engine.command_cell)
+			if tgt != null:
+				intent.request_attack(engine.state.active, engine.sel_unit, tgt)
+		else:
+			intent.request_use_command_at(engine.state.active, engine.sel_hand_index, engine.command_cell)
 		return
 	## 待确认支援 → 按钮「确认」执行（迭代059 步3：恢复原设计）
 	if engine.support_pending != null:
