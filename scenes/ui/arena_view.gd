@@ -648,7 +648,9 @@ func _mark_opponent_hand(side: int, text: String) -> void:
 	for ch in container.get_children():
 		var old := ch.get_node_or_null("RemoteHandMark") as Panel
 		if old != null:
-			old.queue_free()
+			## ⚠️ 人 2026-10-05 反馈"两个甚至三个以上手牌被同时选中"：根因是这里用了 `queue_free()`
+			##   （**延迟释放** ✗）⇒ 连续多个 `sel` 到达时旧标记仍挂在树上 ⇒ 多个同时可见 ⟹ 改 `free()` 立即释放 ✓
+			old.free()
 	if text == "" or engine == null or engine.state == null:
 		return
 	var nm := text.replace("选中手牌 ", "")
@@ -687,6 +689,9 @@ func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 	if cell.x < 0:
 		_mark_opponent_hand(side, text)
 	else:
+		## ⭐ 人 2026-10-05 反馈修复：**选的是单位/移动/攻击/指令等"非选牌"目标时，必须清掉手牌选中标记**
+		##   —— 否则此前的手牌标记会一直残留（多个同时选中 ✗，正是"选中其他目标了对手却看到多个手牌被选中"）
+		_mark_opponent_hand(side, "")
 		## ⭐ ⑤ 修正（人 2026-10-05）：**不得围绕"玩家基本信息框"** ✗ ⇒ 只标具体对象 ✓
 		_on_remote_select(side, cell)
 		## ⭐ ③ 修正（人 2026-10-05）：对端**指令卡**（文本＝"选中手牌 <卡名>"）带**待确认格** ⇒
@@ -1146,7 +1151,13 @@ func _on_main_button(text: String, enabled: bool, _hint: String = "") -> void:
 		b.disabled = not enabled
 		## §二之3 line 60：结束部署 / 结束行动 = 文本白
 		b.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	$HUD/ActionBar/Label.text = text
+	## ⭐ 人 2026-10-05：「非己方回合内主按钮的文本改为等待，来到自己的回合时重新变回常态」——
+	##   ⚠️ 实测：**主按钮本体 caption 为空（""）**，玩家看到的"完成部署/结束回合"是它右侧的 **Label** ✓
+	##   ⇒ 换文案要换 Label：非我方回合显示「等待」，轮到我方时用引擎给的常态文案（text 参数）✓
+	var lbl := $HUD/ActionBar/Label as Label
+	if lbl != null:
+		var my_turn: bool = engine != null and engine.state != null and int(engine.state.active) == my_seat
+		lbl.text = text if my_turn else "等待"
 
 
 func _on_log(text: String, level: int) -> void:
@@ -1220,6 +1231,9 @@ func _adopt_cells() -> void:
 ## 做法＝**旋转容器**（MapView 绕棋盘中心）→ 底图 / 格 / 单位 / FX 一次性全部对齐；
 ## ⚠️ 数据仍是**规范 cell**（格节点保存规范 cell、点击回报规范 cell）→ 两端引擎状态天然一致
 var my_seat: int = 0
+## ⭐ 人 2026-10-05：「非己方回合内主按钮文本改为等待，来到自己的回合时重新变回常态」
+##   —— 记下"常态文案"（完成部署/结束回合），非我方回合显示「等待」，轮到我方时还原 ✓
+var _btn_text_normal := ""
 const BOARD_PX := PITCH * 4.0
 
 
