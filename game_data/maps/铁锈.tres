@@ -7,7 +7,7 @@
 
 [resource]
 script = ExtResource("2_cfmgm")
-id = "9ea7d575-8c4f-438c-a348-84383bb7a2b8"
+id = "33f81c50-0320-42d6-9bd1-51cc1a1915e6"
 display_name = "铁锈"
 terrain_texture = ExtResource("4_6gyt8")
 background_texture = ExtResource("1_msukd")

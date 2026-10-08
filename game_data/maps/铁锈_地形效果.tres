@@ -5,7 +5,7 @@
 
 [sub_resource type="Resource" id="Resource_2rnuj"]
 script = ExtResource("1_vrowq")
-id = "f5e246a2-c92b-43f5-9dff-76150ee2b591"
+id = "5c26a282-afcb-481f-9ffc-c82fdd9bc829"
 display_name = "力场"
 grants_field = true
 blocks_command = true

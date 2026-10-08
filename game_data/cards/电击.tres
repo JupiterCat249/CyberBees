@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CommandData" format=3 uid="uid://k26xjooemgi4"]
+[gd_resource type="Resource" script_class="CommandData" format=3]
 
-[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_dyemb"]
-[ext_resource type="Script" uid="uid://bjnl0nbhp36pe" path="res://scripts/data/command_data.gd" id="2_3o5g0"]
-[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_n2b1v"]
-[ext_resource type="Texture2D" uid="uid://b0via4bl2hbpw" path="res://assets/card_art/电击.png" id="4_hate6"]
-[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_v8wtn"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_dyemb"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_3o5g0"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_n2b1v"]
+[ext_resource type="Texture2D" path="res://assets/card_art/电击.png" id="4_hate6"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_v8wtn"]
 
 [sub_resource type="Resource" id="Resource_hb0xh"]
 script = ExtResource("5_v8wtn")
@@ -15,7 +15,7 @@ script = ExtResource("2_3o5g0")
 dmg = 2
 chain_span = 99
 self_to_graveyard = true
-id = "a552adab-331c-4b94-ae9d-7d9aba420fc1"
+id = "0b48639b-8f20-4020-88df-aa33d38c3445"
 display_name = "电击"
 kind = 3
 cost = 2

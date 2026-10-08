@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="CommandData" format=3 uid="uid://c2rtdldt7esee"]
+[gd_resource type="Resource" script_class="CommandData" format=3]
 
-[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_oqr0r"]
-[ext_resource type="Script" uid="uid://bjnl0nbhp36pe" path="res://scripts/data/command_data.gd" id="2_eug1e"]
-[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_nv3op"]
-[ext_resource type="Texture2D" uid="uid://psguajpnqe0q" path="res://assets/card_art/巡航导弹.png" id="4_yf80y"]
-[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_eyotj"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_oqr0r"]
+[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_eug1e"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_nv3op"]
+[ext_resource type="Texture2D" path="res://assets/card_art/巡航导弹.png" id="4_yf80y"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_eyotj"]
 
 [sub_resource type="Resource" id="Resource_0d0m8"]
 script = ExtResource("5_eyotj")
@@ -16,7 +16,7 @@ dmg = 6
 target_range = 1
 aoe_span = 1
 self_to_graveyard = true
-id = "c2601c5a-902c-401a-829a-1e57149f44d9"
+id = "519153d0-9e3d-4ccb-a229-6812d83a7d40"
 display_name = "巡航导弹"
 kind = 3
 cost = 6

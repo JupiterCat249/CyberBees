@@ -1,14 +1,14 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://botwedb6ftvnq"]
+[gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_ylq06"]
-[ext_resource type="Script" uid="uid://bicfsabbatgeh" path="res://scripts/data/unit_data.gd" id="2_ebcb0"]
-[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_8b65o"]
-[ext_resource type="Texture2D" uid="uid://cqhvdu42xkkil" path="res://assets/card_art/叶蜂.png" id="4_xwunb"]
-[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_eicwl"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_ylq06"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_ebcb0"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_8b65o"]
+[ext_resource type="Texture2D" path="res://assets/card_art/叶蜂.png" id="4_xwunb"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_eicwl"]
 
 [sub_resource type="Resource" id="Resource_out7l"]
 script = ExtResource("1_ylq06")
-id = "abe79611-bc93-4d04-8dbb-a2efb94ae0a3"
+id = "d27f5e1e-d6d9-4d3c-8b6e-f4de9492acb7"
 display_name = "领地倍伤"
 atk_mul_in_foe_territory = 2.0
 
@@ -23,7 +23,7 @@ hp = 2
 move = 2
 attack_range = 1
 passives = Array[ExtResource("1_ylq06")]([SubResource("Resource_out7l")])
-id = "d9229286-8fad-4aa2-8938-d84ea58e967b"
+id = "4e488549-3dfa-430f-82c4-2d050639a53b"
 display_name = "叶蜂"
 cost = 2
 glossary = "[被动]"

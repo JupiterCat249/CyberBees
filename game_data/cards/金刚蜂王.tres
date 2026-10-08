@@ -1,21 +1,21 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://i8vg8ar5t4n1"]
+[gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_5tybm"]
-[ext_resource type="Script" uid="uid://bicfsabbatgeh" path="res://scripts/data/unit_data.gd" id="2_t05sb"]
-[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_b07ur"]
-[ext_resource type="Texture2D" uid="uid://d13otxvrm8ot8" path="res://assets/card_art/金刚蜂王.png" id="4_3v5yk"]
-[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_7om1r"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_5tybm"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_t05sb"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_b07ur"]
+[ext_resource type="Texture2D" path="res://assets/card_art/金刚蜂王.png" id="4_3v5yk"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_7om1r"]
 
 [sub_resource type="Resource" id="Resource_t7ryj"]
 script = ExtResource("1_5tybm")
-id = "7a1b1b23-13bf-4980-a690-87eeeff221cd"
+id = "c7c853c2-3b16-4f9f-9869-69f0851da6cc"
 display_name = "装甲"
 blocks_attack = true
 metadata/armor_layers = 2
 
 [sub_resource type="Resource" id="Resource_i2mb2"]
 script = ExtResource("3_b07ur")
-id = "1d61b78f-5f0a-433c-b51d-349f6a4f3324"
+id = "badaf1bb-90b3-4b9c-bb15-2b952947079a"
 display_name = "装甲"
 kind = 2
 glossary = "部署"
@@ -34,7 +34,7 @@ move = 1
 attack_range = 1
 refund = 4
 immune_command = true
-id = "36a37ae4-6195-4ac0-bd81-1bbc23099a0d"
+id = "db6fbcb9-7058-413e-b592-ddcf8adff5eb"
 display_name = "金刚蜂王"
 kind = 0
 glossary = "[回费]"

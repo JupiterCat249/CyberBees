@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://ci6rxdcg1wyu4"]
+[gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_ur62j"]
-[ext_resource type="Script" uid="uid://bicfsabbatgeh" path="res://scripts/data/unit_data.gd" id="2_dk8u6"]
-[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_ohyqe"]
-[ext_resource type="Texture2D" uid="uid://b3fwbgejacjcx" path="res://assets/card_art/蜂巢.png" id="4_tmeav"]
-[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_bvs61"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_ur62j"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_dk8u6"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_ohyqe"]
+[ext_resource type="Texture2D" path="res://assets/card_art/蜂巢.png" id="4_tmeav"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_bvs61"]
 
 [sub_resource type="Resource" id="Resource_ejeaq"]
 script = ExtResource("5_bvs61")
@@ -14,7 +14,7 @@ artwork = ExtResource("4_tmeav")
 script = ExtResource("2_dk8u6")
 hp = 5
 refund = 1
-id = "7ff6bb4c-7e79-4703-88a9-2a2ae161e332"
+id = "9db9b521-f71d-4526-8128-006387a30cf3"
 display_name = "蜂巢"
 kind = 2
 cost = 3

@@ -61,14 +61,26 @@ func _generate_deck() -> void:
 	var specs_by_name := {}
 	for spec in CardPoolLib.CARDS:
 		specs_by_name[spec["name"]] = spec
-	# 先把卡牌资源按名字加载进来
-	for spec in CardPoolLib.CARDS:
-		var p := "%s/cards/%s.tres" % [ROOT, _safe(spec["name"])]
+	## ⚠️ 既有缺陷修复（2026-10-08 本轮排查时抓到 · 与"卡组顺序不对"直接相关）：
+	##   **必须按 `DECK_NAMES` 的顺序加载** —— Godot 给 `[ext_resource]` 编的 `id`
+	##   （`1_xxx`、`2_xxx`…）是按**加载/建号顺序**分配的，而 `cards = Array[...]([...])`
+	##   里引用的就是这串 id ⇒ 原实现（按 `CARDS` 全池顺序先加载）会把 id 号按**卡池顺序**排，
+	##   于是落盘后 `cards` 的**实际顺序**是卡池序（叶蜂·泥蜂·熊蜂·电击…）**而不是钉死序** ✗。
+	##   依据：a500「前 4 张＝初始手牌」⇒ **顺序即语义**，必须与 `DECK_NAMES` 完全一致。
+	##   （此前"按名 append"看似保序，但 id 已定序 ⇒ 只对**先加载的那批**成立 ⇒ 是个隐形陷阱。）
+	for nm in CardPoolLib.DECK_NAMES:
+		var p := "%s/cards/%s.tres" % [ROOT, _safe(nm)]
 		if ResourceLoader.exists(p):
-			by_name[spec["name"]] = load(p)
+			by_name[nm] = load(p)
 	for nm in CardPoolLib.DECK_NAMES:
 		if by_name.has(nm):
-			dd.cards.append(by_name[nm])
+			var res: Resource = by_name[nm]
+			## ⚠️ 蜂王**已单独挂在 `dd.queen`**，而 `DECK_NAMES` 里也写着"金刚蜂王" ⇒
+			##   不能重复塞进 `dd.cards`（否则 9 张、违反 a500 构筑 1，回读校验会报「不符」）。
+			##   与 `scripts/data/card_pool.gd::build()` 的同一处修复保持一致（两处同源，必须同时修）。
+			if res is CardData and (res as CardData).kind == CardData.CardKind.QUEEN:
+				continue
+			dd.cards.append(res)
 	dd.queen = by_name.get("金刚蜂王", null)
 	_save(dd, "%s/decks/示范卡组.tres" % ROOT)
 

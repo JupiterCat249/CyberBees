@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://c8ii53cl5rv63"]
+[gd_resource type="Resource" script_class="UnitData" format=3]
 
-[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_cea5b"]
-[ext_resource type="Script" uid="uid://bicfsabbatgeh" path="res://scripts/data/unit_data.gd" id="2_jide4"]
-[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_wjlf0"]
-[ext_resource type="Texture2D" uid="uid://dw4adctnptve2" path="res://assets/card_art/泥蜂.png" id="4_ln5l5"]
-[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_jaejp"]
+[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_cea5b"]
+[ext_resource type="Script" path="res://scripts/data/unit_data.gd" id="2_jide4"]
+[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_wjlf0"]
+[ext_resource type="Texture2D" path="res://assets/card_art/泥蜂.png" id="4_ln5l5"]
+[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_jaejp"]
 
 [sub_resource type="Resource" id="Resource_b53yf"]
 script = ExtResource("5_jaejp")
@@ -16,7 +16,7 @@ atk = 4
 hp = 6
 move = 1
 attack_range = 2
-id = "8316a690-b712-49e6-ab78-13d152e286d9"
+id = "6516c1d5-3f17-42d8-8b10-eea6fb1a4b75"
 display_name = "泥蜂"
 cost = 4
 description = "无"
