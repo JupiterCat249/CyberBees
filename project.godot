@@ -41,6 +41,10 @@ enabled=PackedStringArray("res://addons/dsh_godot/plugin.cfg", "res://addons/gd-
 
 directory_path="res://addons/godot-idea-board/savedata/"
 
+[net]
+
+profile="prod"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
