@@ -559,7 +559,11 @@ func _display_image(path: String) -> void:
 	rect.texture = texture
 	rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	var width := minf(float(image.get_width()), 460.0)
+	## ⚠️ 收敛（2026-10-08）：**停靠面板里任何"按内容设最小宽度"的控件都会顶宽右列 ⇒ 挤掉底部面板带**
+	##   （根因定论见 `系统维护/开发环境/编辑器显示缩放导致的底部被裁-修复记录（2026-10-04）.md` §九/§二十八）。
+	##   本处是聊天流里的**图片预览**：原上限 460px 宽 ⇒ 右列被顶宽 ⇒ 底部页签条＋状态栏消失
+	##   （表现为"启动后/贴图后复发，要手动切一下面板才唤回"）。故上限 460 → **300**。
+	var width := minf(float(image.get_width()), 300.0)
 	var height := maxf(width * float(image.get_height()) / float(image.get_width()), 180.0)
 	rect.custom_minimum_size = Vector2(width, minf(height, 360.0))
 	_messages_box.add_child(rect)
