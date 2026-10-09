@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://wkb41sx5gq14"]
+
+[ext_resource type="Script" path="res://verification/env_selfcheck.gd" id="1_v3pba"]
+
+[node name="EnvSelfCheck" type="Node" unique_id=431149143]
+script = ExtResource("1_v3pba")
