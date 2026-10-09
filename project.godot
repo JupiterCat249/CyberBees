@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 _mcp_game_helper="*res://addons/godot_ai/runtime/game_helper.gd"
+NetDiagDump="*res://scripts/diag/net_diag_dump.gd"
 
 [display]
 
