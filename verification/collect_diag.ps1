@@ -96,4 +96,40 @@ if (-not $NoZip) {
 }
 
 Write-Host "Done. Send the OutDir contents back for comparison." -ForegroundColor Green
+
+# --- 5. hold the window open (so the result can be read / screenshotted) ------
+# Why: when launched by double-click the console would close instantly and the
+#   operator has no time to read the paths or take a screenshot.
+$hold = 90
+if ($env:DIAG_HOLD_SEC) { $hold = [int]$env:DIAG_HOLD_SEC }
+Write-Host ""
+Write-Host ("=" * 62)
+Write-Host ("[OK] FINISHED  {0}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss')) -ForegroundColor Green
+Write-Host ("      output folder : {0}" -f $OutDir)
+if ($zip) { Write-Host ("      zip to send   : {0}" -f $zip) }
+Write-Host ""
+Write-Host "      In that folder:" -ForegroundColor Cyan
+Get-ChildItem -LiteralPath $OutDir -File |
+	Sort-Object LastWriteTime -Descending |
+	Select-Object -First 10 |
+	ForEach-Object { Write-Host ("        {0,-46} {1,10:N0} B" -f $_.Name, $_.Length) }
+Write-Host ""
+Write-Host ("      This window stays open ~{0}s for screenshots." -f $hold) -ForegroundColor Yellow
+Write-Host "      >> Press any key to close immediately <<" -ForegroundColor Yellow
+Write-Host ("=" * 62)
+# Countdown loop: exits as soon as a key is pressed (no need to wait it out).
+# Guard: when stdin is redirected / there is no console (piped, CI, task runner),
+#   [Console]::KeyAvailable throws InvalidOperationException -> fall back to a plain sleep.
+$canPoll = $true
+try { $null = [Console]::KeyAvailable } catch { $canPoll = $false }
+if ($canPoll) {
+	for ($i = $hold; $i -gt 0; $i--) {
+		try {
+			if ([Console]::KeyAvailable) { $null = [Console]::ReadKey($true); break }
+		} catch { Start-Sleep -Seconds $hold; break }
+		Start-Sleep -Milliseconds 1000
+	}
+} else {
+	Start-Sleep -Seconds $hold
+}
 exit 0

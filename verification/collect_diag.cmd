@@ -22,7 +22,9 @@ if "%RC%"=="0" (
 ) else (
   echo [FAILED] rc=%RC%
   echo   - "diag dir not found" means the game was not run yet on this code.
-  echo   - Otherwise: make sure your repo is at commit 07ec245 or newer.
+  echo   - Otherwise: make sure your repo is up to date ^(git pull^).
 )
 echo.
-pause
+echo The PowerShell output above (paths / file list) can be screenshotted.
+echo Press Enter to close this window.
+set /p _=
