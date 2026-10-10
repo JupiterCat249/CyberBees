@@ -1102,15 +1102,22 @@ func _apply_detail_params() -> void:
 		##   `DetailBlock` = 284×284、内框 `Artwork` = **274×274** ⇒ 立绘**溢出 26px 且贴左上角** ✗
 		##   （实测：`Portrait size=(300,300)` / `Artwork (274,274)`）
 		##   修法：**以父框实测尺寸为准铺满**（不写死），并保持宽高比居中 —— 区再改也不用回来改这里。
+		## ⚠️ 2026-10-10 **二次修正**（人：「立绘还是偏右而不是居中」—— 实测定位到残留问题）：
+		##   ① 定位要**相对父框原点**：`Portrait` 的父 `Artwork` 自身在 `(4,4)`，
+		##      `Portrait.position=(0,0)` 是**相对 Artwork** 的 ⇒ 观感**偏左上 4px**
+		##      （实测：框心 `(141,141)` / 立绘心 `(137,137)`）✗
+		##   ② 场景里 `stretch_mode = 5` 是 **KEEP_ASPECT_COVERED（会裁切）** ⇒
+		##      构图偏右的立绘右侧被切掉 ⇒ 观感"偏右"；改为 **KEEP_ASPECT_CENTERED（按比例居中、不裁）** ✓
 		var frame := portrait.get_parent() as Control
 		var fit: Vector2 = frame.size if frame != null else p.art_size
-		if fit.x > 1.0 and fit.y > 1.0:
-			portrait.size = fit
-			## 铺满父框左上角 + 垂直微调（`art_offset_y`，默认 0；不改比例/字号）
-			portrait.position = Vector2(0.0, p.art_offset_y)
-		else:
-			portrait.size = p.art_size
-		## 留白不裁切、按比例居中：既不出黑边也不压扁（细节见 ②「立绘不得被拉伸」同一口径）
+		portrait.size = fit if (fit.x > 1.0 and fit.y > 1.0) else p.art_size
+		portrait.position = Vector2.ZERO
+		## 垂直微调：**优先读 `Portrait` 节点上的 `metadata/art_offset_y`**（编辑器可改、可观察），
+		## 回退 `DetailParams.art_offset_y`（默认 0）。⚠️ 不动比例、不改字号。
+		var off_y: float = p.art_offset_y
+		if portrait.has_meta("art_offset_y"):
+			off_y = float(portrait.get_meta("art_offset_y"))
+		portrait.position.y = off_y
 		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		## ⚠️ 不设 `label`/`clip`：立绘源图与框同量级时按比例居中即可
