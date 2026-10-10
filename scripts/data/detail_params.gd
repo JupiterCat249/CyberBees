@@ -15,11 +15,18 @@ extends Resource
 ##   | 费用徽章 | 无 | 60 x 65 + 26px |
 
 ## ============ 立绘槽 ============
+## ⚠️ 2026-10-10（人反馈「详情区尺寸调整后立绘需要跟着调」）：
+##   详情区被重排后 `DetailBlock` 284×284 / `Artwork`(内框) **274×274**，而本值仍是 300×300
+##   ⇒ **Portrait 溢出轨 26px 且贴左上角**（实测：`Portrait size=(300,300)` 塞在 `Artwork (274,274)` 里）。
+##   ⇒ 运行期改为**读父框实测尺寸**并铺满（`arena_view._apply_detail_params`），本值降级为**兜底上限**。
 @export var art_size: Vector2 = Vector2(300, 300)
 ## 立绘源图基准尺寸（详情区与手牌卡共用同一批卡面素材，但显示尺寸不同）
 @export var art_base_scale: Vector2 = Vector2(1.0, 1.0)
 @export var crop_offset: Vector2 = Vector2.ZERO
 @export var crop_scale: float = 0.0            ## <=0 = 用 base_scale
+## ⭐ 立绘**垂直微调**（像素，正数=向下）：仅挪锚点，**不动比例、不改字号**。
+##   用途：立绘构图（头/身重心）与框心不重合时按实测校准（人可回填此值）。
+@export var art_offset_y: float = 0.0
 
 ## ============ 文字（**默认 0 = 沿用素材场景原值，不覆盖字号**）============
 ## ⚠️ 人 2026-09-19 明确：不要改字号。故默认全 0（不改），

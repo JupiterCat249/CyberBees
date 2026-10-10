@@ -105,6 +105,19 @@ func bind(data: Dictionary) -> void:
 	var tex = data.get("art", null)
 	if tex is Texture2D:
 		_set_prop("Artwork/ArtPlane/TextureRect", "texture", tex)
+		## ⭐ 迭代067（人 2026-10-10：「战场上卡牌单位的单位立绘存在**纵向压缩**」）：
+		##   **真因**：该 `TextureRect` 是 **500×500 的方框**（`scale=0.5` ⇒ 实际 250×250），
+		##   而立绘源图是 **250×258** ⇒ 被硬拉成正方形 ⇒ **纵向 −3.1%**（人说的"不明显但确实存在"）。
+		##   修法（**不写死尺寸**，按贴图自身比例导出）：宽取框宽、**高 = 宽 × 贴图高宽比**；
+		##   并让它在框内**按比例居中**（`STRETCH_KEEP_ASPECT_CENTERED`）—— 换任何素材都不会再被压。
+		var art := get_node_or_null("Artwork/ArtPlane/TextureRect") as TextureRect
+		if art != null:
+			var ts: Vector2 = (tex as Texture2D).get_size()
+			if ts.x > 1.0 and ts.y > 1.0:
+				var w: float = maxf(art.size.x, 1.0)
+				art.size = Vector2(w, w * ts.y / ts.x)
+			art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	# **类型图标**：按单位类型切换（unit / queen / building / order）
 	_bind_type_icon(String(data.get("type", "unit")))
 	# **持有效果**：卡面小图标条（数据由 `arena_view._effect_badges()` 装配）

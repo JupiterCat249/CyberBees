@@ -1018,7 +1018,23 @@ func _apply_detail_params() -> void:
 		ds.add_theme_constant_override("line_spacing", int(p.desc_line_spacing))
 	var portrait := $HUD/InfoPanel/DetailBlock/Artwork/Portrait as TextureRect
 	if portrait != null:
-		portrait.size = p.art_size
+		## ⭐ 迭代067（人 2026-10-10：详情区尺寸调整后立绘要跟着修）：
+		##   原实现 `portrait.size = p.art_size`（**写死 300×300**）—— 而详情区重排后
+		##   `DetailBlock` = 284×284、内框 `Artwork` = **274×274** ⇒ 立绘**溢出 26px 且贴左上角** ✗
+		##   （实测：`Portrait size=(300,300)` / `Artwork (274,274)`）
+		##   修法：**以父框实测尺寸为准铺满**（不写死），并保持宽高比居中 —— 区再改也不用回来改这里。
+		var frame := portrait.get_parent() as Control
+		var fit: Vector2 = frame.size if frame != null else p.art_size
+		if fit.x > 1.0 and fit.y > 1.0:
+			portrait.size = fit
+			## 铺满父框左上角 + 垂直微调（`art_offset_y`，默认 0；不改比例/字号）
+			portrait.position = Vector2(0.0, p.art_offset_y)
+		else:
+			portrait.size = p.art_size
+		## 留白不裁切、按比例居中：既不出黑边也不压扁（细节见 ②「立绘不得被拉伸」同一口径）
+		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		## ⚠️ 不设 `label`/`clip`：立绘源图与框同量级时按比例居中即可
 	var attrs := $HUD/InfoPanel/Attributes
 	if attrs != null:
 		for i in int(p.attr_rows):
@@ -1053,12 +1069,16 @@ func _apply_one_hand_params(node, p) -> void:
 		## ⚠️ 人 2026-10-05：费用图标"疑似横向被压缩" —— 与立绘窗**同一类问题**：
 		##   徽章贴图被硬拉进固定 `60×65` 矩形 ⇒ 宽高比被破坏 ✗。
 		##   修法同立绘：宽取参数值，**高按贴图自身宽高比推导** ✓（参数仍是被尊重的"宽"基准）。
-		var bsz: Vector2 = p.badge_size
-		if badge.texture != null:
-			var bt: Vector2 = badge.texture.get_size()
-			if bt.x > 1.0 and bt.y > 1.0:
-				bsz = Vector2(p.badge_size.x, p.badge_size.x * bt.y / bt.x)
-		badge.size = bsz
+		## ⭐ 迭代067 追加（人 2026-10-10：「费用数字相对父节点过度靠下」）：
+		##   实测徽章贴图 **91×101**（纵向比 **1.110**）⇒ 按上一行推导会把节点撑成 **60×66.6**，
+		##   而节点自身是 **60×60** ⇒ 贴图被**纵向拉长**、六边形比设计稿更"高"
+		##   ⇒ 数字虽在**节点内**居中（实测 ΔY=+1.0px），却相对这个**被拉长的六边形**显得靠下 ✗
+		##   依据：策划案 §2.4「费用徽章标注区域 **100×100**」+ §2.7「费用/徽章**内描边 4px**」
+		##   ⇒ 徽章本体是**正方形**，贴图应按比例**居中**而不是撑满。
+		##   修法：节点保持参数给的**正方形**尺寸，贴图 `KEEP_ASPECT_CENTERED`（不再拉伸、不再改变节点高）。
+		badge.size = p.badge_size
+		badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		var bv: Label = badge.get_node_or_null("Value")
 		## ⚠️ 只在显式给正数时覆盖字号（人 2026-09-19：不要改字号）
 		##    素材原值 48；之前这里覆盖成 26 → 变小

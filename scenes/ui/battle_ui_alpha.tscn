@@ -152,6 +152,12 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 1, 1, 0.1)
+corner_detail = 8
 
 [sub_resource type="StyleBoxFlat" id="R18"]
 bg_color = Color(0.541176, 0.541176, 0.541176, 1)
@@ -159,6 +165,12 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 1, 1, 0.1)
+corner_detail = 8
 
 [sub_resource type="SystemFont" id="R21"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
@@ -564,30 +576,34 @@ vertical_alignment = 1
 [node name="DetailBlock" type="Control" parent="HUD/InfoPanel" unique_id=120224723]
 anchors_preset = 0
 offset_top = 190.0
-offset_right = 300.0
-offset_bottom = 490.0
+offset_right = 284.0
+offset_bottom = 474.0
 mouse_filter = 2
 
 [node name="BlockBg" type="Panel" parent="HUD/InfoPanel/DetailBlock" unique_id=1856663289]
 layout_mode = 0
-offset_right = 300.0
-offset_bottom = 320.0
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 284.0
+offset_bottom = 284.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R10")
 
 [node name="BlockFrame" type="Panel" parent="HUD/InfoPanel/DetailBlock" unique_id=74546701]
 layout_mode = 0
-offset_left = 2.0
-offset_top = 22.0
-offset_right = 298.0
-offset_bottom = 318.0
+offset_left = -1.0
+offset_top = -1.0
+offset_right = 283.0
+offset_bottom = 283.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R11")
 
 [node name="Artwork" type="Panel" parent="HUD/InfoPanel/DetailBlock" unique_id=953288216]
 layout_mode = 0
-offset_right = 300.0
-offset_bottom = 320.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 278.0
+offset_bottom = 278.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R12")
 
