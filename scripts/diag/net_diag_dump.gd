@@ -624,6 +624,36 @@ func _section_turnstate(out: PackedStringArray) -> void:
 					continue
 				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f)" % [
 					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a])
+	## ⭐ 地图单位几何（**迭代065 数据镜像的取证位**）——
+	##   人 2026-10-10 报「对端初始两个蜂王普遍向右向下各移动一格」；本段给出：
+	##   规范格（元数据）· 节点局部位置 · 全局位置 · 旋转 · 以及**该规范格节点自身的局部位置**。
+	##   ⇒ 两端各发一份：若"规范格相同、而节点的 local 与该格节点的 local 不等"，即定位/镜像有偏。
+	var units_root := cs.get_node_or_null("Battle/MapView/Units") as Control
+	var cells_root2 := cs.get_node_or_null("Battle/MapView/MapCells") as Control
+	out.append("  --- 地图单位几何（规范格 → 节点位置 → 该格节点位置）---")
+	if units_root == null:
+		out.append("    <无 Units 容器>")
+	else:
+		var ucount := 0
+		for u in units_root.get_children():
+			var uc := u as Control
+			if uc == null:
+				continue
+			ucount += 1
+			var canon = uc.get_meta("cell", null)
+			var cell_local := "<无格节点>"
+			var cell_global := "-"
+			if canon != null and cells_root2 != null:
+				var cn := cells_root2.get_node_or_null("Cell_%d_%d" % [int(canon.x), int(canon.y)]) as Control
+				if cn != null:
+					cell_local = str(cn.position)
+					cell_global = str(cn.global_position)
+			out.append("    %-20s 规范格=%s | 单位 local=%s global=%s rot=%.4f | 该格 local=%s global=%s | 吻合=%s" % [
+				String(uc.name), str(canon), str(uc.position), str(uc.global_position), uc.rotation,
+				cell_local, cell_global,
+				str(str(uc.position) == cell_local)])
+		if ucount == 0:
+			out.append("    (当前无单位)")
 
 
 ## §D 运行时变化 + 事件流

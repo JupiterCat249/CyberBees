@@ -625,11 +625,20 @@ func _check_cell_mirror_data_driven() -> void:
 	for ctl in cells:
 		var canon1: Vector2i = ctl.get("cell")
 		var canon_p1 := Vector2(float(canon1.y) * pitch, float(canon1.x) * pitch)
-		var mirror_p := Vector2(ext, ext) - canon_p1
+		## ⚠️ 必须再 `− PITCH`：格 `position` 是**左上角**，而镜像按**格心**定义
+		##    （漏掉 ⇒ 每格 +250,+250 —— 人实测"单位整体向右向下各移动一格"）
+		var mirror_p := Vector2(ext, ext) - canon_p1 - Vector2(pitch, pitch)
 		if not mirror_p.is_equal_approx(ctl.position):
 			bad1 += 1
 	_ok("065 seat0：16 格 = 规范坐标（恒等）", bad0 == 0, " 不符 %d 格" % bad0)
-	_ok("065 seat1：16 格 = N·PITCH − 规范坐标（数据镜像）", bad1 == 0, " 不符 %d 格" % bad1)
+	_ok("065 seat1：16 格 = N·PITCH − 规范坐标 − 格宽", bad1 == 0, " 不符 %d 格" % bad1)
+	## ⭐ 物理约束（**这条正是上一版漏 −PITCH 时能一眼抓住的判据**）：镜像后每格必须落在棋盘矩形内
+	var oob := 0
+	for ctl2 in cells:
+		var q: Vector2 = ctl2.position
+		if q.x < -0.001 or q.y < -0.001 or q.x > ext - pitch + 0.001 or q.y > ext - pitch + 0.001:
+			oob += 1
+	_ok("065 seat1：16 格全部落在棋盘内（0 .. N·PITCH−格宽）", oob == 0, " 越界 %d 格" % oob)
 	# ① 旋转必须恒为 0（含 pivot —— 旧实现靠 pivot + rotation 做镜像）
 	_view.call("set_my_seat", 1)
 	var rot_ok := is_zero_approx(mv.rotation) and mv.pivot_offset.is_equal_approx(Vector2.ZERO)

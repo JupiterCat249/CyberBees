@@ -496,6 +496,47 @@ func _center_badge_value(badge: Control) -> void:
 	_center_badge_value_geometry(badge)
 
 
+## ⭐ 费用数字的**确定性字体**（迭代065 续，人 2026-10-10「对端费用数字依然偏下」的根因修法）
+##   为何必须显式绑定：两个 `Value` 原本用 `SystemFont` + 候选族名 ⇒ **按机器上装了什么字体解析**
+##   （本机 Noto Sans SC：`ascent=65/descent=13/高=78`；对端若落到 Microsoft YaHei 则行盒比例不同）
+##   ⇒ 同为"垂直居中"，**字形的视觉落点却差若干像素** ⇒ 外观随机器变化，违反"不假设两台一致"。
+##   绑到项目内已入库的 `assets/fonts/NotoSansSC-Bold.ttf` ⇒ **两端同一字体文件、同一行盒**。
+const NUMBER_FONT_PATH := "res://assets/fonts/NotoSansSC-Bold.ttf"
+static var _number_font: Font = null
+
+
+func _apply_number_font(lb: Control) -> void:
+	if lb == null or not (lb is Label):
+		return
+	## 幂等：已经绑过同一字体就不再动
+	if lb.has_meta("num_font_done"):
+		return
+	if _number_font == null and ResourceLoader.exists(NUMBER_FONT_PATH):
+		var res := load(NUMBER_FONT_PATH)
+		if res is FontFile:
+			var ff := res as FontFile
+			## ⚠️ **就绪判据不能只看 `data`**：导入字体是**压缩懒加载**（`.import` 里 `compress=true`，
+			##    实际数据在 `res://.godot/imported/*.fontdata`），`data` 可能非空而 TextServer 仍拿不到字形
+			##    ⇒ 此时挂 override 会持续刷 `Parameter "fd" is null`（实测）。
+			##    改用**能真正驱动 TextServer 的探测**（`get_height`）当就绪判据，探测失败就本轮不绑、下次再试。
+			var ok := false
+			if ff.data != null and ff.data.size() > 0:
+				var h := 0.0
+				h = ff.get_height(48)      ## 触发字形数据加载；未就绪时会报错但被下面的容错吃掉
+				ok = h > 0.0
+			if ok:
+				_number_font = ff
+	if _number_font == null:
+		return                       ## 字体缺失/未就绪时保持原状（不阻断渲染，下次再试）
+	## ⚠️ **延到首帧之后应用**：实测在 `_ready()` 期间挂 override，会撞上**首帧布局/字形数据绑定**，
+	##    刷 8 次 `Parameter "fd" is null`（每个费用数字一次），之后自愈。
+	##    `call_deferred` 让应用落在本轮布局结束之后 ⇒ 既不报错，绑定时机也不影响观感。
+	if not lb.has_meta("num_font_pending"):
+		lb.set_meta("num_font_pending", true)
+		lb.call_deferred("add_theme_font_override", "font", _number_font)
+		lb.set_meta("num_font_done", true)
+
+
 ## 把徽章里的数字**几何居中**到徽章正中（幂等；供信息栏与手牌卡**两处共用**）
 ## ⭐ 为什么两处要共用一个实现：人 2026-10-10 反馈"联机对端**费用数字过度靠下**" ——
 ##   两边原来各写一套（信息栏走 `_center_badge_value`、手牌走 `_apply_one_hand_params`），
@@ -515,6 +556,16 @@ func _center_badge_value_geometry(badge: Control) -> void:
 	if lb == null:
 		return
 	lb.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	## ⭐⭐ 迭代065 续：**费用数字改用「项目自带字体」**（根因修法，异机度量一致）
+	##   人 2026-10-10：「对端**手牌与玩家信息栏的费用数字依然偏下**」；而本机实测**几何完全正确**
+	##   （徽章与 `Value` 同矩形、`H/V` 都居中、offsets 全 0）⇒ 差异只能在**字形/字体**。
+	##   **查明**：这两个 `Value` 用的是**系统字体** `SystemFont`，候选
+	##     `["Noto Sans SC","Source Han Sans CN","Microsoft YaHei"]`
+	##     ⇒ **哪台机装了什么字体，就解析到不同的族**（本机落到 Noto Sans SC：`ascent=65/descent=13`；
+	##       对端大概率落到 Microsoft YaHei，**行盒比例不同**）⇒ 同为"垂直居中"，**数字的视觉落点却不同** ✗
+	##   **修法**：显式绑定项目内已随仓的 `assets/fonts/NotoSansSC-Bold.ttf`（`FontFile`）
+	##     ⇒ **两端解析到同一个字体文件 ⇒ 行盒完全相同 ⇒ 数字落点一致**。
+	_apply_number_font(lb)
 	if lb is Label:
 		var l := lb as Label
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1713,13 +1764,20 @@ func _cell_pos(cell: Vector2i) -> Vector2:
 ##   · 坐标语义分裂：`_cell_pos()` 给的是**规范坐标**，实际屏上位置却由父节点旋转决定
 ##   · 点击/预览/动画都要在脑子里过一遍 180° 变换（`地图抖动` 等动画也被牵连翻转）
 ##
-## 数据镜像公式（**已在运行中逐格对拍验证**：seat0/seat1 各 **全 16 格完全一致**）：
-##   `镜像局部坐标 = N·PITCH − 规范局部坐标`（即"180° 绕棋盘中心的矩形变换"，`flip(v) = EXT − v`）
+## 数据镜像公式：
+##   ⚠️ **必须再减一个格宽 `PITCH`** —— 格节点的 `position` 是**格的左上角**，而 180° 旋转作用在**格心**：
+##      `mirror(格心) = EXT − 格心` ⇒ `mirror(左上角) = EXT − 左上角 − PITCH`。
+##   **错解代价（人 2026-10-10 实测抓到）**：漏掉 `− PITCH` ⇒ 每格都 **+250,+250**
+##      ⇒ 对端看到**单位与整盘向右向下各移动一格**；且 `Cell_0_0` 落到 `y=1000`（**越出 0..1000 的棋盘**）。
+##   ⭐ **我上一版的"对拍验证"是错的**：我拿**旧旋转实现**当基准，而 `rotation=PI` 把 (0,0) 转到 (1000,1000)
+##      **同样是错的** ⇒ 我把"与错误等价"当成了"正确"。
+##      **教训：基准必须来自设计/物理事实**（格心↔格心、且结果必须落在棋盘范围内），
+##      不能拿**被替换掉的实现**当真理。
 func _view_cell_pos(cell: Vector2i) -> Vector2:
 	var p := _cell_pos(cell)
 	if not BoardMirror.needs_mirror(my_seat):
 		return p
-	return Vector2(BOARD_PX, BOARD_PX) - p
+	return Vector2(BOARD_PX, BOARD_PX) - p - Vector2(PITCH, PITCH)
 
 
 ## 把 `_cells` 里所有格节点按**当前座位视角**重排（幂等；`set_my_seat` 与初始化各调一次）
