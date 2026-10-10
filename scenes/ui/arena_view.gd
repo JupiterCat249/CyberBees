@@ -563,16 +563,39 @@ func _install_main_button_stroke() -> void:
 		stroke.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		stroke.z_index = 2
 		bar.add_child(stroke)
-	## 位置与按钮对齐；内描边 = 设计稿的 (1492,572) 相对按钮 (1490,570) ⇒ **内缩 2px**、
-	##   尺寸 396×96（= 400-4 / 100-4）；圆角 8；边框 4px `#FFFFFF-10%`；底色透明
-	stroke.position = Vector2(2, 2)
-	stroke.size = Vector2(396, 96)
+	## 位置与尺寸：**与手牌描边同口径 —— 贴边、同宽 4px**
+	## ⚠️ 2026-10-10 修正（人：「主按钮的描边**太粗了**，要和手牌描边的粗细程度统一」）：
+	##   实测两条描边**宽度都是 4px**（手牌 `1490..1494`、按钮 `1492..1496`）⇒ 差异**不在粗细**，在**位置**：
+	##     · 手牌 `InnerLine`（4px/圆角8）**贴卡边**铺满 200×200
+	##     · 我上一版把覆盖层放在 `(2,2) 396×96`（照搬设计稿的"内缩 2px"）⇒ 描边**浮在里侧 2px**
+	##       ⇒ 视觉上"多出来一圈白边"，看着更粗 ✗
+	##   ⇒ 改为**覆盖层 = 按钮矩形**（贴边），仍 4px / 圆角 8 / `#FFFFFF-10%` ⇒ 与手牌一致。
+	const STROKE_W := 4
+	const STROKE_R := 8
+	stroke.position = Vector2.ZERO
+	stroke.size = Vector2(400, 100)
 	var sb2 := StyleBoxFlat.new()
 	sb2.bg_color = Color(0, 0, 0, 0)
 	sb2.border_color = Color(1, 1, 1, 0.1)
-	sb2.set_border_width_all(4)
-	sb2.set_corner_radius_all(8)
+	sb2.set_border_width_all(STROKE_W)
+	sb2.set_corner_radius_all(STROKE_R)
 	stroke.add_theme_stylebox_override("panel", sb2)
+	## 按钮尺寸变了也跟着贴边（不影响手牌链路）
+	if not bar.resized.is_connected(_fit_main_button_stroke):
+		bar.resized.connect(_fit_main_button_stroke)
+	_fit_main_button_stroke()
+
+
+## 让描边覆盖层始终**贴住**按钮矩形（幂等；供 `ActionBar.resized` 回调）
+func _fit_main_button_stroke() -> void:
+	var bar := get_node_or_null("HUD/ActionBar") as Control
+	if bar == null:
+		return
+	var stroke := bar.get_node_or_null("MainButtonStroke") as Control
+	if stroke == null:
+		return
+	stroke.position = Vector2.ZERO
+	stroke.size = bar.size
 
 
 ## 把主按钮文案**水平居中**到 ActionBar 宽度内（供 `resized` 回调；幂等）
