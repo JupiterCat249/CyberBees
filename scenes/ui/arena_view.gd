@@ -118,6 +118,11 @@ func _ready() -> void:
 	## 🧪 诊断信号接线（跨尺寸扫查用；见 `diag_request` / `_on_diag_request`）
 	if not diag_request.is_connected(_on_diag_request):
 		diag_request.connect(_on_diag_request)
+	## ⭐ 自适应窗口（2026-10-10，**异机实测驱动**）：保证**渲染区 ≥ 设计分辨率**
+	##   实测（另一台机器，1920×1080 屏）：窗口被 OS 压到 **1920×1055**（比设计矮 25px）
+	##   ⇒ `canvas_items + expand` 把视口撑成 **1965×1080**（宽 45px）⇒ 靠下的 UI 被推出屏幕。
+	##   本机 2560×1600 屏没有这个约束，所以"本机不复现"。此处按**实际可用区**自动兜住。
+	_fit_window_to_design()
 	## 动画引擎（迭代060 v4）：唯一动画宿主；帧数计时 + 确定性推进（回放一致）
 	anim = preload("res://scripts/anim/anim_player.gd").new()
 	anim.name = "AnimPlayer"
@@ -508,6 +513,53 @@ func _flash_msg(text: String) -> void:
 
 
 ## （HUD 提示已按人要求省略 —— 反馈走控制台）
+
+# ============================================================
+#  🖥️ 自适应窗口（保证渲染区 ≥ 设计分辨率 —— **不假设两台机器一致**）
+# ============================================================
+## 问题（2026-10-10 异机实测定位）：
+##   项目设计分辨率 **1920×1080**，而 UI 坐标全是设计分辨率下的绝对像素。
+##   在 **1920×1080 的屏幕上**，一个 1080 高的窗口放不下（标题栏/任务栏吃掉约 25–60px）⇒
+##   OS 把窗口压到 **1055** ⇒ `canvas_items + expand` 把视口撑成 **1965×1080**
+##   ⇒ 横向多出 45px、**纵向少 25px** ⇒ 靠下的 UI（手牌/费用数字/按钮）被推出屏幕。
+##   本机是 2560×1600 屏，根本不会触发 ⇒ "本机正常、异机出问题"。
+##
+## 修法（按能力从强到弱，全部在 **运行时实测** 后决策）：
+##   ① 可用高度 **放得下**设计高 → 不动（本机走这条）
+##   ② 窗口**已经矮于**设计高（已被 OS 压缩）但**屏幕放得下** → 把窗口改回设计尺寸
+##   ③ 屏幕都放不下（或可用区高度不足） → **无边框全屏**（屏幕高 = 设计高时 1:1，不缩放、不裁切）
+##   ④ 仍不行 → 只告警并打印实测数据（不硬改），由采集报告带出去
+## ⚠️ 只动**窗口/显示**，不动任何游戏数据与联机协议（两端各自适配自己的屏幕，互不影响）。
+func _fit_window_to_design() -> void:
+	var dw := int(ProjectSettings.get_setting("display/window/size/viewport_width", 1920))
+	var dh := int(ProjectSettings.get_setting("display/window/size/viewport_height", 1080))
+	if dw <= 0 or dh <= 0:
+		return
+	var win := get_window()
+	if win == null:
+		return
+	## 全屏（真全屏/无边框全屏）下不需要适配
+	if win.mode != Window.MODE_WINDOWED:
+		print("[VIEW][WIN] 非窗口模式（mode=%d），跳过自适应" % int(win.mode))
+		return
+	var scr := DisplayServer.screen_get_size(win.current_screen)
+	var usable := DisplayServer.screen_get_usable_rect(win.current_screen)
+	var cur := win.size
+	print("[VIEW][WIN] 适配前：窗口=%s · 屏幕=%s · 可用=%s · 设计=%dx%d" % [
+		str(cur), str(scr), str(usable), dw, dh])
+	## ① 已经达标：窗口不低于设计分辨率
+	if cur.x >= dw and cur.y >= dh:
+		print("[VIEW][WIN] ✓ 窗口已放得下设计分辨率，无需调整")
+		return
+	## ② 屏幕（可用区）放得下设计尺寸 ⇒ 把窗口改回设计尺寸（修正被 OS 压掉的高）
+	if usable.size.x >= dw and usable.size.y >= dh:
+		win.size = Vector2i(dw, dh)
+		print("[VIEW][WIN] ✓ 已把窗口恢复到设计尺寸 %dx%d（原 %s 低于设计）" % [dw, dh, str(cur)])
+		return
+	## ③ 屏幕放不下 ⇒ 无边框全屏（无标题栏/任务栏干涉；屏幕高 = 设计高时 1:1）
+	win.mode = Window.MODE_FULLSCREEN
+	print("[VIEW][WIN] ✓ 屏幕可用区(%s)放不下设计尺寸 ⇒ 已切无边框全屏（屏幕=%s）" % [
+		str(usable.size), str(scr)])
 
 # ============================================================
 #  🧪 运行环境自测（2026-10-08 新增 · 为"异机不一致"提供可取证手段）

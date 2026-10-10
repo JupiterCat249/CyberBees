@@ -393,6 +393,8 @@ func _section_runtime(out: PackedStringArray) -> void:
 	out.append("  场景树根：%s（%s）" % [
 		str(get_tree().current_scene), str(get_tree().get_node_count())])
 	out.append("  --- 关键节点全局矩形（越界自动标注）---")
+	out.append("  ⚠️ 被**旋转**的节点（联机镜像 seat=1 时 `MapView` 绕中心转 180°）用 `get_global_rect()`")
+	out.append("     量到的是\"左上角\"**假值** ⇒ 本工具同时给出\"可见范围\"（按四角变换求包围盒）并以它判越界：")
 	var bad := 0
 	var cs := get_tree().current_scene
 	for path in _diag_paths():
@@ -402,19 +404,54 @@ func _section_runtime(out: PackedStringArray) -> void:
 		if n == null:
 			continue
 		var r := n.get_global_rect()
+		var rot: float = _ctl_global_rotation(n)
+		var rot_deg: float = rad_to_deg(rot)
+		var bb := _visible_bounds(n)
 		var fl := ""
-		if r.position.y < -1.0:
+		if bb.position.y < -1.0:
 			fl += " ←上越界"
-		if r.position.x < -1.0:
+		if bb.position.x < -1.0:
 			fl += " ←左越界"
-		if r.end.x > vp_size.x + 1.0:
+		if bb.end.x > vp_size.x + 1.0:
 			fl += " →右越界"
-		if r.end.y > vp_size.y + 1.0:
+		if bb.end.y > vp_size.y + 1.0:
 			fl += " ↓下越界"
 			bad += 1
-		out.append("    %-44s rect=(%.0f,%.0f) %.0fx%.0f end=(%.0f,%.0f)%s" % [
-			String(path), r.position.x, r.position.y, r.size.x, r.size.y, r.end.x, r.end.y, fl])
+		out.append("    %-42s rect=(%.0f,%.0f) %.0fx%.0f%s" % [
+			String(path), r.position.x, r.position.y, r.size.x, r.size.y,
+			("  ⟲%.0f°" % rot_deg) if rot_deg > 0.5 else ""])
+		out.append("      └ 可见范围=(%.0f,%.0f)…(%.0f,%.0f)%s" % [
+			bb.position.x, bb.position.y, bb.end.x, bb.end.y, fl])
 	out.append("    ⚠️ 下越界节点数：%d（视口 %s）" % [bad, str(vp_size)])
+
+
+## Control 的**全局旋转弧度**（归一化到 [0, TAU)）。
+## ⚠️ `Control` **没有** `global_rotation`（那是 Node2D 的属性）—— 实测踩到
+##   `Invalid access to property or key 'global_rotation'` 会把游戏停进断点。
+##   Control 只有局部 `rotation`（相对父），全局旋转要从 `get_global_transform()` 取。
+func _ctl_global_rotation(n: Control) -> float:
+	var r: float = n.get_global_transform().get_rotation()
+	r = fmod(r, TAU)
+	if r < 0.0:
+		r += TAU
+	return absf(r)
+
+
+## 节点"真正可见"的屏幕范围（**考虑旋转/缩放**）。
+## 为什么需要：旋转过的 Control 用 `get_global_rect()` 会返回假"左上角" —— 实测对方机器
+##   `MapView`（seat=1 镜像 180°）被报成 (1459,1040)，而它实际仍在 (459,40)
+##   ⇒ 旧版工具据此**误报"右越界/下越界"**（两个假阳性）。改取四角变换后的包围盒即可。
+func _visible_bounds(n: Control) -> Rect2:
+	if _ctl_global_rotation(n) < 0.001 and n.scale.is_equal_approx(Vector2.ONE):
+		return n.get_global_rect()
+	var xf := n.get_global_transform()
+	var p0: Vector2 = xf * Vector2.ZERO
+	var p1: Vector2 = xf * Vector2(n.size.x, 0.0)
+	var p2: Vector2 = xf * Vector2(0.0, n.size.y)
+	var p3: Vector2 = xf * n.size
+	var mn: Vector2 = p0.min(p0.min(p1).min(p2.min(p3)))
+	var mx: Vector2 = p0.max(p0.max(p1).max(p2.max(p3)))
+	return Rect2(mn, mx - mn)
 
 
 ## §D 运行时变化 + 事件流
