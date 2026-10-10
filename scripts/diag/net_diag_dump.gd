@@ -284,6 +284,7 @@ func _collect(tag: String) -> PackedStringArray:
 	_section_env(out)
 	_section_runtime(out)
 	_section_pixels(out)
+	_section_turnstate(out)
 	_section_events(out)
 	out.append("========== END ==========")
 	return out
@@ -557,6 +558,64 @@ func _visible_bounds(n: Control) -> Rect2:
 	var mn: Vector2 = p0.min(p0.min(p1).min(p2.min(p3)))
 	var mx: Vector2 = p0.max(p0.max(p1).max(p2.max(p3)))
 	return Rect2(mn, mx - mn)
+
+
+## §F 回合态 / 压暗规律快照（**专治"联机两端变化规律不一致"**）
+## 为什么需要：压暗口径是 `_info_tint(side)` = f(side, my_seat, active) ——
+##   两端各自算，**任一项不同就会让"变化规律"看着不一样**（而单看一端永远自洽）。
+##   人 2026-10-10 描述：「本机变化规律正确，对方**异常变暗后再叠加已有的规律**」
+##   ⇒ 必须把**两端的 自座位 / 当前行动方 / 实际压暗值**摆在一起比，才能定位。
+## 本段同时打印：座位与回合态、四个信息栏节点的**实际 modulate**、手牌区位置与 modulate。
+func _section_turnstate(out: PackedStringArray) -> void:
+	out.append("\n--- §F 回合态 / 压暗规律（两端应各自自洽；比对两端本段即可看出分歧）---")
+	var cs := get_tree().current_scene
+	if cs == null:
+		out.append("  <无场景>")
+		return
+	var seat = cs.get("my_seat")
+	out.append("  my_seat（本端座位）        = %s" % str(seat))
+	var eng = cs.get("engine")
+	if eng != null and eng.get("state") != null:
+		var st = eng.get("state")
+		out.append("  engine.state.active（行动方）= %s" % str(st.get("active")))
+		out.append("  engine.state.phase（阶段）  = %s" % str(st.get("phase")))
+		out.append("  engine.state.round（回合）  = %s" % str(st.get("round")))
+		out.append("  engine.sel_kind / sel_unit  = %s / %s" % [
+			str(eng.get("sel_kind")), str(eng.get("sel_unit"))])
+	else:
+		out.append("  ⚠ 取不到 engine.state（可能非战斗场景）")
+	## 四个信息栏节点的实际压暗值（**这是"规律"的最终体现**）
+	for p in [["左·PlayerBesaInfoLift（敌方）", "Battle/PlayerBesaInfoLift"],
+			["右·PlayerBesaInfoRight（我方）", "Battle/PlayerBesaInfoRight"]]:
+		var n := cs.get_node_or_null(String(p[1])) as Control
+		if n == null:
+			out.append("  %-30s <缺失>" % String(p[0]))
+			continue
+		var m := n.modulate
+		out.append("  %-30s modulate=(%.3f, %.3f, %.3f, %.2f)  pos=%s" % [
+			String(p[0]), m.r, m.g, m.b, m.a, str(n.position)])
+	## 手牌区（位置体现镜像；modulate 体现手牌压暗）
+	for p in [["左·HandPanelLeft", "Battle/HandPanelLeft"],
+			["右·HandPanelRight", "Battle/HandPanelRight"]]:
+		var n := cs.get_node_or_null(String(p[1])) as Control
+		if n == null:
+			out.append("  %-30s <缺失>" % String(p[0]))
+			continue
+		out.append("  %-30s modulate=(%.3f, %.3f, %.3f, %.2f)  pos=%s" % [
+			String(p[0]), n.modulate.r, n.modulate.g, n.modulate.b, n.modulate.a, str(n.position)])
+	## 手牌卡亮/灰（每张卡的 modulate —— 口径：只按部署费用，理论上两端应一致）
+	var hn = cs.get("_hand_nodes")
+	if hn != null:
+		for sidek in hn.keys():
+			var d = hn[sidek]
+			var idx := 0
+			for k in d.keys():
+				var c = d[k]
+				idx += 1
+				if c == null or not is_instance_valid(c):
+					continue
+				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f)" % [
+					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a])
 
 
 ## §D 运行时变化 + 事件流

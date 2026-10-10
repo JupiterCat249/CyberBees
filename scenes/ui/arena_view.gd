@@ -1235,25 +1235,17 @@ func _on_round_started(round_no: int) -> void:
 		_set_turn(engine.state.active, round_no)
 
 
-## 玩家信息面板的压暗口径（设计稿 §186 / §532）
-## ⭐ 迭代067 修正（人 2026-10-10：「左右侧信息栏异常叠加变暗…**设计中两边应该是对称的**而不是不对称」）：
-##   **设计稿原文**：
-##     · §186「**等待对手行动的一方**：费用 + 玩家名 + 手牌区**变暗**」
-##     · §532「防守方（**等待方**）：左侧 Nemo，费用 5，**费用、玩家名与手牌区整体变暗**；进攻方（行动方）：右侧 Jupiter…」
-##   ⇒ 口径是「**等待方整体变暗 / 行动方正常**」，是**一个基准的对称二态**。
-##   **旧实现的病**：敌方用 `0.22`、我方非回合用 `0.65` —— **两个不同的压暗系数**，
-##     于是"等对手时"看起来左暗右也不够亮、且两侧**深度不一致** ✗
-##     （像素取证：左徽章 #586051 / 右徽章 #797f6e，比值 1.38 ≈ 0.65/0.22，**完全吻合** ⇒ 不对称确实来自系数本身）
-##   **修法**：两侧**用同一个"等待态"系数**（`INFO_DIM`），只有"是否轮到本侧"决定亮/暗 ⇒ 天然对称。
-const INFO_DIM := Color(0.22, 0.22, 0.22, 1)   ## 等待方（设计稿：费用/玩家名/手牌区整体变暗）
-
-
+## 玩家信息面板的压暗口径（清单 21）：**我方** → 轮到自己正常 / 否则灰；**敌方** → 一律**变黑**
+## ⚠️ 2026-10-10 **还原**（人明确：这条"不对称"是**联机两端变化规律不一致**，不是配色口径问题；
+##   本机变化规律**正确**，对端"异常变暗后再叠加已有的规律"）。
+##   我曾按"两侧应对称"改成统一 `INFO_DIM` —— **方向错了**，已在此逐字还原为原三态口径。
+##   ⇒ 这条的正确动作是：**先保原规律，再查"为什么两端规律不一致"**（见 `浏览器/采集报告 §F 回合态`）。
 func _info_tint(side: int) -> Color:
-	var active_side: int = -1
-	if engine != null and engine.state != null:
-		active_side = int(engine.state.active)
-	## 行动方 → 常态；等待方 → 统一压暗（两侧同系数 ⇒ 对称）
-	return Color(1, 1, 1, 1) if int(side) == active_side else INFO_DIM
+	if int(side) != my_seat:
+		return Color(0.22, 0.22, 0.22, 1)
+	if engine != null and engine.state != null and int(engine.state.active) == my_seat:
+		return Color(1, 1, 1, 1)
+	return Color(0.65, 0.65, 0.65, 1)
 
 
 func _set_turn(side: int, round_no: int) -> void:
@@ -1273,6 +1265,14 @@ func _set_turn(side: int, round_no: int) -> void:
 	var right := get_node_or_null("Battle/PlayerBesaInfoRight") as Control
 	if right != null:
 		right.modulate = _info_tint(SIDE_ALLY)
+	## 🧪 结构化时序日志（人 2026-10-10：「对端**异常变暗后再叠加**已有的规律」⇒ 需要时序证据）
+	##   每行给出：用于计算的 `side`（事件带的行动方）· `my_seat` · 两侧最终 modulate。
+	##   ⇒ 两端各发一份报告，比 §F 与这些 `[TURN]` 行即可看出"从哪一步开始不一致"。
+	print("[TURN] set_turn(side=%d) · my_seat=%d · active=%s · 左(敌)=%s · 右(我)=%s" % [
+		int(side), int(my_seat),
+		str(engine.state.active) if (engine != null and engine.state != null) else "?",
+		str(lift.modulate) if lift != null else "?",
+		str(right.modulate) if right != null else "?"])
 
 
 ## ⭐ 迭代064 P-15（清单 **机制-7**「没有做完善的 手牌-备卡-墓地 轮换机制」）：
