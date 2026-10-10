@@ -79,6 +79,7 @@ func _ready() -> void:
 	await _check_b8()
 	await _check_b2()
 	await _check_cell_mirror_data_driven()
+	await _check_seat_invariants()
 	_check_p12()
 	## ⚠️ P-03 必须**在任何修改 phase 的新用例之前**跑（它依赖"开局＝部署阶段"，见下）
 	await _check_p03()
@@ -661,6 +662,72 @@ func _check_cell_mirror_data_driven() -> void:
 		if not p2.is_equal_approx(ctl.position):
 			back_bad += 1
 	_ok("065 切回 seat0 精确还原全部 16 格", back_bad == 0, " 不符 %d 格" % back_bad)
+
+
+## ⭐ 迭代065 续：**座位无关不变量**（人 2026-10-10 要求"进一步检索会不会还有阻碍对端视图的代码"）
+##   设计意图：把"对端视图必须正确"这件事变成**两端都会跑的断言**，而不是靠人眼在另一台机器上发现。
+##   覆盖三类过去真的出过问题的点：
+##     ① 单位位置必须 ≡ 它所在格的位置（**2026-10-10 的"整盘偏一格"就是这个不变量破的**）
+##     ② 任何座位下，所有格/单位都必须落在棋盘矩形内（漏减格宽时会越界）
+##     ③ 全场景不得有**非零旋转**残留（旧实现靠 `rotation=PI` 做镜像；残留即代表又走回变换法）
+func _check_seat_invariants() -> void:
+	var mv := _view.get_node_or_null("Battle/MapView") as Control
+	var cells_root := _view.get_node_or_null("Battle/MapView/MapCells") as Control
+	var units_root := _view.get_node_or_null("Battle/MapView/Units") as Control
+	if mv == null or cells_root == null or units_root == null:
+		_ok("065+ 取到 MapView/MapCells/Units", false)
+		return
+	var pitch := 250.0
+	var ext := pitch * 4.0
+	for seat in [0, 1]:
+		_view.call("set_my_seat", seat)
+		# ① 单位位置 ≡ 该格位置
+		var mismatch := 0
+		var checked := 0
+		for u in units_root.get_children():
+			var uc := u as Control
+			if uc == null:
+				continue
+			var canon = uc.get_meta("cell", null)
+			if canon == null:
+				continue
+			checked += 1
+			var cn := cells_root.get_node_or_null("Cell_%d_%d" % [int(canon.x), int(canon.y)]) as Control
+			if cn == null or not uc.position.is_equal_approx(cn.position):
+				mismatch += 1
+		# ② 格与单位都在盘内
+		var oob := 0
+		for c in cells_root.get_children():
+			var cc := c as Control
+			if cc == null or cc.get("cell") == null:
+				continue
+			var q := cc.position
+			if q.x < -0.001 or q.y < -0.001 or q.x > ext - pitch + 0.001 or q.y > ext - pitch + 0.001:
+				oob += 1
+		for u2 in units_root.get_children():
+			var uc2 := u2 as Control
+			if uc2 == null:
+				continue
+			var q2 := uc2.position
+			if q2.x < -0.001 or q2.y < -0.001 or q2.x > ext - pitch + 0.001 or q2.y > ext - pitch + 0.001:
+				oob += 1
+		# ③ 无旋转残留（MapView + 所有格 + 所有单位）
+		var rot_bad := 0
+		if not is_zero_approx(mv.rotation) or not mv.pivot_offset.is_equal_approx(Vector2.ZERO):
+			rot_bad += 1
+		for c2 in cells_root.get_children():
+			var cc2 := c2 as Control
+			if cc2 != null and not is_zero_approx(cc2.rotation):
+				rot_bad += 1
+		for u3 in units_root.get_children():
+			var uc3 := u3 as Control
+			if uc3 != null and not is_zero_approx(uc3.rotation):
+				rot_bad += 1
+		_ok("065+ seat%d：单位位置 ≡ 所在格位置（%d 个单位）" % [seat, checked],
+			mismatch == 0, " 不符 %d 个" % mismatch)
+		_ok("065+ seat%d：格与单位全部落在棋盘内" % seat, oob == 0, " 越界 %d 个" % oob)
+		_ok("065+ seat%d：全场景无非零旋转残留" % seat, rot_bad == 0, " 异常 %d 处" % rot_bad)
+	_view.call("set_my_seat", 0)
 
 
 ## P-12：地图边框（纯描边无填充）必须压在单位卡之上，否则边缘卡会截断框线
