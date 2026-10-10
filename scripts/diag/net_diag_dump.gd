@@ -296,12 +296,23 @@ func _collect(tag: String) -> PackedStringArray:
 ## 采样点选在**两侧信息栏徽章中心**与两侧手牌区，可比出"两侧亮度是否对称"。
 func _section_pixels(out: PackedStringArray) -> void:
 	out.append("\n--- §E 像素取证（两侧信息栏/手牌亮度对比）---")
-	## ⚠️ **headless / dummy 渲染器**下 `get_texture()` 返回 null，直接 `get_image()` 会刷一堆
-	##   `ERROR: Parameter "t" is null ... texture_2d_get`（实测：双端 auto 模式跑 headless 实例时刷屏）
-	##   ⇒ 取图必须**两级判空**，取不到就说明原因后跳过，不影响其余段落。
+	## ⚠️ **headless / dummy 渲染器**下取帧会失败。**实测教训（两次）**：
+	##   ① 直接 `get_texture().get_image()`：刷 `Parameter "t" is null ... texture_2d_get`；
+	##   ② **只判 `texture == null` 挡不住** —— dummy 渲染器返回的是**非 null 但无效**的纹理，
+	##      报错发生在 `get_image()` **内部** ⇒ 必须在 `get_image()` 外面加 `has_method`/能力判定。
+	##   ⇒ 用 **`DisplayServer.get_rendering_driver_name()`/`get_name()` 判定 headless**，
+	##     再退一步用 `RenderingServer.get_rendering_device()==null && driver=="dummy"` 兜底；
+	##     只要判定为无帧可读，就直接跳过本段（不阻断其余段落）。
 	var vp := get_viewport()
 	if vp == null:
 		out.append("  ⚠ 无 Viewport ⇒ 跳过")
+		return
+	## headless / dummy：用 **`DisplayServer.get_name()`**（headless 下返回 `"headless"`，稳定 API；
+	##   ⚠️ 实测 `get_rendering_driver_name()` **不存在**、`OS.has_feature("headless")` 在本环境**为 false**
+	##   ⇒ 这两个都不作为判据）。判定为无帧可读即跳过本段，不阻断其余段落。
+	var ds_name := String(DisplayServer.get_name()).to_lower()
+	if ds_name.contains("headless") or ds_name.contains("dummy") or OS.has_feature("headless"):
+		out.append("  ⚠ headless/dummy 渲染器（DisplayServer=%s）⇒ 跳过像素取证" % ds_name)
 		return
 	var tex := vp.get_texture()
 	if tex == null:
