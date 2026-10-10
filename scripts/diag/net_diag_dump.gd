@@ -283,9 +283,49 @@ func _collect(tag: String) -> PackedStringArray:
 	_section_static(out)
 	_section_env(out)
 	_section_runtime(out)
+	_section_pixels(out)
 	_section_events(out)
 	out.append("========== END ==========")
 	return out
+
+
+## §E 像素取证（**联机对端"异常叠加变暗"类问题专用**）
+## 为什么需要：`modulate` 是**级联**的，读节点属性只能看到自己那一层；
+##   "叠加压暗"必须看**最终渲染出来的像素**才能定性（本机实测两侧徽章 0.345 vs 0.475 ⇒ 比值 1.38 ≈ 0.65/0.22）。
+## 采样点选在**两侧信息栏徽章中心**与两侧手牌区，可比出"两侧亮度是否对称"。
+func _section_pixels(out: PackedStringArray) -> void:
+	out.append("\n--- §E 像素取证（两侧信息栏/手牌亮度对比）---")
+	var vp := get_viewport()
+	if vp == null:
+		return
+	var img := vp.get_texture().get_image()
+	if img == null:
+		out.append("  ⚠ 取不到帧图像（headless 或不支持）")
+		return
+	var pts: Array = [
+		["左·信息栏徽章", Vector2i(40, 45)],
+		["右·信息栏徽章", Vector2i(1500, 45)],
+		["左·手牌卡面", Vector2i(70, 190)],
+		["右·手牌卡面", Vector2i(1520, 190)],
+		["地图中央", Vector2i(960, 540)],
+	]
+	var vals := {}
+	for it in pts:
+		var p: Vector2i = it[1]
+		if p.x < 0 or p.y < 0 or p.x >= img.get_width() or p.y >= img.get_height():
+			out.append("  %-14s <越界>" % String(it[0]))
+			continue
+		var c := img.get_pixelv(p)
+		var lum := 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
+		vals[String(it[0])] = lum
+		out.append("  %-14s #%s  r=%.3f g=%.3f b=%.3f  亮度=%.3f" % [
+			String(it[0]), c.to_html(false), c.r, c.g, c.b, lum])
+	var l: float = float(vals.get("左·信息栏徽章", 0.0))
+	var r: float = float(vals.get("右·信息栏徽章", 0.0))
+	if l > 0.001 and r > 0.001:
+		var ratio: float = maxf(l, r) / minf(l, r)
+		out.append("  ⇒ 两侧信息栏亮度比 = %.2f（**接近 1.0 = 对称**；明显偏离说明有一侧被额外压暗/叠加）" % ratio)
+		out.append("     （本机 2026-10-10 实测：`0.345 / 0.475` ⇒ 1.38，恰好 ≈ 旧口径的 0.65/0.22 ⇒ 不对称来自系数差异）")
 
 
 ## §A 静态代码态：脚本/资源哈希 + 关键常量源码文本值
@@ -321,6 +361,71 @@ func _section_static(out: PackedStringArray) -> void:
 			if String(line).begins_with("const %s" % String(pair[1])):
 				out.append("  %s: %s" % [String(pair[1]), String(line).strip_edges()])
 				break
+
+
+## 🎨 只读颜色探针（供"某处异常变暗/叠加"类问题取证）：
+##   从**当前帧的渲染结果**上采样若干点，打印实际像素 RGB —— 比读 `modulate` 更能定性"叠加压暗"。
+##   用法：`NetDiagDump.probe_colors([Vector2i(40,45), Vector2i(1500,45), ...])`
+##   ⚠️ 必须在**渲染完成之后**取（本函数内部等一帧 post_draw），且**不要在 game_eval 里 await**
+##      —— 改成发射信号/直接调用让它在帧边界后跑（见 `_on_diag_request` 的同款约定）。
+func probe_colors(points: Array = []) -> void:
+	var pts: Array = points
+	if pts.is_empty():
+		## 默认采样：红方信息栏徽章 / 绿方信息栏徽章 / 左右手牌卡面 / 地图底
+		pts = [Vector2i(40, 45), Vector2i(1500, 45), Vector2i(70, 190), Vector2i(1520, 190), Vector2i(960, 540)]
+	await RenderingServer.frame_post_draw
+	var img := get_viewport().get_texture().get_image()
+	var lines: PackedStringArray = []
+	lines.append("========== 🎨 COLOR PROBE ==========")
+	lines.append("视口=%s · 窗口=%s" % [str(get_viewport().get_visible_rect().size), str(get_window().size)])
+	for p in pts:
+		var v: Vector2i = p
+		if v.x < 0 or v.y < 0 or v.x >= img.get_width() or v.y >= img.get_height():
+			lines.append("  %s : <越界>" % str(v))
+			continue
+		var c := img.get_pixelv(v)
+		var lin := c.to_html(false)
+		## 同时给出"还原到 0..1 的 sRGB 值"与"±1px 邻域均值"（抗锯齿/描边干扰）
+		var acc := Vector3.ZERO
+		var n := 0
+		for dy in [-1, 0, 1]:
+			for dx in [-1, 0, 1]:
+				var q := Vector2i(v.x + dx, v.y + dy)
+				if q.x >= 0 and q.y >= 0 and q.x < img.get_width() and q.y < img.get_height():
+					var cc := img.get_pixelv(q)
+					acc += Vector3(cc.r, cc.g, cc.b)
+					n += 1
+		var avg := acc / maxf(1.0, float(n))
+		lines.append("  %-14s 像素=#%s (r=%.3f g=%.3f b=%.3f) · 3x3均值=(%.3f, %.3f, %.3f)" % [
+			str(v), lin, c.r, c.g, c.b, avg.x, avg.y, avg.z])
+		lines.append("                所在节点=%s" % _node_at(v))
+	lines.append("===================================")
+	for l in lines:
+		print(l)
+
+
+## 反查某屏幕点命中的 Control（`gui_get_hovered_control` 只给鼠标处，这里按几何求交）
+func _node_at(p: Vector2i) -> String:
+	var cs := get_tree().current_scene
+	if cs == null:
+		return "<无场景>"
+	var best := ""
+	var best_area := INF
+	var stack: Array[Node] = [cs]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		for ch in n.get_children():
+			stack.append(ch)
+		var c := n as Control
+		if c == null or not c.is_visible_in_tree():
+			continue
+		var r := _visible_bounds(c)
+		if r.has_point(Vector2(p)):
+			var a := r.get_area()
+			if a < best_area:
+				best_area = a
+				best = String(c.get_path())
+	return best if best != "" else "<无>"
 
 
 ## §B 环境态

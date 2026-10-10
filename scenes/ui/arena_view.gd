@@ -118,6 +118,8 @@ func _ready() -> void:
 	## 🧪 诊断信号接线（跨尺寸扫查用；见 `diag_request` / `_on_diag_request`）
 	if not diag_request.is_connected(_on_diag_request):
 		diag_request.connect(_on_diag_request)
+	## ⭐ 主按钮描边覆盖层（见函数注释：绘制在按钮内容之上，而不是嵌套一圈）
+	_install_main_button_stroke()
 	## ⭐ 自适应窗口（2026-10-10，**异机实测驱动**）：保证**渲染区 ≥ 设计分辨率**
 	##   实测（另一台机器，1920×1080 屏）：窗口被 OS 压到 **1920×1055**（比设计矮 25px）
 	##   ⇒ `canvas_items + expand` 把视口撑成 **1965×1080**（宽 45px）⇒ 靠下的 UI 被推出屏幕。
@@ -489,11 +491,88 @@ func _center_badge_value(badge: Control) -> void:
 	var lb := badge.get_node_or_null("Value") as Control
 	if lb == null:
 		return
-	lb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	## ⭐ 迭代067（人 2026-10-10：「费用数字过度靠下…可能需要做自适应」）：
+	##   见 `_center_badge_value_geometry()` —— 两处（信息栏 / 手牌卡）**共用同一实现**，杜绝分叉。
+	_center_badge_value_geometry(badge)
+
+
+## 把徽章里的数字**几何居中**到徽章正中（幂等；供信息栏与手牌卡**两处共用**）
+## ⭐ 为什么两处要共用一个实现：人 2026-10-10 反馈"联机对端**费用数字过度靠下**" ——
+##   两边原来各写一套（信息栏走 `_center_badge_value`、手牌走 `_apply_one_hand_params`），
+##   任何一处漏掉就会出现"本机正常、对端偏下"的机器相关差异。统一到一个函数，杜绝分叉。
+## ⚠️ 保持 `Value` 仍是徽章的**直接子节点**（路径 `BadgeImage/Value` 被多处按路径取用）。
+func _center_badge_value_geometry(badge: Control) -> void:
+	if badge == null:
+		return
+	## ⚠️ **幂等/防重入**（实测踩到栈溢出）：本函数会改 `Value` 的尺寸，而 `_center_badge_value`
+	##   又把该节点的 `resized` 接到这里 ⇒ 不加守卫会**无限递归**（Stack overflow）。
+	##   徽章的父框尺寸不变时无需重算 ⇒ 用"上次算过的父框尺寸"做记忆即可。
+	var stamp := badge.size
+	if badge.has_meta("vcenter_stamp") and badge.get_meta("vcenter_stamp") == stamp:
+		return
+	badge.set_meta("vcenter_stamp", stamp)
+	var lb := badge.get_node_or_null("Value") as Control
+	if lb == null:
+		return
+	lb.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	if lb is Label:
 		var l := lb as Label
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		l.autowrap_mode = TextServer.AUTOWRAP_OFF
+		## ⚠️ **单行文本不要显式设尺寸**：字体最小尺寸会把高度撑成"行盒高"（实测 38×78，
+		##   远大于徽章可用空间 ⇒ 位置算成负值、反而偏离中心）。
+		##   只把它铺满父框、把居中交给对齐标记 ⇒ 与字体度量无关，任意位数都居中。
+		lb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		return
+	## 非 Label 兜底：按最小尺寸几何居中
+	var need := lb.get_combined_minimum_size()
+	if need.x < 1.0 or need.y < 1.0:
+		need = badge.size
+	lb.size = need
+	lb.position = ((badge.size - need) * 0.5).floor()
+
+
+## 把主按钮文案**水平居中**到 ActionBar 宽度内（供 `resized` 回调；幂等）
+## ⭐ 迭代067（人 2026-10-10：「主按钮的描边是**叠加在底部图像之上**的，不是在外面嵌套一圈」）：
+##   做法：在 `ActionBar` 下**运行时新建一层描边覆盖层**（`z_index` 高于按钮、`MOUSE_FILTER_IGNORE` 不挡点击），
+##   由它把设计稿的内描边画在**按钮内容之上**；同时把按钮自身 `StyleBoxFlat` 的边框清掉，
+##   避免"两圈描边"。设计稿 §2.7：主按钮 400×100 圆角 10 · **内描边 (1492,572) 396×96 圆角 8 `#FFFFFF-10%` 4px**。
+##   ⚠️ 只动绘制层次，不改尺寸/字号/文案（守 2026-09-19 硬约束）。
+func _install_main_button_stroke() -> void:
+	var bar := get_node_or_null("HUD/ActionBar") as Control
+	if bar == null:
+		return
+	## 按钮自身不再画边框（描边改由覆盖层负责）
+	var mb := bar.get_node_or_null("MainButton") as Button
+	if mb != null:
+		for sname in ["normal", "hover", "pressed", "focus", "disabled"]:
+			var sb := mb.get_theme_stylebox(sname)
+			if sb is StyleBoxFlat:
+				var s2: StyleBoxFlat = (sb as StyleBoxFlat).duplicate()
+				s2.border_width_left = 0
+				s2.border_width_top = 0
+				s2.border_width_right = 0
+				s2.border_width_bottom = 0
+				mb.add_theme_stylebox_override(sname, s2)
+	## 覆盖层（幂等）
+	var stroke := bar.get_node_or_null("MainButtonStroke") as Panel
+	if stroke == null:
+		stroke = Panel.new()
+		stroke.name = "MainButtonStroke"
+		stroke.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stroke.z_index = 2
+		bar.add_child(stroke)
+	## 位置与按钮对齐；内描边 = 设计稿的 (1492,572) 相对按钮 (1490,570) ⇒ **内缩 2px**、
+	##   尺寸 396×96（= 400-4 / 100-4）；圆角 8；边框 4px `#FFFFFF-10%`；底色透明
+	stroke.position = Vector2(2, 2)
+	stroke.size = Vector2(396, 96)
+	var sb2 := StyleBoxFlat.new()
+	sb2.bg_color = Color(0, 0, 0, 0)
+	sb2.border_color = Color(1, 1, 1, 0.1)
+	sb2.set_border_width_all(4)
+	sb2.set_corner_radius_all(8)
+	stroke.add_theme_stylebox_override("panel", sb2)
 
 
 ## 把主按钮文案**水平居中**到 ActionBar 宽度内（供 `resized` 回调；幂等）
@@ -1084,6 +1163,8 @@ func _apply_one_hand_params(node, p) -> void:
 		##    素材原值 48；之前这里覆盖成 26 → 变小
 		if bv != null and int(p.badge_font_size) > 0:
 			bv.add_theme_font_size_override("font_size", int(p.badge_font_size))
+		## ⭐ 迭代067：与信息栏**共用同一套几何居中**（人反馈"对端数字过度靠下" ⇒ 两处统一，杜绝分叉）
+		_center_badge_value_geometry(badge)
 	var line: Panel = node.get_node_or_null("InnerLine")
 	if line != null:
 		line.size = p.inner_line_size
@@ -1154,13 +1235,25 @@ func _on_round_started(round_no: int) -> void:
 		_set_turn(engine.state.active, round_no)
 
 
-## 玩家信息面板的压暗口径（清单 21）：**我方** → 轮到自己正常 / 否则灰；**敌方** → 一律**变黑**
+## 玩家信息面板的压暗口径（设计稿 §186 / §532）
+## ⭐ 迭代067 修正（人 2026-10-10：「左右侧信息栏异常叠加变暗…**设计中两边应该是对称的**而不是不对称」）：
+##   **设计稿原文**：
+##     · §186「**等待对手行动的一方**：费用 + 玩家名 + 手牌区**变暗**」
+##     · §532「防守方（**等待方**）：左侧 Nemo，费用 5，**费用、玩家名与手牌区整体变暗**；进攻方（行动方）：右侧 Jupiter…」
+##   ⇒ 口径是「**等待方整体变暗 / 行动方正常**」，是**一个基准的对称二态**。
+##   **旧实现的病**：敌方用 `0.22`、我方非回合用 `0.65` —— **两个不同的压暗系数**，
+##     于是"等对手时"看起来左暗右也不够亮、且两侧**深度不一致** ✗
+##     （像素取证：左徽章 #586051 / 右徽章 #797f6e，比值 1.38 ≈ 0.65/0.22，**完全吻合** ⇒ 不对称确实来自系数本身）
+##   **修法**：两侧**用同一个"等待态"系数**（`INFO_DIM`），只有"是否轮到本侧"决定亮/暗 ⇒ 天然对称。
+const INFO_DIM := Color(0.22, 0.22, 0.22, 1)   ## 等待方（设计稿：费用/玩家名/手牌区整体变暗）
+
+
 func _info_tint(side: int) -> Color:
-	if int(side) != my_seat:
-		return Color(0.22, 0.22, 0.22, 1)
-	if engine != null and engine.state != null and int(engine.state.active) == my_seat:
-		return Color(1, 1, 1, 1)
-	return Color(0.65, 0.65, 0.65, 1)
+	var active_side: int = -1
+	if engine != null and engine.state != null:
+		active_side = int(engine.state.active)
+	## 行动方 → 常态；等待方 → 统一压暗（两侧同系数 ⇒ 对称）
+	return Color(1, 1, 1, 1) if int(side) == active_side else INFO_DIM
 
 
 func _set_turn(side: int, round_no: int) -> void:
