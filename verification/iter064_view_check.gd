@@ -191,12 +191,44 @@ func _check_cancel_paths() -> void:
 		_ok("取消出口 ②点敌方手牌 → 取消选中（且仍未选中该牌）",
 			int(eng.sel_kind) == 0, " sel_kind=%d" % int(eng.sel_kind))
 	## ③ 点地图内空格（原设计稿 §5.1：点击不可交互区域取消选中）
-	eng.call("select_hand", 0, 0)
-	await _idle(2)
-	_view.call("_on_cell_clicked", Vector2i(2, 3))
-	await _idle(2)
-	_ok("取消出口 ③点地图内空格 → 取消选中", int(eng.sel_kind) == 0,
-		" sel_kind=%d" % int(eng.sel_kind))
+	## ⚠️ **修正（2026-10-10 实测：本断言原为 flaky，且深层原因不止"写死格子"）**：
+	##   原写法把格子**写死成 `(2,3)`**，并假设"部署阶段 0 号手牌的布署范围不含它" ——
+	##   实测发现这**取决于手上是哪张卡**：
+	##     · 0 号 = 蜂王时，`hand_range_has_cell()` 对**全部 16 格都返回 true**
+	##       （"选蜂王时每格都可部署"是**设计行为**）⇒ **"范围外格"在该卡下根本不存在** ⇒ 断言恒 FAIL ✗
+	##     · 0 号是别的卡时范围有界 ⇒ 恰好 PASS（纯运气，非稳定）
+	##   修法：**动态找一张"布署范围不覆盖目标格"的手牌**（含"单位选中"这条同类取消路径的兜底），
+	##        把"取消出口"这件事**与牌库/回合解耦** —— 断言才有确定的判据。
+	var target_cell := Vector2i(2, 3)
+	var pick := -1
+	var hand_size: int = (eng.state.sides[0]["hand"] as Array).size()
+	for hi in hand_size:
+		eng.call("select_hand", 0, hi)
+		await _idle(1)
+		if not eng.hand_range_has_cell(target_cell):
+			pick = hi
+			break
+	if pick < 0:
+		## 兜底：单位选中态的取消出口（`_on_cell_clicked` 在 MOVE/ATTACK 之外同样清选中）
+		var mine_u = _first_ally_unit()
+		if mine_u != null:
+			eng.state.phase = 3          ## ACTION
+			eng.state.active = 0
+			eng.call("select_unit", 0, mine_u)
+			await _idle(1)
+			_view.call("_on_cell_clicked", target_cell)
+			await _idle(2)
+			_ok("取消出口 ③（兜底：单位选中态）点范围外格 → 取消选中",
+				int(eng.sel_kind) == 0,
+				" sel_kind=%d（该牌库下每张手牌布署范围均覆盖该格，故走单位态）" % int(eng.sel_kind))
+	else:
+		eng.call("select_hand", 0, pick)
+		await _idle(2)
+		_view.call("_on_cell_clicked", target_cell)
+		await _idle(2)
+		_ok("取消出口 ③点地图内（手牌范围外）空格 → 取消选中",
+			int(eng.sel_kind) == 0,
+			" 手牌索引=%d · 点的是 %s · sel_kind=%d" % [pick, str(target_cell), int(eng.sel_kind)])
 
 
 ## ⭐ 防回归（与上面同批改动强相关）：棋盘格仍是"点自己单位"的有效入口。
