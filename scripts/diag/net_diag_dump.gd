@@ -296,10 +296,18 @@ func _collect(tag: String) -> PackedStringArray:
 ## 采样点选在**两侧信息栏徽章中心**与两侧手牌区，可比出"两侧亮度是否对称"。
 func _section_pixels(out: PackedStringArray) -> void:
 	out.append("\n--- §E 像素取证（两侧信息栏/手牌亮度对比）---")
+	## ⚠️ **headless / dummy 渲染器**下 `get_texture()` 返回 null，直接 `get_image()` 会刷一堆
+	##   `ERROR: Parameter "t" is null ... texture_2d_get`（实测：双端 auto 模式跑 headless 实例时刷屏）
+	##   ⇒ 取图必须**两级判空**，取不到就说明原因后跳过，不影响其余段落。
 	var vp := get_viewport()
 	if vp == null:
+		out.append("  ⚠ 无 Viewport ⇒ 跳过")
 		return
-	var img := vp.get_texture().get_image()
+	var tex := vp.get_texture()
+	if tex == null:
+		out.append("  ⚠ 无帧纹理（headless / dummy 渲染器）⇒ 跳过像素取证")
+		return
+	var img := tex.get_image()
 	if img == null:
 		out.append("  ⚠ 取不到帧图像（headless 或不支持）")
 		return

@@ -148,29 +148,27 @@ font_weight = 700
 subpixel_positioning = 0
 
 [sub_resource type="StyleBoxFlat" id="R17"]
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
 border_color = Color(1, 1, 1, 0.1)
-corner_detail = 8
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R18"]
 bg_color = Color(0.541176, 0.541176, 0.541176, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
 border_color = Color(1, 1, 1, 0.1)
-corner_detail = 8
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [sub_resource type="SystemFont" id="R21"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
@@ -610,14 +608,15 @@ theme_override_styles/panel = SubResource("R12")
 [node name="Attributes" type="VBoxContainer" parent="HUD/InfoPanel" unique_id=219494896]
 layout_mode = 0
 offset_left = 310.0
-offset_top = 230.0
-offset_right = 406.0
-offset_bottom = 446.0
+offset_top = 214.0
+offset_right = 372.0
+offset_bottom = 444.0
 mouse_filter = 2
+theme_override_constants/separation = 10
+alignment = 1
 
 [node name="Row1" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1654434942]
 layout_mode = 2
-size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row1" unique_id=2074367686]
@@ -630,13 +629,12 @@ expand_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R13")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
 [node name="Row2" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1845661383]
 layout_mode = 2
-size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row2" unique_id=2065809764]
@@ -649,13 +647,12 @@ expand_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R14")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
 [node name="Row3" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=47291006]
 layout_mode = 2
-size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row3" unique_id=2081540134]
@@ -668,13 +665,12 @@ expand_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R15")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
 [node name="Row4" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1307267724]
 layout_mode = 2
-size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row4" unique_id=386429402]
@@ -687,7 +683,7 @@ expand_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R16")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
