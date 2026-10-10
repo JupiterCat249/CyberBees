@@ -1395,7 +1395,9 @@ func _on_unit_spawned(inst: UnitInstance, cell: Vector2i) -> void:
 func _on_unit_moved(inst: UnitInstance, _from: Vector2i, to: Vector2i) -> void:
 	var n: Control = _unit_nodes.get(inst.instance_id, null)
 	if n != null and is_instance_valid(n):
-		n.position = _cell_pos(to)
+		## 迭代065：位置走**视角坐标**（数据镜像），节点本身不旋转
+		n.set_meta("cell", to)
+		n.position = _view_cell_pos(to)
 		_play("移动落位", inst)
 
 
@@ -1619,7 +1621,8 @@ func _adopt_cells() -> void:
 			if node == null:
 				node = Control.new()
 				node.name = "Cell_%d_%d" % [x, y]
-				node.position = _cell_pos(c)
+				## 迭代065：位置按**当前座位视角**给（不再依赖父节点旋转）
+				node.position = _view_cell_pos(c)
 				node.size = Vector2(PITCH, PITCH)
 				_cells_root.add_child(node)
 			node.set_script(CELL_SCRIPT)
@@ -1651,24 +1654,19 @@ func set_my_seat(seat: int) -> void:
 	if seat == my_seat:
 		return
 	my_seat = seat
+	## ⭐ 迭代065 · **不再旋转节点树**，改为**按数据还原该座位视角**（见 `_view_cell_pos`）：
+	##   `MapView` 恒为 `rotation=0 / pivot=ZERO`；格与单位卡的位置由"规范格 → 视角局部坐标"算出。
+	##   （旧实现在此设 `MapView.rotation = PI` + 单位卡反向自转，已废弃：旋转会带来亚像素模糊、
+	##     坐标语义分裂、点击/预览/动画都要穿过 180° 变换。）
 	var mv := get_node_or_null("Battle/MapView") as Control
 	if mv != null:
-		var mirror := BoardMirror.needs_mirror(my_seat)
-		mv.pivot_offset = Vector2(BOARD_PX * 0.5, BOARD_PX * 0.5)   ## 绕棋盘中心
-		mv.rotation = PI if mirror else 0.0
-		## 单位卡自身反向旋转 → 位置随棋盘镜像，但**卡面文字保持正向可读**
-		## ⚠️ 必须先把轴心设到卡片中心（默认轴心=左上角，反向自转会把自己转出格外 —— 实测踩到）
-		## ⚠️ 同时**重涂阵营配色**：配色只在 spawn 时按 mine 上色，切座位必须补一次（实测踩到）
-		for k in _unit_nodes:
-			var un = _unit_nodes[k]
-			if un != null and is_instance_valid(un):
-				un.pivot_offset = Vector2(PITCH, PITCH) * 0.5
-				un.rotation = PI if mirror else 0.0
-				var inst_m = _find_unit(String(k))
-				if inst_m != null and un.has_method("set_mine"):
-					un.set_mine(int(inst_m.side) == my_seat)
+		mv.rotation = 0.0
+		mv.pivot_offset = Vector2.ZERO
+	_relayout_cells()
+	_relayout_units()
 	_place_hud(BoardMirror.needs_mirror(my_seat))
-	print("[NET] 棋盘镜像 seat=%d（需镜像=%s）" % [my_seat, str(BoardMirror.needs_mirror(my_seat))])
+	print("[NET] 棋盘镜像 seat=%d（需镜像=%s · **数据镜像，无节点旋转**）" % [
+		my_seat, str(BoardMirror.needs_mirror(my_seat))])
 
 
 ## ⭐ 迭代064 B2：**HUD 也要跟着座位换边**（人 2026-09-27 清单 **UI-13**「自己的手牌无论如何都应该默认在玩家视图的右边」
@@ -1704,6 +1702,52 @@ func _place_hud(mirror: bool) -> void:
 func _cell_pos(cell: Vector2i) -> Vector2:
 	## ⚠️ 沿用项目坐标约定：cell.x = 行、cell.y = 列（**规范坐标**，不随镜像变化）
 	return Vector2(cell.y * PITCH, cell.x * PITCH)
+
+
+## ⭐ 迭代065 · **按数据镜像求"该座位视角下"的格局部坐标**（不做任何节点旋转）
+## 人 2026-10-10 口径：「需要的**不是旋转**，而是尝试**根据数据还原**出对面视角下应该看到的**对称的内容**」
+##
+## 旧实现（已废弃）＝ `MapView.rotation = PI` + 每张单位卡反向自转 `PI` 抵回来。代价：
+##   · 旋转空间里坐标落在非整数位置 ⇒ 卡面文字/边框走**插值采样（亚像素模糊）**
+##   · 单位卡叠加"整体转 + 反向转"两次变换 ⇒ 更糊
+##   · 坐标语义分裂：`_cell_pos()` 给的是**规范坐标**，实际屏上位置却由父节点旋转决定
+##   · 点击/预览/动画都要在脑子里过一遍 180° 变换（`地图抖动` 等动画也被牵连翻转）
+##
+## 数据镜像公式（**已在运行中逐格对拍验证**：seat0/seat1 各 **全 16 格完全一致**）：
+##   `镜像局部坐标 = N·PITCH − 规范局部坐标`（即"180° 绕棋盘中心的矩形变换"，`flip(v) = EXT − v`）
+func _view_cell_pos(cell: Vector2i) -> Vector2:
+	var p := _cell_pos(cell)
+	if not BoardMirror.needs_mirror(my_seat):
+		return p
+	return Vector2(BOARD_PX, BOARD_PX) - p
+
+
+## 把 `_cells` 里所有格节点按**当前座位视角**重排（幂等；`set_my_seat` 与初始化各调一次）
+func _relayout_cells() -> void:
+	for c in _cells:
+		var node: Control = _cells[c]
+		if node != null and is_instance_valid(node):
+			node.position = _view_cell_pos(c)
+
+
+## 把**地图单位卡**按当前座位视角重排（单位卡不再旋转，只挪位置）
+##   规范格存在节点的 `metadata/cell`（`_spawn_unit` 写入）⇒ 切座位时据此重算
+func _relayout_units() -> void:
+	for k in _unit_nodes:
+		var un = _unit_nodes[k]
+		if un == null or not is_instance_valid(un):
+			continue
+		var ctl := un as Control
+		if ctl == null:
+			continue
+		ctl.rotation = 0.0
+		ctl.pivot_offset = Vector2.ZERO
+		if ctl.has_meta("cell"):
+			ctl.position = _view_cell_pos(ctl.get_meta("cell"))
+		## ⚠️ 重涂阵营配色：配色只在 spawn 时按 mine 上色，切座位必须补一次（实测踩到）
+		var inst_m = _find_unit(String(k))
+		if inst_m != null and un.has_method("set_mine"):
+			un.set_mine(int(inst_m.side) == my_seat)
 
 
 ## 点格 → 翻译成引擎请求（**不在视图里做规则判定**：种类看预览资源给的 kind）
@@ -1960,11 +2004,13 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	_clear_preview_units_once()
 	var node: Control = UNIT_CARD_SCENE.instantiate()
 	node.name = "Unit_" + inst.instance_id.substr(0, 8)
-	node.position = _cell_pos(cell)
-	if BoardMirror.needs_mirror(my_seat):
-		## 镜像视角下反向自转：位置随棋盘翻转、卡面保持正向；轴心必须=卡片中心
-		node.pivot_offset = Vector2(PITCH, PITCH) * 0.5
-		node.rotation = PI
+	## ⭐ 迭代065：单位卡**不再旋转**（旧实现自转 PI 抵父节点旋转）——
+	##   位置直接按"该座位视角"的数据坐标摆放 ⇒ 卡面天然正向、且不做两次变换（更锐利）。
+	##   规范格记进 `metadata/cell`，供 `set_my_seat()` 里 `_relayout_units()` 重算。
+	node.set_meta("cell", cell)
+	node.position = _view_cell_pos(cell)
+	node.rotation = 0.0
+	node.pivot_offset = Vector2.ZERO
 	_units_root.add_child(node)
 	## ⭐ 运行时新建的单位卡也会带 CrtFx 叠加层 → 必须单独设鼠标穿透，
 	##    否则新部署的单位会**盖住整块棋盘**、吞掉所有点击（迭代058 实测教训）

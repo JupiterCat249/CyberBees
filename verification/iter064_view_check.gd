@@ -78,6 +78,7 @@ func _ready() -> void:
 	await _check_b7()
 	await _check_b8()
 	await _check_b2()
+	await _check_cell_mirror_data_driven()
 	_check_p12()
 	## ⚠️ P-03 必须**在任何修改 phase 的新用例之前**跑（它依赖"开局＝部署阶段"，见下）
 	await _check_p03()
@@ -588,6 +589,69 @@ func _check_b2() -> void:
 	_view.call("set_my_seat", 0)
 	_ok("B2 切回座位 0 精确还原", is_equal_approx(hl.position.x, l0) and is_equal_approx(hr.position.x, r0),
 		" L=%.0f(原 %.0f) R=%.0f(原 %.0f)" % [hl.position.x, l0, hr.position.x, r0])
+
+
+## ⭐ 迭代065 专用断言：**数据镜像**（无节点旋转）契约
+##   人 2026-10-10 口径：「需要的不是旋转，而是根据数据还原出对面视角下应该看到的对称的内容」
+##   判据三条：① `MapView` 恒无旋转 ② 16 格位置 = `N·PITCH − 规范局部坐标`（seat1）/ 恒等（seat0）
+##            ③ 单位卡恒无旋转（不再反向自转抵父节点旋转）
+func _check_cell_mirror_data_driven() -> void:
+	var mv := _view.get_node_or_null("Battle/MapView") as Control
+	var cells_root := _view.get_node_or_null("Battle/MapView/MapCells") as Control
+	if mv == null or cells_root == null:
+		_ok("065 取到 MapView / MapCells", false)
+		return
+	var pitch := 250.0
+	var ext := pitch * 4.0
+	var cells := []
+	for ch in cells_root.get_children():
+		var ctl := ch as Control
+		if ctl != null and ctl.has_method("get") and ctl.get("cell") != null:
+			cells.append(ctl)
+	if cells.size() < 16:
+		_ok("065 取到 16 个格节点（实际 %d）" % cells.size(), false)
+		return
+	# ② seat0 = 恒等；seat1 = N·PITCH - 规范局部坐标
+	## ⚠️ 每个座位只切一次再统一核对（在循环里切会让 `set_my_seat` 的日志刷屏，也拖慢用例）
+	var bad0 := 0
+	var bad1 := 0
+	_view.call("set_my_seat", 0)
+	for ctl in cells:
+		var canon0: Vector2i = ctl.get("cell")
+		var canon_p0 := Vector2(float(canon0.y) * pitch, float(canon0.x) * pitch)
+		if not canon_p0.is_equal_approx(ctl.position):
+			bad0 += 1
+	_view.call("set_my_seat", 1)
+	for ctl in cells:
+		var canon1: Vector2i = ctl.get("cell")
+		var canon_p1 := Vector2(float(canon1.y) * pitch, float(canon1.x) * pitch)
+		var mirror_p := Vector2(ext, ext) - canon_p1
+		if not mirror_p.is_equal_approx(ctl.position):
+			bad1 += 1
+	_ok("065 seat0：16 格 = 规范坐标（恒等）", bad0 == 0, " 不符 %d 格" % bad0)
+	_ok("065 seat1：16 格 = N·PITCH − 规范坐标（数据镜像）", bad1 == 0, " 不符 %d 格" % bad1)
+	# ① 旋转必须恒为 0（含 pivot —— 旧实现靠 pivot + rotation 做镜像）
+	_view.call("set_my_seat", 1)
+	var rot_ok := is_zero_approx(mv.rotation) and mv.pivot_offset.is_equal_approx(Vector2.ZERO)
+	var unit_rot_bad := 0
+	var units_root := _view.get_node_or_null("Battle/MapView/Units") as Control
+	if units_root != null:
+		for u in units_root.get_children():
+			var uc := u as Control
+			if uc != null and not is_zero_approx(uc.rotation):
+				unit_rot_bad += 1
+	_ok("065 seat1：MapView 无旋转（rotation=0 · pivot=ZERO）", rot_ok,
+		" rot=%.4f pivot=%s" % [mv.rotation, str(mv.pivot_offset)])
+	_ok("065 seat1：单位卡无反向自转", unit_rot_bad == 0, " 异常 %d 个" % unit_rot_bad)
+	# ③ 回到 seat0 必须精确还原
+	var back_bad := 0
+	_view.call("set_my_seat", 0)
+	for ctl in cells:
+		var canon2: Vector2i = ctl.get("cell")
+		var p2 := Vector2(float(canon2.y) * pitch, float(canon2.x) * pitch)
+		if not p2.is_equal_approx(ctl.position):
+			back_bad += 1
+	_ok("065 切回 seat0 精确还原全部 16 格", back_bad == 0, " 不符 %d 格" % back_bad)
 
 
 ## P-12：地图边框（纯描边无填充）必须压在单位卡之上，否则边缘卡会截断框线
