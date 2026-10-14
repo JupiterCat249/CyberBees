@@ -67,8 +67,8 @@ func _ready() -> void:
 	_snapshot_watched()
 	_period_frames = _read_period()
 	_last_window_size = DisplayServer.window_get_size()
-	_log("采集器启动（autoload · 每次匹配自动落盘到 %s）" % ProjectSettings.globalize_path(DIAG_DIR))
-	print("[DIAG] 📂 诊断落盘目录：%s" % ProjectSettings.globalize_path(DIAG_DIR))
+	_log("采集器启动（autoload · 每次匹配自动落盘到 %s）" % ProjectSettings.globalize_path(_diag_dir()))
+	print("[DIAG] 📂 诊断落盘目录：%s" % ProjectSettings.globalize_path(_diag_dir()))
 	print("[DIAG] 手动落盘热键：Ctrl+F9（或调 NetDiagDump.dump(\"manual\")）")
 
 
@@ -98,8 +98,16 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 
-## 开关：`res://net_config/diag.flag` 内容 1/true/on = 开；0/false/off = 关；缺失 = 开（默认开，便于异机取证）
+## 开关（两层）：
+##   ① 环境变量 `ESH_DIAG_OFF=1/true/on/yes` → **强制关闭**（优先于文件开关）。
+##      为什么需要：Godot 的 user:// 按**项目名**定位、**不随项目目录副本改变** ⇒
+##      别人复制一份工程跑起来（复跑核对、并行验证）会把产物写进**本机真实目录**；
+##      复跑方只要在环境里设了它，就不会污染作者的取证集。
+##   ② `res://net_config/diag.flag` 内容 1/true/on = 开；0/false/off = 关；缺失 = 开（默认开，便于异机取证）
 func _read_flag() -> bool:
+	var off := OS.get_environment("ESH_DIAG_OFF").strip_edges().to_lower()
+	if off == "1" or off == "true" or off == "on" or off == "yes":
+		return false
 	const P := "res://net_config/diag.flag"
 	if not FileAccess.file_exists(P):
 		return true
@@ -247,12 +255,27 @@ func _snapshot_watched() -> void:
 # ============================================================================
 #  落盘
 # ============================================================================
+## 落盘目录：默认 `user://diag`，可被环境变量 `ESH_DIAG_DIR` **改道**（取 `user://相对名` 或绝对路径）。
+## 为什么需要：Godot 的 user:// 按**项目名**定位、**不随项目目录副本改变** ⇒
+## 别人在别处复制工程跑起来（复跑核对、并行验证），产物会写进**本机真实目录**，
+## 与作者的取证集混在一起（实测：副本的 periodic 快照落进作者目录，还改写了 LATEST.txt）。
+## 复跑方只要 `ESH_DIAG_DIR=<自己的目录名>`，两边各写各的。
+func _diag_dir() -> String:
+	var dir := OS.get_environment("ESH_DIAG_DIR").strip_edges()
+	if dir == "":
+		return DIAG_DIR
+	if dir.begins_with("user://") or dir.is_absolute_path():
+		return dir
+	return "user://" + dir
+
+
 ## `tag` 会进入文件名，便于区分"入局/配对/手动"
 func dump(tag: String = "manual") -> String:
 	var lines := _collect(tag)
-	DirAccess.make_dir_recursive_absolute(DIAG_DIR)
+	var base := _diag_dir()
+	DirAccess.make_dir_recursive_absolute(base)
 	var stamp := Time.get_datetime_string_from_system(false, true).replace(":", "-")
-	var path := "%s/diag_%s_%s.txt" % [DIAG_DIR, tag, stamp]
+	var path := "%s/diag_%s_%s.txt" % [base, tag, stamp]
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
 		push_warning("[DIAG] 写盘失败：%s" % path)
@@ -264,12 +287,12 @@ func dump(tag: String = "manual") -> String:
 	## ① 打进控制台（终端日志里能直接看到去哪儿取）
 	print("[DIAG] 📄 诊断已落盘：%s" % abs_path)
 	## ② 追加一行"最新产物"索引，便于外部脚本/人快速找到最后一份
-	var idx := FileAccess.open("%s/LATEST.txt" % DIAG_DIR, FileAccess.WRITE)
+	var idx := FileAccess.open("%s/LATEST.txt" % base, FileAccess.WRITE)
 	if idx != null:
 		idx.store_string("tag=%s\ntime=%s\npath=%s\n" % [tag, Time.get_datetime_string_from_system(false, true), abs_path])
 		idx.close()
 	## ③ 复制到"下传目录"（便于外部直接取；路径可在文件头看到）
-	var out_dir := "%s/outbox" % DIAG_DIR
+	var out_dir := "%s/outbox" % base
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	var out_path := "%s/%s" % [out_dir, path.get_file()]
 	DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(out_path))
