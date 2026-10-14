@@ -617,9 +617,22 @@ func _section_turnstate(out: PackedStringArray) -> void:
 		var st = eng.get("state")
 		out.append("  engine.state.active（行动方）= %s" % str(st.get("active")))
 		out.append("  engine.state.phase（阶段）  = %s" % str(st.get("phase")))
-		out.append("  engine.state.round（回合）  = %s" % str(st.get("round")))
+		out.append("  engine.state.round_no（回合）  = %s" % str(st.get("round_no")))
 		out.append("  engine.sel_kind / sel_unit  = %s / %s" % [
 			str(eng.get("sel_kind")), str(eng.get("sel_unit"))])
+		## ⭐ 迭代067 rev8：补打印「双方费用」与「选中手牌索引」——
+		##   此前取证档引用了 cost0/cost1/sel_hand 三个值，但 §F 并不输出它们
+		##   ⇒ 第三方无法从产物核对「点击前后未变」。此处补齐，使这类断言可落盘复核。
+		var _sd = st.get("sides")
+		var _c0 := "?"
+		var _c1 := "?"
+		if _sd is Dictionary:
+			if _sd.has(0):
+				_c0 = str((_sd[0] as Dictionary).get("cost", "?"))
+			if _sd.has(1):
+				_c1 = str((_sd[1] as Dictionary).get("cost", "?"))
+		out.append("  cost（双方费用）             = %s / %s · sel_hand_index = %s" % [
+			_c0, _c1, str(eng.get("sel_hand_index"))])
 	else:
 		out.append("  ⚠ 取不到 engine.state（可能非战斗场景）")
 	## 四个信息栏节点的实际压暗值（**这是"规律"的最终体现**）
