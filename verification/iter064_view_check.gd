@@ -434,12 +434,32 @@ func _check_b3() -> void:
 	if c == null:
 		_ok("B3 取到手牌卡", false, "（无手牌节点）")
 		return
-	c.call("set_playable", false)
-	var m: Color = c.modulate
-	_ok("B3 灰化后 alpha 仍为 1（费用标记不半透明）", is_equal_approx(m.a, 1.0), " a=%.2f" % m.a)
-	_ok("B3 灰化确实压了 RGB", m.r < 1.0 and is_equal_approx(m.r, m.g), " r=%.2f" % m.r)
 	c.call("set_playable", true)
-	_ok("B3 set_playable(true) 复原", is_equal_approx(c.modulate.a, 1.0) and is_equal_approx(c.modulate.r, 1.0))
+	var m: Color = c.modulate
+	_ok("B3 滤镜后 alpha 仍为 1（费用标记不半透明）", is_equal_approx(m.a, 1.0), " a=%.2f" % m.a)
+	_ok("B3 set_playable(true) 复原", is_equal_approx(m.a, 1.0) and is_equal_approx(m.r, 1.0))
+	## ⭐ 迭代067（人 2026-10-14 口径变更）：`set_playable` 的 `dim_black` 语义由
+	##   「非本方手牌」收窄为「**非行动方一侧**」—— 整卡滤镜只回答"是不是行动方"，
+	##   不再表达"费用够不够"（后者改由费用数字变灰表达，见下方三条新断言）。
+	_ok("B3 行动方手牌不加滤镜（全白）", is_equal_approx(c.modulate.a, 1.0) and is_equal_approx(c.modulate.r, 1.0))
+	c.call("set_playable", true, true)
+	_ok("067 非行动方手牌变黑且只压 RGB（alpha 恒 1）",
+		is_equal_approx(c.modulate.a, 1.0) and c.modulate.r < 0.5 and is_equal_approx(c.modulate.r, c.modulate.g),
+		" r=%.2f a=%.2f" % [c.modulate.r, c.modulate.a])
+	c.call("set_playable", true)
+	_ok("067 切回行动方精确复原为全白", is_equal_approx(c.modulate.r, 1.0) and is_equal_approx(c.modulate.a, 1.0))
+	## ⭐ 迭代067 第二条口径：**费用数字灰化**（与整卡滤镜解耦）
+	var bg := c.get_node_or_null("BadgeImage/Value")
+	if bg is Label:
+		var lb := bg as Label
+		c.call("set_cost_affordable", false)
+		var g: Color = lb.get_theme_color("font_color")
+		_ok("067 费用不足 → 费用数字变灰", g != Color("#FFFFFF"), " font=%s" % str(g))
+		c.call("set_cost_affordable", true)
+		_ok("067 费用补足 → 费用数字复原为白", lb.get_theme_color("font_color") == Color("#FFFFFF"),
+			" font=%s" % str(lb.get_theme_color("font_color")))
+	else:
+		_ok("067 取到费用数字 Label", false, "（无 BadgeImage/Value）")
 
 
 ## B4：卡上目标标框（因 PITCH=250 而卡正好 250×250，格高亮会被整片盖住）

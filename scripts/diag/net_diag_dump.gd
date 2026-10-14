@@ -585,6 +585,19 @@ func _visible_bounds(n: Control) -> Rect2:
 ##   人 2026-10-10 描述：「本机变化规律正确，对方**异常变暗后再叠加已有的规律**」
 ##   ⇒ 必须把**两端的 自座位 / 当前行动方 / 实际压暗值**摆在一起比，才能定位。
 ## 本段同时打印：座位与回合态、四个信息栏节点的**实际 modulate**、手牌区位置与 modulate。
+## ⭐ 迭代067：读一张手牌卡的费用数字字色（供 §F 机器比对"费用数字灰化"口径）
+##   为什么需要：本轮起「整卡滤镜」与「费用数字灰化」是两条通路，
+##   只印 modulate 无法证明数字是否按费用变灰 ⇒ 把 `BadgeImage/Value` 的 font_color 一并落盘。
+##   蜂王卡不参与费用判定（显示回费量），其值恒为默认白。
+func _digit_color_of(c: Node) -> Color:
+	if c == null or not is_instance_valid(c):
+		return Color(0, 0, 0, 0)
+	var lb := c.get_node_or_null("BadgeImage/Value")
+	if lb is Label:
+		return (lb as Label).get_theme_color("font_color")
+	return Color(0, 0, 0, 0)
+
+
 func _section_turnstate(out: PackedStringArray) -> void:
 	out.append("\n--- §F 回合态 / 压暗规律（两端应各自自洽；比对两端本段即可看出分歧）---")
 	var cs := get_tree().current_scene
@@ -593,6 +606,12 @@ func _section_turnstate(out: PackedStringArray) -> void:
 		return
 	var seat = cs.get("my_seat")
 	out.append("  my_seat（本端座位）        = %s" % str(seat))
+	## ⭐ 迭代067：详情栏状态（口径③「详情栏恒开放」的机器取证位）——
+	##   点任意手牌/单位后本行应随 CardName 变化，而 sel_kind 不变（可看 ≠ 可操作）。
+	var ip_name := cs.get_node_or_null("HUD/InfoPanel/CardName")
+	var ip_desc := cs.get_node_or_null("HUD/InfoPanel/SkillDesc")
+	out.append("  详情栏 CardName            = %s" % (String(ip_name.text) if ip_name is Label else "<缺失>"))
+	out.append("  详情栏 SkillDesc 前 24 字   = %s" % (String(ip_desc.text).substr(0, 24) if ip_desc is Label else "<缺失>"))
 	var eng = cs.get("engine")
 	if eng != null and eng.get("state") != null:
 		var st = eng.get("state")
@@ -622,7 +641,9 @@ func _section_turnstate(out: PackedStringArray) -> void:
 			continue
 		out.append("  %-30s modulate=(%.3f, %.3f, %.3f, %.2f)  pos=%s" % [
 			String(p[0]), n.modulate.r, n.modulate.g, n.modulate.b, n.modulate.a, str(n.position)])
-	## 手牌卡亮/灰（每张卡的 modulate —— 口径：只按部署费用，理论上两端应一致）
+	## 手牌卡亮/灰（每张卡的 modulate —— ⭐ 迭代067 起口径改为**按行动方**：
+	##   行动方一侧全白、非行动方一侧变黑；而"费用够不够"改由**费用数字字色**单独表达。
+	##   故本段同时打印 `字色`，供两端比对费用数字的灰化是否一致）
 	var hn = cs.get("_hand_nodes")
 	if hn != null:
 		for sidek in hn.keys():
@@ -633,8 +654,9 @@ func _section_turnstate(out: PackedStringArray) -> void:
 				idx += 1
 				if c == null or not is_instance_valid(c):
 					continue
-				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f)" % [
-					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a])
+				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f) 字色=(%.3f,%.3f,%.3f,%.2f)" % [
+					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a,
+					_digit_color_of(c).r, _digit_color_of(c).g, _digit_color_of(c).b, _digit_color_of(c).a])
 	## ⭐ 地图单位几何（**迭代065 数据镜像的取证位**）——
 	##   人 2026-10-10 报「对端初始两个蜂王普遍向右向下各移动一格」；本段给出：
 	##   规范格（元数据）· 节点局部位置 · 全局位置 · 旋转 · 以及**该规范格节点自身的局部位置**。

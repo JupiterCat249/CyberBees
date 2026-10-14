@@ -25,6 +25,11 @@ const ICON_DIR := "res://assets/card_icons/"
 var card_data: CardData = null
 var _press_frames := 0
 var _long_fired := false
+## ⭐ 迭代067（人 2026-10-14）：**费用数字灰化**是本卡独立的一条视觉通路 ——
+##   与「整卡滤镜」（modulate，见 `set_playable`）**解耦**：行动方手牌不加滤镜，
+##   但费用不足以部署的那张牌，其角标费用数字单独变灰。
+##   默认 true（费用够）＝沿用历史白色字，不改变既有观感。
+var _cost_affordable: bool = true
 
 
 # ---------------- 节点取用（判空） ----------------
@@ -50,21 +55,22 @@ func _ready() -> void:
 
 # ---------------- ① 数据绑定 ----------------
 
-func bind(data: CardData) -> void:
+func bind(data: CardData, p_cost_affordable: bool = true) -> void:
 	card_data = data
 	if data == null:
 		visible = false
 		return
 	visible = true
+	_cost_affordable = p_cost_affordable
 	## ⚠️ 重置为正常显示 —— 防止烤入场景里遗留的暗色 modulate 让可出的牌也显示为灰
 	##   （可出性由 `set_playable()` 控制，不依赖 modulate 历史值）
 	modulate = Color(1, 1, 1, 1)
 	var bg := _badge()
 	if bg != null:
 		bg.text = str(data.cost) if data.cost >= 0 else "X"
-		## ⭐ 迭代064 UI-11：设计色卡「亮橙 `#FFA300` = 默认部署费用」
-		## ⚠️ 人 2026-10-05 明确：手牌费用图标上的**文字应为白色**（此前的黑字判断作废）
-		bg.add_theme_color_override("font_color", Color("#FFFFFF"))
+	## ⭐ 迭代067（人 2026-10-14）：**费用数字颜色改由「费用是否够」单独决定**（不再写死白）。
+	##   口径：显式入参 > 本轮已下发的 set_cost_affordable() > 默认白。
+	_apply_cost_digit(p_cost_affordable)
 	_apply_type_color(data)
 	_apply_artwork(data)
 	_apply_crop(data.visual)
@@ -101,7 +107,7 @@ func _ensure_stripe_overlay() -> void:
 	##   而条纹已改挂到 `Body` 下 ⇒ 守卫永远失效 ⇒ **每次 `bind()`（手牌每次渲染 ✗）都再挂一层** ✗
 	##   ⇒ 层层叠加：白得越来越明显 / 把类型底色冲淡 / 溢出边界（人 2026-10-05 反馈的三个现象同一根因）。
 	var body := _body()
-	var host: Node = body if body != null else self
+	var host: Node = (body as Node) if body != null else (self as Node)
 	if host.has_node("TypeStripe"):
 		return
 	var tex := load("res://assets/ui/fx/crt_scanline_tile.png") as Texture2D
@@ -171,26 +177,55 @@ func set_image_offset(new_offset: Vector2, new_scale: Vector2 = Vector2.ZERO) ->
 
 # ---------------- ③ 可出牌态（逻辑层下发，视图只表现） ----------------
 
-func set_playable(can_play: bool, dim_black: bool = false) -> void:
+## ⭐ 迭代067（人 2026-10-14）：本函数语义**收窄为「整卡滤镜」**——只回答"这一侧是不是行动方"。
+##   参数名由 `can_play` 改为 `affordable` 前先说明：本函数**不再参与"钱够不够"的表达**，
+##   钱不够改由「费用数字变灰」表达（见 `_apply_cost_digit` / `set_cost_affordable`）。
+##   ⇒ 行动方手牌恒 modulate 全白；非行动方一侧一律变黑。
+func set_playable(_affordable: bool, dim_black: bool = false) -> void:
 	## ⚠️ 迭代064 批次 B3（人 2026-09-27 问题清单 UI-9 / UI-12）：
 	##   **灰化只压 RGB，绝不压 alpha**。原实现是 `Color(0.65,0.65,0.65,0.85)` ——
 	##   那个 0.85 会经 `modulate` **级联到全部子节点**，把**费用图标与费用数字也一并变成半透明**
 	##   （人明确：「费用标记不应该在任何情况下变半透明」「不可选时应该是整体变灰，
 	##     而不是变灰的同时费用图标和费用数字（甚至卡面本身）变半透明」）。
 	##   现在：整卡统一变灰（RGB × 0.65），费用标记保持**完全不透明**。
-	## ⭐ 迭代064 UI-21：`dim_black` = **非本方**手牌 → 直接变黑（0.22）；本方"不可用" → 中性灰（0.65）。
+	## ⭐ 迭代067：`dim_black` = **非行动方**手牌 → 直接变黑（0.22）；行动方手牌 → 全白（1,1,1,1）。
 	##   两者都**只压 RGB、不压 alpha**（守 UI-9 / UI-12 口径）。
-	if can_play:
-		modulate = Color(1, 1, 1, 1)
-	elif dim_black:
+	if dim_black:
 		modulate = Color(0.22, 0.22, 0.22, 1)
 	else:
-		modulate = Color(0.65, 0.65, 0.65, 1)
+		modulate = Color(1, 1, 1, 1)
 	## ⭐ 迭代064 遗留修复（人 2026-10-05「单位会奇怪的变黑」）防复发：
 	##   `modulate` 是**级联**的，但 `self_modulate` 是**本节点单独**的乘子 —— 若它残留非白值，
 	##   会把 modulate 的灰/黑**再乘一层**（0.22 × 残留 ⇒ 近乎全黑），且**排查时在 modulate 上看不出来**。
 	##   本卡全部视觉状态都由 `modulate` 表达 ⇒ `self_modulate` 永远保持白（显式重置，不依赖场景烤值）。
 	self_modulate = Color(1, 1, 1, 1)
+
+
+## ⭐ 迭代067（人 2026-10-14）：**费用数字的灰化通路**（与整卡滤镜解耦）
+##   人 2026-10-14 口径：「处于行动阶段的一方，其手牌全部都是正常显示不加额外滤镜，
+##   但如果该玩家当前持有的费用不能使用某某手牌则该手牌对应的**费用数字**自动变成灰色」。
+##   ⇒ 整卡 modulate（见 `set_playable`）只表达「是不是行动方」，费用数字颜色单独表达「够不够」。
+##   实现：显式绑定 `BadgeImage/Value` 的 `font_color` override（优先级高于 theme 默认值，
+##         与迭代064 UI-11 的写法同源，故不会与素材主题冲突）。
+##   ⚠️ 只改**字色**：不动字号、不动徽章尺寸（守 2026-09-19「不要改字号」硬约束）。
+##   ⚠️ 蜂王卡不参与：它显示的是「每回合回费量」（UI-11 口径），不是部署费。
+const COST_DIGIT_NORMAL := Color("#FFFFFF")
+const COST_DIGIT_DIM := Color("#808080")
+
+
+func _apply_cost_digit(affordable: bool) -> void:
+	_cost_affordable = affordable
+	var lb := _badge()
+	if lb == null:
+		return
+	var is_queen := card_data != null and card_data.kind == CardData.CardKind.QUEEN
+	var col := COST_DIGIT_NORMAL if (affordable or is_queen) else COST_DIGIT_DIM
+	lb.add_theme_color_override("font_color", col)
+
+
+## 外部下发：费用是否够（供 `arena_view.refresh_hand_affordability()` 等处调用；幂等）
+func set_cost_affordable(affordable: bool) -> void:
+	_apply_cost_digit(affordable)
 
 
 func set_selected(sel: bool) -> void:

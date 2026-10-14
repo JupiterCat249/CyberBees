@@ -47,6 +47,11 @@ const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1
 const PITCH := 250.0
+## ⭐ 迭代067（人 2026-10-14）：手牌区与玩家信息栏**共用同一套滤镜常量**（口径单一来源，避免分叉）
+##   normal = 该侧为行动方（不加滤镜）· black = 非行动方（变黑）
+##   只压 RGB、不压 alpha（守 UI-9 / UI-12：费用标记不得变半透明）
+const INFO_FILTER_NORMAL := Color(1, 1, 1, 1)
+const INFO_FILTER_BLACK := Color(0.22, 0.22, 0.22, 1)
 
 @export var auto_start := true
 @export var use_resources := true
@@ -1321,17 +1326,18 @@ func _on_round_started(round_no: int) -> void:
 		_set_turn(engine.state.active, round_no)
 
 
-## 玩家信息面板的压暗口径（清单 21）：**我方** → 轮到自己正常 / 否则灰；**敌方** → 一律**变黑**
-## ⚠️ 2026-10-10 **还原**（人明确：这条"不对称"是**联机两端变化规律不一致**，不是配色口径问题；
-##   本机变化规律**正确**，对端"异常变暗后再叠加已有的规律"）。
-##   我曾按"两侧应对称"改成统一 `INFO_DIM` —— **方向错了**，已在此逐字还原为原三态口径。
-##   ⇒ 这条的正确动作是：**先保原规律，再查"为什么两端规律不一致"**（见 `浏览器/采集报告 §F 回合态`）。
+## 玩家信息面板的压暗口径（**迭代067 重构 · 人 2026-10-14 指示**）
+##   ⭐ 现行口径＝**按行动方对称**：该侧是行动方 → 不加滤镜（全白）；不是行动方 → 一律变黑。
+##   ⇒ 同一时刻，两端看到的是**同一规律**：行动那一侧亮、另一侧黑；轮到自己时自己亮、对手黑。
+##
+## ⚠️ 沿革（勿据旧注释回改）：本条曾是「我方→灰(0.65) / 敌方→黑(0.22)」的**非对称三态**；
+##   2026-10-10 有人指出"两侧不对称"是两端规律不一致的问题，当时判定**不应改成对称**并逐字还原。
+##   2026-10-14 人重新指示：**滤镜规律改为按行动方对称**（本条与手牌区同口径，见 card_hand.set_playable）。
+##   旧三态的三处调用点（本方不可用=0.65）随本次重构整体移除。
 func _info_tint(side: int) -> Color:
-	if int(side) != my_seat:
-		return Color(0.22, 0.22, 0.22, 1)
-	if engine != null and engine.state != null and int(engine.state.active) == my_seat:
-		return Color(1, 1, 1, 1)
-	return Color(0.65, 0.65, 0.65, 1)
+	if engine == null or engine.state == null:
+		return INFO_FILTER_NORMAL
+	return INFO_FILTER_NORMAL if int(engine.state.active) == int(side) else INFO_FILTER_BLACK
 
 
 func _set_turn(side: int, round_no: int) -> void:
@@ -1371,9 +1377,6 @@ func _refresh_zone_info(side: int, round_no: int) -> void:
 	if ti == null or engine == null or engine.state == null:
 		return
 	var s: int = side
-	var hand: Array = engine.state.sides[s]["hand"]
-	var dk: Array = engine.state.sides[s]["deck"]
-	var dis: Array = engine.state.sides[s]["discard"]
 ##   ⚠️ **三区计数暂不并入该行**（R17 曾尝试，已实测回退）：该面板宽约 230px，而
 ##   `"回合1--绿方 ｜ 手牌4 · 备卡4 · 墓地0"` 实测文本宽 **721px** —— 压缩成
 ##   `"回合1--绿方 ｜ 手4 备4 墓0"` **仍被面板截断**（截图两次实测）；而人 2026-09-19
@@ -1936,7 +1939,7 @@ func _hand_parent(side: int) -> Control:
 
 ## ⚠️ 不写 position / size —— 手牌区是 GridContainer，布局完全由它负责
 ##   （迭代057 C1 修正：以前写 layout_mode/offset 会把卡从容器布局里摘出来）
-func _render_hand(side: int, hand: Array, playable: Array) -> void:
+func _render_hand(side: int, hand: Array, _playable: Array) -> void:
 	var parent := _hand_parent(side)
 	for ch in parent.get_children():
 		if not ch.is_queued_for_deletion():
@@ -1955,20 +1958,17 @@ func _render_hand(side: int, hand: Array, playable: Array) -> void:
 			node.hand_clicked.connect(_on_hand_clicked.bind(side))
 		_hand_nodes[side][data.id] = node
 		_hand_order[side].append(data.id)
-		## ⭐ 手牌亮/灰：**按当前状态自算**（费用口径），不依赖外部传入的瞬时 mask
-		##   人明确：「只考虑部署费用，其他不用考虑」+ 要求「稳定显示」
-		var aff: bool = engine.hand_affordable(side, i) if engine != null else false
-		if i < playable.size():
-			aff = bool(playable[i])
-		## ⭐ 迭代064 UI-21（清单 21「敌人回合自己的手牌和玩家基本信息是默认灰色不可选中…
-		##   敌人手牌与基本信息直接变黑而不是变灰」）—— **以清单为准**（覆盖 2026-09-19
-		##   「亮/灰只看费用、不看阶段、不看是否当前行动方」的旧裁决）。
-		var my_turn0: bool = engine != null and int(engine.state.active) == my_seat
-		if not my_turn0 or int(side) != my_seat:
-			aff = false
+		## ⚠️ 手牌 UI 参数（立绘裁剪/取窗）必须在这里应用 —— 每次 `bind()` 重建卡面后都要重施
 		if hand_params != null:
 			_apply_one_hand_params(node, hand_params)
-		_call_opt(node, "set_playable", [aff, int(side) != my_seat])
+		## ⭐ 迭代067（人 2026-10-14 指示 · **对称滤镜**）：
+		##   整卡滤镜＝「**该侧是不是当前行动方**」——行动方一侧不加滤镜（全白），
+		##   非行动方一侧一律变黑；**与费用是否够无关**（费用不够改由费用数字变灰表达）。
+		var active_side0: int = int(engine.state.active) if engine != null else my_seat
+		_call_opt(node, "set_playable", [true, int(side) != active_side0])
+		## 费用数字单独表达"够不够"（与上面的整卡滤镜解耦）
+		var cost_ok0: bool = engine.hand_affordable(side, i) if engine != null else false
+		_call_opt(node, "set_cost_affordable", [cost_ok0])
 	## ⭐ 每次渲染后都把子卡内部节点设为鼠标透明（**保留卡根节点可点**）
 	##   （`_ready` 里那次跑在首次渲染之前 → 容器还是空的，等于没跑）
 	_ignore_descendants(parent)
@@ -1987,18 +1987,18 @@ func refresh_hand_affordability() -> void:
 	if engine == null:
 		return
 	for side in [SIDE_ALLY, SIDE_ENEMY]:
-		var hand: Array = engine.state.sides[side]["hand"]
 		## 按渲染顺序（_hand_order）取节点，避免字典顺序错配
 		for i in _hand_order[side].size():
 			var cid: String = _hand_order[side][i]
 			var node: Control = _hand_nodes[side].get(cid)
 			if node == null or not is_instance_valid(node):
 				continue
-			## ⭐ 迭代064 UI-21（与 `_render_hand` 同一口径，**以清单为准**）：
-			##   非本回合 / 非本方 → 一律不可用；**敌方手牌走 `dim_black`（变黑）**，本方不可用走灰。
-			var my_turn1: bool = int(engine.state.active) == my_seat
-			var aff1: bool = engine.hand_affordable(side, i) and my_turn1 and (int(side) == my_seat)
-			_call_opt(node, "set_playable", [aff1, int(side) != my_seat])
+			## ⭐ 迭代067（人 2026-10-14 · 与 `_render_hand` 同一口径，**一条规律两处实现**）：
+			##   整卡滤镜只看「该侧是不是行动方」；费用是否够由**费用数字**单独表达。
+			var active_side1: int = int(engine.state.active)
+			var cost_ok1: bool = engine.hand_affordable(side, i)
+			_call_opt(node, "set_playable", [true, int(side) != active_side1])
+			_call_opt(node, "set_cost_affordable", [cost_ok1])
 	## ⭐ 迭代064 P-15：轮换三区数量一并刷新（**幂等**；与上面的亮/灰共用同一批刷新时机 ——
 	##   费用变化 / 阶段变化 / 回合切换 / 卡入牌库墓地，四条路径都会到）
 	if engine.state != null:
@@ -2018,6 +2018,14 @@ func _on_hand_clicked(card_id: String, side: int) -> void:
 	##   修法：对手手牌**仍然不可操作**（权限门不变），但这一下点击在语义上属于
 	##   **「点击非交互区域」= 取消当前选中**（设计稿 §5.1「进入对象选择状态 → 点击不可交互区域取消选中」）✓。
 	if side != my_seat:
+		## ⭐ 迭代067（人 2026-10-14 指示 · **详情栏恒开放**）：
+		##   「无论是否处于自己的行动阶段，玩家都可以通过任何点击操作查看对方和自己的手牌
+		##     和战场单位的详细信息」⇒ 对手手牌虽**不可操作**，但**必须可看**。
+		##   故这里先按该牌更新左下详情栏，再执行原有权限语义（清掉当前选中）。
+		var opp_idx: int = _hand_order[side].find(card_id)
+		var opp_hand: Array = engine.state.sides[side]["hand"] if engine.state != null else []
+		if opp_idx >= 0 and opp_idx < opp_hand.size():
+			show_detail(opp_hand[opp_idx])
 		if int(engine.sel_kind) != 0:
 			intent.request_clear_selection()
 		return
@@ -2294,6 +2302,12 @@ func _on_unit_clicked(instance_id: String) -> void:
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return
+	## ⭐ 迭代067（人 2026-10-14 指示 · **详情栏恒开放**）：**先无条件更新详情栏**，
+	##   再判操作权限。⇒ 非本方回合点对手单位（或点自己的单位）都能看详情，
+	##   但不会因此获得选中/攻击能力（下面的门原样保留）。
+	var inst0 := _find_unit(instance_id)
+	if inst0 != null and inst0.data != null:
+		show_detail(inst0.data)
 	## ⭐ 迭代064 联机-2：**不是自己回合就不接受单位操作**（同上 —— 别先邀请）
 	if int(engine.state.active) != my_seat:
 		return
