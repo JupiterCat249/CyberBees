@@ -2034,6 +2034,15 @@ func _on_hand_clicked(card_id: String, side: int) -> void:
 		return
 	## 非行动方的手牌不可操作（本地双人热座：只有轮到的一方能动）
 	if side != engine.state.active:
+		## ⭐ 迭代067 补（人 2026-10-15 反馈 · 「详情栏恒开放」的**漏网分支**）：
+		##   走到这里的是「**我自己**的牌，但**不是我回合**」——它与上面「对手手牌」那条是**两个分支**，
+		##   而此前只在对手那条加了 `show_detail` ⇒ 人实测报："点非行动方手牌不显示详细信息" ✗
+		##   （本轮实测复现：详情栏先显示「金刚蜂王」，点非行动方手牌后**仍是**「金刚蜂王」。）
+		##   修法：权限语义**不变**（仍不可操作、仍给回合提示），只把 `show_detail` 提到 `return` 之前 ——
+		##   与对手手牌那条同一条口径：「先展示，后判权限」。
+		var hand_inactive: Array = engine.state.sides[side]["hand"]
+		if idx < hand_inactive.size():
+			show_detail(hand_inactive[idx])
 		_flash_msg("现在不是%s的回合" % ("绿方" if side == SIDE_ALLY else "红方"))
 		return
 	## ⭐ 弃牌 BUG 修复（人 2026-10-05）：处于**弃牌态**时，**点另一张手牌 = 对当前选中的那张执行弃牌** ✓
