@@ -59,12 +59,26 @@ const STRIPE_TEXTURE_PATH := "res://assets/ui/fx/crt_scanline_tile.png"
 @export var kind_center: bool = true
 
 
-## 该卡种的立绘缩放：命中 `kind_art_scale` → 用表值；否则（兵蜂/未知）→ 沿用原参数链
+## 该卡种的立绘缩放。
+## ⭐ 迭代067 补（人 2026-10-15 反馈「除兵蜂外其他单位的 UI 参数都无法改变其手牌的牌面」）：
+##   **优先级改为「显式逐卡缩放 > 参数全局缩放 > 卡种表 > 基准」** —— 此前是"卡种表优先"，
+##   于是蜂王/建筑/指令三型**永远拿表值 0.5**，`crop_scale` 怎么调都不生效 ✗。
+##   改后：表值仍是**默认**（不调参时行为与之前逐字一致），但**显式给了 crop_scale 就能覆盖** ✓
 func art_scale_for_key(kind_key: String, vis: CardVisual) -> Vector2:
+	## ① 逐卡视觉数据显式给的缩放（最强）—— **同样要过 `_scale_ok`**：
+	##    ⚠️ 漏了这一处，实测那张 `crop_scale=80` 的指令卡仍会 `img.scale=(80,80)` ✗
+	##    （第一次修就踩了：只钳了 `final_art_scale`，而本函数才是 `_apply_one_hand_params` 走的那条）
+	if vis != null and _scale_ok(vis.crop_scale):
+		return Vector2(vis.crop_scale, vis.crop_scale)
+	## ② 参数资源显式给的全局缩放
+	if _scale_ok(crop_scale):
+		return Vector2(crop_scale, crop_scale)
+	## ③ 卡种表（兵蜂 key="unit" 不在表里 ⇒ 落到 ④）
 	if kind_key != "" and kind_art_scale.has(kind_key):
 		var v := float(kind_art_scale[kind_key])
 		if v > 0.0:
 			return Vector2(v, v)
+	## ④ 基准
 	return final_art_scale(vis)
 
 
@@ -80,10 +94,25 @@ func final_art_offset(vis: CardVisual) -> Vector2:
 	return off
 
 
+## ⭐ 迭代067 补（人 2026-10-15 反馈「除兵蜂外其他单位的 UI 参数都无法改变其手牌的牌面」）：
+##   **真因**：`CardVisual.crop_scale` 的默认值是 **1.0**（而注释与参数侧都约定"0 = 不覆盖"），
+##   于是**每张卡都算"显式给了缩放"** ⇒ 参数侧的 `crop_scale` **永远被抢先**，改参数当然没反应 ✗。
+##   个别卡还把它填成了 **80**（量级明显误填：实测该卡 `img.scale=(80,80)`、偏移 -15903，卡面早废）。
+##   **修法**：① 只接受**合理区间**内的值（越界视为误填 ⇒ 忽略并回落）；
+##           ② `CardVisual.crop_scale` 默认值改为 0.0（与"0 = 不覆盖"一致，见 card_visual.gd）。
+const ART_SCALE_MIN := 0.05      ## 小于此视为"没填/误填"
+const ART_SCALE_MAX := 4.0       ## 大于此视为误填（正常立绘缩放不会超过 4 倍）
+
+
+## 读作"有效缩放"：必须落在 [ART_SCALE_MIN, ART_SCALE_MAX]
+func _scale_ok(v: float) -> bool:
+	return v >= ART_SCALE_MIN and v <= ART_SCALE_MAX
+
+
 func final_art_scale(vis: CardVisual) -> Vector2:
-	if vis != null and vis.crop_scale > 0.0:
+	if vis != null and _scale_ok(vis.crop_scale):
 		return Vector2(vis.crop_scale, vis.crop_scale)
-	if crop_scale > 0.0:
+	if _scale_ok(crop_scale):
 		return Vector2(crop_scale, crop_scale)
 	return art_base_scale
 

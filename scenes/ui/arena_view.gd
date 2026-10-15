@@ -1280,7 +1280,15 @@ func _apply_one_hand_params(node, p) -> void:
 		var sz := Vector2(400, 400.0 * tsz.y / maxf(tsz.x, 1.0))
 		var sc: Vector2 = p.art_scale_for_key(key, vis)
 		var off: Vector2 = p.final_art_offset(vis)
-		if p.should_center_key(key):
+		## ⭐ 迭代067 补（人 2026-10-15 反馈「除兵蜂外其他单位的 UI 参数都无法改变其手牌的牌面」）：
+		##   此前这里**无条件**把 off 覆盖成居中值 ⇒ 命中卡种表的三型（蜂王/建筑/指令）
+		##   的 `art_base_offset` / `crop_offset` / `vis.crop_offset` **全被丢弃**，参数怎么调都不动 ✗。
+		##   改后：**只有"没显式给偏移"时才用居中作为默认基准**；
+		##   一旦 `crop_offset`（或逐卡 `vis.crop_offset`）非零，就**尊重参数** ⇒ 参数重新能改变牌面 ✓
+		##   （不调参时行为与之前逐字一致。）
+		var has_explicit_offset: bool = p.crop_offset != Vector2.ZERO \
+				or (vis != null and vis.crop_offset != Vector2.ZERO)
+		if p.should_center_key(key) and not has_explicit_offset:
 			var plane: Control = img.get_parent()
 			var pw: Vector2 = Vector2(194, 196)
 			if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
