@@ -1286,7 +1286,17 @@ func _apply_one_hand_params(node, p) -> void:
 			if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
 				pw = plane.size
 			var draw: Vector2 = Vector2(sz.x * sc.x, sz.y * sc.y)
-			off = (pw - draw) * 0.5
+			## ⭐ 2026-10-15（人报告「**位置调节参数没有生效**」）：
+			##   此前这里**无条件**把 off 覆盖成居中值 ⇒ 命中卡种表的三型（蜂王 / 建筑 / 指令）的
+			##   `p.crop_offset` 与逐卡 `vis.crop_offset`（以及 `art_base_offset`）**全被丢弃**，
+			##   位置参数怎么填都不动 ✗。
+			##   现改为**增量式**：居中作**基准**、参数作**微调** ——
+			##     · 不填参数 ⇒ 纯居中（与改动前**逐字一致**）
+			##     · 填了参数 ⇒ 居中 + 偏移量 ⇒ 位置参数生效 ✓
+			##   ⚠️ 不用"填了就完全弃用居中"：那样 off 会被**整段替换**成参数偏移，
+			##      在 194×196 的裁剪窗里极可能裁出空帧（独立静态审查指出过这一点）。
+			var adjust: Vector2 = p.crop_offset + (vis.crop_offset if vis != null else Vector2.ZERO)
+			off = (pw - draw) * 0.5 + adjust
 		img.offset_left = off.x
 		img.offset_top = off.y
 		img.offset_right = off.x + sz.x
