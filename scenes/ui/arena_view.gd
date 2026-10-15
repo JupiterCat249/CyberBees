@@ -106,10 +106,24 @@ var _preview_cleared := false
 
 ## 两套 UI 参数（**各自独立**，人要求：详情区 / 手牌卡不共用）
 ## 运行时可替换（如换皮肤/调参）——替换后调 apply_params() 重施即可
-var detail_params: Resource = DetailP.new()
-var hand_params: Resource = HandP.new()
+## ⭐ 迭代067 补（人 2026-10-15 反馈「除兵蜂外其他单位的 UI 参数都无法改变其手牌的牌面」）：
+##   **这两个字段此前不是 `@export`** ⇒ 编辑器 Inspector 里**根本看不到**，人**没地方调** ✗；
+##   再叠上「`apply_params()` 只在 `_ready()` 调一次、而那一刻 `_hand_nodes` 还是空的」⇒ 也没有重施路径。
+##   现改为 `@export` + **setter 自动重施**：
+##     · Inspector 里可直接展开调 `crop_offset` / `crop_scale` / `kind_art_scale` …（改完立刻见效）
+##     · 运行中整体换资源也会马上重施（`apply_params()` 本身幂等，只读这些字段、不写 ⇒ 不会递归）
+@export var detail_params: Resource = DetailP.new():
+	set(v):
+		detail_params = v
+		if is_inside_tree():
+			apply_params()
+@export var hand_params: Resource = HandP.new():
+	set(v):
+		hand_params = v
+		if is_inside_tree():
+			apply_params()
 ## 地形格渲染参数（迭代059 步3：UI 资源化 —— 地形格视觉走本资源）
-var terrain_params: Resource = TerrainP.new()
+@export var terrain_params: Resource = TerrainP.new()
 
 ## 操作反馈：**人 2026-09-19 明确省略 HUD 橙色提示文本**（可省设计）
 ## 所有反馈走控制台输出（`_flash_msg` → print("[VIEW] ...")）
@@ -1279,22 +1293,26 @@ func _apply_one_hand_params(node, p) -> void:
 		var tsz: Vector2 = img.texture.get_size() if img.texture != null else Vector2(400, 454)
 		var sz := Vector2(400, 400.0 * tsz.y / maxf(tsz.x, 1.0))
 		var sc: Vector2 = p.art_scale_for_key(key, vis)
+		## 基准偏移：走**完整参数链**（`art_base_offset` + 参数 `crop_offset` + 逐卡 `vis.crop_offset`）。
+		## ⚠️ 这一行**必须保留** —— 上一次改这段时曾误删它，导致下面 `img.offset_* = off.x` 报
+		##    `Parse Error: Identifier "off" not declared`（脚本直接编译不过，游戏起不来）。
 		var off: Vector2 = p.final_art_offset(vis)
-		## ⭐ 迭代067 补（人 2026-10-15 反馈「除兵蜂外其他单位的 UI 参数都无法改变其手牌的牌面」）：
-		##   此前这里**无条件**把 off 覆盖成居中值 ⇒ 命中卡种表的三型（蜂王/建筑/指令）
-		##   的 `art_base_offset` / `crop_offset` / `vis.crop_offset` **全被丢弃**，参数怎么调都不动 ✗。
-		##   改后：**只有"没显式给偏移"时才用居中作为默认基准**；
-		##   一旦 `crop_offset`（或逐卡 `vis.crop_offset`）非零，就**尊重参数** ⇒ 参数重新能改变牌面 ✓
-		##   （不调参时行为与之前逐字一致。）
-		var has_explicit_offset: bool = p.crop_offset != Vector2.ZERO \
-				or (vis != null and vis.crop_offset != Vector2.ZERO)
-		if p.should_center_key(key) and not has_explicit_offset:
+		if p.should_center_key(key):
 			var plane: Control = img.get_parent()
 			var pw: Vector2 = Vector2(194, 196)
 			if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
 				pw = plane.size
 			var draw: Vector2 = Vector2(sz.x * sc.x, sz.y * sc.y)
-			off = (pw - draw) * 0.5
+			## ⭐ 迭代067 补（人 2026-10-15 反馈「除兵蜂外其他单位的 UI 参数都无法改变其手牌的牌面」）：
+			##   此前这里**无条件**把 off 覆盖成居中值 ⇒ 命中卡种表的三型（蜂王/建筑/指令）的
+			##   `art_base_offset` / `crop_offset` / `vis.crop_offset` **全被丢弃**，参数怎么调都不动 ✗。
+			##   现改为**增量式**：居中作基准，参数作微调 ——
+			##     · 不调参 ⇒ 纯居中（与修复前**逐字一致**）
+			##     · 调参   ⇒ 居中 + 偏移增量 ⇒ 参数能改变牌面，且**不会**像"整段换掉 off"那样裁出空帧 ✓
+			##   （⚠️ 曾试过"给了 crop_offset 就完全弃用居中"；独立静态审查指出那样会把 off 整段替换、
+			##     clip 后极可能空帧 —— 已按建议改为增量式。）
+			var adjust: Vector2 = p.crop_offset + (vis.crop_offset if vis != null else Vector2.ZERO)
+			off = (pw - draw) * 0.5 + adjust
 		img.offset_left = off.x
 		img.offset_top = off.y
 		img.offset_right = off.x + sz.x
