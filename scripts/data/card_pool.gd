@@ -275,31 +275,57 @@ const DECK_NAMES: Array = [
 ]
 
 
-## 构造示范卡组（每次调用生成**新的 UUID**，可安全用于双方各一份）
+## 卡组资源路径（**运行时唯一真值来源**）
+const DECK_PATH := "res://game_data/decks/示范卡组.tres"
+const CARD_DIR := "res://game_data/cards/"
+
+
+## ✅ 迭代067 重构（人 2026-10-15：「**卡牌本身是数据驱动的，使用的数据格式是 Godot 内置类 Resources**」）：
+##   **改为从 `.tres` 加载** —— 此前这里是"读代码常量表 `CARDS` 构造"，于是
+##   人在编辑器里改 `game_data/cards/*.tres` **运行时完全不生效**（资源那条链是单向的、只出不进）。
+##   现在：**`.tres` 是运行时真值来源**；`CARDS` 降级为**生成器输入**
+##   （只供 `verification/gen_resources.gd` 重建资源用）。
+##
+##   ⚠️ **必须深拷贝 + 重生成 id**：
+##     · 深拷贝：双方各拿一份、每局独立 —— 不能共用同一个资源实例；
+##     · 重生成 id：资源里的 `id` 是**生成那一刻写死**的，复用会让双方/多局撞 id
+##       —— `state_hash`（联机对账）与 `Uuid` 唯一性都依赖它。
 static func build(deck_name: String = "示范卡组") -> DeckData:
+	var src: DeckData = load(DECK_PATH)
+	if src == null:
+		push_error("[CardPool] 卡组资源加载失败：%s —— 请先跑 verification/gen_resources 生成" % DECK_PATH)
+		return null
+	## ⚠️ **不要写成 `src.duplicate(true)`**：实测它对 `DeckData` 的 `cards` **不生效** ——
+	##   `duplicate(subresources)` 复制的是**内嵌子资源**，而 `cards` 里的卡是**外部资源引用**，
+	##   复制后 `dd.cards == src.cards` 与 `dd.cards[0] == src.cards[0]` **仍为 true**（连数组都共享）
+	##   ⇒ 双方会共用同一批卡（联机下改一份影响另一份）✗。
+	##   **必须逐张 `duplicate(true)`** —— 实测逐卡复制能连 `visual` / `skills` 一并深拷贝 ✓。
 	var dd := DeckData.new()
 	dd.id = Uuid.generate()
 	dd.display_name = deck_name
-	var by_name := {}
-	for spec in CARDS:
-		var c := make(spec)
-		by_name[spec["name"]] = c
-		if c.kind == CardData.CardKind.QUEEN:
-			dd.queen = c
-	for nm in DECK_NAMES:
-		if by_name.has(nm):
-			var c: CardData = by_name[nm]
-			## ⚠️ 既有缺陷修复（2026-10-05 本轮回归时抓到）：蜂王**已单独挂在 `dd.queen`**，
-			##   而 `DECK_NAMES` 里也写着"金刚蜂王" ⇒ 原实现把它**又塞进了 `dd.cards`**，
-			##   导致常规卡变 9 张、违反 a500 构筑 1「1 蜂王 + **8** 张常规卡」：
-			##     · `BattleConfig.validate()` 必报「常规卡应为 8 张（实际 9）」
-			##     · `BattleState` 侧的两个牌堆各多一张蜂王（等于**牌库里还能再抽出一张蜂王** ✗）
-			##   判据：人钉死的顺序把它写作"卡组第一"，指的是**卡组列表的展示顺序**，
-			##   而蜂王的归属位置始终是 `dd.queen`（不是 `dd.cards`）。
-			if c.kind == CardData.CardKind.QUEEN:
-				continue
-			dd.cards.append(c)
+	if src.queen != null:
+		var q := src.queen.duplicate(true) as CardData
+		_regen_one(q)
+		dd.queen = q
+	for c in src.cards:
+		if c == null:
+			continue
+		var cc := c.duplicate(true) as CardData
+		_regen_one(cc)
+		dd.cards.append(cc)
 	return dd
+
+
+## 重生成一张卡的 id + 其技能/被动的 id（资源里的 id 只代表"生成那一刻"）
+static func _regen_one(c: CardData) -> void:
+	c.id = Uuid.generate()
+	for s in c.skills:
+		if s != null:
+			s.id = Uuid.generate()
+	if c is UnitData:
+		for p in (c as UnitData).passives:
+			if p != null:
+				p.id = Uuid.generate()
 
 
 ## 按卡名取一张新卡（不在表中 → null）
