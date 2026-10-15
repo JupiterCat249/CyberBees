@@ -59,12 +59,27 @@ const STRIPE_TEXTURE_PATH := "res://assets/ui/fx/crt_scanline_tile.png"
 @export var kind_center: bool = true
 
 
-## 该卡种的立绘缩放：命中 `kind_art_scale` → 用表值；否则（兵蜂/未知）→ 沿用原参数链
+## 该卡种的立绘缩放。
+## ⭐ 2026-10-15（人认可）：**优先级改为「逐卡 → 参数全局 → 卡种表 → 基准」**。
+##   理由：`.tres` 已是运行时真值来源（数据驱动），而"卡种表优先"会让
+##   蜂王 / 建筑 / 指令 三型的**逐卡 `crop_scale` 永远改不动**
+##   （实测：资源里填 0.7、运行时 `visual.crop_scale` 也确实读到了 0.7，但立绘最终仍是表值 0.5 ✗）。
+##   改后 `kind_art_scale` 退为**默认值**，只在"逐卡与参数都没给"时生效。
+##   ⚠️ 配套：`CardVisual.crop_scale` 默认值必须是 **0.0**（＝不覆盖），
+##      否则每张卡都算"给了值"、表仍旧失效。
 func art_scale_for_key(kind_key: String, vis: CardVisual) -> Vector2:
+	## ① 逐卡视觉数据（最具体 ⇒ 最高优先）
+	if vis != null and vis.crop_scale > 0.0:
+		return Vector2(vis.crop_scale, vis.crop_scale)
+	## ② 参数资源给的全局缩放
+	if crop_scale > 0.0:
+		return Vector2(crop_scale, crop_scale)
+	## ③ 卡种表（默认值）
 	if kind_key != "" and kind_art_scale.has(kind_key):
 		var v := float(kind_art_scale[kind_key])
 		if v > 0.0:
 			return Vector2(v, v)
+	## ④ 基准
 	return final_art_scale(vis)
 
 

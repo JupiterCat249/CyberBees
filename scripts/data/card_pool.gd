@@ -328,17 +328,36 @@ static func _regen_one(c: CardData) -> void:
 				p.id = Uuid.generate()
 
 
-## 按卡名取一张新卡（不在表中 → null）
+## 按卡名取一张**新卡**（从资源层加载 ⇒ 与运行时同一真值来源；找不到 → null）
+## ⭐ 2026-10-15（人认可）：由"读代码表构造"改为"读 `.tres`"，与 `build()` 对齐 ——
+##   于是人在编辑器里改某张卡的 `.tres`，`card()` 取到的也就是改后的值。
 static func card(nm: String) -> CardData:
-	for spec in CARDS:
-		if spec["name"] == nm:
-			return make(spec)
-	return null
+	var path := CARD_DIR + nm + ".tres"
+	if not ResourceLoader.exists(path):
+		return null
+	var src := load(path) as CardData
+	if src == null:
+		return null
+	var c := src.duplicate(true) as CardData
+	_regen_one(c)
+	return c
 
 
-## 卡名清单
+## 卡名清单（扫资源目录 ⇒ 不再依赖代码表）
+## ⚠️ 顺序按名称排序，**不再是 `CARDS` 表序** ⇒ 调用方只应把它当"集合"用（遍历/包含判断），
+##    需要顺序的地方一律用 `DECK_NAMES`（那才是钉死序）。
 static func names() -> Array:
 	var out: Array = []
-	for spec in CARDS:
-		out.append(spec["name"])
+	var dir := DirAccess.open(CARD_DIR)
+	if dir == null:
+		push_error("[CardPool] 打不开卡目录：%s" % CARD_DIR)
+		return out
+	dir.list_dir_begin()
+	var f := dir.get_next()
+	while f != "":
+		if not dir.current_is_dir() and f.ends_with(".tres"):
+			out.append(f.get_basename())
+		f = dir.get_next()
+	dir.list_dir_end()
+	out.sort()
 	return out

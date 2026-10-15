@@ -17,7 +17,12 @@ enum CardTypeColor { QUEEN, SOLDIER, BUILDING, COMMAND }
 ##   y 越负 → 立绘越往上 → 窗口里越看到立绘的下半部分
 ##   y 越正 → 立绘越往下 → 窗口里越看到立绘的上半部分（头部）
 @export var crop_offset: Vector2 = Vector2.ZERO
-@export var crop_scale: float = 1.0                             ## 立绘缩放（0 = 不覆盖，用场景默认）
+## 立绘缩放（**0 = 不覆盖**）⇒ 回落顺序：参数资源 `crop_scale` → 卡种表 `kind_art_scale` → `art_base_scale`。
+## ⭐ 2026-10-15（人认可"逐卡优先"）：默认值由 **1.0 改为 0.0** ——
+##   1.0 会让**每一张卡都算"显式给了缩放"**，从而永远盖掉运行时参数与卡种表
+##   （现象正是「除兵蜂外其他单位的 UI 参数都无法改变其手牌的牌面」）。
+##   既有 `.tres` 里**显式**写了该值的卡不受影响（要它回落就把它改成 0）。
+@export var crop_scale: float = 0.0
 
 
 func validate() -> Array[String]:
