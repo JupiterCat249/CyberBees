@@ -39,6 +39,8 @@ _data = {
 }
 
 [sub_resource type="StyleBoxFlat" id="R2"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_color = Color(0.8, 0.8, 0.8, 0)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -51,7 +53,7 @@ border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(1, 1, 1, 0.501961)
+border_color = Color(1, 1, 1, 1)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
@@ -303,6 +305,8 @@ anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2
+metadata/_edit_vertical_guides_ = [1490.0]
+metadata/_edit_horizontal_guides_ = [40.0]
 
 [node name="Background" type="Panel" parent="." unique_id=1049886299]
 layout_mode = 0
@@ -464,10 +468,10 @@ columns = 2
 
 [node name="PlayerBesaInfoRight" type="HBoxContainer" parent="Battle" unique_id=1377072214]
 layout_mode = 0
-offset_left = 1496.7
-offset_top = 41.7
-offset_right = 1586.7
-offset_bottom = 140.7
+offset_left = 1490.0
+offset_top = 40.0
+offset_right = 1785.0
+offset_bottom = 139.0
 mouse_filter = 2
 
 [node name="BadgeImage" type="TextureRect" parent="Battle/PlayerBesaInfoRight" unique_id=1920861006]
@@ -573,8 +577,8 @@ vertical_alignment = 1
 
 [node name="DetailBlock" type="Control" parent="HUD/InfoPanel" unique_id=120224723]
 anchors_preset = 0
-offset_top = 190.0
-offset_right = 284.0
+offset_top = 174.0
+offset_right = 300.0
 offset_bottom = 474.0
 mouse_filter = 2
 
@@ -582,8 +586,8 @@ mouse_filter = 2
 layout_mode = 0
 offset_left = -1.0
 offset_top = -1.0
-offset_right = 284.0
-offset_bottom = 284.0
+offset_right = 299.0
+offset_bottom = 299.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R10")
 
@@ -591,8 +595,8 @@ theme_override_styles/panel = SubResource("R10")
 layout_mode = 0
 offset_left = -1.0
 offset_top = -1.0
-offset_right = 283.0
-offset_bottom = 283.0
+offset_right = 299.0
+offset_bottom = 299.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R11")
 
@@ -600,8 +604,8 @@ theme_override_styles/panel = SubResource("R11")
 layout_mode = 0
 offset_left = 4.0
 offset_top = 4.0
-offset_right = 278.0
-offset_bottom = 278.0
+offset_right = 294.0
+offset_bottom = 294.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R12")
 
@@ -609,7 +613,7 @@ theme_override_styles/panel = SubResource("R12")
 layout_mode = 0
 offset_left = 310.0
 offset_top = 214.0
-offset_right = 372.0
+offset_right = 383.0
 offset_bottom = 444.0
 mouse_filter = 2
 theme_override_constants/separation = 10
@@ -617,7 +621,9 @@ alignment = 1
 
 [node name="Row1" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1654434942]
 layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
+theme_override_constants/separation = 0
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row1" unique_id=2074367686]
 layout_mode = 2
@@ -635,7 +641,9 @@ vertical_alignment = 1
 
 [node name="Row2" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1845661383]
 layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
+theme_override_constants/separation = 0
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row2" unique_id=2065809764]
 layout_mode = 2
@@ -653,7 +661,9 @@ vertical_alignment = 1
 
 [node name="Row3" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=47291006]
 layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
+theme_override_constants/separation = 0
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row3" unique_id=2081540134]
 layout_mode = 2
@@ -671,7 +681,9 @@ vertical_alignment = 1
 
 [node name="Row4" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1307267724]
 layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
+theme_override_constants/separation = 0
 
 [node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row4" unique_id=386429402]
 layout_mode = 2
@@ -707,7 +719,7 @@ theme_override_styles/hover = SubResource("R18")
 [node name="Label" type="Label" parent="HUD/ActionBar" unique_id=1206815651]
 layout_mode = 0
 offset_left = 80.0
-offset_top = 26.0
+offset_top = 23.0
 offset_right = 320.0
 offset_bottom = 74.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -885,9 +897,9 @@ mouse_filter = 2
 [node name="TurnInfo" type="Label" parent="HUD/MatchInfo" unique_id=602256325]
 layout_mode = 0
 offset_left = 4.7
-offset_top = 6.0
+offset_top = -2.0
 offset_right = 364.7
-offset_bottom = 76.0
+offset_bottom = 70.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R34")
 theme_override_font_sizes/font_size = 60

@@ -1,6 +1,13 @@
 extends Node
+## ⛔ **已废弃（人 2026-10-16 裁定：「标记废弃即可，这些本就是一次性的东西」）**
+##   **不要再跑**：本套件 preload 的 `res://scripts/game/*.gd`（第一代数据/规则模块）已于 2026-09-20
+##   整体移入 `archive/legacy/scripts_game/` ⇒ 现在跑起来**只会得到 Parse Error**（`Preload file ... does not exist`
+##   / `Could not find type "GameState"`），**既不是回归失败、也不代表当前代码有问题**。
+##   **当前有效回归**＝`verification/iter064_view_check.tscn`（61 PASS / 0 FAIL）·
+##   `verification/iter056_preview_check.tscn`（37 PASS / 0 FAIL，输出格式为 `[PASS]`）。
+##   ⚠️ 跑套件务必用 Godot 的 **console 版 exe**（主 exe 是 GUI 子系统程序、stdout 恒空，会伪装成"跑了但零失败"）。
 ## 【验证用 · 非生产】迭代054 基础框架自检 —— 逐条验证 a500 规则
-## 状态：待封存（验证用，非生产文件）
+## 状态：已废弃（保留作史料）
 ##
 ## 覆盖：
 ##   回合流程 / 回费（含第7回合+2、后手+2） / 费用上限10 / 部署合法性（建筑领地·兵蜂邻蜂王）

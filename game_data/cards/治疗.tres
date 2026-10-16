@@ -1,14 +1,16 @@
-[gd_resource type="Resource" script_class="CommandData" format=3]
+[gd_resource type="Resource" script_class="CommandData" format=3 uid="uid://b7ql8fxvc53q6"]
 
-[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_54ww8"]
-[ext_resource type="Script" path="res://scripts/data/command_data.gd" id="2_p6s0u"]
-[ext_resource type="Script" path="res://scripts/data/skill_data.gd" id="3_ieydu"]
-[ext_resource type="Texture2D" path="res://assets/card_art/治疗.png" id="4_27wmu"]
-[ext_resource type="Script" path="res://scripts/data/card_visual.gd" id="5_m7ht0"]
+[ext_resource type="Script" uid="uid://t7ef6sb60ipo" path="res://scripts/data/effect_data.gd" id="1_54ww8"]
+[ext_resource type="Script" uid="uid://bjnl0nbhp36pe" path="res://scripts/data/command_data.gd" id="2_p6s0u"]
+[ext_resource type="Script" uid="uid://dcu6nkcxp2i" path="res://scripts/data/skill_data.gd" id="3_ieydu"]
+[ext_resource type="Texture2D" uid="uid://cseyub3s8jnbs" path="res://assets/card_art/治疗.png" id="4_27wmu"]
+[ext_resource type="Script" uid="uid://xq7eevtkv1ac" path="res://scripts/data/card_visual.gd" id="5_m7ht0"]
 
 [sub_resource type="Resource" id="Resource_laaib"]
 script = ExtResource("5_m7ht0")
 artwork = ExtResource("4_27wmu")
+crop_offset = Vector2(0, 5)
+crop_scale = 0.72
 
 [resource]
 script = ExtResource("2_p6s0u")
