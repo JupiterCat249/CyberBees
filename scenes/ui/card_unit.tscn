@@ -22,7 +22,8 @@ corner_radius_top_left = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="R3"]
-bg_color = Color(0.231373, 0.505882, 0.427451, 1)
+bg_color = Color(0.23209421, 0.50638646, 0.42754805, 1)
+border_color = Color(0.8001019, 0.8001019, 0.8001019, 1)
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 
@@ -47,7 +48,7 @@ bg_color = Color(1, 1, 1, 0.8)
 
 [sub_resource type="SystemFont" id="R8"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-font_weight = 900
+font_weight = 600
 subpixel_positioning = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_idb3a"]
@@ -58,7 +59,7 @@ bg_color = Color(1, 1, 1, 0.78431374)
 
 [sub_resource type="SystemFont" id="R12"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-font_weight = 900
+font_weight = 600
 subpixel_positioning = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uidc7"]
@@ -69,7 +70,7 @@ bg_color = Color(1, 1, 1, 0.78431374)
 
 [sub_resource type="SystemFont" id="R16"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-font_weight = 900
+font_weight = 600
 subpixel_positioning = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tnetp"]
@@ -80,7 +81,7 @@ bg_color = Color(1, 1, 1, 0.78431374)
 
 [sub_resource type="SystemFont" id="R20"]
 font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft YaHei")
-font_weight = 900
+font_weight = 600
 subpixel_positioning = 0
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j56he"]
@@ -110,11 +111,12 @@ script = ExtResource("1_hg6cp")
 z_index = 1
 layout_mode = 0
 offset_left = 45.0
-offset_top = 200.0
+offset_top = 199.0
 offset_right = 205.0
-offset_bottom = 240.0
+offset_bottom = 239.0
 
 [node name="Body" type="Panel" parent="." unique_id=871252763]
+visible = false
 layout_mode = 0
 offset_right = 250.0
 offset_bottom = 250.0
@@ -156,8 +158,9 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="UnitType" type="Panel" parent="." unique_id=2016135501]
+modulate = Color(1, 1, 1, 0.5)
 layout_mode = 0
-offset_left = 211.0
+offset_left = 210.0
 offset_right = 250.0
 offset_bottom = 40.0
 mouse_filter = 2
@@ -180,7 +183,7 @@ mouse_filter = 2
 [node name="ArtPlane" type="Panel" parent="Artwork" unique_id=355035369]
 clip_contents = true
 layout_mode = 0
-offset_right = 171.0
+offset_right = 170.0
 offset_bottom = 250.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R6")
@@ -263,6 +266,7 @@ mouse_filter = 2
 
 [node name="ValueCell" type="Panel" parent="Attr_Speed" unique_id=812625035]
 layout_mode = 0
+offset_top = -1.0
 offset_right = 40.0
 offset_bottom = 40.0
 mouse_filter = 2
@@ -284,15 +288,16 @@ vertical_alignment = 1
 layout_mode = 0
 offset_top = 40.0
 offset_right = 40.0
-offset_bottom = 80.0
+offset_bottom = 79.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_uidc7")
 
 [node name="Icon" type="TextureRect" parent="Attr_Speed/AttrCell" unique_id=1004248847]
 modulate = Color(0.133333, 0.133333, 0.133333, 1)
 layout_mode = 0
+offset_top = 3.5
 offset_right = 40.0
-offset_bottom = 40.0
+offset_bottom = 36.5
 mouse_filter = 2
 texture = ExtResource("x3")
 expand_mode = 1
@@ -307,7 +312,6 @@ mouse_filter = 2
 
 [node name="ValueCell" type="Panel" parent="Attr_Health" unique_id=884680617]
 layout_mode = 0
-offset_left = 1.0
 offset_right = 40.0
 offset_bottom = 40.0
 mouse_filter = 2
@@ -315,7 +319,6 @@ theme_override_styles/panel = SubResource("R15")
 
 [node name="Value" type="Label" parent="Attr_Health" unique_id=959918937]
 layout_mode = 0
-offset_left = 1.0
 offset_top = -1.0
 offset_right = 40.0
 offset_bottom = 43.0
@@ -328,7 +331,6 @@ vertical_alignment = 1
 
 [node name="AttrCell" type="Panel" parent="Attr_Health" unique_id=1018829895]
 layout_mode = 0
-offset_left = 1.0
 offset_top = 40.0
 offset_right = 40.0
 offset_bottom = 80.0
@@ -354,7 +356,7 @@ mouse_filter = 2
 
 [node name="ValueCell" type="Panel" parent="Attr_Range" unique_id=16444293]
 layout_mode = 0
-offset_left = 1.0
+offset_top = -1.0
 offset_right = 40.0
 offset_bottom = 40.0
 mouse_filter = 2
@@ -362,7 +364,6 @@ theme_override_styles/panel = SubResource("R19")
 
 [node name="Value" type="Label" parent="Attr_Range" unique_id=264132295]
 layout_mode = 0
-offset_left = 1.0
 offset_top = -1.0
 offset_right = 40.0
 offset_bottom = 43.0
@@ -375,10 +376,9 @@ vertical_alignment = 1
 
 [node name="AttrCell" type="Panel" parent="Attr_Range" unique_id=621867045]
 layout_mode = 0
-offset_left = 1.0
 offset_top = 40.0
 offset_right = 40.0
-offset_bottom = 80.0
+offset_bottom = 79.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_j56he")
 

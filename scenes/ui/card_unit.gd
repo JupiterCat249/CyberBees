@@ -31,8 +31,8 @@ const TYPE_ICON := {
 	"building": "res://assets/type_icons/building.png",
 	"order": "res://assets/type_icons/command.png",
 }
-## 效果徽标边长（`UnitEffects` 容器 158×40 → 4 个 36px + 默认间隔刚好放得下）
-const EFFECT_BADGE_SIZE := 36.0
+## 效果徽标边长（`UnitEffects` 容器 160×40 → 4 个 40px + 默认间隔刚好放得下）
+const EFFECT_BADGE_SIZE := 40.0
 ## ⚠️ 2026-09-24 人实机反馈修正：**徽标不加任何底衬 / 描边 / 内缩**。
 ##    曾用「`corner_radius = 18` 的圆形 Panel 底衬 + 四周 3px 内缩」，人实机看到的观感是
 ##    「圆球状外圈 + 原图被裁小 + 多占一圈空间」——已移除。

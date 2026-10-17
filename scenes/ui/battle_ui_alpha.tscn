@@ -53,7 +53,7 @@ border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(1, 1, 1, 1)
+border_color = Color(1, 1, 1, 0)
 corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
@@ -149,12 +149,24 @@ font_names = PackedStringArray("Noto Sans SC", "Source Han Sans CN", "Microsoft 
 font_weight = 700
 subpixel_positioning = 0
 
-[sub_resource type="StyleBoxFlat" id="R17"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tvb1q"]
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 4
-border_color = Color(1, 1, 1, 0.1)
+border_color = Color(0.6, 0.6, 0.6, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="R17"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 1, 1, 0.101960786)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -305,8 +317,6 @@ anchors_preset = 0
 offset_right = 1920.0
 offset_bottom = 1080.0
 mouse_filter = 2
-metadata/_edit_vertical_guides_ = [1490.0]
-metadata/_edit_horizontal_guides_ = [40.0]
 
 [node name="Background" type="Panel" parent="." unique_id=1049886299]
 layout_mode = 0
@@ -470,8 +480,8 @@ columns = 2
 layout_mode = 0
 offset_left = 1490.0
 offset_top = 40.0
-offset_right = 1785.0
-offset_bottom = 139.0
+offset_right = 1890.0
+offset_bottom = 140.0
 mouse_filter = 2
 
 [node name="BadgeImage" type="TextureRect" parent="Battle/PlayerBesaInfoRight" unique_id=1920861006]
@@ -482,13 +492,13 @@ expand_mode = 2
 
 [node name="Value" type="Label" parent="Battle/PlayerBesaInfoRight/BadgeImage" unique_id=790936648]
 layout_mode = 0
-offset_left = 30.900024
-offset_top = 0.9000015
-offset_right = 68.900024
+offset_left = 30.9
+offset_top = 0.9
+offset_right = 68.9
 offset_bottom = 94.9
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R7")
-theme_override_font_sizes/font_size = 65
+theme_override_font_sizes/font_size = 64
 text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -506,7 +516,7 @@ layout_mode = 0
 offset_left = 30.0
 offset_top = 40.0
 offset_right = 430.0
-offset_bottom = 142.0
+offset_bottom = 140.0
 
 [node name="BadgeImage" type="TextureRect" parent="Battle/PlayerBesaInfoLift" unique_id=214178393]
 layout_mode = 2
@@ -522,7 +532,7 @@ offset_right = 68.9
 offset_bottom = 94.9
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R6")
-theme_override_font_sizes/font_size = 65
+theme_override_font_sizes/font_size = 64
 text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -551,10 +561,8 @@ mouse_filter = 2
 
 [node name="CardName" type="Label" parent="HUD/InfoPanel" unique_id=306631432]
 layout_mode = 0
-offset_left = 1.8
-offset_top = 4.0
-offset_right = 241.8
-offset_bottom = 50.0
+offset_right = 400.0
+offset_bottom = 52.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R8")
 theme_override_font_sizes/font_size = 38
@@ -563,10 +571,9 @@ vertical_alignment = 1
 
 [node name="SkillDesc" type="Label" parent="HUD/InfoPanel" unique_id=1626259457]
 layout_mode = 0
-offset_left = 0.9
-offset_top = 56.0
-offset_right = 300.9
-offset_bottom = 136.0
+offset_top = 52.0
+offset_right = 400.0
+offset_bottom = 157.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R9")
 theme_override_font_sizes/font_size = 25
@@ -577,9 +584,9 @@ vertical_alignment = 1
 
 [node name="DetailBlock" type="Control" parent="HUD/InfoPanel" unique_id=120224723]
 anchors_preset = 0
-offset_top = 174.0
+offset_top = 170.0
 offset_right = 300.0
-offset_bottom = 474.0
+offset_bottom = 470.0
 mouse_filter = 2
 
 [node name="BlockBg" type="Panel" parent="HUD/InfoPanel/DetailBlock" unique_id=1856663289]
@@ -609,90 +616,127 @@ offset_bottom = 294.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("R12")
 
-[node name="Attributes" type="VBoxContainer" parent="HUD/InfoPanel" unique_id=219494896]
-layout_mode = 0
-offset_left = 310.0
-offset_top = 214.0
-offset_right = 383.0
-offset_bottom = 444.0
+[node name="Attributes" type="Control" parent="HUD/InfoPanel" unique_id=1880958694]
+anchors_preset = 0
+offset_left = 300.0
+offset_top = 204.0
+offset_right = 400.0
+offset_bottom = 434.0
 mouse_filter = 2
-theme_override_constants/separation = 10
-alignment = 1
 
-[node name="Row1" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1654434942]
-layout_mode = 2
+[node name="Attack" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=1280699014]
+anchors_preset = 0
+offset_right = 100.0
+offset_bottom = 50.0
 size_flags_vertical = 3
 mouse_filter = 2
-theme_override_constants/separation = 0
 
-[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row1" unique_id=2074367686]
-layout_mode = 2
+[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Attack" unique_id=2074367686]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 5.0
+offset_right = 50.0
+offset_bottom = 45.0
 mouse_filter = 2
 texture = ExtResource("3_r2dp4")
-expand_mode = 2
+expand_mode = 1
 
-[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row1" unique_id=1277448839]
-layout_mode = 2
+[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Attack" unique_id=1277448839]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 5.0
+offset_right = 90.0
+offset_bottom = 45.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R13")
 theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
-[node name="Row2" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1845661383]
-layout_mode = 2
+[node name="Health" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=20196823]
+anchors_preset = 0
+offset_top = 60.0
+offset_right = 100.0
+offset_bottom = 110.0
 size_flags_vertical = 3
 mouse_filter = 2
-theme_override_constants/separation = 0
 
-[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row2" unique_id=2065809764]
-layout_mode = 2
+[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Health" unique_id=2065809764]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 5.0
+offset_right = 50.0
+offset_bottom = 45.0
 mouse_filter = 2
 texture = ExtResource("4_tvb1q")
-expand_mode = 2
+expand_mode = 1
 
-[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row2" unique_id=623202510]
-layout_mode = 2
+[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Health" unique_id=623202510]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 5.0
+offset_right = 90.0
+offset_bottom = 45.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R14")
 theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
-[node name="Row3" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=47291006]
-layout_mode = 2
+[node name="Speed" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=188600371]
+anchors_preset = 0
+offset_top = 120.0
+offset_right = 100.0
+offset_bottom = 170.0
 size_flags_vertical = 3
 mouse_filter = 2
-theme_override_constants/separation = 0
 
-[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row3" unique_id=2081540134]
-layout_mode = 2
+[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Speed" unique_id=2081540134]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 5.0
+offset_right = 50.0
+offset_bottom = 45.0
 mouse_filter = 2
 texture = ExtResource("5_jr2ln")
-expand_mode = 2
+expand_mode = 1
 
-[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row3" unique_id=915690393]
-layout_mode = 2
+[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Speed" unique_id=915690393]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 5.0
+offset_right = 90.0
+offset_bottom = 45.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R15")
 theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
-[node name="Row4" type="HBoxContainer" parent="HUD/InfoPanel/Attributes" unique_id=1307267724]
-layout_mode = 2
+[node name="Range" type="Control" parent="HUD/InfoPanel/Attributes" unique_id=1910928881]
+anchors_preset = 0
+offset_top = 180.0
+offset_right = 100.0
+offset_bottom = 230.0
 size_flags_vertical = 3
 mouse_filter = 2
-theme_override_constants/separation = 0
 
-[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Row4" unique_id=386429402]
-layout_mode = 2
+[node name="Icon" type="TextureRect" parent="HUD/InfoPanel/Attributes/Range" unique_id=386429402]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 5.0
+offset_right = 50.0
+offset_bottom = 45.0
 mouse_filter = 2
 texture = ExtResource("6_3i30t")
-expand_mode = 2
+expand_mode = 1
 
-[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Row4" unique_id=1723479802]
-layout_mode = 2
+[node name="Value" type="Label" parent="HUD/InfoPanel/Attributes/Range" unique_id=1723479802]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 5.0
+offset_right = 90.0
+offset_bottom = 45.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R16")
 theme_override_font_sizes/font_size = 32
@@ -707,6 +751,12 @@ offset_right = 1890.0
 offset_bottom = 670.0
 mouse_filter = 2
 
+[node name="Based" type="Panel" parent="HUD/ActionBar" unique_id=305333974]
+layout_mode = 0
+offset_right = 401.0
+offset_bottom = 99.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_tvb1q")
+
 [node name="MainButton" type="Button" parent="HUD/ActionBar" unique_id=1847805408]
 layout_mode = 0
 offset_right = 400.0
@@ -718,13 +768,13 @@ theme_override_styles/hover = SubResource("R18")
 
 [node name="Label" type="Label" parent="HUD/ActionBar" unique_id=1206815651]
 layout_mode = 0
-offset_left = 80.0
-offset_top = 23.0
-offset_right = 320.0
-offset_bottom = 74.0
+offset_left = 120.0
+offset_top = 21.0
+offset_right = 280.0
+offset_bottom = 79.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R21")
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 40
 text = "主按钮"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -889,47 +939,42 @@ texture = ExtResource("10_x1im3")
 [node name="MatchInfo" type="Control" parent="HUD" unique_id=1388773231]
 anchors_preset = 0
 offset_left = 1490.0
-offset_top = 700.0
+offset_top = 691.0
 offset_right = 1890.0
-offset_bottom = 950.0
+offset_bottom = 941.0
 mouse_filter = 2
 
 [node name="TurnInfo" type="Label" parent="HUD/MatchInfo" unique_id=602256325]
 layout_mode = 0
-offset_left = 4.7
-offset_top = -2.0
-offset_right = 364.7
-offset_bottom = 70.0
+offset_right = 400.0
+offset_bottom = 93.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R34")
-theme_override_font_sizes/font_size = 60
+theme_override_font_sizes/font_size = 64
 text = "回合1--先手"
 vertical_alignment = 1
 
 [node name="MapName" type="Label" parent="HUD/MatchInfo" unique_id=1788709181]
 layout_mode = 0
-offset_left = 1.2
-offset_top = 88.0
-offset_right = 201.2
-offset_bottom = 132.0
+offset_top = 93.0
+offset_right = 400.0
+offset_bottom = 145.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R35")
-theme_override_font_sizes/font_size = 37
+theme_override_font_sizes/font_size = 36
 text = "地图名"
 vertical_alignment = 1
 
 [node name="SiteEffect" type="Label" parent="HUD/MatchInfo" unique_id=1359281784]
 layout_mode = 0
-offset_left = 0.9
-offset_top = 138.0
-offset_right = 300.9
-offset_bottom = 238.0
+offset_top = 145.0
+offset_right = 400.0
+offset_bottom = 250.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("R36")
 theme_override_font_sizes/font_size = 24
 text = "场地效果描述-行1
 场地效果描述-行2
 场地效果描述-行3"
-vertical_alignment = 1
 
 [connection signal="pressed" from="HUD/ActionBar/MainButton" to="." method="_on_main_button_pressed"]

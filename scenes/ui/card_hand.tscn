@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://csycanfke7qpq"]
 
 [ext_resource type="Script" uid="uid://b5mpd14xr74yy" path="res://scenes/ui/card_hand.gd" id="1_fame5"]
-[ext_resource type="Texture2D" uid="uid://bsp7jd66ckh2l" path="res://card-system/card_system/art/卡牌c1-泥蜂.png" id="1_gvnpr"]
+[ext_resource type="Texture2D" uid="uid://bsp7jd66ckh2l" path="res://archive/legacy/card-system/card_system/art/卡牌c1-泥蜂.png" id="1_gvnpr"]
 [ext_resource type="Texture2D" uid="uid://bgqaavu8mbywd" path="res://assets/card_icons/icon-费用.png" id="2_gvnpr"]
 
 [sub_resource type="StyleBoxFlat" id="R1"]
@@ -45,9 +45,12 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+mouse_default_cursor_shape = 2
 script = ExtResource("1_fame5")
 metadata/_edit_horizontal_guides_ = [0.0]
 metadata/_edit_vertical_guides_ = [200.0]
+metadata/image_base_offset = Vector2(-100, -46)
+metadata/image_base_scale = Vector2(0.8, 0.8)
 
 [node name="Body" type="Panel" parent="." unique_id=732458305]
 layout_mode = 0
@@ -95,9 +98,9 @@ theme_override_styles/panel = SubResource("R5")
 
 [node name="BadgeImage" type="TextureRect" parent="." unique_id=319531291]
 layout_mode = 0
-offset_top = 5.0
+offset_top = 1.0
 offset_right = 60.0
-offset_bottom = 65.0
+offset_bottom = 61.0
 mouse_filter = 2
 texture = ExtResource("2_gvnpr")
 expand_mode = 1
@@ -109,7 +112,7 @@ offset_right = 56.0
 offset_bottom = 60.0
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = SubResource("SystemFont_fame5")
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 40
 text = "0"
 horizontal_alignment = 1
 vertical_alignment = 1
