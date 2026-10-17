@@ -208,6 +208,13 @@ func set_playable(_affordable: bool, dim_black: bool = false) -> void:
 		var mat: ShaderMaterial = badge.material as ShaderMaterial
 		if mat != null:
 			mat.set_shader_parameter("card_dim", k)
+	## ⭐ 2026-10-17（人）：「行动时数字变白，不行动时数字**也像图标一样被施加滤镜**，
+	##   但**仍看得出底色是白**」⇒ 数字**单独**接这一层滤镜（它是普通 Label、不走 shader）。
+	##   白（`#f8f8f8`）× 0.22 = 中性灰 `#303030` ⇒ 与图标的暗橙 `#382000` 明显区分，
+	##   一眼能看出"底色是白、只是被盖了一层滤镜"。复原时回白。
+	var val: CanvasItem = get_node_or_null("BadgeImage/Value") as CanvasItem
+	if val != null:
+		val.modulate = Color(k, k, k, 1)
 	## 本卡自身恒白（防 064 那类残留叠加）
 	modulate = Color(1, 1, 1, 1)
 	## ⭐ 迭代064 遗留修复（人 2026-10-05「单位会奇怪的变黑」）防复发：

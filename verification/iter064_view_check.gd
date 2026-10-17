@@ -491,6 +491,19 @@ func _check_b3() -> void:
 			_ok("067 非行动方 → 费用数字仍为白（不被整卡滤镜压暗）",
 				num.get_theme_color("font_color") == Color("#FFFFFF"),
 				" font=%s" % str(num.get_theme_color("font_color")))
+			## ⭐ 2026-10-17（人）：「不行动时数字**也像图标一样被施加滤镜**，但**仍看得出底色是白**」
+			##   ⇒ 数字自身 `modulate` 被压到 0.22（视觉上 `#f8f8f8 → #303030`，中性灰），
+			##     而它的**字色仍是白**（`font_color = #FFFFFF`，底色语义不变）。
+			_ok("067 非行动方 → 费用数字也被施加滤镜（Value.modulate=0.22）",
+				is_equal_approx(num.modulate.r, 0.22) and is_equal_approx(num.modulate.g, 0.22),
+				" Value.modulate=%s" % str(num.modulate))
+			_ok("067 非行动方 → 数字字色仍为白（看得出底色是白）",
+				num.get_theme_color("font_color") == Color("#FFFFFF"),
+				" font=%s" % str(num.get_theme_color("font_color")))
+			c.call("set_playable", true)
+			_ok("067 行动方 → 数字滤镜复原为白（Value.modulate=1.0）",
+				is_equal_approx(num.modulate.r, 1.0) and is_equal_approx(num.modulate.a, 1.0),
+				" Value.modulate=%s" % str(num.modulate))
 			c.call("set_playable", true)
 	else:
 		_ok("067 取到费用图标与数字节点", false, "（缺 BadgeImage 或 BadgeImage/Value）")
