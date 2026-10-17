@@ -690,7 +690,8 @@ func _section_turnstate(out: PackedStringArray) -> void:
 		out.append("  %-30s modulate=(%.3f, %.3f, %.3f, %.2f)  pos=%s" % [
 			String(p[0]), n.modulate.r, n.modulate.g, n.modulate.b, n.modulate.a, str(n.position)])
 	## 手牌卡亮/灰（每张卡的 modulate —— ⭐ 迭代067 起口径改为**按行动方**：
-	##   行动方一侧全白、非行动方一侧变黑；而"费用够不够"改由**费用数字字色**单独表达。
+	##   行动方一侧全白、非行动方一侧变黑；而"费用够不够"改由**费用图标**变灰单独表达
+	##   （⚠️ 人 2026-10-17 纠正：变灰的是 `BadgeImage` 图标本体，**费用数字恒为白**）。
 	##   故本段同时打印 `字色`，供两端比对费用数字的灰化是否一致）
 	var hn = cs.get("_hand_nodes")
 	if hn != null:

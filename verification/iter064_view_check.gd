@@ -440,7 +440,8 @@ func _check_b3() -> void:
 	_ok("B3 set_playable(true) 复原", is_equal_approx(m.a, 1.0) and is_equal_approx(m.r, 1.0))
 	## ⭐ 迭代067（人 2026-10-14 口径变更）：`set_playable` 的 `dim_black` 语义由
 	##   「非本方手牌」收窄为「**非行动方一侧**」—— 整卡滤镜只回答"是不是行动方"，
-	##   不再表达"费用够不够"（后者改由费用数字变灰表达，见下方三条新断言）。
+	##   不再表达"费用够不够"（后者改由**费用图标**变灰表达，见下方**四条**新断言：
+	##   ⚠️ 人 2026-10-17 纠正 —— 变灰的是 `BadgeImage` 图标本体，**费用数字恒为白**）。
 	_ok("B3 行动方手牌不加滤镜（全白）", is_equal_approx(c.modulate.a, 1.0) and is_equal_approx(c.modulate.r, 1.0))
 	c.call("set_playable", true, true)
 	_ok("067 非行动方手牌变黑且只压 RGB（alpha 恒 1）",

@@ -1973,7 +1973,8 @@ func _render_hand(side: int, hand: Array, _playable: Array) -> void:
 			_apply_one_hand_params(node, hand_params)
 		## ⭐ 迭代067（人 2026-10-14 指示 · **对称滤镜**）：
 		##   整卡滤镜＝「**该侧是不是当前行动方**」——行动方一侧不加滤镜（全白），
-		##   非行动方一侧一律变黑；**与费用是否够无关**（费用不够改由费用数字变灰表达）。
+		##   非行动方一侧一律变黑；**与费用是否够无关**（费用不够改由**费用图标**变灰表达 ——
+		##   ⚠️ 人 2026-10-17 纠正：变灰的是 `BadgeImage` 图标本体，**费用数字恒为白**）。
 		var active_side0: int = int(engine.state.active) if engine != null else my_seat
 		_call_opt(node, "set_playable", [true, int(side) != active_side0])
 		## 费用数字单独表达"够不够"（与上面的整卡滤镜解耦）
