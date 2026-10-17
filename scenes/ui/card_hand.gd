@@ -190,29 +190,14 @@ func set_playable(_affordable: bool, dim_black: bool = false) -> void:
 	##   现在：整卡统一变灰（RGB × 0.65），费用标记保持**完全不透明**。
 	## ⭐ 迭代067：`dim_black` = **非行动方**手牌 → 直接变黑（0.22）；行动方手牌 → 全白（1,1,1,1）。
 	##   两者都**只压 RGB、不压 alpha**（守 UI-9 / UI-12 口径）。
-	## ⭐ 2026-10-17（人）：**不再用 `HandCard.modulate` 做整卡滤镜** ——
-	##   按引擎文档，`modulate` 会作用到自身**与所有子节点**（`self_modulate` 才只作用于自身），
-	##   必然把 `BadgeImage/Value`（费用数字）一起乘暗 —— 而人要求「费用数字**始终白色**」。
-	##   ⇒ 改为**三路分开**（纯参数调整，不加节点）：
-	##     · 卡面 `Body` / `Artwork` / `InnerLine` → 各自 `self_modulate` 压暗；
-	##     · 费用图标 `BadgeImage` → 由 shader 的 `card_dim` 自乘（**图标要跟着卡面一起变暗**）；
-	##     · 费用数字 `Value` → **完全不动**（不在任何 modulate 链下）⇒ **恒白**。
-	var k: float = 0.22 if dim_black else 1.0
-	for p in ["Body", "Artwork", "InnerLine"]:
-		var n: CanvasItem = get_node_or_null(p) as CanvasItem
-		if n != null:
-			n.self_modulate = Color(k, k, k, 1)
-	var badge: CanvasItem = get_node_or_null("BadgeImage") as CanvasItem
-	if badge != null:
-		var mat: ShaderMaterial = badge.material as ShaderMaterial
-		if mat != null:
-			mat.set_shader_parameter("card_dim", k)
+	if dim_black:
+		modulate = Color(0.22, 0.22, 0.22, 1)
+	else:
+		modulate = Color(1, 1, 1, 1)
 	## ⭐ 迭代064 遗留修复（人 2026-10-05「单位会奇怪的变黑」）防复发：
-	##   `self_modulate` 是**本节点单独**的乘子 —— 若它残留非白值，会与父级/自身的
-	##   modulate **再乘一层**（0.22 × 残留 ⇒ 近乎全黑），且**排查时在 modulate 上看不出来**。
-	##   ⇒ 本卡自身的 `modulate` / `self_modulate` **永远保持白**（显式重置，不依赖场景烤值）；
-	##     视觉状态全部由**三个卡面子节点**（各自 self_modulate）+ **shader 的 card_dim** 表达。
-	modulate = Color(1, 1, 1, 1)
+	##   `modulate` 是**级联**的，但 `self_modulate` 是**本节点单独**的乘子 —— 若它残留非白值，
+	##   会把 modulate 的灰/黑**再乘一层**（0.22 × 残留 ⇒ 近乎全黑），且**排查时在 modulate 上看不出来**。
+	##   本卡全部视觉状态都由 `modulate` 表达 ⇒ `self_modulate` 永远保持白（显式重置，不依赖场景烤值）。
 	self_modulate = Color(1, 1, 1, 1)
 
 

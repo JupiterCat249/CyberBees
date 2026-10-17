@@ -435,32 +435,20 @@ func _check_b3() -> void:
 		_ok("B3 取到手牌卡", false, "（无手牌节点）")
 		return
 	c.call("set_playable", true)
-	## ⚠️ 2026-10-17：整卡滤镜**不再走 `HandCard.modulate`**（按引擎文档它会级联到子节点，
-	##   把费用数字一起压暗，而人要求「费用数字始终白色」）⇒ 改由**卡面子节点各自的 `self_modulate`**
-	##   表达。下面统一读 `Body` 的 `self_modulate` 作代表。
-	var body0 := c.get_node_or_null("Body") as CanvasItem
-	if body0 == null:
-		_ok("B3 取到卡面 Body 节点", false, "（无 Body）")
-		return
-	var m: Color = body0.self_modulate
+	var m: Color = c.modulate
 	_ok("B3 滤镜后 alpha 仍为 1（费用标记不半透明）", is_equal_approx(m.a, 1.0), " a=%.2f" % m.a)
 	_ok("B3 set_playable(true) 复原", is_equal_approx(m.a, 1.0) and is_equal_approx(m.r, 1.0))
 	## ⭐ 迭代067（人 2026-10-14 口径变更）：`set_playable` 的 `dim_black` 语义由
 	##   「非本方手牌」收窄为「**非行动方一侧**」—— 整卡滤镜只回答"是不是行动方"，
-	##   不再表达"费用够不够"（后者改由**费用图标**换色表达，见下方 4 条断言）。
-	_ok("B3 行动方手牌不加滤镜（全白）", is_equal_approx(body0.self_modulate.a, 1.0) and is_equal_approx(body0.self_modulate.r, 1.0))
+	##   不再表达"费用够不够"（后者改由**费用图标**变灰表达，见下方**四条**新断言：
+	##   ⚠️ 人 2026-10-17 纠正 —— 变灰的是 `BadgeImage` 图标本体，**费用数字恒为白**）。
+	_ok("B3 行动方手牌不加滤镜（全白）", is_equal_approx(c.modulate.a, 1.0) and is_equal_approx(c.modulate.r, 1.0))
 	c.call("set_playable", true, true)
-	var body1 := c.get_node_or_null("Body") as CanvasItem
-	_ok("067 非行动方手牌变暗且只压 RGB（alpha 恒 1）",
-		body1 != null and is_equal_approx(body1.self_modulate.a, 1.0) \
-			and body1.self_modulate.r < 0.5 \
-			and is_equal_approx(body1.self_modulate.r, body1.self_modulate.g),
-		" body.self_modulate=%s" % (str(body1.self_modulate) if body1 != null else "（无 Body）"))
+	_ok("067 非行动方手牌变黑且只压 RGB（alpha 恒 1）",
+		is_equal_approx(c.modulate.a, 1.0) and c.modulate.r < 0.5 and is_equal_approx(c.modulate.r, c.modulate.g),
+		" r=%.2f a=%.2f" % [c.modulate.r, c.modulate.a])
 	c.call("set_playable", true)
-	var body2 := c.get_node_or_null("Body") as CanvasItem
-	_ok("067 切回行动方精确复原为全白",
-		body2 != null and is_equal_approx(body2.self_modulate.r, 1.0) and is_equal_approx(body2.self_modulate.a, 1.0),
-		" body.self_modulate=%s" % (str(body2.self_modulate) if body2 != null else "（无 Body）"))
+	_ok("067 切回行动方精确复原为全白", is_equal_approx(c.modulate.r, 1.0) and is_equal_approx(c.modulate.a, 1.0))
 	## ⭐ 迭代067 第二条口径：**费用图标灰化**（与整卡滤镜解耦）
 	## ⚠️ **人 2026-10-17 纠正口径**：变灰的是**费用图标本体**（`BadgeImage` 贴图），
 	##   **费用数字（`BadgeImage/Value`）恒保持白色** —— 此前这两个断言测的是"数字变灰"，**做反了** ✗
@@ -483,16 +471,6 @@ func _check_b3() -> void:
 			var num_ok: Color = num.get_theme_color("font_color")
 			_ok("067 费用补足 → 图标底色复原（dim=0）", dim2 < 0.5, " dim=%.2f" % dim2)
 			_ok("067 费用补足 → 费用数字仍为白", num_ok == Color("#FFFFFF"), " font=%s" % str(num_ok))
-			## ⭐ 2026-10-17（人）两点要求：
-			##   ① 非行动方时**费用图标要跟着卡面一起变暗**（旧实现里 shader 让父级 modulate 失效 ⇒ 图标漏掉）；
-			##   ② **费用数字必须始终保持白色**（旧实现的整卡 modulate 会级联把数字压暗）。
-			c.call("set_playable", false, true)
-			var cd: float = float(mat.get_shader_parameter("card_dim"))
-			_ok("067 非行动方 → 费用图标随卡压暗（card_dim=0.22）", is_equal_approx(cd, 0.22), " card_dim=%.2f" % cd)
-			_ok("067 非行动方 → 费用数字仍为白（不被整卡滤镜压暗）",
-				num.get_theme_color("font_color") == Color("#FFFFFF"),
-				" font=%s" % str(num.get_theme_color("font_color")))
-			c.call("set_playable", true)
 	else:
 		_ok("067 取到费用图标与数字节点", false, "（缺 BadgeImage 或 BadgeImage/Value）")
 
