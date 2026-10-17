@@ -448,18 +448,26 @@ func _check_b3() -> void:
 		" r=%.2f a=%.2f" % [c.modulate.r, c.modulate.a])
 	c.call("set_playable", true)
 	_ok("067 切回行动方精确复原为全白", is_equal_approx(c.modulate.r, 1.0) and is_equal_approx(c.modulate.a, 1.0))
-	## ⭐ 迭代067 第二条口径：**费用数字灰化**（与整卡滤镜解耦）
-	var bg := c.get_node_or_null("BadgeImage/Value")
-	if bg is Label:
-		var lb := bg as Label
+	## ⭐ 迭代067 第二条口径：**费用图标灰化**（与整卡滤镜解耦）
+	## ⚠️ **人 2026-10-17 纠正口径**：变灰的是**费用图标本体**（`BadgeImage` 贴图），
+	##   **费用数字（`BadgeImage/Value`）恒保持白色** —— 此前这两个断言测的是"数字变灰"，**做反了** ✗
+	var bg := c.get_node_or_null("BadgeImage")
+	var lb := c.get_node_or_null("BadgeImage/Value")
+	if bg is TextureRect and lb is Label:
+		var icon := bg as TextureRect
+		var num := lb as Label
 		c.call("set_cost_affordable", false)
-		var g: Color = lb.get_theme_color("font_color")
-		_ok("067 费用不足 → 费用数字变灰", g != Color("#FFFFFF"), " font=%s" % str(g))
+		var icon_dim: Color = icon.self_modulate
+		var num_dim: Color = num.get_theme_color("font_color")
+		_ok("067 费用不足 → **费用图标**变灰", icon_dim != Color("#FFFFFF"), " icon_self_modulate=%s" % str(icon_dim))
+		_ok("067 费用不足 → **费用数字仍为白**（口径纠正）", num_dim == Color("#FFFFFF"), " font=%s" % str(num_dim))
 		c.call("set_cost_affordable", true)
-		_ok("067 费用补足 → 费用数字复原为白", lb.get_theme_color("font_color") == Color("#FFFFFF"),
-			" font=%s" % str(lb.get_theme_color("font_color")))
+		var icon_ok: Color = icon.self_modulate
+		var num_ok: Color = num.get_theme_color("font_color")
+		_ok("067 费用补足 → 费用图标复原为白", icon_ok == Color("#FFFFFF"), " icon_self_modulate=%s" % str(icon_ok))
+		_ok("067 费用补足 → 费用数字仍为白", num_ok == Color("#FFFFFF"), " font=%s" % str(num_ok))
 	else:
-		_ok("067 取到费用数字 Label", false, "（无 BadgeImage/Value）")
+		_ok("067 取到费用图标与数字节点", false, "（缺 BadgeImage 或 BadgeImage/Value）")
 
 
 ## B4：卡上目标标框（因 PITCH=250 而卡正好 250×250，格高亮会被整片盖住）

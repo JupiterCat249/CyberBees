@@ -608,10 +608,22 @@ func _visible_bounds(n: Control) -> Rect2:
 ##   人 2026-10-10 描述：「本机变化规律正确，对方**异常变暗后再叠加已有的规律**」
 ##   ⇒ 必须把**两端的 自座位 / 当前行动方 / 实际压暗值**摆在一起比，才能定位。
 ## 本段同时打印：座位与回合态、四个信息栏节点的**实际 modulate**、手牌区位置与 modulate。
-## ⭐ 迭代067：读一张手牌卡的费用数字字色（供 §F 机器比对"费用数字灰化"口径）
-##   为什么需要：本轮起「整卡滤镜」与「费用数字灰化」是两条通路，
-##   只印 modulate 无法证明数字是否按费用变灰 ⇒ 把 `BadgeImage/Value` 的 font_color 一并落盘。
+## ⭐ 迭代067：读一张手牌卡的**费用标记两个量**（供 §F 机器比对）
+##   ⚠️ **人 2026-10-17 纠正口径**：变灰的是**费用图标本体**（`BadgeImage` 贴图），
+##      而**费用数字**（`BadgeImage/Value` 的 `font_color`）**恒为白色**。
+##   ⇒ 两个量都要落盘：**图标灰了**才算"费用不足"生效；**数字若变了反而是 bug**。
+##   ⚠️ 图标读 `self_modulate`（不是 `modulate`）—— 后者会级联到子节点 `Value`。
 ##   蜂王卡不参与费用判定（显示回费量），其值恒为默认白。
+func _badge_icon_color_of(c: Node) -> Color:
+	if c == null or not is_instance_valid(c):
+		return Color(0, 0, 0, 0)
+	var ic := c.get_node_or_null("BadgeImage")
+	if ic is CanvasItem:
+		return (ic as CanvasItem).self_modulate
+	return Color(0, 0, 0, 0)
+
+
+## 费用数字字色 —— **口径纠正后应恒为白**，此处仅作**对照**：它若变了说明又走回错路。
 func _digit_color_of(c: Node) -> Color:
 	if c == null or not is_instance_valid(c):
 		return Color(0, 0, 0, 0)
@@ -690,8 +702,9 @@ func _section_turnstate(out: PackedStringArray) -> void:
 				idx += 1
 				if c == null or not is_instance_valid(c):
 					continue
-				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f) 字色=(%.3f,%.3f,%.3f,%.2f)" % [
+				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f) 费用图标=(%.3f,%.3f,%.3f,%.2f) 费用数字=(%.3f,%.3f,%.3f,%.2f)" % [
 					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a,
+					_badge_icon_color_of(c).r, _badge_icon_color_of(c).g, _badge_icon_color_of(c).b, _badge_icon_color_of(c).a,
 					_digit_color_of(c).r, _digit_color_of(c).g, _digit_color_of(c).b, _digit_color_of(c).a])
 	## ⭐ 地图单位几何（**迭代065 数据镜像的取证位**）——
 	##   人 2026-10-10 报「对端初始两个蜂王普遍向右向下各移动一格」；本段给出：

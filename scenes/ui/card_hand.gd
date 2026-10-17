@@ -201,26 +201,29 @@ func set_playable(_affordable: bool, dim_black: bool = false) -> void:
 	self_modulate = Color(1, 1, 1, 1)
 
 
-## ⭐ 迭代067（人 2026-10-14）：**费用数字的灰化通路**（与整卡滤镜解耦）
-##   人 2026-10-14 口径：「处于行动阶段的一方，其手牌全部都是正常显示不加额外滤镜，
-##   但如果该玩家当前持有的费用不能使用某某手牌则该手牌对应的**费用数字**自动变成灰色」。
-##   ⇒ 整卡 modulate（见 `set_playable`）只表达「是不是行动方」，费用数字颜色单独表达「够不够」。
-##   实现：显式绑定 `BadgeImage/Value` 的 `font_color` override（优先级高于 theme 默认值，
-##         与迭代064 UI-11 的写法同源，故不会与素材主题冲突）。
-##   ⚠️ 只改**字色**：不动字号、不动徽章尺寸（守 2026-09-19「不要改字号」硬约束）。
-##   ⚠️ 蜂王卡不参与：它显示的是「每回合回费量」（UI-11 口径），不是部署费。
-const COST_DIGIT_NORMAL := Color("#FFFFFF")
-const COST_DIGIT_DIM := Color("#808080")
+## ⭐ 迭代067（人 2026-10-14 提出 · **2026-10-17 人纠正口径**）：**费用标记的灰化通路**（与整卡滤镜解耦）
+##   **纠正后的口径（人 2026-10-17 原话）**：「费用数字本身颜色不变，变的是费用图标，
+##   也就是**费用字体本身是保持白色，变灰的部分是背后的费用图标**」。
+##   ⇒ 此前实现改的是 `BadgeImage/Value` 的 `font_color`（**把数字染灰**）—— **做反了** ✗
+##   ⇒ 现在：**`BadgeImage`（六边形费用图标贴图）变灰；`Value`（费用数字）恒为白色** ✓
+##   ⚠️ **必须用 `self_modulate`，不能用 `modulate`**：`Value` 是 `BadgeImage` 的子节点，
+##      `modulate` 会**级联**下去把数字一并染灰（这正是迭代064 UI-9/UI-12 踩过的坑）。
+const COST_BADGE_NORMAL := Color("#FFFFFF")
+const COST_BADGE_DIM := Color("#808080")
 
 
 func _apply_cost_digit(affordable: bool) -> void:
 	_cost_affordable = affordable
-	var lb := _badge()
-	if lb == null:
-		return
 	var is_queen := card_data != null and card_data.kind == CardData.CardKind.QUEEN
-	var col := COST_DIGIT_NORMAL if (affordable or is_queen) else COST_DIGIT_DIM
-	lb.add_theme_color_override("font_color", col)
+	var col := COST_BADGE_NORMAL if (affordable or is_queen) else COST_BADGE_DIM
+	## ① 费用图标本体（`BadgeImage` 贴图）变灰 / 复原 —— 用 self_modulate，只染自己
+	var badge: CanvasItem = get_node_or_null("BadgeImage")
+	if badge != null:
+		badge.self_modulate = col
+	## ② 费用数字**恒保持白色**（并清掉历史上可能残留的灰 override）
+	var lb := _badge()
+	if lb != null:
+		lb.add_theme_color_override("font_color", COST_BADGE_NORMAL)
 
 
 ## 外部下发：费用是否够（供 `arena_view.refresh_hand_affordability()` 等处调用；幂等）
