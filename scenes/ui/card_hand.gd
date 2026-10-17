@@ -215,11 +215,22 @@ const COST_BADGE_DIM := Color("#808080")
 func _apply_cost_digit(affordable: bool) -> void:
 	_cost_affordable = affordable
 	var is_queen := card_data != null and card_data.kind == CardData.CardKind.QUEEN
-	var col := COST_BADGE_NORMAL if (affordable or is_queen) else COST_BADGE_DIM
-	## ① 费用图标本体（`BadgeImage` 贴图）变灰 / 复原 —— 用 self_modulate，只染自己
+	var dimmed: bool = not (affordable or is_queen)
+	## ① 费用图标：**底色变灰**（不是给整张图叠滤镜）
+	##   ⚠️ 用 `dim` uniform 走「只把内部填充换成灰、深棕描边保持原色」的 shader；
+	##      **不能**用 `self_modulate`/`modulate` —— 那会把描边一起乘灰，人被 2026-10-17 明确否掉。
 	var badge: CanvasItem = get_node_or_null("BadgeImage")
 	if badge != null:
-		badge.self_modulate = col
+		var mat: ShaderMaterial = badge.material as ShaderMaterial
+		if mat != null:
+			## ⚠️ 场景里挂的是**共享资源**：不 duplicate 的话，改一张卡会让所有手牌一起变
+			if not mat.has_meta("_per_card"):
+				mat = mat.duplicate() as ShaderMaterial
+				if mat != null:
+					mat.set_meta("_per_card", true)
+					badge.material = mat
+			if mat != null:
+				mat.set_shader_parameter("dim", 1.0 if dimmed else 0.0)
 	## ② 费用数字**恒保持白色**（并清掉历史上可能残留的灰 override）
 	var lb := _badge()
 	if lb != null:

@@ -457,16 +457,20 @@ func _check_b3() -> void:
 	if bg is TextureRect and lb is Label:
 		var icon := bg as TextureRect
 		var num := lb as Label
-		c.call("set_cost_affordable", false)
-		var icon_dim: Color = icon.self_modulate
-		var num_dim: Color = num.get_theme_color("font_color")
-		_ok("067 费用不足 → **费用图标**变灰", icon_dim != Color("#FFFFFF"), " icon_self_modulate=%s" % str(icon_dim))
-		_ok("067 费用不足 → **费用数字仍为白**（口径纠正）", num_dim == Color("#FFFFFF"), " font=%s" % str(num_dim))
-		c.call("set_cost_affordable", true)
-		var icon_ok: Color = icon.self_modulate
-		var num_ok: Color = num.get_theme_color("font_color")
-		_ok("067 费用补足 → 费用图标复原为白", icon_ok == Color("#FFFFFF"), " icon_self_modulate=%s" % str(icon_ok))
-		_ok("067 费用补足 → 费用数字仍为白", num_ok == Color("#FFFFFF"), " font=%s" % str(num_ok))
+		var mat := icon.material as ShaderMaterial
+		if mat == null:
+			_ok("067 费用图标挂了 shader 材质（底色变灰用）", false, "（material 为空）")
+		else:
+			c.call("set_cost_affordable", false)
+			var dim1: float = float(mat.get_shader_parameter("dim"))
+			var num_dim: Color = num.get_theme_color("font_color")
+			_ok("067 费用不足 → **费用图标底色**变灰（dim=1）", dim1 > 0.5, " dim=%.2f" % dim1)
+			_ok("067 费用不足 → **费用数字仍为白**（口径纠正）", num_dim == Color("#FFFFFF"), " font=%s" % str(num_dim))
+			c.call("set_cost_affordable", true)
+			var dim2: float = float(mat.get_shader_parameter("dim"))
+			var num_ok: Color = num.get_theme_color("font_color")
+			_ok("067 费用补足 → 图标底色复原（dim=0）", dim2 < 0.5, " dim=%.2f" % dim2)
+			_ok("067 费用补足 → 费用数字仍为白", num_ok == Color("#FFFFFF"), " font=%s" % str(num_ok))
 	else:
 		_ok("067 取到费用图标与数字节点", false, "（缺 BadgeImage 或 BadgeImage/Value）")
 

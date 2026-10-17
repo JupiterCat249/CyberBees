@@ -608,19 +608,20 @@ func _visible_bounds(n: Control) -> Rect2:
 ##   人 2026-10-10 描述：「本机变化规律正确，对方**异常变暗后再叠加已有的规律**」
 ##   ⇒ 必须把**两端的 自座位 / 当前行动方 / 实际压暗值**摆在一起比，才能定位。
 ## 本段同时打印：座位与回合态、四个信息栏节点的**实际 modulate**、手牌区位置与 modulate。
-## ⭐ 迭代067：读一张手牌卡的**费用标记两个量**（供 §F 机器比对）
-##   ⚠️ **人 2026-10-17 纠正口径**：变灰的是**费用图标本体**（`BadgeImage` 贴图），
-##      而**费用数字**（`BadgeImage/Value` 的 `font_color`）**恒为白色**。
-##   ⇒ 两个量都要落盘：**图标灰了**才算"费用不足"生效；**数字若变了反而是 bug**。
-##   ⚠️ 图标读 `self_modulate`（不是 `modulate`）—— 后者会级联到子节点 `Value`。
-##   蜂王卡不参与费用判定（显示回费量），其值恒为默认白。
-func _badge_icon_color_of(c: Node) -> Color:
+## 费用图标「**底色变灰**」程度 —— shader `dim` uniform（0 = 正常、1 = 灰）
+## ⚠️ 人 2026-10-17 第二轮口径：变的是**底色（六边形内部填充）**，**不是**给整张图叠一层滤镜
+##   ⇒ 不能再读 `self_modulate`（那会把深棕描边一起乘灰）；贴图为「深棕描边 + 亮橙填充」，
+##     故改由 shader 按亮度只替换填充色，这里读 shader 的 `dim`。
+## 费用数字字色（**口径纠正后应恒为白**）另由 `_digit_color_of()` 读，作对照。
+func _badge_dim_of(c: Node) -> float:
 	if c == null or not is_instance_valid(c):
-		return Color(0, 0, 0, 0)
+		return -1.0
 	var ic := c.get_node_or_null("BadgeImage")
 	if ic is CanvasItem:
-		return (ic as CanvasItem).self_modulate
-	return Color(0, 0, 0, 0)
+		var mat := (ic as CanvasItem).material as ShaderMaterial
+		if mat != null:
+			return float(mat.get_shader_parameter("dim"))
+	return -1.0
 
 
 ## 费用数字字色 —— **口径纠正后应恒为白**，此处仅作**对照**：它若变了说明又走回错路。
@@ -703,9 +704,9 @@ func _section_turnstate(out: PackedStringArray) -> void:
 				idx += 1
 				if c == null or not is_instance_valid(c):
 					continue
-				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f) 费用图标=(%.3f,%.3f,%.3f,%.2f) 费用数字=(%.3f,%.3f,%.3f,%.2f)" % [
+				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f) 图标底色dim=%.2f 费用数字=(%.3f,%.3f,%.3f,%.2f)" % [
 					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a,
-					_badge_icon_color_of(c).r, _badge_icon_color_of(c).g, _badge_icon_color_of(c).b, _badge_icon_color_of(c).a,
+					_badge_dim_of(c),
 					_digit_color_of(c).r, _digit_color_of(c).g, _digit_color_of(c).b, _digit_color_of(c).a])
 	## ⭐ 地图单位几何（**迭代065 数据镜像的取证位**）——
 	##   人 2026-10-10 报「对端初始两个蜂王普遍向右向下各移动一格」；本段给出：
