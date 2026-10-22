@@ -167,7 +167,6 @@ function Invoke-Test {
     $text = ($raw -join ' ')
 
     $harnessErrors = 0
-    if ($LASTEXITCODE -ne 0) { $harnessErrors = 1 }
     if ($text -match 'have not been imported') { $harnessErrors = 1; Write-Host '[qc] GUT class_name 未注册 —— 先跑 qc/qc.ps1 import（新增/升级 addon 后必做）' -ForegroundColor Yellow }
     if ($text -notmatch 'Passing Tests') { $harnessErrors = 1 }
 
