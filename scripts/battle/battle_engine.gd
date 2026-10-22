@@ -23,6 +23,7 @@ const Effects := preload("res://scripts/battle/rules_effects.gd")
 const Combat := preload("res://scripts/battle/rules_combat.gd")
 const Command := preload("res://scripts/battle/rules_command.gd")
 const Preview := preload("res://scripts/battle/rules_preview.gd")
+const Queries := preload("res://scripts/battle/rules_queries.gd")
 const Assets := preload("res://scripts/battle/arena_assets.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
 
@@ -109,19 +110,9 @@ func start(p_config: BattleConfig) -> bool:
 	return true
 
 
-## 蜂王开局位置（a500 对战准备 9）
-## ⚠️ 坐标约定：`Vector2i(行, 列)`；行 0 在上（红方领地）、行 3 在下（我方领地）
-##
-## 人 2026-09-19 最终指定（**位于顶部/底部行**，不是左右两侧）：
-##   · 我方蜂王 **(行3, 列2)** —— 底部行·中右列
-##   · 红方蜂王 **(行0, 列1)** —— 顶部行·中左列
-##
-## ✅ 中心对称校验（棋盘 4×4，几何中心在 (1.5, 1.5)）：
-##   我方偏移 = (3−1.5, 2−1.5) = (+1.5, +0.5)
-##   红方偏移 = (0−1.5, 1−1.5) = (−1.5, −0.5)  → 互为相反数，**严格中心对称**
-##   （人原口径 (4,2)/(1,3) 指旧朝向；整体顺时针旋转 90° 后即本值）
+## 蜂王开局位置（a500 对战准备 9）—— 坐标与对称性说明见 rules_queries.queen_cell
 static func queen_cell(side: int) -> Vector2i:
-	return Vector2i(3, 2) if side == 0 else Vector2i(0, 1)
+	return Queries.queen_cell(side)
 
 
 func _apply_deploy_skills(inst: UnitInstance, ud: UnitData) -> void:
@@ -370,19 +361,14 @@ func _deploy_cell_ok(side: int, ud: UnitData, cell: Vector2i) -> bool:
 	return state.board.manhattan(q.cell, cell) == 1
 
 
-## 该格是否因地形禁止部署（禁区）
+## 该格是否因地形禁止部署（禁区）—— 实现在 rules_queries（迭代075 切出）
 func _terrain_blocks_deploy(cell: Vector2i) -> bool:
-	if state == null or state.map_data == null:
-		return false
-	var te: TerrainEffect = state.map_data.effect_at(cell)
-	if te == null:
-		return false
-	return te.blocks_deploy
+	return Queries.terrain_blocks_deploy(state, cell)
 
 
 ## 供预览/UI 查询：某格是否因地形不可部署（视图只读，不自行判定）
 func terrain_blocks_deploy(cell: Vector2i) -> bool:
-	return _terrain_blocks_deploy(cell)
+	return Queries.terrain_blocks_deploy(state, cell)
 
 
 # ============================================================
@@ -432,11 +418,9 @@ func request_move(side: int, unit: UnitInstance, cell: Vector2i) -> bool:
 	return true
 
 
-## 该单位此刻射程内是否有可攻击目标（供"行动后自动切目标"判定；与预览同源 —— 都用 `attackable()`）
+## 该单位此刻射程内是否有可攻击目标（与预览同源）—— 实现在 rules_queries
 func _has_attackable(unit: UnitInstance) -> bool:
-	if unit == null or unit.has_acted:
-		return false
-	return not state.board.attackable(unit, state.board.all_units()).is_empty()
+	return Queries.has_attackable(state, unit)
 
 
 func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -> bool:
@@ -482,12 +466,9 @@ func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -
 	return true
 
 
-## ⭐ 迭代059 修缺陷：**side 与 Result 是两套语义，不能混用**
-##   `enum Result { NONE=0, ALLY_WIN=1, ENEMY_WIN=2, DRAW=3 }` 而 `SIDE_ALLY=0 / SIDE_ENEMY=1`
-##   直接把 side 赋给 result → 胜者是绿方时恰好等于 `Result.NONE` → 对局看起来"没结束"。
-##   （与本日早前修的 `PreviewKind vs BattleState.Phase` 是同一类枚举撞车问题）
+## 胜负换算（side → Result）—— 实现在 rules_queries.result_of_winner
 static func result_of_winner(winner_side: int) -> int:
-	return StateLib.Result.ALLY_WIN if winner_side == StateLib.SIDE_ALLY else StateLib.Result.ENEMY_WIN
+	return Queries.result_of_winner(winner_side)
 
 
 ## 蜂王被击杀 → 对局结束（a500 胜利条件 1）
@@ -867,37 +848,21 @@ func _emit_hand(side: int) -> void:
 	bus().emit_signal(Bus.SIG_HAND_CHANGED, side, hand.duplicate(), mask)
 
 
-## 手牌 i 当前是否可打出（费用 + 阶段）
-## ⭐ 手牌「亮/灰」的唯一口径（人 2026-09-19 明确：**只考虑部署费用，其他不用考虑**）
-##   · 单位卡 / 指令卡 = 部署费用（`CardData.cost`）；X 费卡（cost < 0）视为**随时可负担**
-##   · **不看阶段、不看是否当前行动方** —— 这样轮换/阶段切换时显示不会跳动
-##   · 该口径**只用于显示**；真正能否执行仍由 request_deploy / request_use_command 校验
+## 手牌可用性三谓词 —— 实现在 rules_queries（迭代075 切出，纯读 state）
+## ⭐ 口径未变（人 2026-09-19）：**显示口径只看部署费**；执行口径才看阶段/行动方
 func can_afford_card(side: int, card: CardData) -> bool:
-	if state == null or card == null:
-		return false
-	if side < 0 or side >= state.sides.size():
-		return false
-	if card.cost < 0:
-		return true                              ## X 费卡：费用不固定
-	return card.cost <= state.cost(side)
+	return Queries.can_afford_card(state, side, card)
 
 
 ## 手牌 index 当前是否可负担（**显示口径**；与实际可执行性分开）
 func hand_affordable(side: int, index: int) -> bool:
-	var hand: Array = state.sides[side]["hand"] if state != null else []
-	if index < 0 or index >= hand.size():
-		return false
-	return can_afford_card(side, hand[index])
+	return Queries.hand_affordable(state, side, index)
 
 
 ## 手牌 i 当前是否可打出（**执行口径**：费用 + 阶段 + 当前行动方）
 ##   ⚠️ 与显示口径 `hand_affordable` 区分：显示只看费用，执行才看阶段/回合
 func can_play_hand(side: int, index: int) -> bool:
-	if state == null or side != state.active:
-		return false
-	if not hand_affordable(side, index):
-		return false
-	return state.phase == state.Phase.DEPLOY or state.phase == state.Phase.ACTION
+	return Queries.can_play_hand(state, side, index)
 
 
 ## 选中态 + **操作预览资源**一起下发
@@ -984,23 +949,14 @@ func _emit_button() -> void:
 	bus().emit_signal(Bus.SIG_MAIN_BUTTON, text, enabled, hint)
 
 
-## 当前选中的手牌（无则 null）
+## 当前选中的手牌（无则 null）—— 实现在 rules_queries（迭代075 切出）
 func _selected_hand_card() -> CardData:
-	if state == null or sel_kind != 1 or sel_hand_index < 0:
-		return null
-	var hand: Array = state.sides[state.active]["hand"]
-	if sel_hand_index >= hand.size():
-		return null
-	return hand[sel_hand_index]
+	return Queries.selected_hand_card(state, sel_kind, sel_hand_index)
 
 
-## 弃牌消耗（a500 抽卡 6：消耗等同于部署的费用；**X 费卡牌消耗 10 点费用**）
+## 弃牌消耗（a500 抽卡 6：消耗等同部署费用；X 费卡 = 10）—— 实现在 rules_queries
 func discard_cost_of(card: CardData) -> int:
-	if card == null:
-		return 0
-	if card.cost < 0:
-		return 10
-	return card.cost
+	return Queries.discard_cost_of(card)
 
 
 ## 请求：丢弃手牌（a500 抽卡 6）
