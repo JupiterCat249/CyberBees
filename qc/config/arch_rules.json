@@ -1,5 +1,5 @@
 {
-  "$comment": "分层依赖规则 —— 由 qc/lib/arch_check.py 执行；判据即文件，可 review。层名→路径前缀（** 表示子树）",
+  "$comment": "分层依赖规则 —— 由 qc/lib/arch_check.py 执行；判据即文件，可 review。层名→路径前缀。⚠️ cycles 只统计 preload/load 边且排除自环（单例 idiom）；class_ref 环为类型标注、GDScript 由全局类表解析，不构成加载顺序风险，仅作 info 统计。",
   "layers": {
     "ui": [
       "scenes/ui/"

@@ -19,7 +19,7 @@ def load(path, default):
 
 UP_KEYS = ("test:passing",)
 # 参考类：随实现自然增减，不参与棘轮判定（否则"删掉一个死信号"会被误判成覆盖率下降）
-INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable")
+INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable", "arch:type_cycles")
 
 def direction(key):
     if key in INFO_KEYS:

@@ -123,6 +123,7 @@ function Invoke-Arch {
 
     $arch = Get-Content $archOut -Raw | ConvertFrom-Json
     Add-Count 'arch:cycles' $arch.cycles
+    Add-Count 'arch:type_cycles' $arch.type_cycles
     Add-Count 'arch:layer_violations' $arch.layer_violations
     Add-Count 'arch:unresolved_edges' $arch.unresolved
     return (([int]$arch.cycles -eq 0) -and ([int]$arch.layer_violations -eq 0) -and ([int]$arch.unresolved -eq 0))
