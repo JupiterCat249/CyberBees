@@ -18,3 +18,8 @@ __pycache__/
 
 # AI 提交消息临时文件（不入库）
 _commit_msg.txt
+
+# 质控体系（qc）—— 运行产物与本机 venv 不入库
+qc/.venv/
+qc/out/
+qc/config/local.json

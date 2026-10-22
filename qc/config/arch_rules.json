@@ -1,0 +1,60 @@
+{
+  "$comment": "分层依赖规则 —— 由 qc/lib/arch_check.py 执行；判据即文件，可 review。层名→路径前缀（** 表示子树）",
+  "layers": {
+    "ui": [
+      "scenes/ui/"
+    ],
+    "battle": [
+      "scripts/battle/"
+    ],
+    "data": [
+      "scripts/data/"
+    ],
+    "net": [
+      "scripts/net/"
+    ],
+    "anim": [
+      "scripts/anim/"
+    ],
+    "diag": [
+      "scripts/diag/"
+    ],
+    "scene_root": [
+      "scenes/"
+    ]
+  },
+  "forbid": [
+    {
+      "from": "battle",
+      "to": [
+        "ui"
+      ],
+      "why": "规则层不得反向引用视图（视图可引用规则层，反之不行）"
+    },
+    {
+      "from": "data",
+      "to": [
+        "battle",
+        "ui",
+        "net",
+        "anim"
+      ],
+      "why": "数据层是叶子模块，只能被依赖、不主动依赖"
+    },
+    {
+      "from": "anim",
+      "to": [
+        "ui"
+      ],
+      "why": "动画引擎与视图解耦"
+    },
+    {
+      "from": "diag",
+      "to": [
+        "ui"
+      ],
+      "why": "诊断工具不耦合视图"
+    }
+  ],
+  "unresolved_must_be_zero": true
+}

@@ -1,0 +1,4 @@
+#!/bin/sh
+# pre-commit —— 质量门禁（判定权归程序，不依赖 AI）
+# 安装：powershell -File qc/install-hooks.ps1    绕过：git commit --no-verify（事后 qc report 可对账）
+exec powershell -NoProfile -ExecutionPolicy Bypass -File qc/qc.ps1 all

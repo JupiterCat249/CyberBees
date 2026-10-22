@@ -1,0 +1,16 @@
+# 质控（qc）专用 gdlint 配置 —— 判据即文件，可 review
+# 关闭 class-definitions-order：纯排序噪音（本项目实测 96 条），会把真信号淹没。
+# 其余规则一律保留；gdlint 只做 --check，永不写文件（见 系统维护/开发环境/Godot质控方案.md）
+disable:
+  - class-definitions-order
+excluded_directories: !!set
+  .git: null
+  .godot: null
+  addons: null
+  archive: null
+  verification: null
+  tools: null
+max-file-lines: 1000
+max-line-length: 100
+max-returns: 6
+max-public-methods: 20
