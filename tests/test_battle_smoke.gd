@@ -215,3 +215,13 @@ func test_preview_render_highlights_cells() -> void:
 		if String(c.highlight) != "":
 			marked += 1
 	assert_gt(marked, 0, "选中单位后应有若干格被预览高亮")
+
+
+func test_main_button_stroke_overlay_installed() -> void:
+	## 迭代086：主按钮描边族切到 view_layout.gd 后，覆盖层仍须建出来且不挡点击
+	var stroke := _scene.get_node_or_null("HUD/ActionBar/MainButtonStroke") as Control
+	assert_not_null(stroke, "描边覆盖层应存在（运行时新建）")
+	if stroke == null:
+		return
+	assert_eq(stroke.mouse_filter, Control.MOUSE_FILTER_IGNORE, "覆盖层必须鼠标穿透，否则按钮点不到")
+	assert_eq(stroke.size, (_scene.get_node_or_null("HUD/ActionBar") as Control).size, "覆盖层应贴住按钮矩形")

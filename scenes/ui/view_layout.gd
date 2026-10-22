@@ -164,3 +164,113 @@ static func center_badge_value_geometry(badge: Control) -> void:
 		need = badge.size
 	lb.size = need
 	lb.position = ((badge.size - need) * 0.5).floor()
+
+
+## 把主按钮文案**水平居中**到 ActionBar 宽度内（供 `resized` 回调；幂等）
+## ⭐ 迭代067（人 2026-10-10：「主按钮的描边是**叠加在底部图像之上**的，不是在外面嵌套一圈」）：
+##   做法：在 `ActionBar` 下**运行时新建一层描边覆盖层**（`z_index` 高于按钮、`MOUSE_FILTER_IGNORE` 不挡点击），
+##   由它把设计稿的内描边画在**按钮内容之上**；同时把按钮自身 `StyleBoxFlat` 的边框清掉，
+##   避免"两圈描边"。设计稿 §2.7：主按钮 400×100 圆角 10 · **内描边 (1492,572) 396×96 圆角 8 `#FFFFFF-10%` 4px**。
+##   ⚠️ 只动绘制层次，不改尺寸/字号/文案（守 2026-09-19 硬约束）。
+static func install_main_button_stroke(root: Node, on_fit_stroke: Callable) -> void:
+	var bar := root.get_node_or_null("HUD/ActionBar") as Control
+	if bar == null:
+		return
+	## 按钮自身不再画边框（描边改由覆盖层负责）
+	var mb := bar.get_node_or_null("MainButton") as Button
+	if mb != null:
+		for sname in ["normal", "hover", "pressed", "focus", "disabled"]:
+			var sb := mb.get_theme_stylebox(sname)
+			if sb is StyleBoxFlat:
+				var s2: StyleBoxFlat = (sb as StyleBoxFlat).duplicate()
+				s2.border_width_left = 0
+				s2.border_width_top = 0
+				s2.border_width_right = 0
+				s2.border_width_bottom = 0
+				mb.add_theme_stylebox_override(sname, s2)
+	## 覆盖层（幂等）
+	var stroke := bar.get_node_or_null("MainButtonStroke") as Panel
+	if stroke == null:
+		stroke = Panel.new()
+		stroke.name = "MainButtonStroke"
+		stroke.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		stroke.z_index = 2
+		bar.add_child(stroke)
+	## 位置与尺寸：**与手牌描边同口径 —— 贴边、同宽 4px**
+	## ⚠️ 2026-10-10 修正（人：「主按钮的描边**太粗了**，要和手牌描边的粗细程度统一」）：
+	##   实测两条描边**宽度都是 4px**（手牌 `1490..1494`、按钮 `1492..1496`）⇒ 差异**不在粗细**，在**位置**：
+	##     · 手牌 `InnerLine`（4px/圆角8）**贴卡边**铺满 200×200
+	##     · 我上一版把覆盖层放在 `(2,2) 396×96`（照搬设计稿的"内缩 2px"）⇒ 描边**浮在里侧 2px**
+	##       ⇒ 视觉上"多出来一圈白边"，看着更粗 ✗
+	##   ⇒ 改为**覆盖层 = 按钮矩形**（贴边），仍 4px / 圆角 8 / `#FFFFFF-10%` ⇒ 与手牌一致。
+	const STROKE_W := 4
+	const STROKE_R := 8
+	stroke.position = Vector2.ZERO
+	stroke.size = Vector2(400, 100)
+	var sb2 := StyleBoxFlat.new()
+	sb2.bg_color = Color(0, 0, 0, 0)
+	sb2.border_color = Color(1, 1, 1, 0.1)
+	sb2.set_border_width_all(STROKE_W)
+	sb2.set_corner_radius_all(STROKE_R)
+	stroke.add_theme_stylebox_override("panel", sb2)
+	## 按钮尺寸变了也跟着贴边（不影响手牌链路）
+	if not bar.resized.is_connected(on_fit_stroke):
+		bar.resized.connect(on_fit_stroke)
+	fit_main_button_stroke(root)
+
+
+## 让描边覆盖层始终**贴住**按钮矩形（幂等；供 `ActionBar.resized` 回调）
+static func fit_main_button_stroke(root: Node) -> void:
+	var bar := root.get_node_or_null("HUD/ActionBar") as Control
+	if bar == null:
+		return
+	var stroke := bar.get_node_or_null("MainButtonStroke") as Control
+	if stroke == null:
+		return
+	stroke.position = Vector2.ZERO
+	stroke.size = bar.size
+
+
+## 问题（2026-10-10 异机实测定位）：
+##   项目设计分辨率 **1920×1080**，而 UI 坐标全是设计分辨率下的绝对像素。
+##   在 **1920×1080 的屏幕上**，一个 1080 高的窗口放不下（标题栏/任务栏吃掉约 25–60px）⇒
+##   OS 把窗口压到 **1055** ⇒ `canvas_items + expand` 把视口撑成 **1965×1080**
+##   ⇒ 横向多出 45px、**纵向少 25px** ⇒ 靠下的 UI（手牌/费用数字/按钮）被推出屏幕。
+##   本机是 2560×1600 屏，根本不会触发 ⇒ "本机正常、异机出问题"。
+##
+## 修法（按能力从强到弱，全部在 **运行时实测** 后决策）：
+##   ① 可用高度 **放得下**设计高 → 不动（本机走这条）
+##   ② 窗口**已经矮于**设计高（已被 OS 压缩）但**屏幕放得下** → 把窗口改回设计尺寸
+##   ③ 屏幕都放不下（或可用区高度不足） → **无边框全屏**（屏幕高 = 设计高时 1:1，不缩放、不裁切）
+##   ④ 仍不行 → 只告警并打印实测数据（不硬改），由采集报告带出去
+## ⚠️ 只动**窗口/显示**，不动任何游戏数据与联机协议（两端各自适配自己的屏幕，互不影响）。
+static func fit_window_to_design(root: Node) -> void:
+	var dw := int(ProjectSettings.get_setting("display/window/size/viewport_width", 1920))
+	var dh := int(ProjectSettings.get_setting("display/window/size/viewport_height", 1080))
+	if dw <= 0 or dh <= 0:
+		return
+	var win := root.get_window()
+	if win == null:
+		return
+	## 全屏（真全屏/无边框全屏）下不需要适配
+	if win.mode != Window.MODE_WINDOWED:
+		print("[VIEW][WIN] 非窗口模式（mode=%d），跳过自适应" % int(win.mode))
+		return
+	var scr := DisplayServer.screen_get_size(win.current_screen)
+	var usable := DisplayServer.screen_get_usable_rect(win.current_screen)
+	var cur := win.size
+	print("[VIEW][WIN] 适配前：窗口=%s · 屏幕=%s · 可用=%s · 设计=%dx%d" % [
+		str(cur), str(scr), str(usable), dw, dh])
+	## ① 已经达标：窗口不低于设计分辨率
+	if cur.x >= dw and cur.y >= dh:
+		print("[VIEW][WIN] ✓ 窗口已放得下设计分辨率，无需调整")
+		return
+	## ② 屏幕（可用区）放得下设计尺寸 ⇒ 把窗口改回设计尺寸（修正被 OS 压掉的高）
+	if usable.size.x >= dw and usable.size.y >= dh:
+		win.size = Vector2i(dw, dh)
+		print("[VIEW][WIN] ✓ 已把窗口恢复到设计尺寸 %dx%d（原 %s 低于设计）" % [dw, dh, str(cur)])
+		return
+	## ③ 屏幕放不下 ⇒ 无边框全屏（无标题栏/任务栏干涉；屏幕高 = 设计高时 1:1）
+	win.mode = Window.MODE_FULLSCREEN
+	print("[VIEW][WIN] ✓ 屏幕可用区(%s)放不下设计尺寸 ⇒ 已切无边框全屏（屏幕=%s）" % [
+		str(usable.size), str(scr)])
