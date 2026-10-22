@@ -2033,7 +2033,7 @@ func _on_phase_text_color(_side: int, phase: int, _round_no: int) -> void:
 
 ## 受击抖动 —— 实现与完整口径（受攻击即抖 / 同帧去重）见 scenes/ui/view_fx.gd
 func _shake(inst: UnitInstance, value: int) -> void:
-	Fx.shake(_shake_frame, anim, _unit_nodes, inst, value, _play)
+	Fx.shake(_shake_frame, anim, inst, value, _play)
 
 
 ## 播动画（迭代060 v4）—— 目标节点由 `instance_id` 解析；不在册则跳过（不报错、不吞）

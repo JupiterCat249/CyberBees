@@ -8,6 +8,7 @@ extends RefCounted
 const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
 const StateLib := preload("res://scripts/battle/battle_state.gd")
 const TerrainEff := preload("res://scripts/data/terrain_effect.gd")
+const CardKindLib := preload("res://scripts/data/card_kind.gd")
 
 ## a500 效果 4：若效果的消失与赋予在相同阶段 —— **先计算消失，再计算赋予**
 static func tick_and_grant(_state, inst: UnitInstance,
@@ -49,16 +50,12 @@ static func tick_effects(inst: UnitInstance) -> Array:
 ##   原因：`CardPool.make_armor()` 每次 `Uuid.generate()` 生成新 id，
 ##   若仅比 id，两个**同名的「装甲」**会被视为不同效果而叠层 → 违反 a500「相同效果最多一个」。
 ##   现改为：先按 `display_name` 比（同为「装甲」即同一效果），名字空时退回比 id。
-## 单位类型是否可被赋予该效果（a500 效果 2：单位类型不匹配则无法赋予效果）
-## 迭代074 B3：自 EffectData 迁来 —— 数据层不得反向引用 CardData.CardKind，否则形成类型环
+## 单位类型是否可被赋予该效果（a500 效果 2）—— 谓词归数据叶子自持（迭代083）
+##   本层只转调，不重复实现口径；详情见 `EffectData.allows_kind()`
 static func effect_allows_kind(eff: EffectData, kind: int) -> bool:
 	if eff == null:
 		return false
-	match kind:
-		CardData.CardKind.QUEEN:    return eff.allow_queen
-		CardData.CardKind.SOLDIER:  return eff.allow_soldier
-		CardData.CardKind.BUILDING: return eff.allow_building
-		_:                          return false
+	return eff.allows_kind(kind)
 
 
 static func grant(inst: UnitInstance, eff: EffectData) -> bool:
@@ -140,7 +137,7 @@ static func resolve_terrain_phase(state, side: int) -> Dictionary:
 	# 回合性伤害（寒潮）
 	if round_ok and md.damage_per_round > 0:
 		for u in state.units(side):
-			if u.data == null or u.data.kind == CardData.CardKind.QUEEN:
+			if u.data == null or u.data.kind == CardKindLib.Kind.QUEEN:
 				continue
 			var before: int = u.current_hp
 			u.damage(md.damage_per_round)

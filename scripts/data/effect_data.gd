@@ -1,5 +1,6 @@
 class_name EffectData
 extends Resource
+const CardKindLib := preload("res://scripts/data/card_kind.gd")
 ## 效果（buff / 减益）静态数据 —— A5 十种效果
 ## id 为 UUID（D-4）；T14：相同效果最多一个 → stacking 固定 NONE
 ##
@@ -40,6 +41,17 @@ enum Stacking { NONE }
 @export var allow_soldier: bool = true
 @export var allow_building: bool = true
 
+
+
+## 单位类型是否可被赋予本效果（a500 效果 2）
+## ⭐ 迭代083：本谓词**回到数据叶子**自持 —— 它依赖 `card_kind` 叶子（不是 `CardData`），
+##   因此不再构成 effect→card→skill→effect 的类型环（迭代074 当时被迫搬去规则层）。
+func allows_kind(kind: int) -> bool:
+	match kind:
+		CardKindLib.Kind.QUEEN:    return allow_queen
+		CardKindLib.Kind.SOLDIER:  return allow_soldier
+		CardKindLib.Kind.BUILDING: return allow_building
+		_:                          return false
 
 
 func validate() -> Array[String]:

@@ -12,6 +12,7 @@ extends GutTest
 const Fixture := preload("res://tests/support/battle_fixture.gd")
 const CombatLib := preload("res://scripts/battle/rules_combat.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
+const CardKindLib := preload("res://scripts/data/card_kind.gd")
 
 var e: BattleEngine = null
 
@@ -167,3 +168,26 @@ func test_attack_is_two_step_and_matches_preview() -> void:
 	assert_true(e.request_attack(0, q, foe), "阶段 2 应执行攻击")
 	assert_eq(foe.current_hp, expect_hp, "实际伤害应与 preview_attack 同源")
 	assert_true(q.has_acted, "攻击后 has_acted 应为 true")
+
+
+# ---------------------------------------------------------------- 类型解耦（迭代083·B3 第二步）
+
+func test_card_kind_compat_forwarding_matches_leaf() -> void:
+	## 102 处既有写法（含封存 verification 脚本）都靠这条转发：CardData.CardKind.X == 叶子.X
+	assert_eq(CardData.CardKind.QUEEN, CardKindLib.Kind.QUEEN)
+	assert_eq(CardData.CardKind.SOLDIER, CardKindLib.Kind.SOLDIER)
+	assert_eq(CardData.CardKind.BUILDING, CardKindLib.Kind.BUILDING)
+	assert_eq(CardData.CardKind.COMMAND, CardKindLib.Kind.COMMAND)
+	assert_eq(CardData.CardKind.COMMAND_X, CardKindLib.Kind.COMMAND_X)
+
+
+func test_effect_allows_kind_lives_on_data_leaf() -> void:
+	## 谓词回到 EffectData 自持（依赖 card_kind 叶子，不成环）
+	var eff := EffectData.new()
+	eff.allow_queen = false
+	eff.allow_soldier = true
+	eff.allow_building = true
+	assert_false(eff.allows_kind(CardKindLib.Kind.QUEEN), "禁蜂王")
+	assert_true(eff.allows_kind(CardKindLib.Kind.SOLDIER), "可兵蜂")
+	assert_true(RulesEffects.effect_allows_kind(eff, CardKindLib.Kind.BUILDING), "规则层转调同一口径")
+	assert_false(RulesEffects.effect_allows_kind(null, 0), "空效果防御")

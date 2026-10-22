@@ -5,11 +5,13 @@ extends Resource
 ##   —— 无 current_hp / 无 position / 无 has_acted / 无 effects
 ##   Godot 对同一路径的资源只加载一份实例（手册），写运行态会污染全场 → 运行态放 UnitInstance
 
-enum CardKind { QUEEN, SOLDIER, BUILDING, COMMAND, COMMAND_X }
+const CardKindLib := preload("res://scripts/data/card_kind.gd")
+## 兼容转发：`CardData.CardKind.QUEEN` 等 102 处既有写法（含封存 verification 脚本）保持可用
+const CardKind := CardKindLib.Kind   # gdlint:ignore=constant-name
 
 @export var id: String = ""                       ## UUID（D-4）
 @export var display_name: String = ""             ## 卡名
-@export var kind: CardKind = CardKind.SOLDIER
+@export var kind: int = CardKind.SOLDIER
 @export var cost: int = 0                         ## 部署费；X 费卡 = -1
 @export var glossary: String = ""                 ## 技能前缀，如「机场」「指令」「支援」
 @export var skill_name: String = ""               ## 技能名（详情区标题：卡名 · 技能名）

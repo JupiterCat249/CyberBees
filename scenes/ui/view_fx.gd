@@ -33,8 +33,7 @@ static func float_at(fx_root: Control, scene: PackedScene, anim, anchor: Control
 ## 受击抖动（§二之2：受到攻击即抖；**数值越大越剧烈**）
 ##   触发条件是"受到攻击/伤害的事件"，不是"血量是否变化"（人 2026-09-21）
 ##   同一帧多来源只算一次 → 按帧号去重（shake_frame: instance_id → 帧号）
-static func shake(shake_frame: Dictionary, anim, unit_nodes: Dictionary,
-		inst, value: int, on_play: Callable) -> void:
+static func shake(shake_frame: Dictionary, anim, inst, value: int, on_play: Callable) -> void:
 	if anim == null or inst == null:
 		return
 	var fid: int = Engine.get_process_frames()
