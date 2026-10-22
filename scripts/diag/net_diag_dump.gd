@@ -291,13 +291,15 @@ func dump(tag: String = "manual") -> String:
 	## ② 追加一行"最新产物"索引，便于外部脚本/人快速找到最后一份
 	var idx := FileAccess.open("%s/LATEST.txt" % base, FileAccess.WRITE)
 	if idx != null:
-		idx.store_string("tag=%s\ntime=%s\npath=%s\n" % [tag, Time.get_datetime_string_from_system(false, true), abs_path])
+		idx.store_string("tag=%s\ntime=%s\npath=%s\n" % [
+			tag, Time.get_datetime_string_from_system(false, true), abs_path])
 		idx.close()
 	## ③ 复制到"下传目录"（便于外部直接取；路径可在文件头看到）
 	var out_dir := "%s/outbox" % base
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	var out_path := "%s/%s" % [out_dir, path.get_file()]
-	DirAccess.copy_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(out_path))
+	var src_abs := ProjectSettings.globalize_path(path)
+	DirAccess.copy_absolute(src_abs, ProjectSettings.globalize_path(out_path))
 	return abs_path
 
 
@@ -614,8 +616,7 @@ func _section_turnstate(out: PackedStringArray) -> void:
 		return
 	var seat = cs.get("my_seat")
 	out.append("  my_seat（本端座位）        = %s" % str(seat))
-	## ⭐ 迭代067：详情栏状态（口径③「详情栏恒开放」的机器取证位）——
-	##   点任意手牌/单位后本行应随 CardName 变化，而 sel_kind 不变（可看 ≠ 可操作）。
+	## ⭐ 迭代067：详情栏状态（口径③「详情栏恒开放」的机器取证位）—— 点任意手牌/单位后本行应随 CardName 变化，而 sel_kind 不变（可看 ≠ 可操作）。
 	var ip_name := cs.get_node_or_null("HUD/InfoPanel/CardName")
 	var ip_desc := cs.get_node_or_null("HUD/InfoPanel/SkillDesc")
 	out.append("  详情栏 CardName            = %s" % (String(ip_name.text) if ip_name is Label else "<缺失>"))
@@ -680,8 +681,7 @@ func _section_turnstate(out: PackedStringArray) -> void:
 					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a,
 					_badge_dim_of(c),
 					_digit_color_of(c).r, _digit_color_of(c).g, _digit_color_of(c).b, _digit_color_of(c).a])
-	## ⭐ 地图单位几何（**迭代065 数据镜像的取证位**）——
-	##   人 2026-10-10 报「对端初始两个蜂王普遍向右向下各移动一格」；本段给出：
+	## ⭐ 地图单位几何（**迭代065 数据镜像的取证位**）—— 人 2026-10-10 报「对端初始两个蜂王普遍向右向下各移动一格」；本段给出：
 	##   规范格（元数据）· 节点局部位置 · 全局位置 · 旋转 · 以及**该规范格节点自身的局部位置**。
 	##   ⇒ 两端各发一份：若"规范格相同、而节点的 local 与该格节点的 local 不等"，即定位/镜像有偏。
 	var units_root := cs.get_node_or_null("Battle/MapView/Units") as Control

@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'lint', 'size', 'arch', 'signals', 'test', 'report', 'snapshot', 'import', 'setup')]
+    [ValidateSet('all', 'lint', 'size', 'arch', 'signals', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -257,12 +257,28 @@ function Invoke-Ratchet([switch]$Update) {
     return $LASTEXITCODE
 }
 
+function Invoke-Selftest {
+    # 门禁自检（迭代089）：造已知坏输入，断言每个闸真会红 —— 专治"假绿"复发。
+    # 本仓已发现三个「失败路径从未被执行」的 Bug，故把它变成每次 qc all 都会走的常规路径。
+    Assert-Python
+    $out = @(& $Py (Join-Path $QcRoot 'lib\selftest_gates.py') 2>&1 | ForEach-Object { $_.ToString() })
+    $code = $LASTEXITCODE
+    foreach ($line in $out) { Write-Host ('[qc] ' + $line) }
+    $fails = @($out | Where-Object { $_ -match '\[FAIL\]' }).Count
+    Add-Count 'qc:selftest_failures' $fails
+    return ($code -eq 0 -and $fails -eq 0)
+}
+
 function Invoke-Gates {
     # 钩子自检：core.hooksPath 是**本地配置**，新克隆不会自动生效 → 每次全闸都提醒一次
     $hp = (& git -C $Repo config --get core.hooksPath 2>$null)
     if ((("$hp").Trim()) -ne 'qc/hooks') {
         Write-Host '[qc] ⚠ 提交钩子未安装（core.hooksPath != qc/hooks）—— 跑 qc/install-hooks.ps1 才能"每次提交自动执行"' -ForegroundColor Yellow
     }
+    Write-Host ''
+    Write-Host '=== qc · 门禁自检 ===' -ForegroundColor Cyan
+    $selfOk = Invoke-Selftest
+    if (-not $selfOk) { $script:GateFailed = $true }
     Write-Host ''
     Write-Host '=== qc · 四道闸 ===' -ForegroundColor Cyan
     # 每一闸的返回值都要收集：门禁失败必须让退出码非零，不能只靠棘轮比较计数
@@ -379,6 +395,7 @@ switch ($Command) {
     'arch'     { if (Invoke-Arch)    { exit 0 } else { exit 1 } }
     'signals'  { if (Invoke-Signals) { exit 0 } else { exit 1 } }
     'test'     { if (Invoke-Test)    { exit 0 } else { exit 1 } }
+    'selftest' { if (Invoke-Selftest) { exit 0 } else { exit 1 } }
     'report'   { Show-Report; exit 0 }
     'import'   { Invoke-Import; exit 0 }
     'setup'    { Invoke-Setup; exit 0 }
