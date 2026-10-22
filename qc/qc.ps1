@@ -146,6 +146,10 @@ function Invoke-Signals {
     return ([int]$sig.problems -eq 0)
 }
 
+function Invoke-GutRun([string]$GodotBin) {
+    return @(& $GodotBin --headless --path $Repo -s 'addons/gut/gut_cmdln.gd' -gdir='res://tests' -gexit 2>&1 | ForEach-Object { $_.ToString() })
+}
+
 function Invoke-Test {
     $files = Get-TestFiles
     if ($files.Count -eq 0) {
@@ -162,9 +166,25 @@ function Invoke-Test {
     if (-not (Test-Path $gut)) { Write-Host '[qc] 缺少 addons/gut：跑 setup' -ForegroundColor Yellow; exit 2 }
 
     $log = Join-Path $Out 'gut.log'
-    $raw = @(& $godot --headless --path $Repo -s 'addons/gut/gut_cmdln.gd' -gdir='res://tests' -gexit 2>&1 | ForEach-Object { $_.ToString() })
-    $raw | Set-Content -Path $log -Encoding UTF8
+    $raw = @(Invoke-GutRun $godot)
     $text = ($raw -join ' ')
+
+    # 自愈：编辑器实例先于 addon 启动时会回写 class 缓存，导致 GUT 报 class_name 未注册。
+    # 这是环境问题、不是测试失败 —— 由程序自动重跑一次 --import 再试（人不需要记任何命令）。
+    if ($text -match 'have not been imported') {
+        Write-Host '[qc] GUT class_name 未注册（编辑器回写了 .godot 缓存）→ 自动 --import 后重试一次' -ForegroundColor Yellow
+        $proj = Join-Path $Repo 'project.godot'
+        $before = (Get-FileHash $proj -Algorithm SHA256).Hash
+        & $godot --headless --path $Repo --import 2>&1 | Out-Null
+        $after = (Get-FileHash $proj -Algorithm SHA256).Hash
+        if ($before -ne $after) {
+            Write-Host '[qc] 注意：import 期间 project.godot 被改写（编辑器/插件行为），按 T11 核对' -ForegroundColor Yellow
+        }
+        $raw = @(Invoke-GutRun $godot)
+        $text = ($raw -join ' ')
+    }
+
+    $raw | Set-Content -Path $log -Encoding UTF8
 
     $harnessErrors = 0
     if ($text -match 'have not been imported') { $harnessErrors = 1; Write-Host '[qc] GUT class_name 未注册 —— 先跑 qc/qc.ps1 import（新增/升级 addon 后必做）' -ForegroundColor Yellow }

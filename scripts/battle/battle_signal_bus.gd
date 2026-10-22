@@ -24,9 +24,9 @@ extends Node
 const SIG_BATTLE_STARTED := "battle_started"
 const SIG_ROUND_STARTED := "round_started"
 const SIG_TURN_STARTED := "turn_started"
-const SIG_TURN_ENDED := "turn_ended"
+const SIG_TURN_ENDED := "turn_ended"  ## @dead 视图无消费者：收束态由下一次 STARTED 重建，见迭代070
 const SIG_PHASE_STARTED := "phase_started"
-const SIG_PHASE_ENDED := "phase_ended"
+const SIG_PHASE_ENDED := "phase_ended"  ## @dead 视图无消费者：收束态由下一次 STARTED 重建，见迭代070
 const SIG_BATTLE_ENDED := "battle_ended"
 const SIG_COST_CHANGED := "cost_changed"
 ## 单位回费（迭代064 B7 · 清单 UI-20）——**只由持有施法单位的回费发出**（见下方 signal 注释）
@@ -43,10 +43,10 @@ const SIG_REMOTE_ACTION := "remote_action"
 signal remote_action(side: int, text: String, cell: Vector2i)
 ## 对端选中变化（cell 非法 x<0 表示**对端已取消选中**）
 signal remote_selection_changed(side: int, cell: Vector2i)
-const SIG_CARD_DRAWN := "card_drawn"
+const SIG_CARD_DRAWN := "card_drawn"  ## @dead 手牌统一经 HAND_CHANGED 重绘，见迭代070
 const SIG_HAND_CHANGED := "hand_changed"
-const SIG_DECK_RESHUFFLED := "deck_reshuffled"
-const SIG_CARD_DISCARDED := "card_discarded"
+const SIG_DECK_RESHUFFLED := "deck_reshuffled"  ## @dead 手牌统一经 HAND_CHANGED 重绘，见迭代070
+const SIG_CARD_DISCARDED := "card_discarded"  ## @dead 手牌统一经 HAND_CHANGED 重绘，见迭代070
 const SIG_UNIT_SPAWNED := "unit_spawned"
 const SIG_UNIT_MOVED := "unit_moved"
 const SIG_UNIT_DAMAGED := "unit_damaged"
@@ -58,7 +58,7 @@ const SIG_EFFECT_GRANTED := "effect_granted"
 const SIG_EFFECT_EXPIRED := "effect_expired"
 const SIG_UNIT_STATS := "unit_stats_changed"
 const SIG_SELECTION := "selection_changed"
-const SIG_ACTION_AVAIL := "action_availability"
+const SIG_ACTION_AVAIL := "action_availability"  ## @dead 按钮态经 MAIN_BUTTON 下发，见迭代070
 const SIG_MAIN_BUTTON := "main_button_state"
 const SIG_LOG := "log_added"
 const SIG_MAP_ASSETS := "map_assets_changed"
