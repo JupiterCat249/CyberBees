@@ -42,6 +42,7 @@ $GutVersion       = '9.6.1'
 
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 $script:Counts = [ordered]@{}
+$script:GateFailed = $false
 
 function Add-Count([string]$Key, $Value) { $script:Counts[$Key] = [int]$Value }
 
@@ -108,7 +109,10 @@ function Invoke-Lint {
     Add-Count 'lint:total' $total
     $n = $files.Count
     Write-Host ('[qc] lint   files={0}  problems={1}  (明细 {2})' -f $n, $total, $log)
-    return ($total -eq 0)
+    # ⚠️ 不把"有 lint 问题"当硬失败：本仓有 25 条**已裁定接受**的历史债（理由写在迭代记录里），
+    #    lint 的增量由棘轮（qc/baseline.json）把关 —— 涨一条就红。
+    #    硬失败的闸是那些"零容忍"的：体积门禁 / 加载环 / 信号问题 / 测试失败。
+    return $true
 }
 
 function Invoke-Arch {
@@ -206,20 +210,40 @@ function Invoke-Test {
 }
 
 function Invoke-Size {
-    $cfgPath = Join-Path $QcRoot 'config\size_watch.json'
-    if (-not (Test-Path $cfgPath)) { return $true }
-    # ⚠️ PS 5.1 的 Get-Content -Raw 按 ANSI 读无 BOM 文件 → 中文注释会让 JSON 解析失败（实测踩到）
-    $cfg = [System.IO.File]::ReadAllText($cfgPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
-    foreach ($w in $cfg.watch) {
-        $p = Join-Path $Repo ($w.path -replace '/', '\')
-        if (-not (Test-Path $p)) { Add-Count ('size:' + $w.key) 0; continue }
-        # ⚠️ 必须显式 UTF8：PS 5.1 默认按 ANSI 读无 BOM 文件，中文行会让行数读数偏小约 19%（实测 2433 → 1965）
-        $n = @(Get-Content $p -Encoding UTF8).Count
-        Add-Count ('size:' + $w.key) $n
+    Assert-Python
+    # ① 行数/体积硬门禁（迭代082）：单文件上限 + 祖父条款只许变小
+    $policy = Join-Path $QcRoot 'config\size_policy.json'
+    $sizeBase = Join-Path $QcRoot 'config\size_baseline.json'
+    $sizeOut = Join-Path $Out 'size.json'
+    if (Test-Path $policy) {
+        & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy $policy --baseline $sizeBase --out $sizeOut |
+            ForEach-Object { Write-Host ('[qc] ' + $_) }
+        $gateOk = ($LASTEXITCODE -eq 0)
+        if (Test-Path $sizeOut) {
+            $sj = [System.IO.File]::ReadAllText($sizeOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+            Add-Count 'size:over_cap_files' $sj.over_cap
+            Add-Count 'size:max_lines' $sj.max_lines
+            Add-Count 'size:max_bytes' $sj.max_bytes
+            Add-Count 'size:violations' (@($sj.violations).Count)
+        }
+    } else {
+        Write-Host '[qc] size   未配置 size_policy.json —— 跳过硬门禁' -ForegroundColor Yellow
+        $gateOk = $true
     }
-    $summary = ($cfg.watch | ForEach-Object { $_.key + '=' + $script:Counts['size:' + $_.key] }) -join '  '
-    Write-Host ('[qc] size   ' + $summary)
-    return $true
+    # ② 单体行数看板（3 个关注文件；报告曲线用）
+    $cfgPath = Join-Path $QcRoot 'config\size_watch.json'
+    if (Test-Path $cfgPath) {
+        $cfg = [System.IO.File]::ReadAllText($cfgPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        foreach ($w in $cfg.watch) {
+            $p = Join-Path $Repo ($w.path -replace '/', '\')
+            if (-not (Test-Path $p)) { Add-Count ('size:' + $w.key) 0; continue }
+            $n = @(Get-Content $p -Encoding UTF8).Count
+            Add-Count ('size:' + $w.key) $n
+        }
+        $summary = ($cfg.watch | ForEach-Object { $_.key + '=' + $script:Counts['size:' + $_.key] }) -join '  '
+        Write-Host ('[qc] size   ' + $summary)
+    }
+    return $gateOk
 }
 
 function Invoke-Ratchet([switch]$Update) {
@@ -234,14 +258,21 @@ function Invoke-Ratchet([switch]$Update) {
 }
 
 function Invoke-Gates {
+    # 钩子自检：core.hooksPath 是**本地配置**，新克隆不会自动生效 → 每次全闸都提醒一次
+    $hp = (& git -C $Repo config --get core.hooksPath 2>$null)
+    if ((("$hp").Trim()) -ne 'qc/hooks') {
+        Write-Host '[qc] ⚠ 提交钩子未安装（core.hooksPath != qc/hooks）—— 跑 qc/install-hooks.ps1 才能"每次提交自动执行"' -ForegroundColor Yellow
+    }
     Write-Host ''
     Write-Host '=== qc · 四道闸 ===' -ForegroundColor Cyan
-    Invoke-Lint | Out-Null
-    Invoke-Size | Out-Null
-    Invoke-Arch | Out-Null
-    Invoke-Signals | Out-Null
-    Invoke-Test | Out-Null
+    # 每一闸的返回值都要收集：门禁失败必须让退出码非零，不能只靠棘轮比较计数
+    if (-not (Invoke-Lint))     { $script:GateFailed = $true }
+    if (-not (Invoke-Size))     { $script:GateFailed = $true }
+    if (-not (Invoke-Arch))     { $script:GateFailed = $true }
+    if (-not (Invoke-Signals))  { $script:GateFailed = $true }
+    if (-not (Invoke-Test))     { $script:GateFailed = $true }
     Write-Host ''
+    if ($script:GateFailed) { Write-Host '[qc] 有闸未通过（见上方红色/明细）—— 退出码将非零' -ForegroundColor Red }
 }
 
 function Show-Report {
@@ -342,15 +373,16 @@ function Invoke-Setup {
 }
 
 switch ($Command) {
-    'lint'     { Invoke-Lint | Out-Null; exit 0 }
-    'size'     { Invoke-Size | Out-Null; exit 0 }
-    'arch'     { Invoke-Arch | Out-Null; exit 0 }
-    'signals'  { Invoke-Signals | Out-Null; exit 0 }
-    'test'     { Invoke-Test | Out-Null; exit 0 }
+    # 单闸的退出码必须反映该闸结果 —— 曾一律 exit 0，导致"单闸永远绿"的假象（迭代082 修）
+    'lint'     { if (Invoke-Lint)    { exit 0 } else { exit 1 } }
+    'size'     { if (Invoke-Size)    { exit 0 } else { exit 1 } }
+    'arch'     { if (Invoke-Arch)    { exit 0 } else { exit 1 } }
+    'signals'  { if (Invoke-Signals) { exit 0 } else { exit 1 } }
+    'test'     { if (Invoke-Test)    { exit 0 } else { exit 1 } }
     'report'   { Show-Report; exit 0 }
     'import'   { Invoke-Import; exit 0 }
     'setup'    { Invoke-Setup; exit 0 }
-    'all'      { Invoke-Gates; exit (Invoke-Ratchet) }
-    'snapshot' { Invoke-Gates; exit (Invoke-Ratchet -Update) }
+    'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
+    'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if ($script:GateFailed) { exit 1 } else { exit $r } }
 }
 exit 0

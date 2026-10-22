@@ -1,0 +1,18 @@
+{
+  "$comment": "文件体积/行数门禁（迭代082）。规则：① 单文件不得超过 max_lines / max_bytes；② 超限的历史文件必须登记在 size_baseline.json 的 exempt 里，且**只许变小**（长一行就红）；③ 掉到上限以下后必须从 exempt 移除（不许挂着占位）。由 qc/lib/size_check.py 执行，`qc all`（含 pre-commit 钩子）每次执行。",
+  "max_lines": 1000,
+  "max_bytes": 65536,
+  "warn_lines": 800,
+  "exclude_dirs": [
+    "addons",
+    ".godot",
+    "archive",
+    "verification",
+    "tools",
+    "qc",
+    ".venv"
+  ],
+  "include_ext": [
+    ".gd"
+  ]
+}
