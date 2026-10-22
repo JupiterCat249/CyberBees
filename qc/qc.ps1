@@ -166,6 +166,11 @@ function Invoke-Test {
     $raw | Set-Content -Path $log -Encoding UTF8
     $text = ($raw -join ' ')
 
+    $harnessErrors = 0
+    if ($LASTEXITCODE -ne 0) { $harnessErrors = 1 }
+    if ($text -match 'have not been imported') { $harnessErrors = 1; Write-Host '[qc] GUT class_name 未注册 —— 先跑 qc/qc.ps1 import（新增/升级 addon 后必做）' -ForegroundColor Yellow }
+    if ($text -notmatch 'Passing Tests') { $harnessErrors = 1 }
+
     $passing = 0; $failing = 0; $asserts = 0
     if ($text -match 'Passing Tests\s+(\d+)') { $passing = [int]$matches[1] }
     if ($text -match 'Failing Tests\s+(\d+)') { $failing = [int]$matches[1] }
@@ -174,15 +179,18 @@ function Invoke-Test {
     Add-Count 'test:passing' $passing
     Add-Count 'test:asserts' $asserts
     Add-Count 'test:failures' $failing
+    Add-Count 'test:harness_errors' $harnessErrors
     Write-Host ('[qc] test   passing={0} failing={1} asserts={2}  (明细 {3})' -f $passing, $failing, $asserts, $log)
-    return ($failing -eq 0)
+    if ($harnessErrors -ne 0) { Write-Host '[qc] 回归闸未能正常执行（不是测试失败），见上方提示与 gut.log' -ForegroundColor Red }
+    return (($failing -eq 0) -and ($harnessErrors -eq 0))
 }
 
 function Invoke-Ratchet([switch]$Update) {
     Assert-Python
     $json = $script:Counts | ConvertTo-Json -Depth 4
     $json | Out-File -FilePath $CountsFile -Encoding utf8
-    $ratchetArgs = @((Join-Path $QcRoot 'lib\ratchet.py'), '--baseline', $Baseline, '--current', $CountsFile, '--iteration', $Iteration)
+    $ratchetArgs = @((Join-Path $QcRoot 'lib\ratchet.py'), '--baseline', $Baseline, '--current', $CountsFile)
+    if ($Iteration -ne '') { $ratchetArgs = $ratchetArgs + @('--iteration', $Iteration) }
     if ($Update) { $ratchetArgs = $ratchetArgs + '--update' }
     & $Py @ratchetArgs | ForEach-Object { Write-Host $_ }
     return $LASTEXITCODE

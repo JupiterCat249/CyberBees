@@ -17,9 +17,13 @@ def load(path, default):
     with open(path, encoding="utf-8-sig") as f:
         return json.load(f)
 
-UP_KEYS = ("test:passing", "test:asserts")
+UP_KEYS = ("test:passing",)
+# 参考类：随实现自然增减，不参与棘轮判定（否则"删掉一个死信号"会被误判成覆盖率下降）
+INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable")
 
 def direction(key):
+    if key in INFO_KEYS:
+        return "info"
     # 覆盖类指标越高越好；其余（含 test:failures）越低越好
     return "up" if key in UP_KEYS else "down"
 
@@ -43,7 +47,9 @@ def main():
         b = int(base.get(key, 0))
         d = direction(key)
         delta = c - b
-        if d == "down":
+        if d == "info":
+            status = "info"
+        elif d == "down":
             status = "same" if delta == 0 else ("BETTER" if delta < 0 else "WORSE")
         else:
             status = "same" if delta == 0 else ("BETTER" if delta > 0 else "WORSE")
@@ -56,7 +62,7 @@ def main():
     print("%-34s %6s %6s %7s" % ("metric", "base", "now", "delta"))
     print("-" * 60)
     for key, b, c, delta, status in rows:
-        mark = {"same": "", "BETTER": "<-", "WORSE": "!!"}[status]
+        mark = {"same": "", "BETTER": "<-", "WORSE": "!!", "info": "i"}[status]
         print("%-34s %6d %6d %+7d  %s" % (key, b, c, delta, mark))
 
     if bootstrap:
