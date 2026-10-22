@@ -708,6 +708,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	## F8 = 运行环境自测（不影响其他输入：只接管这一个键）
 	if event is InputEventKey and event.pressed and not event.echo \
 			and (event as InputEventKey).keycode == KEY_F8:
+		print("[DIAG] F8 已收到 → 落盘运行期几何")   # 回执：区分「键没送到」与「dump 失败」
 		dump_runtime_geometry(true)
 		get_viewport().set_input_as_handled()
 
@@ -2029,11 +2030,7 @@ func _on_phase_text_color(_side: int, phase: int, _round_no: int) -> void:
 	lb.modulate = Color(1, 1, 1, 0.5) if (phase == PHASE_RECOVER or phase == PHASE_TERRAIN) else Color(1, 1, 1, 1)
 
 
-## 受击抖动（§二之2 line 54「单位受到攻击时抖动」+ line 55「数值越大越剧烈」）
-##   ⚠️ 触发条件是**"受到攻击/伤害的事件"**，不是"血量是否变化"（人 2026-09-21）：
-##     · 抵挡型效果（装甲/护盾/力场）**完全抵挡** → 引擎不发 `unit_damaged` → 仍要抖
-##     · **致死伤害** → 仍要抖（退场会排队等它播完，见 `_pending_exit`）
-##   同一帧多个来源（event 信号 + `unit_damaged`）只算一次 → 按帧号去重
+## 受击抖动 —— 实现与完整口径（受攻击即抖 / 同帧去重）见 scenes/ui/view_fx.gd
 func _shake(inst: UnitInstance, value: int) -> void:
 	Fx.shake(_shake_frame, anim, _unit_nodes, inst, value, _play)
 
