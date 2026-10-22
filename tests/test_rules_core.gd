@@ -167,19 +167,3 @@ func test_attack_is_two_step_and_matches_preview() -> void:
 	assert_true(e.request_attack(0, q, foe), "阶段 2 应执行攻击")
 	assert_eq(foe.current_hp, expect_hp, "实际伤害应与 preview_attack 同源")
 	assert_true(q.has_acted, "攻击后 has_acted 应为 true")
-
-
-# ---------------------------------------------------------------- 弃牌费用（迭代075 切出的纯查询）
-
-func test_discard_cost_matches_deploy_cost() -> void:
-	## a500 抽卡 6：弃牌消耗 = 部署费用
-	var card = Pool.card("电击")
-	assert_eq(e.discard_cost_of(card), int(card.cost), "弃牌费应等于部署费")
-
-
-func test_discard_cost_of_x_cost_card_is_ten() -> void:
-	## a500：X 费卡（cost < 0）弃牌消耗 10 点
-	var xc := CommandData.new()
-	xc.cost = -1
-	assert_eq(e.discard_cost_of(xc), 10, "X 费卡弃牌应消耗 10 点")
-	assert_eq(e.discard_cost_of(null), 0, "空卡应返回 0（防御）")

@@ -25,6 +25,7 @@ extends Node
 ## 关闭方式：把 `net_config/diag.flag` 内容写 `0`（或删除该文件即恢复默认开启规则）。
 ## ============================================================================
 const DIAG_DIR := "user://diag"
+const DiagIO := preload("res://scripts/diag/diag_io.gd")
 ## 采样间隔（帧）：60fps 下 = 每 0.5 秒一次；只比较少量标量，开销可忽略
 const SAMPLE_EVERY := 30
 ## 被持续监视的"关键量"（运行期被谁改动 —— 本工具的核心价值）
@@ -375,7 +376,7 @@ func _section_pixels(out: PackedStringArray) -> void:
 func _section_static(out: PackedStringArray) -> void:
 	out.append("\n--- §A 静态代码态 ---")
 	## A1 脚本哈希（对所有 .gd 求哈希，列出**非基线**的少数几个，便于异机比对"是不是同一份代码"）
-	var scripts := _list_files("res://", ".gd")
+	var scripts := DiagIO.list_files("res://", ".gd")
 	scripts.sort()
 	out.append("  .gd 脚本数：%d" % scripts.size())
 	var h := HashingContext.new()
@@ -392,12 +393,12 @@ func _section_static(out: PackedStringArray) -> void:
 	for key in ["res://scenes/ui/arena_view.gd", "res://scenes/ui/battle_ui_alpha.tscn",
 			"res://scripts/data/card_pool.gd", "res://game_data/decks/示范卡组.tres",
 			"res://project.godot", "res://scenes/ui/battle_scene.tscn"]:
-		out.append("  %-52s %s" % [key.replace("res://", ""), _file_sha(key)])
+		out.append("  %-52s %s" % [key.replace("res://", ""), DiagIO.file_sha(key)])
 	## A2 关键常量的**源码文本值**（防止"同一常量在不同机器上被改"）
 	for pair in [["res://scripts/data/card_pool.gd", "DECK_NAMES"],
 			["res://scenes/ui/arena_view.gd", "DIAG_NODES"],
 			["res://scripts/battle/battle_engine.gd", "PITCH"]]:
-		var txt := _read_text(String(pair[0]))
+		var txt := DiagIO.read_text(String(pair[0]))
 		if txt == "":
 			continue
 		for line in txt.split("\n"):
@@ -502,10 +503,10 @@ func _section_env(out: PackedStringArray) -> void:
 	for k in WATCHED_SETTINGS:
 		out.append("  %-46s = %s" % [String(k), str(_read_watched(String(k)))])
 	out.append("  编辑器设置：")
-	for kl in _read_editor_settings():
+	for kl in DiagIO.read_editor_settings():
 		out.append("    %s" % String(kl))
 	out.append("  停靠布局（.godot/editor/editor_layout.cfg）：")
-	for kl in _read_layout():
+	for kl in DiagIO.read_layout():
 		out.append("    %s" % String(kl))
 
 
@@ -545,7 +546,7 @@ func _section_runtime(out: PackedStringArray) -> void:
 	out.append("     量到的是\"左上角\"**假值** ⇒ 本工具同时给出\"可见范围\"（按四角变换求包围盒）并以它判越界：")
 	var bad := 0
 	var cs := get_tree().current_scene
-	for path in _diag_paths():
+	for path in DiagIO.diag_paths():
 		if cs == null:
 			break
 		var n := cs.get_node_or_null(String(path)) as Control
@@ -747,99 +748,3 @@ func _section_events(out: PackedStringArray) -> void:
 		out.append("  （无）")
 	for e in _events:
 		out.append("  %s" % String(e))
-
-
-# ============================================================================
-#  工具
-# ============================================================================
-func _diag_paths() -> Array:
-	return ["Battle/MapView", "Battle/MapView/MapFrame",
-		"Battle/HandPanelLeft", "Battle/HandPanelRight",
-		"Battle/PlayerBesaInfoRight", "Battle/PlayerBesaInfoRight/BadgeImage",
-		"Battle/PlayerBesaInfoRight/BadgeImage/Value",
-		"Battle/PlayerBesaInfoLift", "Battle/PlayerBesaInfoLift/BadgeImage",
-		"HUD/InfoPanel", "HUD/ActionBar", "HUD/ActionBar/MainButton",
-		"HUD/ActionBar/Label", "HUD/MatchInfo", "HUD/FuncButtonGroup"]
-
-
-func _file_sha(path: String) -> String:
-	var f := FileAccess.open(path, FileAccess.READ)
-	if f == null:
-		return "<缺失>"
-	var h := HashingContext.new()
-	h.start(HashingContext.HASH_SHA256)
-	h.update(f.get_buffer(f.get_length()))
-	f.close()
-	return h.finish().hex_encode().substr(0, 16)
-
-
-func _read_text(path: String) -> String:
-	if not FileAccess.file_exists(path):
-		return ""
-	return FileAccess.get_file_as_string(path)
-
-
-func _list_files(root: String, suffix: String, out: Array = []) -> Array:
-	var d := DirAccess.open(root)
-	if d == null:
-		return out
-	d.list_dir_begin()
-	var n := d.get_next()
-	while n != "":
-		var full := root.path_join(n)
-		if d.current_is_dir():
-			## 跳过缓存/仓库/插件（只需游戏代码，避免几万文件）
-			if n != "." and n != ".." and n != ".godot" and n != ".git" and n != "addons":
-				_list_files(full, suffix, out)
-		elif n.ends_with(suffix):
-			out.append(full)
-		n = d.get_next()
-	d.list_dir_end()
-	return out
-
-
-func _read_editor_settings() -> PackedStringArray:
-	var res: PackedStringArray = []
-	var vi := Engine.get_version_info()
-	var cands := [
-		"%s/editor_settings-%d.%d.tres" % [OS.get_data_dir(), int(vi.major), int(vi.minor)],
-		"%s/Godot/editor_settings-%d.%d.tres" % [OS.get_data_dir(), int(vi.major), int(vi.minor)],
-	]
-	var txt := ""
-	var used := ""
-	for c in cands:
-		if FileAccess.file_exists(String(c)):
-			txt = FileAccess.get_file_as_string(String(c))
-			used = String(c)
-			break
-	if txt == "":
-		res.append("⚠ 读不到（外部/导出运行属正常）")
-		return res
-	for key in ["interface/editor/appearance/display_scale",
-			"interface/editor/appearance/custom_display_scale",
-			"interface/editor/appearance/editor_screen",
-			"run/window_placement/screen", "run/window_placement/rect",
-			"run/window_placement/game_embed_mode"]:
-		var val := "<未设>"
-		for line in txt.split("\n"):
-			if String(line).begins_with(String(key) + " ="):
-				var parts := String(line).split("=", false, 1)
-				if parts.size() > 1:
-					val = String(parts[1]).strip_edges()
-				break
-		res.append("%s = %s" % [String(key), val])
-	res.append("文件：%s" % used)
-	return res
-
-
-func _read_layout() -> PackedStringArray:
-	var res: PackedStringArray = []
-	var txt := _read_text("res://.godot/editor/editor_layout.cfg")
-	if txt == "":
-		res.append("⚠ 无 editor_layout.cfg（会自动重建默认布局）")
-		return res
-	for line in txt.split("\n"):
-		var l := String(line).strip_edges()
-		if l.begins_with("dock_split") or l.begins_with("dock_hsplit"):
-			res.append(l)
-	return res
