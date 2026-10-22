@@ -195,3 +195,23 @@ func test_badge_value_fills_badge() -> void:
 	if v == null:
 		return
 	assert_eq(v.size, badge.size, "费用数字应铺满徽章（FULL_RECT），而不是被最小尺寸夹住")
+
+
+func test_preview_render_highlights_cells() -> void:
+	## 迭代085：预览渲染切到 view_preview.gd 后，选中单位仍应把范围高亮打到格子上
+	var engine = _scene.get("engine")
+	assert_not_null(engine, "前置：场景应有引擎")
+	engine.request_end_phase(0)                      ## DEPLOY -> ACTION（行动阶段才有移动/攻击范围）
+	await wait_frames(2)
+	var units: Array = engine.state.units(0)
+	assert_gt(units.size(), 0, "前置：绿方应有单位")
+	engine.select_unit(0, units[0])
+	engine._emit_selection()
+	await wait_frames(3)
+
+	var cells: Dictionary = _scene.get("_cells")
+	var marked := 0
+	for c in cells.values():
+		if String(c.highlight) != "":
+			marked += 1
+	assert_gt(marked, 0, "选中单位后应有若干格被预览高亮")
