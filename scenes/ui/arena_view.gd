@@ -47,6 +47,7 @@ const InputUtils := preload("res://scenes/ui/view_input_utils.gd")
 const Fx := preload("res://scenes/ui/view_fx.gd")
 const Layout := preload("res://scenes/ui/view_layout.gd")
 const PreviewRenderer := preload("res://scenes/ui/view_preview.gd")
+const ResultPanel := preload("res://scenes/ui/view_result.gd")
 
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1
@@ -297,32 +298,15 @@ func _auto_finish() -> void:
 		get_tree().quit(0)
 
 
-## ============================================================================
-##  结算浮层与收尾去向（迭代063 · 人裁定：浮层保留战场画面 · 再来一局＝回大厅后再匹配 · 掉线随时可手动返回）
-## ============================================================================
+## 结算浮层构造已切到 scenes/ui/view_result.gd（迭代087）
+##   人 2026-09-21/10-10 裁定原样保留：浮层保留战场画面 · 再来一局＝回大厅后再匹配 · 掉线可手动返回
 func _show_result(result: int, reason: String) -> void:
 	if _result_panel != null:
 		return
-	var title := "对局结束"
-	match int(result):
-		1: title = "绿方胜"
-		2: title = "红方胜"
-		3: title = "平局"
-	if int(result) == 1 or int(result) == 2:
-		var my_win: bool = (int(result) == 1 and net_seat == 0) or (int(result) == 2 and net_seat == 1)
-		title = ("胜利" if my_win else "失败") + "（" + title + "）"
-	var lines: Array[String] = []
-	lines.append("我的座位：%d（%s）" % [net_seat, "绿方" if net_seat == 0 else "红方"])
-	if engine != null and engine.state != null:
-		lines.append("回合数：%d" % int(engine.state.round_no))
-		lines.append("状态指纹：%s" % StateHash.sha(engine.state).substr(0, 12))
-	if NetSession.active:
-		lines.append("房间：%s" % NetSession.room_code)
-	_result_panel = Control.new()
-	_result_panel.set_script(RESULT_PANEL)
-	_result_panel.setup(title, reason, lines)      ## ⚠️ 必须在 add_child 之前（_ready 里要用这些字段建 UI）
-	_result_panel.rematch_pressed.connect(func() -> void: _leave_and_go(true))
-	_result_panel.lobby_pressed.connect(func() -> void: _leave_and_go(false))
+	_result_panel = ResultPanel.build_panel(
+		RESULT_PANEL, int(result), reason, net_seat, engine,
+		NetSession.room_code, NetSession.active,
+		func() -> void: _leave_and_go(true), func() -> void: _leave_and_go(false))
 	_fx_root.add_child(_result_panel)
 
 

@@ -225,3 +225,22 @@ func test_main_button_stroke_overlay_installed() -> void:
 		return
 	assert_eq(stroke.mouse_filter, Control.MOUSE_FILTER_IGNORE, "覆盖层必须鼠标穿透，否则按钮点不到")
 	assert_eq(stroke.size, (_scene.get_node_or_null("HUD/ActionBar") as Control).size, "覆盖层应贴住按钮矩形")
+
+
+func test_show_result_builds_panel() -> void:
+	## 迭代087：结算浮层构造切到 view_result.gd。
+	##   ⚠️ 这里**不挂进场景树**：result_panel.gd 的 _ready 会在设 size 时触发引擎 WARNING
+	##   （"non-equal opposite anchors"），GUT 会把它当测试错误 ⇒ 只验证"构造"这一层。
+	var ResultMod := preload("res://scenes/ui/view_result.gd")
+	var panel = ResultMod.build_panel(
+		preload("res://scenes/ui/result_panel.gd"), 1, "测试用原因", 0,
+		_scene.get("engine"), "ROOM01", false,
+		func() -> void: pass, func() -> void: pass)
+	assert_not_null(panel, "应构造出结算浮层面板")
+	if panel == null:
+		return
+	assert_true(panel.has_method("setup"), "面板应挂上 result_panel.gd 脚本")
+	assert_true(panel.has_signal("rematch_pressed"), "应保留再来一局信号")
+	assert_true(panel.has_signal("lobby_pressed"), "应保留返回大厅信号")
+	panel.free()
+	assert_true(_scene.has_method("_show_result"), "视图仍保留 _show_result 入口")
