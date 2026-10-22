@@ -26,6 +26,7 @@ extends Node
 ## ============================================================================
 const DIAG_DIR := "user://diag"
 const DiagIO := preload("res://scripts/diag/diag_io.gd")
+const DiagStatic := preload("res://scripts/diag/diag_static.gd")
 ## 采样间隔（帧）：60fps 下 = 每 0.5 秒一次；只比较少量标量，开销可忽略
 const SAMPLE_EVERY := 30
 ## 被持续监视的"关键量"（运行期被谁改动 —— 本工具的核心价值）
@@ -372,39 +373,9 @@ func _section_pixels(out: PackedStringArray) -> void:
 		out.append("     （本机 2026-10-10 实测：`0.345 / 0.475` ⇒ 1.38，恰好 ≈ 旧口径的 0.65/0.22 ⇒ 不对称来自系数差异）")
 
 
-## §A 静态代码态：脚本/资源哈希 + 关键常量源码文本值
+## §A 静态代码态 —— 实现切到 scripts/diag/diag_static.gd（迭代080）
 func _section_static(out: PackedStringArray) -> void:
-	out.append("\n--- §A 静态代码态 ---")
-	## A1 脚本哈希（对所有 .gd 求哈希，列出**非基线**的少数几个，便于异机比对"是不是同一份代码"）
-	var scripts := DiagIO.list_files("res://", ".gd")
-	scripts.sort()
-	out.append("  .gd 脚本数：%d" % scripts.size())
-	var h := HashingContext.new()
-	h.start(HashingContext.HASH_SHA256)
-	for p in scripts:
-		var f := FileAccess.open(p, FileAccess.READ)
-		if f == null:
-			continue
-		h.update(p.to_utf8_buffer())
-		h.update(f.get_buffer(f.get_length()))
-		f.close()
-	out.append("  全部 .gd 汇总 SHA256：%s" % h.finish().hex_encode())
-	## 关键文件逐个哈希（异机 diff 时一眼看出哪一个文件不同）
-	for key in ["res://scenes/ui/arena_view.gd", "res://scenes/ui/battle_ui_alpha.tscn",
-			"res://scripts/data/card_pool.gd", "res://game_data/decks/示范卡组.tres",
-			"res://project.godot", "res://scenes/ui/battle_scene.tscn"]:
-		out.append("  %-52s %s" % [key.replace("res://", ""), DiagIO.file_sha(key)])
-	## A2 关键常量的**源码文本值**（防止"同一常量在不同机器上被改"）
-	for pair in [["res://scripts/data/card_pool.gd", "DECK_NAMES"],
-			["res://scenes/ui/arena_view.gd", "DIAG_NODES"],
-			["res://scripts/battle/battle_engine.gd", "PITCH"]]:
-		var txt := DiagIO.read_text(String(pair[0]))
-		if txt == "":
-			continue
-		for line in txt.split("\n"):
-			if String(line).begins_with("const %s" % String(pair[1])):
-				out.append("  %s: %s" % [String(pair[1]), String(line).strip_edges()])
-				break
+	DiagStatic.section(out)
 
 
 ## 🎨 只读颜色探针（供"某处异常变暗/叠加"类问题取证）：

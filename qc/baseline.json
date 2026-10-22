@@ -18,7 +18,7 @@
     "signals:unsubscribed": 0,
     "size:arena_view": 2361,
     "size:battle_engine": 999,
-    "size:net_diag_dump": 750,
+    "size:net_diag_dump": 721,
     "test:asserts": 177,
     "test:failures": 0,
     "test:harness_errors": 0,
@@ -412,8 +412,37 @@
       },
       "date": "2026-10-22",
       "iteration": "iter079"
+    },
+    {
+      "counts": {
+        "arch:cycles": 0,
+        "arch:layer_violations": 0,
+        "arch:type_cycles": 0,
+        "arch:unresolved_edges": 0,
+        "lint:max-file-lines": 1,
+        "lint:max-line-length": 16,
+        "lint:max-public-methods": 1,
+        "lint:max-returns": 6,
+        "lint:total": 25,
+        "lint:unused-argument": 1,
+        "signals:dead": 0,
+        "signals:declared": 24,
+        "signals:problems": 0,
+        "signals:undetectable": 0,
+        "signals:unemitted": 0,
+        "signals:unsubscribed": 0,
+        "size:arena_view": 2361,
+        "size:battle_engine": 999,
+        "size:net_diag_dump": 721,
+        "test:asserts": 177,
+        "test:failures": 0,
+        "test:harness_errors": 0,
+        "test:passing": 46
+      },
+      "date": "2026-10-22",
+      "iteration": "iter080"
     }
   ],
-  "iteration": "iter079",
+  "iteration": "iter080",
   "updated": "2026-10-22"
 }
