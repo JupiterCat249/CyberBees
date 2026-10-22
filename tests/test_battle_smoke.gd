@@ -54,3 +54,21 @@ func test_both_queens_assigned() -> void:
 	var st = _scene.engine.state
 	assert_not_null(st.sides[BattleState.SIDE_ALLY].queen, "绿方蜂王应已入场")
 	assert_not_null(st.sides[BattleState.SIDE_ENEMY].queen, "红方蜂王应已入场")
+
+
+# ---------------------------------------------------------------- B5 切片后的回归守护
+
+func test_diag_dump_delegate_works() -> void:
+	## 迭代073 把诊断实现切到 scenes/ui/view_diagnostics.gd，arena_view 只留 delegate
+	var info: Dictionary = await _scene.dump_runtime_geometry(false)
+	assert_true(info.has("viewport_size"), "dump 应返回视口尺寸")
+	assert_true(info.has("design_size"), "dump 应返回设计分辨率")
+	assert_true(info.has("canvas_transform"), "dump 应返回 canvas 变换")
+
+
+func test_diag_nodes_table_still_exposed() -> void:
+	## net_diag_dump.gd 以 arena_view 的 DIAG_NODES 作静态指纹 —— 切片后必须仍可取到
+	var nodes: Array = _scene.DIAG_NODES
+	assert_true(nodes.size() > 0, "DIAG_NODES 不应为空")
+	var first := String(nodes[0])
+	assert_not_null(_scene.get_node_or_null(first), "DIAG_NODES 首个路径应能在场景里解析：%s" % first)

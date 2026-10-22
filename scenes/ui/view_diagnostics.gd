@@ -84,8 +84,8 @@ static func dump(root: Node, save_shot: bool = true) -> Dictionary:
 				var c = hn[sidek][k]
 				if c == null or not is_instance_valid(c):
 					continue
-				var badge := c.root.get_node_or_null("BadgeImage") as Control
-				var val := c.root.get_node_or_null("BadgeImage/Value") as Control
+				var badge := c.get_node_or_null("BadgeImage") as Control
+				var val := c.get_node_or_null("BadgeImage/Value") as Control
 				if badge != null and val != null:
 					var cb := badge.get_global_rect()
 					var cv := val.get_global_rect()

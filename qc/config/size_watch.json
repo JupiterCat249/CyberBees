@@ -1,0 +1,17 @@
+{
+  "$comment": "单体行数看板（B5 切片专用）。每个 watch 项产出一个 size:<key> 指标，方向=越低越好。之所以要它：gdlint 的 max-file-lines 只在跨过 1000 行阈值时才计数，2528→2434 这类真实进展它看不见。",
+  "watch": [
+    {
+      "key": "arena_view",
+      "path": "scenes/ui/arena_view.gd"
+    },
+    {
+      "key": "battle_engine",
+      "path": "scripts/battle/battle_engine.gd"
+    },
+    {
+      "key": "net_diag_dump",
+      "path": "scripts/diag/net_diag_dump.gd"
+    }
+  ]
+}

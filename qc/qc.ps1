@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'lint', 'arch', 'signals', 'test', 'report', 'snapshot', 'import', 'setup')]
+    [ValidateSet('all', 'lint', 'size', 'arch', 'signals', 'test', 'report', 'snapshot', 'import', 'setup')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -48,7 +48,7 @@ function Add-Count([string]$Key, $Value) { $script:Counts[$Key] = [int]$Value }
 function Get-GodotBin {
     if ($env:GODOT_BIN -and (Test-Path $env:GODOT_BIN)) { return $env:GODOT_BIN }
     if (Test-Path $LocalCfg) {
-        $cfg = Get-Content $LocalCfg -Raw | ConvertFrom-Json
+        $cfg = [System.IO.File]::ReadAllText($LocalCfg, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
         if ($cfg.godot_bin -and (Test-Path $cfg.godot_bin)) { return $cfg.godot_bin }
     }
     $known = @(
@@ -205,6 +205,23 @@ function Invoke-Test {
     return (($failing -eq 0) -and ($harnessErrors -eq 0))
 }
 
+function Invoke-Size {
+    $cfgPath = Join-Path $QcRoot 'config\size_watch.json'
+    if (-not (Test-Path $cfgPath)) { return $true }
+    # ⚠️ PS 5.1 的 Get-Content -Raw 按 ANSI 读无 BOM 文件 → 中文注释会让 JSON 解析失败（实测踩到）
+    $cfg = [System.IO.File]::ReadAllText($cfgPath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+    foreach ($w in $cfg.watch) {
+        $p = Join-Path $Repo ($w.path -replace '/', '\')
+        if (-not (Test-Path $p)) { Add-Count ('size:' + $w.key) 0; continue }
+        # ⚠️ 必须显式 UTF8：PS 5.1 默认按 ANSI 读无 BOM 文件，中文行会让行数读数偏小约 19%（实测 2433 → 1965）
+        $n = @(Get-Content $p -Encoding UTF8).Count
+        Add-Count ('size:' + $w.key) $n
+    }
+    $summary = ($cfg.watch | ForEach-Object { $_.key + '=' + $script:Counts['size:' + $_.key] }) -join '  '
+    Write-Host ('[qc] size   ' + $summary)
+    return $true
+}
+
 function Invoke-Ratchet([switch]$Update) {
     Assert-Python
     $json = $script:Counts | ConvertTo-Json -Depth 4
@@ -220,6 +237,7 @@ function Invoke-Gates {
     Write-Host ''
     Write-Host '=== qc · 四道闸 ===' -ForegroundColor Cyan
     Invoke-Lint | Out-Null
+    Invoke-Size | Out-Null
     Invoke-Arch | Out-Null
     Invoke-Signals | Out-Null
     Invoke-Test | Out-Null
@@ -228,7 +246,8 @@ function Invoke-Gates {
 
 function Show-Report {
     if (-not (Test-Path $Baseline)) { Write-Host '[qc] 还没有基线：先跑 snapshot' -ForegroundColor Yellow; return }
-    $doc = Get-Content $Baseline -Raw | ConvertFrom-Json
+    # ⚠️ 必须 .NET UTF8 读取：PS 5.1 的 Get-Content -Raw 按 ANSI 解码，中文注释会让 ConvertFrom-Json 失败
+    $doc = [System.IO.File]::ReadAllText($Baseline, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
     Write-Host ('基线迭代：' + $doc.iteration + '   更新于：' + $doc.updated)
     Write-Host ''
     Write-Host '当前基线计数：'
@@ -247,6 +266,26 @@ function Show-Report {
         if ($null -ne $c.'test:passing') { $tp = $c.'test:passing' }
         if ($null -ne $c.'test:asserts') { $ta = $c.'test:asserts' }
         Write-Host ('  {0,-12} {1,-12} {2,-8} {3,-8} {4,-8} {5,-8} {6}' -f $h.iteration, $h.date, $lint, $cyc, $sig, $tp, $ta)
+    }
+    # 单体行数看板（B5 切片专用）：B5 的"降幅"只有它看得见
+    $sizeKeys = @($doc.counts.PSObject.Properties | Where-Object { $_.Name -like 'size:*' } | ForEach-Object { $_.Name } | Sort-Object)
+    if ($sizeKeys.Count -gt 0) {
+        Write-Host ''
+        Write-Host '单体行数看板（size:*）：'
+        $hdr = '  {0,-18}' -f 'iteration'
+        foreach ($k in $sizeKeys) { $hdr += (' {0,-14}' -f $k.Replace('size:', '')) }
+        Write-Host $hdr
+        foreach ($h in $doc.history) {
+            $line = '  {0,-18}' -f $h.iteration
+            foreach ($k in $sizeKeys) {
+                $v = $h.counts.PSObject.Properties[$k]
+                # 该指标尚未引入时显示 "-"，不要显示 0（0 会被误读成"文件空了"）
+                $cell = '-'
+                if ($null -ne $v) { $cell = [string]$v.Value }
+                $line += (' {0,-14}' -f $cell)
+            }
+            Write-Host $line
+        }
     }
 }
 
@@ -304,6 +343,7 @@ function Invoke-Setup {
 
 switch ($Command) {
     'lint'     { Invoke-Lint | Out-Null; exit 0 }
+    'size'     { Invoke-Size | Out-Null; exit 0 }
     'arch'     { Invoke-Arch | Out-Null; exit 0 }
     'signals'  { Invoke-Signals | Out-Null; exit 0 }
     'test'     { Invoke-Test | Out-Null; exit 0 }

@@ -47,6 +47,11 @@ def main():
         b = int(base.get(key, 0))
         d = direction(key)
         delta = c - b
+        if key not in base:
+            # 新引入的指标：没有"上一版"可比 → 记为 new（既不是改善也不是退化），
+            # 由 snapshot 冻结进基线。删除式作弊仍会被抓（base 有、current 缺 → count 0）。
+            rows.append((key, b, c, delta, "new"))
+            continue
         if d == "info":
             status = "info"
         elif d == "down":
@@ -62,7 +67,7 @@ def main():
     print("%-34s %6s %6s %7s" % ("metric", "base", "now", "delta"))
     print("-" * 60)
     for key, b, c, delta, status in rows:
-        mark = {"same": "", "BETTER": "<-", "WORSE": "!!", "info": "i"}[status]
+        mark = {"same": "", "BETTER": "<-", "WORSE": "!!", "info": "i", "new": "?"}[status]
         print("%-34s %6d %6d %+7d  %s" % (key, b, c, delta, mark))
 
     if bootstrap:
