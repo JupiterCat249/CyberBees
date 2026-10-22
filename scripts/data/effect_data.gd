@@ -41,14 +41,6 @@ enum Stacking { NONE }
 @export var allow_building: bool = true
 
 
-## 单位类型是否可被赋予本效果（a500：单位类型不匹配则无法赋予效果）
-func allows_kind(k: CardData.CardKind) -> bool:
-	match k:
-		CardData.CardKind.QUEEN:    return allow_queen
-		CardData.CardKind.SOLDIER:  return allow_soldier
-		CardData.CardKind.BUILDING: return allow_building
-		_:                          return false
-
 
 func validate() -> Array[String]:
 	var errs: Array[String] = []

@@ -178,14 +178,10 @@ func _enter_phase(phase: int) -> void:
 			_end_phase()                       ## 自动推进（P-1）
 		state.Phase.DEPLOY:
 			_emit_selection()
-			_emit_action_availability()
 		state.Phase.ACTION:
 			_emit_selection()
-			_emit_action_availability()
-
 
 func _end_phase() -> void:
-	bus().emit_signal(Bus.SIG_PHASE_ENDED, state.active, state.phase)
 	match state.phase:
 		state.Phase.RECOVER:
 			_enter_phase(state.Phase.TERRAIN)
@@ -205,7 +201,6 @@ func _end_phase() -> void:
 func request_clear_selection() -> void:
 	_cancel_selection()
 	_emit_selection()
-	_emit_action_availability()
 
 
 func request_end_phase(side: int = -1) -> bool:
@@ -256,7 +251,6 @@ func _do_recover(side: int) -> void:
 
 func _end_turn() -> void:
 	var side := state.active
-	bus().emit_signal(Bus.SIG_TURN_ENDED, side, state.round_no)
 	_draw_to_full(side)                        ## 抽卡 4：回合结束后补至 4 张
 	if state.is_over():
 		return
@@ -305,14 +299,12 @@ func draw_card(side: int, n: int) -> int:
 				moved.append(dis.pop_front())
 			dk.append_array(moved)
 			dk.shuffle()
-			bus().emit_signal(Bus.SIG_DECK_RESHUFFLED, side, moved.size())
 			_log("%s 牌库抽完 → 墓地前 %d 张洗回" % [config.name_of(side), moved.size()])
 		var card: CardData = dk.pop_front()
 		if card == null:
 			continue
 		state.sides[side]["hand"].append(card)
 		got += 1
-		bus().emit_signal(Bus.SIG_CARD_DRAWN, side, card, state.sides[side]["hand"].size())
 	return got
 
 
@@ -358,7 +350,6 @@ func request_deploy(side: int, hand_index: int, cell: Vector2i) -> bool:
 	_cancel_selection()
 	_emit_hand(side)
 	_emit_selection()
-	_emit_action_availability()
 	return true
 
 
@@ -438,7 +429,6 @@ func request_move(side: int, unit: UnitInstance, cell: Vector2i) -> bool:
 	else:
 		_cancel_selection()
 	_emit_selection()
-	_emit_action_availability()
 	return true
 
 
@@ -485,7 +475,6 @@ func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -
 	_log("%s 攻击 %s" % [attacker.card_name(), defender.card_name()])
 	_cancel_selection()
 	_emit_selection()
-	_emit_action_availability()
 	if killed_queen >= 0:
 		_declare_queen_killed(killed_queen)
 	else:
@@ -653,7 +642,6 @@ func _resolve_support(side: int, unit: UnitInstance, skill: SkillData) -> bool:
 		"，生效 %d 个效果" % applied if applied > 0 else ""])
 	_cancel_selection()
 	_emit_selection()
-	_emit_action_availability()
 	_emit_button()
 	return true
 
@@ -744,7 +732,6 @@ func hand_range_leave() -> void:
 	if sel_kind == 1 or hand_mode != HandMode.IDLE:
 		_cancel_selection()
 		_emit_selection()
-		_emit_action_availability()
 
 
 ## 选中单位（迭代059 步3：自动带上该单位的支援技能 —— 不需要额外 UI 入口）
@@ -792,7 +779,6 @@ func select_support(side: int, unit: UnitInstance, skill: SkillData) -> void:
 func cancel_selection() -> void:
 	_cancel_selection()
 	_emit_selection()
-	_emit_action_availability()
 
 
 func _cancel_selection() -> void:
@@ -879,8 +865,6 @@ func _emit_hand(side: int) -> void:
 		## ⭐ 手牌亮/灰用**费用口径**（人明确：只考虑部署费用）——不掺阶段与回合
 		mask.append(hand_affordable(side, i))
 	bus().emit_signal(Bus.SIG_HAND_CHANGED, side, hand.duplicate(), mask)
-	var playable := hand.size() > 0
-	bus().emit_signal(Bus.SIG_ACTION_AVAIL, side, true, false, playable, true)
 
 
 ## 手牌 i 当前是否可打出（费用 + 阶段）
@@ -959,12 +943,6 @@ func remote_command_preview(hand_index: int, cell: Vector2i):
 	if state == null or hand_index < 0:
 		return null
 	return Preview.build(state, 1, hand_index, null, null, true, cell)
-
-
-func _emit_action_availability() -> void:
-	var can_deploy: bool = state.phase == state.Phase.DEPLOY
-	var can_act: bool = state.phase == state.Phase.ACTION
-	bus().emit_signal(Bus.SIG_ACTION_AVAIL, state.active, can_deploy, can_act, can_act, true)
 
 
 ## 主按钮文案与可用态
@@ -1049,13 +1027,11 @@ func request_discard(side: int, hand_index: int) -> bool:
 	bus().emit_signal(Bus.SIG_COST_CHANGED, side, state.cost(side), -dc)
 	hand.remove_at(hand_index)
 	state.sides[side]["discard"].append(card)
-	bus().emit_signal(Bus.SIG_CARD_DISCARDED, side, card, dc)
 	_log("%s 弃置 %s（费 -%d）" % [config.name_of(side), card.display_name, dc])
 	_cancel_selection()
 	_emit_hand(side)
 	_emit_selection()
 	_emit_button()
-	_emit_action_availability()
 	return true
 
 

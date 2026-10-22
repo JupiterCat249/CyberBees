@@ -49,11 +49,25 @@ static func tick_effects(inst: UnitInstance) -> Array:
 ##   原因：`CardPool.make_armor()` 每次 `Uuid.generate()` 生成新 id，
 ##   若仅比 id，两个**同名的「装甲」**会被视为不同效果而叠层 → 违反 a500「相同效果最多一个」。
 ##   现改为：先按 `display_name` 比（同为「装甲」即同一效果），名字空时退回比 id。
+## 单位类型是否可被赋予该效果（a500 效果 2：单位类型不匹配则无法赋予效果）
+## 迭代074 B3：自 EffectData 迁来 —— 数据层不得反向引用 CardData.CardKind，否则形成类型环
+static func effect_allows_kind(eff: EffectData, kind: int) -> bool:
+	if eff == null:
+		return false
+	match kind:
+		CardData.CardKind.QUEEN:    return eff.allow_queen
+		CardData.CardKind.SOLDIER:  return eff.allow_soldier
+		CardData.CardKind.BUILDING: return eff.allow_building
+		_:                          return false
+
+
 static func grant(inst: UnitInstance, eff: EffectData) -> bool:
 	if inst == null or eff == null or inst.data == null:
 		return false
-	# 类型匹配（a500 效果 2）
-	if not eff.allows_kind(inst.data.kind):
+	# 类型匹配（a500 效果 2）—— 谓词放在规则层：
+	#   ⚠️ 迭代074 B3：原先在 EffectData.allows_kind() 里，那会让**数据叶子反向依赖 CardData**
+	#   （effect→card→skill→effect 构成类型环）。谓词搬到消费方，数据叶子不再认识卡牌类型。
+	if not effect_allows_kind(eff, inst.data.kind):
 		return false
 	# 相同效果最多一个（a500 效果 1 / T14）：刷新时长，不再加一层
 	for e in inst.effects:

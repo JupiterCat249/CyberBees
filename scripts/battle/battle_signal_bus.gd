@@ -24,9 +24,7 @@ extends Node
 const SIG_BATTLE_STARTED := "battle_started"
 const SIG_ROUND_STARTED := "round_started"
 const SIG_TURN_STARTED := "turn_started"
-const SIG_TURN_ENDED := "turn_ended"  ## @dead 视图无消费者：收束态由下一次 STARTED 重建，见迭代070
 const SIG_PHASE_STARTED := "phase_started"
-const SIG_PHASE_ENDED := "phase_ended"  ## @dead 视图无消费者：收束态由下一次 STARTED 重建，见迭代070
 const SIG_BATTLE_ENDED := "battle_ended"
 const SIG_COST_CHANGED := "cost_changed"
 ## 单位回费（迭代064 B7 · 清单 UI-20）——**只由持有施法单位的回费发出**（见下方 signal 注释）
@@ -43,10 +41,7 @@ const SIG_REMOTE_ACTION := "remote_action"
 signal remote_action(side: int, text: String, cell: Vector2i)
 ## 对端选中变化（cell 非法 x<0 表示**对端已取消选中**）
 signal remote_selection_changed(side: int, cell: Vector2i)
-const SIG_CARD_DRAWN := "card_drawn"  ## @dead 手牌统一经 HAND_CHANGED 重绘，见迭代070
 const SIG_HAND_CHANGED := "hand_changed"
-const SIG_DECK_RESHUFFLED := "deck_reshuffled"  ## @dead 手牌统一经 HAND_CHANGED 重绘，见迭代070
-const SIG_CARD_DISCARDED := "card_discarded"  ## @dead 手牌统一经 HAND_CHANGED 重绘，见迭代070
 const SIG_UNIT_SPAWNED := "unit_spawned"
 const SIG_UNIT_MOVED := "unit_moved"
 const SIG_UNIT_DAMAGED := "unit_damaged"
@@ -58,7 +53,6 @@ const SIG_EFFECT_GRANTED := "effect_granted"
 const SIG_EFFECT_EXPIRED := "effect_expired"
 const SIG_UNIT_STATS := "unit_stats_changed"
 const SIG_SELECTION := "selection_changed"
-const SIG_ACTION_AVAIL := "action_availability"  ## @dead 按钮态经 MAIN_BUTTON 下发，见迭代070
 const SIG_MAIN_BUTTON := "main_button_state"
 const SIG_LOG := "log_added"
 const SIG_MAP_ASSETS := "map_assets_changed"
@@ -73,12 +67,8 @@ signal battle_started(first_side: int, round_no: int, ally_name: String, enemy_n
 signal round_started(round_no: int)
 ## 某方回合开始
 signal turn_started(side: int, round_no: int)
-## 某方回合结束（a500 抽卡 4：回合结束后补手牌到 4 张）
-signal turn_ended(side: int, round_no: int)
 ## 阶段开始（a500 回合流程 1~8）
 signal phase_started(side: int, phase: int, round_no: int)
-## 阶段结束
-signal phase_ended(side: int, phase: int)
 ## 对局结束（a500 胜利条件 1~4）
 signal battle_ended(result: int, reason: String)
 
@@ -95,14 +85,8 @@ signal cost_changed(side: int, cost: int, delta: int)
 ## 单位回费（迭代064 B7 · 人 2026-09-27 清单 **UI-20**「**一个回费的单位就一个回费文本特效**」）
 ## 只由**持有施法单位的回费**发出 → 视图据此把飘字落在该单位卡上（而非费用图标 / 手牌）
 signal refund_gained(side: int, unit: UnitInstance, amount: int)
-## 抽到一张卡（a500 抽卡 4）
-signal card_drawn(side: int, card: CardData, hand_size: int)
 ## 手牌整体变化（供视图重建手牌）
 signal hand_changed(side: int, hand: Array, playable_mask: Array)
-## 牌库抽完 → 墓地前 4 张洗回（a500 抽卡 5）
-signal deck_reshuffled(side: int, count: int)
-## 丢弃卡牌（a500 抽卡 6：消耗等同部署费用）
-signal card_discarded(side: int, card: CardData, cost_paid: int)
 
 # ============================================================
 #  单位
@@ -148,9 +132,6 @@ signal unit_stats_changed(inst: UnitInstance)
 ## 选中态变化 + **操作预览资源**（第三个参数就是供 UI 调用的 PreviewData）
 ##   ⚠️ 人指示（迭代056）：范围预览做成**资源类**，视图直接读它渲染，**不自己算规则**
 signal selection_changed(kind: int, id: String, preview: Resource, selectable_units: Array)
-## 行动机会可用性（a500 行动机会 1~6）
-signal action_availability(side: int, can_deploy: bool, can_move: bool,
-		can_act: bool, can_end_phase: bool)
 ## 主按钮文案与可用态（视图只显示，不判断）
 ##   · text  = 按钮文案（**迭代058：明确写出\"点了会进入哪个阶段\"**，提升可发现性）
 ##   · hint  = 当前阶段的操作提示（告诉玩家现在能做什么）—— 视图显示在提示区
