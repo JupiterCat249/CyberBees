@@ -129,7 +129,9 @@ def main():
         print("  (info) 类型引用环 %d 处：GDScript 由全局类表解析，不构成加载顺序风险" % len(type_cycles))
     for v in violations[:20]:
         print("  FORBIDDEN: %s -> %s (%s->%s line %s)" % (v["from"], v["to"], v["from_layer"], v["to_layer"], v["line"]))
-    return 0
+    # 单独跑时退出码要诚实（此前恒 0 —— 违规只在 qc.ps1 里靠计数发现）
+    bad = len(load_cycles) or len(violations) or (unresolved if rules.get("unresolved_must_be_zero") else 0)
+    return 1 if bad else 0
 
 if __name__ == "__main__":
     sys.exit(main())

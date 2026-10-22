@@ -48,6 +48,7 @@ const Fx := preload("res://scenes/ui/view_fx.gd")
 const Layout := preload("res://scenes/ui/view_layout.gd")
 const PreviewRenderer := preload("res://scenes/ui/view_preview.gd")
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
+const PhaseText := preload("res://scenes/ui/view_phase_text.gd")
 
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1
@@ -1019,23 +1020,9 @@ func _refresh_zone_info(side: int, round_no: int) -> void:
 	ti.text = "回合%d--%s" % [round_no, "绿方" if s == SIDE_ALLY else "红方"]
 
 
+## 阶段文案已切到 scenes/ui/view_phase_text.gd（迭代088）
 func _on_phase_started(side: int, phase: int, _round_no: int) -> void:
-	## 阶段文本 + 操作提示（迭代058：可发现性 —— 告诉玩家\"现在能做什么\"）
-	var names := {0: "回费", 1: "场地", 2: "部署", 3: "行动"}
-	var tips := {
-		0: "自动结算：己方单位回费 + 行动机会重置",
-		1: "自动结算：场地效果作用于格子上的单位",
-		2: "部署阶段：点手牌部署单位/使用指令，准备好后点右侧按钮进入行动阶段",
-		3: "行动阶段：点自己的单位可移动/攻击/支援（每单位每回合 1 次行动）",
-	}
-	## ⚠️ 迭代064 B7（人 2026-09-27 清单 **UI-6**「UI 面板右下角的**信息显示面板显示的应该是地图机制信息**，
-	##   而不是其他如回合阶段解释信息」）：此处**不再覆写** `SiteEffect` ——
-	##   该标签已由 `_on_map_assets()` 填入 `ArenaAssets.map_desc`（＝ `MapData.description`，
-	##   即地图机制；实测 6 张地图**都有**该文案，如「场地效果：第 3、9 回合玩家额外回复 4 点费用。」）。
-	##   阶段提示按 **2026-09-19 既定裁决**（「橙色提示文本省略 → 需要时作为控制台输出存在」）走 `_flash_msg()`。
-	_flash_msg("%s阶段（%s）｜%s" % [
-		str(names.get(phase, "?")), "绿" if side == SIDE_ALLY else "红",
-		str(tips.get(phase, ""))])
+	PhaseText.announce(side == SIDE_ALLY, int(phase), _flash_msg)
 	## ⭐ 阶段切换也刷新手牌亮/灰（幂等；保证任何时刻显示都跟当前费用一致）
 	refresh_hand_affordability()
 
@@ -1777,11 +1764,9 @@ func _on_attack_resolved(attacker: UnitInstance, defender: UnitInstance,
 
 
 ## 文本色表（§二之3 line 60-62）：结束部署/行动 = 白；回费阶段·等待行动 = 白 50%
+## 阶段文本颜色 —— 实现在 scenes/ui/view_phase_text.gd（迭代088）
 func _on_phase_text_color(_side: int, phase: int, _round_no: int) -> void:
-	var lb: Label = $HUD/ActionBar/Label
-	if lb == null:
-		return
-	lb.modulate = Color(1, 1, 1, 0.5) if (phase == PHASE_RECOVER or phase == PHASE_TERRAIN) else Color(1, 1, 1, 1)
+	PhaseText.tint(self, int(phase))
 
 
 ## 受击抖动 —— 实现与完整口径（受攻击即抖 / 同帧去重）见 scenes/ui/view_fx.gd

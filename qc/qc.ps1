@@ -125,7 +125,7 @@ function Invoke-Arch {
     & $cruiser $Repo -f json --exclude addons --exclude archive --exclude '\.godot' --exclude qc --exclude tests -o $graph 2>&1 | Out-Null
     & $Py (Join-Path $QcRoot 'lib\arch_check.py') --graph $graph --rules $RulesFile --out $archOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
 
-    $arch = Get-Content $archOut -Raw | ConvertFrom-Json
+    $arch = [System.IO.File]::ReadAllText($archOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
     Add-Count 'arch:cycles' $arch.cycles
     Add-Count 'arch:type_cycles' $arch.type_cycles
     Add-Count 'arch:layer_violations' $arch.layer_violations
@@ -138,7 +138,7 @@ function Invoke-Signals {
     $sigOut = Join-Path $Out 'signals.json'
     & $Py (Join-Path $QcRoot 'lib\signals_check.py') --repo $Repo --out $sigOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
 
-    $sig = Get-Content $sigOut -Raw | ConvertFrom-Json
+    $sig = [System.IO.File]::ReadAllText($sigOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
     $dead = @($sig.dead).Count
     $unsub = @($sig.unsubscribed).Count
     $unemit = @($sig.unemitted).Count
