@@ -43,13 +43,13 @@ enum Kind {
 ## ============ 工厂（make_ 前缀）============
 
 static func make_none():
-	var t = load("res://scripts/data/terrain_effect.gd").new()
+	var t = TerrainEffect.new()
 	t.kind = Kind.NONE
 	return t
 
 
 static func make_grant_field(eff: EffectData, name_: String = "地形"):
-	var t = load("res://scripts/data/terrain_effect.gd").new()
+	var t = TerrainEffect.new()
 	t.kind = Kind.GRANT_FIELD
 	t.grant_effect = eff
 	t.display_name = name_
@@ -58,7 +58,7 @@ static func make_grant_field(eff: EffectData, name_: String = "地形"):
 
 static func make_block_deploy(name_: String = "障碍地形",
 		desc: String = "无法部署单位（不阻挡移动与攻击）"):
-	var t = load("res://scripts/data/terrain_effect.gd").new()
+	var t = TerrainEffect.new()
 	t.kind = Kind.BLOCK_DEPLOY
 	t.blocks_deploy = true
 	t.blocks_move = false          ## a500：不阻挡移动
@@ -69,7 +69,7 @@ static func make_block_deploy(name_: String = "障碍地形",
 
 
 static func make_command_reduce(n: int, name_: String = "特殊地形"):
-	var t = load("res://scripts/data/terrain_effect.gd").new()
+	var t = TerrainEffect.new()
 	t.kind = Kind.COMMAND_REDUCE
 	t.command_reduce = n
 	t.display_name = name_

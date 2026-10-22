@@ -47,7 +47,6 @@ const SIG_CARD_DRAWN := "card_drawn"
 const SIG_HAND_CHANGED := "hand_changed"
 const SIG_DECK_RESHUFFLED := "deck_reshuffled"
 const SIG_CARD_DISCARDED := "card_discarded"
-const SIG_CARD_PLAYABLE := "card_playable_changed"
 const SIG_UNIT_SPAWNED := "unit_spawned"
 const SIG_UNIT_MOVED := "unit_moved"
 const SIG_UNIT_DAMAGED := "unit_damaged"
@@ -104,8 +103,6 @@ signal hand_changed(side: int, hand: Array, playable_mask: Array)
 signal deck_reshuffled(side: int, count: int)
 ## 丢弃卡牌（a500 抽卡 6：消耗等同部署费用）
 signal card_discarded(side: int, card: CardData, cost_paid: int)
-## 休卡：某张手牌变为"可出/不可出"（视图只更新那一张，避免整手重建）
-signal card_playable_changed(side: int, hand_index: int, playable: bool, reason: String)
 
 # ============================================================
 #  单位
