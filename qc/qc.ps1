@@ -383,6 +383,6 @@ switch ($Command) {
     'import'   { Invoke-Import; exit 0 }
     'setup'    { Invoke-Setup; exit 0 }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
-    'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if ($script:GateFailed) { exit 1 } else { exit $r } }
+    'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
 }
 exit 0

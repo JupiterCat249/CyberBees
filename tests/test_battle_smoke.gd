@@ -180,3 +180,18 @@ func test_diag_flag_trigger_consumes_flag() -> void:
 		await wait_frames(1)
 		waited += 1
 	assert_false(FileAccess.file_exists("user://diag_now.flag"), "NetDiagDump 应消费掉 flag（无需键盘焦点）")
+
+
+func test_badge_value_fills_badge() -> void:
+	## 迭代084：布局适配族切到 view_layout.gd 后，费用数字必须仍然**铺满徽章**
+	##   ⚠️ 这条正是那次真实故障的守护：切片后模块解析失败 → 布局代码根本没跑
+	##   （GDScript 只打印 "Nonexistent function" 就继续）→ 测试仍全绿，只有几何 dump 发现
+	var badge := _scene.get_node_or_null("Battle/PlayerBesaInfoRight/BadgeImage") as Control
+	assert_not_null(badge, "前置：信息栏徽章应存在")
+	if badge == null:
+		return
+	var v := badge.get_node_or_null("Value") as Control
+	assert_not_null(v, "前置：徽章下应有 Value 数字节点")
+	if v == null:
+		return
+	assert_eq(v.size, badge.size, "费用数字应铺满徽章（FULL_RECT），而不是被最小尺寸夹住")

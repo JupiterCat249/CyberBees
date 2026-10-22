@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--policy", required=True)
     ap.add_argument("--baseline", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--tighten", action="store_true", help="把基线收紧到当前实测值（只降不升；已降到上限以下或消失的条目自动移除）")
     a = ap.parse_args()
 
     pol = load_json(a.policy, {})
@@ -101,6 +102,27 @@ def main():
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
+
+    if a.tighten:
+        new_exempt = {}
+        changed = []
+        for rel, cur in used.items():
+            prev = exempt.get(rel) or {}
+            lines = min(int(prev.get("lines", cur["lines"])), cur["lines"])
+            nbytes = min(int(prev.get("bytes", cur["bytes"])), cur["bytes"])
+            new_exempt[rel] = {"lines": lines, "bytes": nbytes}
+            if lines != int(prev.get("lines", lines)) or nbytes != int(prev.get("bytes", nbytes)):
+                changed.append("%s %s->%s 行 / %s->%s 字节" % (rel, prev.get("lines"), lines, prev.get("bytes"), nbytes))
+        dropped = [r for r in exempt if r not in new_exempt]
+        doc = {"$comment": "祖父条款：历史上已超限的文件登记于此，只许变小（长一行/一字节即红）。snapshot 自动收紧登记值；降到上限以下或消失的条目自动移除。", "exempt": new_exempt}
+        with open(a.baseline, "w", encoding="utf-8") as f:
+            json.dump(doc, f, ensure_ascii=False, indent=2)
+        if changed:
+            print("  祖父条款收紧：" + "; ".join(changed))
+        if dropped:
+            print("  移出祖父条款（已达标/已消失）：" + ", ".join(dropped))
+        if not changed and not dropped:
+            print("  祖父条款无需调整")
 
     print("files=%d  over_cap=%d  max_lines=%d  max_bytes=%d  exempt=%d"
           % (len(files), over_cap, max_seen_lines, max_seen_bytes, len(exempt)))
