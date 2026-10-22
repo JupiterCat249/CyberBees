@@ -16,17 +16,17 @@
     "signals:undetectable": 5,
     "signals:unemitted": 0,
     "signals:unsubscribed": 0,
-    "size:arena_view": 2032,
+    "size:arena_view": 1940,
     "size:battle_engine": 999,
-    "size:max_bytes": 105373,
-    "size:max_lines": 2032,
+    "size:max_bytes": 101677,
+    "size:max_lines": 1940,
     "size:net_diag_dump": 721,
     "size:over_cap_files": 1,
     "size:violations": 0,
-    "test:asserts": 206,
+    "test:asserts": 217,
     "test:failures": 0,
     "test:harness_errors": 0,
-    "test:passing": 55
+    "test:passing": 59
   },
   "history": [
     {
@@ -861,8 +861,41 @@
       },
       "date": "2026-10-23",
       "iteration": "iter089"
+    },
+    {
+      "counts": {
+        "arch:cycles": 0,
+        "arch:layer_violations": 0,
+        "arch:type_cycles": 0,
+        "arch:unresolved_edges": 0,
+        "lint:max-file-lines": 1,
+        "lint:max-line-length": 13,
+        "lint:max-public-methods": 1,
+        "lint:max-returns": 6,
+        "lint:total": 21,
+        "qc:selftest_failures": 0,
+        "signals:dead": 0,
+        "signals:declared": 24,
+        "signals:problems": 0,
+        "signals:undetectable": 5,
+        "signals:unemitted": 0,
+        "signals:unsubscribed": 0,
+        "size:arena_view": 1940,
+        "size:battle_engine": 999,
+        "size:max_bytes": 101677,
+        "size:max_lines": 1940,
+        "size:net_diag_dump": 721,
+        "size:over_cap_files": 1,
+        "size:violations": 0,
+        "test:asserts": 217,
+        "test:failures": 0,
+        "test:harness_errors": 0,
+        "test:passing": 59
+      },
+      "date": "2026-10-23",
+      "iteration": "iter090"
     }
   ],
-  "iteration": "iter089",
+  "iteration": "iter090",
   "updated": "2026-10-23"
 }
