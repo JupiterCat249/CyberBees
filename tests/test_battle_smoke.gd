@@ -72,3 +72,39 @@ func test_diag_nodes_table_still_exposed() -> void:
 	assert_true(nodes.size() > 0, "DIAG_NODES 不应为空")
 	var first := String(nodes[0])
 	assert_not_null(_scene.get_node_or_null(first), "DIAG_NODES 首个路径应能在场景里解析：%s" % first)
+
+
+# ---------------------------------------------------------------- B5 第三刀后的回归守护（鼠标穿透族）
+
+func test_crtfx_overlays_are_click_through() -> void:
+	## 迭代076 把穿透族切到 scenes/ui/view_input_utils.gd —— 这段断言它真的跑过了
+	var found := 0
+	var stack: Array[Node] = [_scene]
+	while stack.size() > 0:
+		var n: Node = stack.pop_back()
+		for ch in n.get_children():
+			if ch is Control and String(ch.name).begins_with("CrtFx"):
+				found += 1
+				assert_eq((ch as Control).mouse_filter, Control.MOUSE_FILTER_IGNORE,
+					"扫描线层 %s 应鼠标穿透" % String(ch.name))
+			stack.push_back(ch)
+	assert_true(found > 0, "场景里应至少有一个 CrtFx 扫描线层")
+
+
+func test_card_root_stays_clickable_but_inner_art_is_transparent() -> void:
+	## 卡根必须仍能收点击（STOP）；卡内立绘必须穿透 —— 二者都被切片的实现保证
+	var units := _scene.get_node_or_null("Battle/MapView/Units")
+	assert_not_null(units, "前置：应有 Units 容器")
+	var card: Node = null
+	for ch in units.get_children():
+		if ch is Control:
+			card = ch
+			break
+	assert_not_null(card, "场上有单位卡时应能找到一张")
+	if card == null:
+		return
+	assert_eq((card as Control).mouse_filter, Control.MOUSE_FILTER_STOP, "卡根应可点（STOP）")
+	var inner := card.get_node_or_null("Artwork")
+	if inner is Control:
+		assert_eq((inner as Control).mouse_filter, Control.MOUSE_FILTER_IGNORE,
+			"卡内立绘应鼠标穿透")

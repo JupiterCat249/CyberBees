@@ -43,6 +43,7 @@ const STATUS_ICON_DIR := "res://assets/status_icons/"
 ## 效果图标缓存（显示名 → Texture2D；值为 null 表示"已查过但没有"，避免每次刷新重试）
 static var _icon_cache: Dictionary = {}
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
+const InputUtils := preload("res://scenes/ui/view_input_utils.gd")
 
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1
@@ -381,61 +382,22 @@ func _connect_static_ui() -> void:
 ## 依据：D8「扫描线只作背景纹理，**不得覆盖 UI 节点**；战斗地图上不得出现扫描线」。
 ## 实证：`gui_get_hovered_control()` 在蜂王格中心返回的正是 `.../Artwork/ArtPlane/CrtFx`。
 ##
-## 修法：递归找出所有名为 `CrtFx` 的 Control（含运行时新建的单位卡）→ 设 `MOUSE_FILTER_IGNORE`。
-##   **只改鼠标穿透，不动视觉**（扫描线照常显示）。
+## 鼠标穿透族已切到 scenes/ui/view_input_utils.gd（迭代076 · B5 第三刀）
+##   保留同名瘦包装：既有调用点与 verification/rule_check.gd 的检查口径不变。
 func _make_overlays_click_through() -> void:
-	_set_ignore_recursive(self)
-	_make_card_children_click_through()
+	InputUtils.make_overlays_click_through(self, _units_root, _hand_l, _hand_r)
 
 
-## ⭐ 让**卡片内部的所有子节点**鼠标透明（迭代059 实测 bug③ 根因）
-##
-## 现象：`gui_get_hovered_control()` 在单位格上返回的是
-##   `Units/Unit_xxx/Artwork/ArtPlane/TextureRect` —— 单位卡**内部的立绘节点**。
-##   这些内部节点默认 `mouse_filter = STOP`，会**吃掉点击**，事件到不了卡根节点的
-##   `_gui_input` → 卡的 `unit_pressed` / `hand_pressed` 信号**永远不触发** →
-##   选中指令卡后点单位目标走不到指令分支（控制台只说"要选中己方单位"）。
-##
-## 修法：对卡片实例（单位卡 + 手牌卡）**递归把子 Control 设为 IGNORE**，
-##   只留卡根节点接收点击（卡根节点的 mouse_filter 在场景里已是 STOP）。
-func _make_card_children_click_through() -> void:
-	for node in _units_root.get_children():
-		_ignore_descendants(node)
-	_ignore_descendants(_hand_l)
-	_ignore_descendants(_hand_r)
-
-
-## 扫描**手牌容器**：把每张卡的**内部**节点设为穿透，但保留**卡根节点**可点。
-##   ⚠️ 卡根节点的 `mouse_filter = STOP` 由 `card_hand.gd` 的 `_ready()` 设置；
-##      若把根节点也设成 IGNORE，整张卡都点不到（迭代059 实测）。
-##   故此处**跳过容器的直接子节点（= 卡根）**，只处理它们下面的层级。
 func _ignore_descendants(container: Node) -> void:
-	if container == null:
-		return
-	for card in container.get_children():
-		_ignore_children(card)
+	InputUtils.ignore_descendants(container)
 
 
-## 递归把 n 的**所有子 Control** 设为鼠标透明
-##   （用于**单位卡实例**：卡根由 `card_unit.gd` 的 `_ready()` 设 STOP，此处只清内部）
 func _ignore_children(n: Node) -> void:
-	if n == null:
-		return
-	for ch in n.get_children():
-		if ch is Control:
-			(ch as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_ignore_children(ch)
+	InputUtils.ignore_children(n)
 
 
 func _set_ignore_recursive(n: Node) -> void:
-	for ch in n.get_children():
-		if ch is Control:
-			var c := ch as Control
-			## 扫描线特效层一律鼠标穿透（按节点名识别，含卡内叠加层）
-			if String(c.name) == "CrtFx" or String(c.name).begins_with("CrtFx"):
-				c.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_set_ignore_recursive(ch)
-
+	InputUtils.ignore_crtfx_recursive(n)
 
 ## 适配长文案与地形提示
 ## ⚠️ **人 2026-09-19 明确要求：不要改字号。**
