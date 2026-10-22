@@ -10,6 +10,7 @@ extends GutTest
 ##    第二条测试就会拿到 previously freed 引用（本文件首版实测踩到）。
 
 const BattleScene := preload("res://scenes/ui/battle_scene.tscn")
+const ViewDiag := preload("res://scenes/ui/view_diagnostics.gd")
 
 var _scene: Node = null
 
@@ -129,3 +130,53 @@ func test_float_text_spawns_and_is_recycled() -> void:
 		await wait_frames(1)
 		waited += 1
 	assert_eq(fx_root.get_child_count(), before_n, "飘字播完应被回收")
+
+
+# ---------------------------------------------------------------- 诊断入口（F8 管线）
+
+func test_f8_key_reaches_diag_handler() -> void:
+	## 用 Viewport.push_input 走**完整输入管线**（_input → GUI → shortcut → unhandled_key），
+	## 用来回答「F8 到底有没有到达视图」——不依赖真机焦点。
+	var hits_before: int = int(_scene.get("_diag_hits"))
+	var ev := InputEventKey.new()
+	ev.keycode = KEY_F8
+	ev.pressed = true
+	_scene.get_viewport().push_input(ev)
+	await wait_frames(1)
+	assert_eq(int(_scene.get("_diag_hits")), hits_before + 1, "F8 应命中诊断入口")
+
+
+func test_diag_key_accepts_physical_keycode() -> void:
+	## 笔记本 F8 可能只带 physical_keycode —— 两种都要认
+	var a := InputEventKey.new()
+	a.keycode = KEY_F8
+	a.pressed = true
+	assert_true(ViewDiag.is_diag_key(a), "keycode 路径应识别")
+
+	var b := InputEventKey.new()
+	b.physical_keycode = KEY_F8
+	b.pressed = true
+	assert_true(ViewDiag.is_diag_key(b), "physical_keycode 路径也应识别")
+
+	var c := InputEventKey.new()
+	c.keycode = KEY_F9
+	c.pressed = true
+	assert_false(ViewDiag.is_diag_key(c), "其它键不应识别")
+
+
+func test_diag_flag_trigger_consumes_flag() -> void:
+	## 文件触发器的端到端验证：建 flag → NetDiagDump 每帧轮询 → flag 被消费
+	##   （这条不依赖键盘与焦点，正是它存在的理由）
+	var f := FileAccess.open("user://diag_now.flag", FileAccess.WRITE)
+	if f == null:
+		pending("无法写入 user:// —— 跳过")
+		return
+	f.store_line("1")
+	f.close()
+	assert_true(FileAccess.file_exists("user://diag_now.flag"), "前置：flag 应已创建")
+
+	var waited := 0
+	while waited < 30 and FileAccess.file_exists("user://diag_now.flag"):
+		await wait_frames(1)
+		waited += 1
+	assert_false(FileAccess.file_exists("user://diag_now.flag"), "NetDiagDump 应消费掉 flag（无需键盘焦点）")

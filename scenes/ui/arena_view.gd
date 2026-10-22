@@ -76,6 +76,7 @@ var anim: Node = null
 var _fx_root: Control = null
 ## UI 锁定（§一之4 line 29）：`block_ui` 动画运行期间屏蔽交互
 var _ui_locked: bool = false
+var _diag_hits: int = 0          ## 诊断入口被命中次数（回归测试断言用；不参与玩法）
 ## 待退场队列（instance_id → 幽灵节点）：等该单位身上动画播完再淡出（人 2026-09-21：致死也要看见抖动）
 var _pending_exit: Dictionary = {}
 ## 抖动同帧去重（instance_id → 帧号）：event 信号 + unit_damaged 双来源只算一次
@@ -706,8 +707,8 @@ const DIAG_NODES := Diag.NODES
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	## F8 = 运行环境自测（不影响其他输入：只接管这一个键）
-	if event is InputEventKey and event.pressed and not event.echo \
-			and (event as InputEventKey).keycode == KEY_F8:
+	if Diag.is_diag_key(event):
+		_diag_hits += 1
 		print("[DIAG] F8 已收到 → 落盘运行期几何")   # 回执：区分「键没送到」与「dump 失败」
 		dump_runtime_geometry(true)
 		get_viewport().set_input_as_handled()
@@ -2042,9 +2043,7 @@ func _play(pname: String, inst: UnitInstance, value: int = 0) -> void:
 
 ## 动画自然播完的收尾（基础动画 §一：**播完立即退场**，不额外等帧）
 ##   仅 "单位退场" 需要释放节点；其余动画的收尾已由引擎自身回位
-## 动画自然播完的收尾（基础动画 §一：**播完立即退场**，不额外等帧）
-##   · `单位退场` → 释放幽灵节点
-##   · `浮字上浮` → 释放飘字（否则淡到 α=0 后永远留在浮字层＝泄漏）
+## 收尾（幽灵节点/飘字回收）—— 口径见 scenes/ui/view_fx.gd
 func _on_anim_finished(pname: StringName, target: Node) -> void:
 	Fx.on_anim_finished(_pending_exit, anim, pname, target, _start_exit)
 

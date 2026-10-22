@@ -19,6 +19,15 @@ const NODES := [
 ]
 
 
+## 诊断热键判定：F8（**同时认 keycode 与 physical_keycode**）
+##   ⚠️ 2026-10-22 实测：笔记本上 F8 常需 Fn，或事件只带 physical_keycode；只认 keycode 会"按了没反应"
+static func is_diag_key(event: InputEvent) -> bool:
+	if not (event is InputEventKey) or not event.pressed or event.echo:
+		return false
+	var k := event as InputEventKey
+	return k.keycode == KEY_F8 or k.physical_keycode == KEY_F8
+
+
 ## 打印并（可选）截图：实测运行期几何，供异机比对
 static func dump(root: Node, save_shot: bool = true) -> Dictionary:
 	var vp := root.get_viewport()

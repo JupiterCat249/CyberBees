@@ -144,6 +144,7 @@ func _process(_dt: float) -> void:
 	if not _enabled:
 		return
 	_frame += 1
+	if preload("res://scripts/diag/diag_trigger.gd").poll(get_tree()): _log("检测到 diag_now.flag ⇒ 手动落盘")
 	## ① 窗口尺寸变化（不依赖信号，直接观察）
 	var wsz := DisplayServer.window_get_size()
 	if wsz != _last_window_size:
@@ -159,8 +160,7 @@ func _process(_dt: float) -> void:
 		_dumped_for_match = true
 		_log("检测到进入战斗场景 ⇒ 自动落盘")
 		dump("match_enter")
-		## ⚠️ 入局瞬间只落了"基线"：此刻 UI 尚未稳定、漂移还没发生 ⇒
-		##   **再排一次"稳定快照"**（约 2 秒后），这样 §D 里就有真实的变化记录可看。
+		## ⚠️ 入局瞬间只落基线（UI 未稳定）⇒ 2 秒后再排一次稳定快照，§D 才有真实变化可看
 		_late_dump_armed = true
 		_late_dump_frame = _frame + 120
 	## ⑤ 稳定后快照
@@ -172,7 +172,7 @@ func _process(_dt: float) -> void:
 	if _period_frames > 0 and _frame % _period_frames == 0:
 		_log("定期快照（每 %d 帧）⇒ 自动落盘" % _period_frames)
 		dump("periodic")
-	## ⑦ 漂移即落盘：关键量一旦被运行时改动，立刻存证（联机不一致最需要这个）
+	## ⑦ 漂移即落盘（联机不一致最需要这个）
 	if _drift_pending and _frame >= _drift_dump_frame:
 		_drift_pending = false
 		_log("检测到运行时变化 ⇒ 立即落盘存证")
