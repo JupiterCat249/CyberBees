@@ -75,7 +75,8 @@ func start(p_url: String, p_build: String = "") -> Error:
 func poll() -> void:
 	_ws.poll()
 	var rs: int = _ws.get_ready_state()
-	if rs == WebSocketPeer.STATE_OPEN or rs == WebSocketPeer.STATE_CLOSING or rs == WebSocketPeer.STATE_CLOSED:
+	if rs == WebSocketPeer.STATE_OPEN or rs == WebSocketPeer.STATE_CLOSING \
+			or rs == WebSocketPeer.STATE_CLOSED:
 		while _ws.get_available_packet_count() > 0:
 			var pkt := _ws.get_packet()
 			recv_bytes += pkt.size()
@@ -186,7 +187,8 @@ func _handle(m: Dictionary) -> void:
 			match_started.emit(seed_value, first_side)
 		"op":
 			recv_ops += 1
-			op_received.emit(int(m.get("seat", -1)), int(m.get("seq", 0)), int(m.get("frame", 0)), m.get("payload", null), int(m.get("sseq", 0)))
+			op_received.emit(int(m.get("seat", -1)), int(m.get("seq", 0)), int(m.get("frame", 0)), \
+				m.get("payload", null), int(m.get("sseq", 0)))
 		"op_ack":
 			op_acked.emit(int(m.get("seq", 0)), int(m.get("sseq", 0)))
 		"queued":

@@ -1,7 +1,6 @@
 class_name BattleEngine
 extends RefCounted
 ## BattleEngine —— 战斗**规则引擎**（a500 阶段状态机 + 请求 API + 信号广播）
-##
 ## ⚠️ **零 UI 依赖（迭代056 解耦目标 G1）**：
 ##   · 本文件与 `scripts/battle/` 下全部文件**不 preload 任何 `scenes/`**、**不 get_node**、
 ##     **不引用 Control / Node 类型**（本类自身 extends RefCounted，不挂场景树）
@@ -813,7 +812,8 @@ func _check_round_limit() -> void:
 	if state.round_no <= state.MAX_ROUNDS:
 		return
 	var a: int = state.queen(state.SIDE_ALLY).current_hp if state.queen(state.SIDE_ALLY) != null else 0
-	var e: int = state.queen(state.SIDE_ENEMY).current_hp if state.queen(state.SIDE_ENEMY) != null else 0
+	var qe := state.queen(state.SIDE_ENEMY)
+	var e: int = qe.current_hp if qe != null else 0
 	if a == e:
 		state.result = state.Result.DRAW
 	elif a > e:

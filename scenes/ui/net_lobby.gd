@@ -52,7 +52,8 @@ func _ready() -> void:
 		_set_state("对局已就绪（%s）→ 点「进入对局」" % NetSession.describe())
 		if NetSession.auto:
 			_on_enter_pressed())
-	_client.server_error.connect(func(code: String, msg: String) -> void: _set_state("错误：%s %s" % [code, msg]))
+	_client.server_error.connect(
+		func(code: String, msg: String) -> void: _set_state("错误：%s %s" % [code, msg]))
 	_client.closed.connect(func(c: int, r: String) -> void: _set_state("连接已关闭（%d %s）" % [c, r]))
 	if _client.is_open():
 		_set_state("已连接中继（复用连接）· %s" % _url)

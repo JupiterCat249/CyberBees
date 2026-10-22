@@ -293,4 +293,5 @@ func apply_remote(seat: int, payload) -> bool:
 
 
 func stats_text() -> String:
-	return "上行 %d · 下行应用 %d · 拒绝 %d · 无法映射 %d" % [sent_ops, applied_remote, rejected_remote, unsupported]
+	return "上行 %d · 下行应用 %d · 拒绝 %d · 无法映射 %d" % [
+		sent_ops, applied_remote, rejected_remote, unsupported]

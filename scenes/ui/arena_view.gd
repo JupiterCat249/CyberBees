@@ -1,7 +1,6 @@
 extends Control
 ## ArenaView —— 战斗**视图适配器**（迭代057 C2/C3）
-##
-## 职责（单一）：订阅 `BattleSignalBus` 的信号 → 驱动 UI 节点；
+## 职责（单一）：订阅 `BattleSignalBus` 信号 → 驱动 UI 节点；
 ##   把玩家点击 → 翻译成 `BattleEngine` 的**请求**。
 ##
 ## ⚠️ **本类是视图层**：只碰节点与信号，**不写规则**。
@@ -1155,7 +1154,8 @@ func _on_main_button(text: String, enabled: bool, _hint: String = "") -> void:
 	##   ⇒ 换文案要换 Label：非我方回合显示「等待」，轮到我方时用引擎给的常态文案（text 参数）✓
 	var lbl := $HUD/ActionBar/Label as Label
 	if lbl != null:
-		var my_turn: bool = engine != null and engine.state != null and int(engine.state.active) == my_seat
+		var my_turn: bool = engine != null and engine.state != null \
+			and int(engine.state.active) == my_seat
 		lbl.text = text if my_turn else "等待"
 
 
