@@ -108,3 +108,24 @@ func test_card_root_stays_clickable_but_inner_art_is_transparent() -> void:
 	if inner is Control:
 		assert_eq((inner as Control).mouse_filter, Control.MOUSE_FILTER_IGNORE,
 			"卡内立绘应鼠标穿透")
+
+
+# ---------------------------------------------------------------- B5 第五刀后的回归守护（FX 播放族）
+
+func test_float_text_spawns_and_is_recycled() -> void:
+	## 迭代078 把飘字/抖动/播动画/收尾切到 scenes/ui/view_fx.gd —— 这段证明它真的还会跑
+	var fx_root = _scene.get("_fx_root")
+	assert_not_null(fx_root, "前置：飘字层 EffectsTop 应已建立")
+	var before_n: int = fx_root.get_child_count()
+	var anchor := _scene.get_node_or_null("Battle/MapView") as Control
+	assert_not_null(anchor, "前置：取一个锚点控件")
+
+	_scene._float_at(anchor, "测试+3", Color.WHITE, 3)
+	assert_eq(fx_root.get_child_count(), before_n + 1, "应生成一个飘字节点")
+
+	## 动画播完 → on_anim_finished 里 queue_free（否则淡到 α=0 永久滞留＝泄漏）
+	var waited := 0
+	while waited < 240 and fx_root.get_child_count() > before_n:
+		await wait_frames(1)
+		waited += 1
+	assert_eq(fx_root.get_child_count(), before_n, "飘字播完应被回收")

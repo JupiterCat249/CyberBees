@@ -44,6 +44,7 @@ const STATUS_ICON_DIR := "res://assets/status_icons/"
 static var _icon_cache: Dictionary = {}
 const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
 const InputUtils := preload("res://scenes/ui/view_input_utils.gd")
+const Fx := preload("res://scenes/ui/view_fx.gd")
 
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1
@@ -1994,20 +1995,8 @@ func _on_ui_lock(locked: bool) -> void:
 ## 飘字（§二之1 line 42-43「回费文本 / 数值buff变化 / 战斗结算文本」
 ##       + §二之2 line 47-51：三色 + **数值越大字体越大**）
 func _float_at(anchor: Control, text: String, color: Color, value: int) -> void:
-	if _fx_root == null or anchor == null or not is_instance_valid(anchor):
-		return
-	var ft: Control = FLOAT_TEXT_SCENE.instantiate()
-	## ⚠️ 颜色/字号放**子节点**：`浮字上浮` 的淡出是 TINT（绝对 modulate），
-	##   若把颜色放在动画目标本身会被白色冲掉（实测踩坑）→ 外层只吃 alpha，内层保留颜色
-	var lb: Label = ft.get_node("Text")
-	lb.text = text
-	lb.modulate = color
-	var t: float = clampf(float(value) / float(FLOAT_FS_REF), 0.0, 1.0)
-	lb.add_theme_font_size_override("font_size", int(round(lerpf(float(FLOAT_FS_BASE), float(FLOAT_FS_MAX), t))))
-	_fx_root.add_child(ft)
-	## 坐标空间：飘字挂 EffectsTop（与视图根同原点的整屏 Control）→ 用 global 差值换算
-	ft.position = anchor.global_position + Vector2(anchor.size.x * 0.5 - 100.0, -20.0) - _fx_root.global_position
-	anim.action("浮字上浮", ft)
+	var fs := {"base": FLOAT_FS_BASE, "max": FLOAT_FS_MAX, "ref": FLOAT_FS_REF}
+	Fx.float_at(_fx_root, FLOAT_TEXT_SCENE, anim, anchor, text, color, value, fs)
 
 
 ## 地图抖动（§二之2 line 54「释放攻击 AOE 时整个地图/镜头抖动」；§六「指令技能命中 ≥2 处」）
@@ -2046,22 +2035,12 @@ func _on_phase_text_color(_side: int, phase: int, _round_no: int) -> void:
 ##     · **致死伤害** → 仍要抖（退场会排队等它播完，见 `_pending_exit`）
 ##   同一帧多个来源（event 信号 + `unit_damaged`）只算一次 → 按帧号去重
 func _shake(inst: UnitInstance, value: int) -> void:
-	if anim == null or inst == null:
-		return
-	var fid: int = Engine.get_process_frames()
-	if int(_shake_frame.get(inst.instance_id, -1)) == fid:
-		return
-	_shake_frame[inst.instance_id] = fid
-	_play("受击抖动", inst, maxi(1, value))
+	Fx.shake(_shake_frame, anim, _unit_nodes, inst, value, _play)
 
 
 ## 播动画（迭代060 v4）—— 目标节点由 `instance_id` 解析；不在册则跳过（不报错、不吞）
 func _play(pname: String, inst: UnitInstance, value: int = 0) -> void:
-	if anim == null or inst == null:
-		return
-	var n: Control = _unit_nodes.get(inst.instance_id, null)
-	if n != null and is_instance_valid(n):
-		anim.action(pname, n, value)
+	Fx.play(anim, _unit_nodes, pname, inst, value)
 
 
 ## 动画自然播完的收尾（基础动画 §一：**播完立即退场**，不额外等帧）
@@ -2070,17 +2049,7 @@ func _play(pname: String, inst: UnitInstance, value: int = 0) -> void:
 ##   · `单位退场` → 释放幽灵节点
 ##   · `浮字上浮` → 释放飘字（否则淡到 α=0 后永远留在浮字层＝泄漏）
 func _on_anim_finished(pname: StringName, target: Node) -> void:
-	if target == null or not is_instance_valid(target):
-		return
-	var n := String(pname)
-	if n == "单位退场" or n == "浮字上浮":
-		target.queue_free()
-		return
-	## 待退场排队：该单位身上动画**全部播完**后才开始淡出（人 2026-09-21）
-	var tid: int = target.get_instance_id()
-	if _pending_exit.has(tid) and anim != null and anim.running_count_on(target) == 0:
-		_pending_exit.erase(tid)
-		_start_exit(target)
+	Fx.on_anim_finished(_pending_exit, anim, pname, target, _start_exit)
 
 
 func _clear_preview_units_once() -> void:
