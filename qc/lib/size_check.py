@@ -115,7 +115,7 @@ def main():
                 changed.append("%s %s->%s 行 / %s->%s 字节" % (rel, prev.get("lines"), lines, prev.get("bytes"), nbytes))
         dropped = [r for r in exempt if r not in new_exempt]
         doc = {"$comment": "祖父条款：历史上已超限的文件登记于此，只许变小（长一行/一字节即红）。snapshot 自动收紧登记值；降到上限以下或消失的条目自动移除。", "exempt": new_exempt}
-        with open(a.baseline, "w", encoding="utf-8") as f:
+        with open(a.baseline, "w", encoding="utf-8-sig") as f:   # 带 BOM：PS 5.1 的 Get-Content 才显示正常
             json.dump(doc, f, ensure_ascii=False, indent=2)
         if changed:
             print("  祖父条款收紧：" + "; ".join(changed))

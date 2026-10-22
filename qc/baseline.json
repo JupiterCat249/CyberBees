@@ -635,6 +635,38 @@
       },
       "date": "2026-10-23",
       "iteration": "iter084"
+    },
+    {
+      "counts": {
+        "arch:cycles": 0,
+        "arch:layer_violations": 0,
+        "arch:type_cycles": 0,
+        "arch:unresolved_edges": 0,
+        "lint:max-file-lines": 1,
+        "lint:max-line-length": 16,
+        "lint:max-public-methods": 1,
+        "lint:max-returns": 6,
+        "lint:total": 24,
+        "signals:dead": 0,
+        "signals:declared": 24,
+        "signals:problems": 0,
+        "signals:undetectable": 2,
+        "signals:unemitted": 0,
+        "signals:unsubscribed": 0,
+        "size:arena_view": 2222,
+        "size:battle_engine": 999,
+        "size:max_bytes": 116840,
+        "size:max_lines": 2222,
+        "size:net_diag_dump": 721,
+        "size:over_cap_files": 1,
+        "size:violations": 0,
+        "test:asserts": 195,
+        "test:failures": 0,
+        "test:harness_errors": 0,
+        "test:passing": 52
+      },
+      "date": "2026-10-23",
+      "iteration": "iter084"
     }
   ],
   "iteration": "iter084",
