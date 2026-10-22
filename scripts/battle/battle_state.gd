@@ -32,7 +32,8 @@ var result_reason: String = ""
 var actions_this_turn: int = 0
 
 # ---------------- 双方 ----------------
-## 每侧：{ cost:int, hand:Array[CardData], deck:Array[CardData], discard:Array[CardData], queen:UnitInstance }
+## 每侧：{ cost:int, hand:Array[CardData], deck:Array[CardData],
+##         discard:Array[CardData], queen:UnitInstance }
 var sides := {}
 
 # ---------------- 棋盘 ----------------

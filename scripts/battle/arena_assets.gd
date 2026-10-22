@@ -49,11 +49,11 @@ func with_background(tex: Texture2D):
 
 
 ## 仅换地图板
-func with_map(tex: Texture2D, name_: String = ""):
+func with_map(tex: Texture2D, p_name: String = ""):
 	map_texture = tex
 	has_map = tex != null
-	if name_ != "":
-		map_name = name_
+	if p_name != "":
+		map_name = p_name
 	return self
 
 

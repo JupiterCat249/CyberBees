@@ -659,16 +659,16 @@ func _section_turnstate(out: PackedStringArray) -> void:
 		## ⭐ 迭代067 rev8：补打印「双方费用」与「选中手牌索引」——
 		##   此前取证档引用了 cost0/cost1/sel_hand 三个值，但 §F 并不输出它们
 		##   ⇒ 第三方无法从产物核对「点击前后未变」。此处补齐，使这类断言可落盘复核。
-		var _sd = st.get("sides")
-		var _c0 := "?"
-		var _c1 := "?"
-		if _sd is Dictionary:
-			if _sd.has(0):
-				_c0 = str((_sd[0] as Dictionary).get("cost", "?"))
-			if _sd.has(1):
-				_c1 = str((_sd[1] as Dictionary).get("cost", "?"))
+		var sides_raw = st.get("sides")
+		var cost0 := "?"
+		var cost1 := "?"
+		if sides_raw is Dictionary:
+			if sides_raw.has(0):
+				cost0 = str((sides_raw[0] as Dictionary).get("cost", "?"))
+			if sides_raw.has(1):
+				cost1 = str((sides_raw[1] as Dictionary).get("cost", "?"))
 		out.append("  cost（双方费用）             = %s / %s · sel_hand_index = %s" % [
-			_c0, _c1, str(eng.get("sel_hand_index"))])
+			cost0, cost1, str(eng.get("sel_hand_index"))])
 	else:
 		out.append("  ⚠ 取不到 engine.state（可能非战斗场景）")
 	## 四个信息栏节点的实际压暗值（**这是"规律"的最终体现**）

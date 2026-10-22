@@ -82,7 +82,7 @@ func _find_skill(unit, _skill_id: String):
 
 
 ## 统一入口：本地执行（先确定性重播）→ 成功则上行
-func _do(sender: int, method: String, args: Array, payload: Dictionary) -> bool:
+func _do(_sender: int, method: String, args: Array, payload: Dictionary) -> bool:
 	_reseed_now()
 	var ok: bool = engine.callv(method, args)
 	if ok:

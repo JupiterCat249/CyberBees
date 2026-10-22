@@ -2225,7 +2225,7 @@ func _clear_preview_units_once() -> void:
 
 
 ## UnitInstance → 单位卡绑定字典（含**立绘**，否则卡面永远是场景默认图）
-func _unit_view(inst: UnitInstance, cell: Vector2i) -> Dictionary:
+func _unit_view(inst: UnitInstance, _cell: Vector2i) -> Dictionary:
 	var kind := "unit"
 	var art = null
 	var nm := ""

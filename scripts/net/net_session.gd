@@ -13,7 +13,8 @@ static var first_side: int = 0
 static var active: bool = false
 
 
-static func set_match(p_url: String, p_code: String, p_seat: int, p_seed: int, p_first: int) -> void:
+static func set_match(p_url: String, p_code: String, p_seat: int, p_seed: int,
+		p_first: int) -> void:
 	url = p_url
 	room_code = p_code
 	seat = p_seat

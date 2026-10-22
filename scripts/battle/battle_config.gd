@@ -32,12 +32,12 @@ var hand_max: int = 4
 
 ## 用两个卡组快速构造（同一份卡组会各自复制，避免共享实例）
 static func make(deck_ally: DeckData, deck_enemy: DeckData,
-		ally_name_: String = "绿方", enemy_name_: String = "红方") -> BattleConfig:
+		p_ally_name: String = "绿方", p_enemy_name: String = "红方") -> BattleConfig:
 	var c := BattleConfig.new()
 	c.deck_ally = deck_ally
 	c.deck_enemy = deck_enemy
-	c.ally_name = ally_name_
-	c.enemy_name = enemy_name_
+	c.ally_name = p_ally_name
+	c.enemy_name = p_enemy_name
 	return c
 
 

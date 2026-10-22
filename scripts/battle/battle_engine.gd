@@ -476,7 +476,6 @@ func request_attack(side: int, attacker: UnitInstance, defender: UnitInstance) -
 	##   故借既有 `SIG_UNIT_STATS`（"单位状态变化"；视图已在 B1 订阅并重绑该卡）广播一次。
 	bus().emit_signal(Bus.SIG_UNIT_STATS, attacker)
 	var killed_queen: int = -1
-	var _is_q: bool = defender.data != null and defender.data.kind == CardData.CardKind.QUEEN
 	## ⭐ 迭代059 修缺陷：**必须在 _cleanup_dead 之前判定胜负** ——
 	##   死掉的蜂王会被移出棋盘，之后 state.queen() 查不到 → 胜负永远判不出来
 	if defender.data != null and defender.data.kind == CardData.CardKind.QUEEN \

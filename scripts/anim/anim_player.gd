@@ -219,7 +219,8 @@ func _all_done(units: Array[AnimUnit], ci: Array[int]) -> bool:
 	return true
 
 
-func _apply(clip: AnimClip, target: Node, st: Dictionary, done_frames: int, want: int, ui: int) -> void:
+func _apply(clip: AnimClip, target: Node, st: Dictionary, done_frames: int, want: int,
+		ui: int) -> void:
 	## 规则2（§一之4 line 27）：**动作开始时**可跳转/触发/终止其他单元或动画（条件门控）
 	if done_frames == 0:
 		_apply_rules(clip, target, st, ui)

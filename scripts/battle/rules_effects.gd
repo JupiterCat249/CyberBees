@@ -10,7 +10,7 @@ const StateLib := preload("res://scripts/battle/battle_state.gd")
 const TerrainEff := preload("res://scripts/data/terrain_effect.gd")
 
 ## a500 效果 4：若效果的消失与赋予在相同阶段 —— **先计算消失，再计算赋予**
-static func tick_and_grant(state, inst: UnitInstance,
+static func tick_and_grant(_state, inst: UnitInstance,
 		to_grant: Array) -> Dictionary:
 	var expired: Array = tick_effects(inst)
 	var granted: Array = []

@@ -4,7 +4,8 @@ extends RefCounted
 ## ---------------------------------------------------------------------------
 ## 不含规则、不碰视图；调用方每帧调一次 `poll()`（与项目的帧数驱动口径一致）
 ## 引擎依据（已核）：`WebSocketPeer`（Godot 4.7.2 ClassDB）
-##   connect_to_url(url, TLSOptions) / poll() / get_ready_state() / send_text() / get_available_packet_count()
+##   connect_to_url(url, TLSOptions) / poll() / get_ready_state() /
+##   send_text() / get_available_packet_count()
 ##   文档：class_websocketpeer · tutorials/networking/websocket
 ## 协议文档：系统维护/网络联机/扩展-001-中继协议v1.md
 ## ---------------------------------------------------------------------------

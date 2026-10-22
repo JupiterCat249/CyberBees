@@ -62,4 +62,5 @@ func final_art_offset(vis: CardVisual) -> Vector2:
 
 
 func describe() -> String:
-	return "DetailParams(art=%s, name=%dpx, desc=%dpx)" % [str(art_size), name_font_size, desc_font_size]
+	return "DetailParams(art=%s, name=%dpx, desc=%dpx)" % [
+		str(art_size), name_font_size, desc_font_size]
