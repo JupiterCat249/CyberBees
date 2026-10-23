@@ -155,3 +155,31 @@ func test_decide_unit_when_not_my_turn_is_none() -> void:
 	var q = Fixture.queen(e, 0)
 	var d: Dictionary = Dispatch.decide_unit(e, 0, q)
 	assert_eq(String(d.get("type", "")), "none", "非我方回合不得产生任何操作决策")
+
+func test_decide_main_defaults_to_end_phase() -> void:
+	var d: Dictionary = Dispatch.decide_main(e)
+	assert_eq(String(d.get("type", "")), "end_phase", "无选中/无待确认时主按钮=推进阶段")
+
+
+func test_decide_main_with_selected_hand_discards() -> void:
+	e.select_hand(0, 0)
+	var d: Dictionary = Dispatch.decide_main(e)
+	assert_eq(String(d.get("type", "")), "discard", "选中手牌时主按钮=弃牌")
+
+
+func test_decide_main_confirm_move_when_pending() -> void:
+	_to_action()
+	var q = Fixture.queen(e, 0)
+	var cell: Vector2i = Vector2i(2, 2)
+	e.request_move(0, q, cell)                # 阶段1：挂待确认
+	var d: Dictionary = Dispatch.decide_main(e)
+	assert_eq(String(d.get("type", "")), "confirm_move", "待确认移动时主按钮=确认移动")
+
+
+func test_decide_main_confirm_support_when_pending() -> void:
+	var bear := Fixture.place_unit(e, 0, "熊蜂", Vector2i(2, 1))
+	var mate := Fixture.place_unit(e, 0, "泥蜂", Vector2i(2, 0))
+	e.support_pending = bear                 # 直接造"支援待确认"（视图路径已另有回归）
+	var d: Dictionary = Dispatch.decide_main(e)
+	assert_eq(String(d.get("type", "")), "confirm_support", "支援待确认时主按钮=确认支援")
+	assert_not_null(mate, "（保持引用，避免未用变量）")

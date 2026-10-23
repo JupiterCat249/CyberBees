@@ -1825,35 +1825,29 @@ func _on_main_pressed() -> void:
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return
-	## ⭐ 迭代064 P-19（清单 机制-4「还应该有一个确定环节」）：待确认的**空地 AOE** →
-	##   按钮「确认」= 再调一次同一入口 ⇒ 执行（`ok=true` ⇒ op 随 `command` 的 `target_cell` 发出）
-	if engine.command_cell.x >= 0:
-		## ⭐ ④ 修正（人 2026-10-05）：待确认的**单位行动**（移动/攻击）也要能从这里「确认」执行 ——
-		##   与指令卡共用"待确认格"，按 `pending_action` 分流 ✓
-		var pa := String(engine.pending_action)
-		if pa == "move" and engine.sel_unit != null:
-			intent.request_move(engine.state.active, engine.sel_unit, engine.command_cell)
-		elif pa == "attack" and engine.sel_unit != null:
+	## 决策（纯函数）见 scenes/ui/view_cell_dispatch.gd（迭代107）；
+	##   待确认的 AOE / 单位行动 / 支援、选中手牌弃牌、推进阶段 —— 五条路都在那里分流。
+	var d := CellDispatch.decide_main(engine)
+	var side: int = int(engine.state.active)
+	match String(d.get("type", "none")):
+		"confirm_move":
+			intent.request_move(side, engine.sel_unit, engine.command_cell)
+		"confirm_attack":
 			var tgt: UnitInstance = engine.state.board.unit_at(engine.command_cell)
 			if tgt != null:
-				intent.request_attack(engine.state.active, engine.sel_unit, tgt)
-		else:
-			intent.request_use_command_at(engine.state.active, engine.sel_hand_index, engine.command_cell)
-		return
-	## 待确认支援 → 按钮「确认」执行（迭代059 步3：恢复原设计）
-	if engine.support_pending != null:
-		engine.confirm_pending()
-		return
-	## 选中了手牌 → 弃牌
-	if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:
-		var card: CardData = null
-		var hand: Array = engine.state.sides[engine.state.active]["hand"]
-		if int(engine.sel_hand_index) < hand.size():
-			card = hand[engine.sel_hand_index]
-		var dc: int = engine.discard_cost_of(card) if card != null else 0
-		if not intent.request_discard(engine.state.active, engine.sel_hand_index):
-			_flash_msg("弃牌失败：需 %d 费，当前 %d" % [dc, engine.state.cost(engine.state.active)])
-		return
-	## 否则推进阶段
-	print("[VIEW] 主按钮被点击 → request_end_phase()；phase=", engine.state.phase)
-	intent.request_end_phase()
+				intent.request_attack(side, engine.sel_unit, tgt)
+		"confirm_command":
+			intent.request_use_command_at(side, engine.sel_hand_index, engine.command_cell)
+		"confirm_support":
+			engine.confirm_pending()
+		"discard":
+			var card: CardData = null
+			var hand: Array = engine.state.sides[side]["hand"]
+			if int(engine.sel_hand_index) < hand.size():
+				card = hand[engine.sel_hand_index]
+			var dc: int = engine.discard_cost_of(card) if card != null else 0
+			if not intent.request_discard(side, engine.sel_hand_index):
+				_flash_msg(CellDispatch.MSG_DISCARD_FAIL % [dc, engine.state.cost(side)])
+		"end_phase":
+			print("[VIEW] 主按钮被点击 → request_end_phase()；phase=", engine.state.phase)
+			intent.request_end_phase()

@@ -23,6 +23,7 @@ const MSG_SELECT_HINT := "点是自己的单位来选中它（选中后才能移
 const MSG_FOE_UNIT := "这是对方的单位（要攻击请先选中自己的单位）"
 const MSG_COMMAND_TARGET := "该单位不是该指令的合法目标"
 const MSG_ATTACK_UNIT := "不能攻击 %s（需先选中自己的单位，且目标在射程内）"
+const MSG_DISCARD_FAIL := "弃牌失败：需 %d 费，当前 %d"
 
 
 ## 返回字典：{"type": "...", "msg": "...", "unit": UnitInstance?}
@@ -141,3 +142,23 @@ static func decide_unit(engine, my_seat: int, inst) -> Dictionary:
 		return {"type": "select", "leave_first": leave_first}
 	return {"type": "attack", "leave_first": leave_first,
 		"msg": MSG_ATTACK_UNIT % inst.card_name()}
+
+## 主按钮的**纯决策**（自 arena_view._on_main_pressed 切出 —— 迭代107）
+##   返回 type：confirm_move / confirm_attack / confirm_command（待确认格）
+##              confirm_support（支援待确认）/ discard（选中手牌）/ end_phase（推进阶段）/ none
+##   ⚠️ 目标解析（z 值）留在视图：本函数只回答"该走哪条路"。
+static func decide_main(engine) -> Dictionary:
+	if engine == null or engine.state == null:
+		return {"type": "none"}
+	if int(engine.command_cell.x) >= 0:
+		var pa := String(engine.pending_action)
+		if pa == "move" and engine.sel_unit != null:
+			return {"type": "confirm_move"}
+		if pa == "attack" and engine.sel_unit != null:
+			return {"type": "confirm_attack"}
+		return {"type": "confirm_command"}
+	if engine.support_pending != null:
+		return {"type": "confirm_support"}
+	if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:
+		return {"type": "discard"}
+	return {"type": "end_phase"}
