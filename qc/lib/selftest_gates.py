@@ -112,6 +112,19 @@ def test_arch_gate(tmp, python):
         v = json.load(open(out, encoding="utf-8")).get("layer_violations", 0)
     record("架构闸：禁止依赖必须红", rc == 1 and v > 0, "rc=%d violations=%s" % (rc, v))
 
+    # ③ 未解析依赖 → 必须红（resolved=false 且规则要求 unresolved_must_be_zero）
+    unresolved = os.path.join(tmp, "g_unres.json")
+    with open(unresolved, "w", encoding="utf-8") as f:
+        json.dump(graph({"res://scenes/ui/view_fx.gd": {"dependencies": [
+            {"target": "./missing.gd", "type": "preload", "line": 3, "resolved": False}
+        ]}}), f)
+    out_u = os.path.join(tmp, "a_unres.json")
+    rc_u, _ = run([python, ARCH_CHECK, "--graph", unresolved, "--rules", rules, "--out", out_u])
+    n_unres = 0
+    if os.path.exists(out_u):
+        n_unres = int(json.load(open(out_u, encoding="utf-8")).get("unresolved", 0))
+    record("架构闸：未解析依赖必须红", rc_u == 1 and n_unres > 0, "rc=%d unresolved=%d" % (rc_u, n_unres))
+
     good = os.path.join(tmp, "g_good.json")
     with open(good, "w", encoding="utf-8") as f:
         json.dump(graph({"res://scenes/ui/view_fx.gd": {"dependencies": []}}), f)

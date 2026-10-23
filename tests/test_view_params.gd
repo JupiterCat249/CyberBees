@@ -110,3 +110,36 @@ func test_first_hand_card_art_uses_texture_aspect() -> void:
 	assert_almost_eq(w, 400.0, 0.5, "基准宽应为 400")
 	var tsz: Vector2 = img.texture.get_size()
 	assert_almost_eq(h, 400.0 * tsz.y / tsz.x, 1.0, "窗高应按贴图宽高比推导（不得拉伸）")
+
+## ── 手牌重建 / 单位卡生成的**可读读数**（迭代111：切它们的前置网兜）─────────────
+
+func test_hand_render_matches_engine_hand() -> void:
+	## 手牌一有变化就整体重绘 ⇒ 渲染结果必须与引擎手牌**一一对应**（数量/顺序/id 集合）
+	var e = _scene.get("engine")
+	_scene._on_hand_changed(0, e.state.sides[0]["hand"], [])
+	await wait_frames(1)
+	var nodes: Dictionary = _scene.get("_hand_nodes")[0]
+	var order: Array = _scene.get("_hand_order")[0]
+	var hand: Array = e.state.sides[0]["hand"]
+	assert_eq(nodes.size(), hand.size(), "手牌节点数应等于引擎手牌数")
+	assert_eq(order.size(), hand.size(), "顺序表长度应与手牌一致")
+	for i in hand.size():
+		assert_true(nodes.has(String(hand[i].id)), "第 %d 张应有对应节点" % i)
+		assert_eq(String(order[i]), String(hand[i].id), "顺序应与引擎手牌一致（第 %d 张）" % i)
+
+
+func test_unit_spawn_creates_bound_node_at_cell() -> void:
+	## 单位卡生成：进册 · 绑定同一份卡数据 · 位置按视角坐标 · 规范格记进 meta
+	var e = _scene.get("engine")
+	var FixtureLib := preload("res://tests/support/battle_fixture.gd")
+	var u = FixtureLib.place_unit(e, 1, "泥蜂", Vector2i(1, 2))
+	assert_not_null(u, "前置：应能放下单位")
+	_scene._on_unit_spawned(u, u.cell)
+	await wait_frames(1)
+	var nodes: Dictionary = _scene.get("_unit_nodes")
+	assert_true(nodes.has(u.instance_id), "应在 _unit_nodes 里注册")
+	var node = nodes[u.instance_id]
+	assert_not_null(node, "节点应有效")
+	assert_eq(node.get_meta("cell"), u.cell, "规范格应记入 meta（供切座位时重算）")
+	assert_eq(node.position, _scene._view_cell_pos(u.cell), "位置应按视角坐标摆放")
+	assert_eq(String(node.get("unit_id")), u.instance_id, "单位卡应绑定该实例 id（_unit_view 的 id 字段）")
