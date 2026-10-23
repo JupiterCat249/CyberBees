@@ -158,3 +158,82 @@ func test_board_click_ignored_on_opponent_turn() -> void:
 	await wait_frames(1)
 	assert_null(e.sel_unit, "非我方回合时，点单位卡不得产生选中")
 	e.state.active = saved
+
+
+func _to_action() -> void:
+	var e = _engine()
+	if int(e.state.phase) != 3:
+		e.request_end_phase(0)
+
+
+func _first_empty_reachable(q) -> Vector2i:
+	var e = _engine()
+	var allow: Dictionary = e.state.board.move_range(q)
+	for c in allow.keys():
+		if e.state.board.is_empty(c):
+			return c
+	return Vector2i(-1, -1)
+
+
+func test_move_is_two_step_via_cell_click() -> void:
+	## 移动与攻击同构：第一次挂待确认（单位不动），第二次才真的移动
+	_to_action()
+	var e = _engine()
+	var q = e.state.queen(0)
+	_scene._on_unit_clicked(q.instance_id)
+	await wait_frames(1)
+	assert_same(e.sel_unit, q, "前置：应选中己方蜂王")
+	var dest := _first_empty_reachable(q)
+	assert_ne(dest.x, -1, "前置：蜂王应有可达空格")
+	var from: Vector2i = q.cell
+	_scene._on_cell_clicked(dest)
+	await wait_frames(1)
+	assert_eq(String(e.pending_action), "move", "第一次点落点应挂'待确认移动'")
+	assert_eq(q.cell, from, "待确认阶段单位**不应**移动")
+	_scene._on_cell_clicked(dest)
+	await wait_frames(1)
+	assert_eq(q.cell, dest, "第二次点同一落点应真的移动")
+	assert_true(q.has_moved, "移动后应标记本回合已移动")
+
+
+func test_main_button_confirms_pending_move() -> void:
+	## 主按钮的「确认」分支（待确认单位行动）—— 与再点一次同一入口等价
+	_to_action()
+	var e = _engine()
+	var q = e.state.queen(0)
+	_scene._on_unit_clicked(q.instance_id)
+	await wait_frames(1)
+	var dest := _first_empty_reachable(q)
+	assert_ne(dest.x, -1, "前置：应有可达空格")
+	_scene._on_cell_clicked(dest)
+	await wait_frames(1)
+	assert_eq(String(e.pending_action), "move", "前置：应已挂待确认移动")
+	_scene._on_main_pressed()
+	await wait_frames(1)
+	assert_eq(q.cell, dest, "主按钮「确认」应执行这次移动")
+	assert_eq(String(e.pending_action), "", "执行后待确认态应清空")
+
+
+func test_main_button_with_selected_card_discards() -> void:
+	## 选中手牌时，主按钮＝**弃牌**（G-6 Q-3）
+	## ⚠️ 实测：`HandMode.DISCARD`（枚举值 3）**全项目没有任何写入点** —— 弃牌的真实路径
+	##   就是「选中手牌 → 主按钮」，与 hand_mode 无关（死枚举已记入路线图待复核）。
+	_to_action()
+	var e = _engine()
+	var hand: Array = e.state.sides[0]["hand"]
+	var hand_before: int = hand.size()
+	var discard_before: int = e.state.sides[0]["discard"].size()
+	var cost_before: int = e.state.cost(0)
+	var card_id := _first_hand_id(0)
+	_scene._on_hand_clicked(card_id, 0)
+	await wait_frames(1)
+	assert_eq(int(e.sel_kind), 1, "前置：应选中一张手牌")
+	var sel_card = e.state.sides[0]["hand"][int(e.sel_hand_index)]
+	var need: int = e.discard_cost_of(sel_card)
+	assert_true(cost_before >= need, "前置：当前费用应够弃这张牌（need=%d）" % need)
+	_scene._on_main_pressed()
+	await wait_frames(1)
+	assert_eq(e.state.sides[0]["hand"].size(), hand_before - 1, "弃牌后手牌应少一张")
+	assert_eq(e.state.sides[0]["discard"].size(), discard_before + 1, "弃掉的牌应进墓地")
+	assert_eq(e.state.cost(0), cost_before - need, "弃牌应扣掉弃牌费")
+	assert_eq(int(e.sel_kind), 0, "弃牌后应清掉选中态")
