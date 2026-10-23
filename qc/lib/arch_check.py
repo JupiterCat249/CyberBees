@@ -105,6 +105,42 @@ def main():
                     "line": dep.get("line"), "why": why.get((src_layer, tgt_layer), "")
                 })
 
+    ## ⭐ 第三轮 S1/WS4（迭代158）：层界按**可达性**判定 ——
+    ##   边界是"最终能依赖到什么"，不是"直接 preload 了什么"（参照 dependency-cruiser 的 reachable 语义）。
+    ##   仅用 load/preload 边（类型标注不构成加载风险），逐对 (from,to) 做 BFS 取**最短路径**。
+    adjacency = {}
+    for src, deps in list(load_edges.items()) + list(type_edges.items()):
+        adjacency.setdefault(src, set()).update(deps)
+
+    def shortest_path(start, pred):
+        seen = {start: [start]}
+        queue = [start]
+        while queue:
+            cur = queue.pop(0)
+            if pred(cur) and cur != start:
+                return seen[cur]
+            for nxt in sorted(adjacency.get(cur, ())):
+                if nxt not in seen:
+                    seen[nxt] = seen[cur] + [nxt]
+                    queue.append(nxt)
+        return None
+
+    reach_viol = []
+    nodes = sorted(set(list(adjacency.keys()) + [t for ds in adjacency.values() for t in ds]))
+    for node in nodes:
+        src_layer = layer_of(node, layers)
+        if src_layer is None:
+            continue
+        banned = forbid.get(src_layer, ())
+        if not banned:
+            continue
+        for bl in banned:
+            path = shortest_path(node, lambda n: layer_of(n, layers) == bl)
+            if path:
+                reach_viol.append({"from": node, "to": path[-1], "from_layer": src_layer,
+                                   "to_layer": bl, "hops": len(path) - 1, "path": path,
+                                   "why": why.get((src_layer, bl), "")})
+
     load_cycles = find_cycles(load_edges)
     type_cycles = find_cycles(type_edges)
 
@@ -114,7 +150,9 @@ def main():
         "type_cycles": len(type_cycles),
         "type_cycle_detail": type_cycles,
         "layer_violations": len(violations),
+        "reach_violations": len(reach_viol),
         "violations": violations,
+        "reach_violations_detail": reach_viol,
         "unresolved": unresolved if rules.get("unresolved_must_be_zero") else 0,
         "edges": edges,
         "modules": len(modules),
@@ -122,15 +160,18 @@ def main():
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
-    print(json.dumps({k: v for k, v in result.items() if k not in ("cycle_detail", "type_cycle_detail", "violations")}, ensure_ascii=False))
+    print(json.dumps({k: v for k, v in result.items() if k not in ("cycle_detail", "type_cycle_detail", "violations", "reach_violations_detail")}, ensure_ascii=False))
     for c in load_cycles:
         print("  LOAD-CYCLE: " + " -> ".join(c))
     if type_cycles:
         print("  (info) 类型引用环 %d 处：GDScript 由全局类表解析，不构成加载顺序风险" % len(type_cycles))
+    for v in reach_viol[:20]:
+        print("  UNREACHABLE-OK?: %s (%s) -> %s (%s), hops=%d: %s" % (
+            v["from"], v["from_layer"], v["to"], v["to_layer"], v["hops"], " -> ".join(v["path"])))
     for v in violations[:20]:
         print("  FORBIDDEN: %s -> %s (%s->%s line %s)" % (v["from"], v["to"], v["from_layer"], v["to_layer"], v["line"]))
     # 单独跑时退出码要诚实（此前恒 0 —— 违规只在 qc.ps1 里靠计数发现）
-    bad = len(load_cycles) or len(violations) or (unresolved if rules.get("unresolved_must_be_zero") else 0)
+    bad = len(load_cycles) or len(violations) or len(reach_viol) or (unresolved if rules.get("unresolved_must_be_zero") else 0)
     return 1 if bad else 0
 
 if __name__ == "__main__":

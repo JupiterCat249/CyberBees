@@ -663,6 +663,42 @@ def test_sync_docs(tmp, python):
           and "自检 **49/49**" in body and "豁免 5" in body)
     record("数字单一来源：write 后必须与 counts 一致", ok, "rc2=%d rc3=%d" % (rc2, rc3))
 
+
+def test_arch_reachability(tmp, python):
+    """可达层界反例（迭代158 · 第三轮 S1/WS4）：间接越界必须红，并报最短路径。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arch_check.py")
+    rules = os.path.join(tmp, "r_rules.json")
+    json.dump({"layers": {"battle": ["src/battle/"], "net": ["src/net/"], "ui": ["src/view/"]},
+               "forbid": [{"from": "battle", "to": ["ui"], "why": "规则层不得最终依赖视图"}],
+               "unresolved_must_be_zero": True}, open(rules, "w", encoding="utf-8"))
+
+    def graph(deps_map, name):
+        p = os.path.join(tmp, name)
+        json.dump({"graph": {"modules": deps_map}, "cycles": []}, open(p, "w", encoding="utf-8"))
+        return p
+
+    # ① battle → net → view（间接越界）⇒ 必须红且带路径
+    g_bad = graph({
+        "res://src/battle/a.gd": {"dependencies": [{"target": "res://src/net/b.gd", "type": "preload", "line": 1, "resolved": True}]},
+        "res://src/net/b.gd": {"dependencies": [{"target": "res://src/view/c.gd", "type": "preload", "line": 2, "resolved": True}]},
+        "res://src/view/c.gd": {"dependencies": []},
+    }, "r_bad.json")
+    out = os.path.join(tmp, "r_o1.json")
+    rc, txt = run([python, CHECK, "--graph", g_bad, "--rules", rules, "--out", out])
+    rj = json.load(open(out, encoding="utf-8")) if os.path.exists(out) else {}
+    path = (rj.get("reach_violations_detail") or [{}])[0].get("path", [])
+    ok = rc == 1 and rj.get("reach_violations", 0) == 1 and len(path) == 3
+    record("可达层界：间接越界必须红并报路径", ok, "rc=%d reach=%s path=%s" % (rc, rj.get("reach_violations"), path))
+
+    # ② battle → net（无越界）⇒ 绿
+    g_ok = graph({
+        "res://src/battle/a.gd": {"dependencies": [{"target": "res://src/net/b.gd", "type": "preload", "line": 1, "resolved": True}]},
+        "res://src/net/b.gd": {"dependencies": []},
+    }, "r_ok.json")
+    out2 = os.path.join(tmp, "r_o2.json")
+    rc2, _ = run([python, CHECK, "--graph", g_ok, "--rules", rules, "--out", out2])
+    record("可达层界：无越界必须绿", rc2 == 0, "rc=%d" % rc2)
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -693,6 +729,8 @@ def main():
         test_bug_binding(tmp, python)
         print("[qc] selftest 数字单一来源")
         test_sync_docs(tmp, python)
+        print("[qc] selftest 可达层界")
+        test_arch_reachability(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:

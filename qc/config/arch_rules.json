@@ -30,9 +30,10 @@
     {
       "from": "battle",
       "to": [
-        "ui"
+        "ui",
+        "ui_component"
       ],
-      "why": "规则层不得反向引用视图（视图可引用规则层，反之不行）"
+      "why": "规则层不得反向引用视图（视图可引用规则层，反之不行）（含 view_* 模块层：间接依赖同样禁止）"
     },
     {
       "from": "data",
@@ -40,23 +41,26 @@
         "battle",
         "ui",
         "net",
-        "anim"
+        "anim",
+        "ui_component"
       ],
-      "why": "数据层是叶子模块，只能被依赖、不主动依赖"
+      "why": "数据层是叶子模块，只能被依赖、不主动依赖（含 view_* 模块层）"
     },
     {
       "from": "anim",
       "to": [
-        "ui"
+        "ui",
+        "ui_component"
       ],
-      "why": "动画引擎与视图解耦"
+      "why": "动画引擎与视图解耦（含 view_* 模块层）"
     },
     {
       "from": "diag",
       "to": [
-        "ui"
+        "ui",
+        "ui_component"
       ],
-      "why": "诊断工具不耦合视图"
+      "why": "诊断工具不耦合视图（含 view_* 模块层）"
     },
     {
       "from": "ui_component",

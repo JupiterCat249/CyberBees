@@ -147,7 +147,7 @@ function Invoke-Arch {
     Add-Count 'arch:type_cycles' $arch.type_cycles
     Add-Count 'arch:layer_violations' $arch.layer_violations
     Add-Count 'arch:unresolved_edges' $arch.unresolved
-    return (([int]$arch.cycles -eq 0) -and ([int]$arch.layer_violations -eq 0) -and ([int]$arch.unresolved -eq 0))
+    return (([int]$arch.cycles -eq 0) -and ([int]$arch.layer_violations -eq 0) -and ([int]$arch.reach_violations -eq 0) -and ([int]$arch.unresolved -eq 0))
 }
 
 function Invoke-Signals {
