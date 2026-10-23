@@ -36,6 +36,8 @@ def main():
     ap.add_argument("--policy", required=True)
     ap.add_argument("--baseline", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--warn-ratio", type=float, default=None,
+                    help="预警比例（默认读 policy 的 warn_ratio，缺省 0.9）：未超限但已达上限该比例时**只提示不判红**")
     ap.add_argument("--tighten", action="store_true", help="把基线收紧到当前实测值（只降不升；已降到上限以下或消失的条目自动移除）")
     a = ap.parse_args()
 
@@ -46,9 +48,11 @@ def main():
     exts = tuple(pol.get("include_ext", [".gd"]))
     exclude = set(pol.get("exclude_dirs", []))
     exempt = base.get("exempt", {}) or {}
+    warn_ratio = float(a.warn_ratio if a.warn_ratio is not None else pol.get("warn_ratio", 0.9))
 
     files = walk(a.repo, exts, exclude)
     violations = []
+    warnings = []
     used = {}
     max_seen_lines = 0
     max_seen_bytes = 0
@@ -82,6 +86,15 @@ def main():
         elif (not over) and rec is not None:
             violations.append({"kind": "STALE_EXEMPT", "file": rel, "lines": nlines,
                                "why": "已降到上限以下 —— 请从 size_baseline.json 移除该条"})
+        if (not over):
+            ## P3（迭代127）：**预警线** —— 只提示不判红，让"快撞线"提前可见。
+            ##   exempt 里的文件本来就超限（由祖父条款管），不再重复预警以免噪声。
+            lr = nlines / float(max_lines) if max_lines else 0.0
+            br = nbytes / float(max_bytes) if max_bytes else 0.0
+            if max(lr, br) >= warn_ratio:
+                warnings.append({"file": rel, "lines": nlines, "bytes": nbytes,
+                                 "lines_ratio": round(lr, 3), "bytes_ratio": round(br, 3),
+                                 "why": "已达上限的 %.1f%%（soft 预警，不判红）" % (max(lr, br) * 100)})
     for rel in exempt:
         if rel not in used and not any(v.get("file") == rel for v in violations):
             p = os.path.join(a.repo, rel.replace("/", os.sep))
@@ -97,6 +110,7 @@ def main():
         "exempt_count": len(exempt),
         "exempt_used": used,
         "violations": violations,
+        "warnings": warnings,
         "policy": {"max_lines": max_lines, "max_bytes": max_bytes},
     }
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
@@ -126,6 +140,8 @@ def main():
 
     print("files=%d  over_cap=%d  max_lines=%d  max_bytes=%d  exempt=%d"
           % (len(files), over_cap, max_seen_lines, max_seen_bytes, len(exempt)))
+    for w in warnings:
+        print("  [预警] %s  %d 行 / %d 字节（%s）" % (w["file"], w["lines"], w["bytes"], w["why"]))
     for v in violations:
         print("  [%s] %s  (%s)" % (v["kind"], v["file"], v["why"]))
     return 1 if violations else 0

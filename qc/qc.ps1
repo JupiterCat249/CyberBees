@@ -293,6 +293,8 @@ function Invoke-Size {
             Add-Count 'size:max_lines' $sj.max_lines
             Add-Count 'size:max_bytes' $sj.max_bytes
             Add-Count 'size:violations' (@($sj.violations).Count)
+            ## P3（迭代127）：soft 预警（只记录，不判红）
+            Add-Count 'size:warn_files' (@($sj.warnings).Count)
         }
     } else {
         Write-Host '[qc] size   未配置 size_policy.json —— 跳过硬门禁' -ForegroundColor Yellow

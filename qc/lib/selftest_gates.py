@@ -12,6 +12,7 @@
   · 文档基线：与实测一致 → 0；漂移 → 1；文档缺失 → 0（skip）
   · GUT 校验：全部加载 → 0；日志含解析错误 → 1；磁盘数 ≠ 加载数 → 1
   · lint 豁免：双向一致 → 0；新债未登记 → 1；豁免陈旧 → 1
+  · 体积预警：达 91% 有预警但**不判红**；50% 无预警
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
 """
@@ -420,6 +421,35 @@ def test_lint_exempt(tmp, python):
     record("lint 豁免：陈旧豁免必须红", rc == 1 and "陈旧" in txt, "rc=%d" % rc)
 
 
+def test_size_warn(tmp, python):
+    """体积预警线反例（迭代127 · P3）：接近上限要"看得见"，但**不得**变成失败（避免噪声红）。"""
+    pol = os.path.join(tmp, "w_policy.json")
+    with open(pol, "w", encoding="utf-8") as f:
+        json.dump({"max_lines": 100, "max_bytes": 100000, "include_ext": [".gd"],
+                   "exclude_dirs": [], "warn_ratio": 0.9}, f)
+    base = os.path.join(tmp, "w_base.json")
+    with open(base, "w", encoding="utf-8") as f:
+        json.dump({"exempt": {}}, f)
+
+    repo = os.path.join(tmp, "w_repo")
+    os.makedirs(repo, exist_ok=True)
+    near = os.path.join(repo, "near.gd")
+    with open(near, "w", encoding="utf-8") as f:
+        f.write("extends Node\n" + "var a := 1\n" * 90)      # 91 行 / 上限 100
+
+    def run_size(out):
+        return run([python, SIZE_CHECK, "--repo", repo, "--policy", pol,
+                    "--baseline", base, "--out", os.path.join(tmp, out)])
+
+    rc, txt = run_size("w_o1.json")
+    record("体积预警：达 91% 有预警且不判红", rc == 0 and "预警" in txt, "rc=%d" % rc)
+
+    with open(near, "w", encoding="utf-8") as f:
+        f.write("extends Node\n" + "var a := 1\n" * 49)      # 50 行
+    rc, txt = run_size("w_o2.json")
+    record("体积预警：50% 不应有预警", rc == 0 and "预警" not in txt, "rc=%d" % rc)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -440,6 +470,8 @@ def main():
         test_gut_check(tmp, python)
         print("[qc] selftest lint 豁免")
         test_lint_exempt(tmp, python)
+        print("[qc] selftest 体积预警")
+        test_size_warn(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
