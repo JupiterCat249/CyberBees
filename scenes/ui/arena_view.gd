@@ -51,6 +51,7 @@ const CardArt := preload("res://scenes/ui/view_card_art.gd")
 const CardParams := preload("res://scenes/ui/view_card_params.gd")
 const Coords := preload("res://scenes/ui/view_coords.gd")
 const Board := preload("res://scenes/ui/view_board.gd")
+const HudTint := preload("res://scenes/ui/view_hud_tint.gd")
 ## 图标参数冲突只提示一次（场景为权威）
 var _detail_icon_warned := false
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
@@ -65,8 +66,6 @@ const PITCH := 250.0
 ## ⭐ 迭代067（人 2026-10-14）：手牌区与玩家信息栏**共用同一套滤镜常量**（口径单一来源，避免分叉）
 ##   normal = 该侧为行动方（不加滤镜）· black = 非行动方（变黑）
 ##   只压 RGB、不压 alpha（守 UI-9 / UI-12：费用标记不得变半透明）
-const INFO_FILTER_NORMAL := Color(1, 1, 1, 1)
-const INFO_FILTER_BLACK := Color(0.22, 0.22, 0.22, 1)
 
 @export var auto_start := true
 @export var use_resources := true
@@ -765,9 +764,10 @@ func _on_round_started(round_no: int) -> void:
 ##   2026-10-14 人重新指示：**滤镜规律改为按行动方对称**（本条与手牌区同口径，见 card_hand.set_playable）。
 ##   旧三态的三处调用点（本方不可用=0.65）随本次重构整体移除。
 func _info_tint(side: int) -> Color:
+	## 口径与常量的来历见 scenes/ui/view_hud_tint.gd（迭代132）
 	if engine == null or engine.state == null:
-		return INFO_FILTER_NORMAL
-	return INFO_FILTER_NORMAL if int(engine.state.active) == int(side) else INFO_FILTER_BLACK
+		return HudTint.NORMAL
+	return HudTint.filter_for(engine.state.active, side)
 
 
 func _set_turn(side: int, round_no: int) -> void:

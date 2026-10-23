@@ -145,3 +145,34 @@ func test_remote_command_action_binds_command_cell() -> void:
 	var st = _scene.get("_remote")
 	assert_eq(st.command_cell, target, "应把指令待确认格登记下来")
 	assert_not_null(_scene.get("_preview"), "应渲染该指令的效果范围/目标预览")
+
+## ── HUD 左右面板的阵营映射（迭代132：历史上曾左右写反，故补读数网兜）─────────────
+
+func test_turn_tint_follows_active_side() -> void:
+	## 口径（人 2026-10-14 重定）：**按行动方对称** —— 该侧是行动方则全白，否则变黑。
+	##   ⚠️ 左右与阵营的映射：右 = 我方(ALLY)、左 = 敌方(ENEMY)（迭代059 曾左右写反）
+	var e = _scene.get("engine")
+	var right = _scene.get_node("Battle/PlayerBesaInfoRight") as Control
+	var left = _scene.get_node("Battle/PlayerBesaInfoLift") as Control
+	e.state.active = 0
+	_scene._set_turn(0, 1)
+	await wait_frames(1)
+	assert_eq(right.modulate, Color(1, 1, 1, 1), "我方行动 ⇒ 右面板（我方）应全白")
+	assert_eq(left.modulate, Color(0.22, 0.22, 0.22, 1), "我方行动 ⇒ 左面板（敌方）应变黑")
+	e.state.active = 1
+	_scene._set_turn(1, 2)
+	await wait_frames(1)
+	assert_eq(right.modulate, Color(0.22, 0.22, 0.22, 1), "敌方行动 ⇒ 右面板（我方）应变黑")
+	assert_eq(left.modulate, Color(1, 1, 1, 1), "敌方行动 ⇒ 左面板（敌方）应全白")
+
+
+func test_cost_label_written_to_correct_panel() -> void:
+	## 费用文本必须写到**对应阵营**的面板（历史上左右反了会让"自己费用"写到对手栏）
+	_scene._on_cost_changed(0, 7, 0)
+	await wait_frames(1)
+	var right_val = _scene.get_node("Battle/PlayerBesaInfoRight/BadgeImage/Value") as Label
+	assert_eq(String(right_val.text), "7", "我方费用应写右面板")
+	_scene._on_cost_changed(1, 3, 0)
+	await wait_frames(1)
+	var left_val = _scene.get_node("Battle/PlayerBesaInfoLift/BadgeImage/Value") as Label
+	assert_eq(String(left_val.text), "3", "敌方费用应写左面板")
