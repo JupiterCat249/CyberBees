@@ -9,8 +9,8 @@ extends Node
 ## ⚠️ GDScript 闭包按值捕获 → 断言/计数一律用**成员变量**
 ## ⚠️ 支援是**二次点击确认**（第一次返回 false）→ 脚本里连调两次
 ## ---------------------------------------------------------------------------
-const EngineLib := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
+const EngineLib := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
 const DECK := "res://game_data/decks/示范卡组.tres"
 const MAX_STEPS := 160
 

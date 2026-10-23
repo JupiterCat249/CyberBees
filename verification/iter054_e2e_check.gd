@@ -1,6 +1,6 @@
 extends Node
 
-const CardPoolLib := preload("res://scripts/data/card_pool.gd")
+const CardPoolLib := preload("res://src/data/card_pool.gd")
 ## 【验证用 · 非生产】迭代054 UI 端到端：battle_scene + GameState 真实对局接线
 ## 状态：待封存（验证用，非生产文件）
 

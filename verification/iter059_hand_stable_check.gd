@@ -7,7 +7,7 @@ extends Node
 ##
 ## 用法：project_run(mode="custom", scene="res://verification/iter059_hand_stable_check.tscn")
 
-const StateLib := preload("res://scripts/battle/battle_state.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
 
 var _pass := 0
 var _fail := 0

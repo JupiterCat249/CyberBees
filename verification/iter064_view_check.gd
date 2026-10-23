@@ -19,9 +19,9 @@ extends Node
 ## ⚠️ 全部用例都带判空 —— 缺节点时判 FAIL 而不是崩（崩了整份报告就没了）
 ## ---------------------------------------------------------------------------
 const BATTLE := preload("res://scenes/ui/battle_scene.tscn")
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
 ## 预览类型枚举（新断言要判"是否含 ATTACK 格"）
-const K := preload("res://scripts/battle/preview_kind.gd")
+const K := preload("res://src/battle/preview_kind.gd")
 
 var _pass := 0
 var _fail := 0

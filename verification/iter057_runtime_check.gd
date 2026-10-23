@@ -6,8 +6,8 @@ extends Node
 ##
 ## 验证链：开局→手牌→部署→行动→换手
 
-const Pool := preload("res://scripts/data/card_pool.gd")
-const K := preload("res://scripts/battle/preview_kind.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const K := preload("res://src/battle/preview_kind.gd")
 
 var _pass := 0
 var _fail := 0

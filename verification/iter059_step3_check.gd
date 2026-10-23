@@ -2,12 +2,12 @@ extends Node
 ## 【验证用 · 非生产】迭代059 步3：支援双击确认（原设计）+ 地形格渲染 + 提示省略
 ## 用法：project_run(mode="custom", scene="res://verification/iter059_step3_check.tscn")
 
-const Eng := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const TerrainP := preload("res://scripts/data/terrain_params.gd")
+const Eng := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const TerrainP := preload("res://src/data/terrain_params.gd")
 
 var _pass := 0
 var _fail := 0

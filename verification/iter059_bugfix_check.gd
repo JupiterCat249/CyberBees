@@ -6,12 +6,12 @@ extends Node
 ## ② 装甲：固定减 1 · **参与防御计算后消失** · 蜂王互攻能造成伤害
 ## ③ 卡内子节点鼠标透明（否则点击被立绘吃掉，指令卡/单位选择都失效）
 
-const Eng := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
-const Combat := preload("res://scripts/battle/rules_combat.gd")
-const Effects := preload("res://scripts/battle/rules_effects.gd")
+const Eng := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const Combat := preload("res://src/battle/rules_combat.gd")
+const Effects := preload("res://src/battle/rules_effects.gd")
 
 var _pass := 0
 var _fail := 0
@@ -208,7 +208,7 @@ func _t_armor_not_permanent() -> void:
 # ============ 电击连锁：严格上下左右直接相邻 + 蜂王不受扩散 ============
 func _t_chain_strict() -> void:
 	_section("电击连锁：**连通分量**（ABCDE 相连即全波及）· 空格/蜂王格中断")
-	var RC := preload("res://scripts/battle/rules_command.gd")
+	var RC := preload("res://src/battle/rules_command.gd")
 	var card: CommandData = Pool.card("电击")
 
 	# ── 链 1：一条直线 A(1,0)-B(1,1)-C(1,2)（上下左右相连）→ 首目标 A 应波及 B、C
@@ -262,7 +262,7 @@ func _cells(arr: Array) -> Array:
 # ============ 全局设计：蜂王对指令卡「不存在」 ============
 func _t_queen_global_design() -> void:
 	_section("全局设计：蜂王可作首选目标，但**永不纳入指令卡判定计算**（连锁在蜂王处中断）")
-	var RC := preload("res://scripts/battle/rules_command.gd")
+	var RC := preload("res://src/battle/rules_command.gd")
 	var card: CommandData = Pool.card("电击")
 	# 布局（列 0 . 1 . 2 . 3）：
 	#   行 0：  (0,0)蜂巢   (0,1)红蜂王   (0,2)泥蜂_后   (0,3)空
@@ -360,14 +360,14 @@ func _t_hand_state_machine() -> void:
 	var st = eng.state
 	st.phase = 2
 	st.sides[0]["cost"] = 10
-	var HM := preload("res://scripts/battle/battle_engine.gd").HandMode
+	var HM := preload("res://src/battle/battle_engine.gd").HandMode
 	_chk("引擎暴露 HandMode 状态机", HM.size() == 4)
 
 	# ① 选单位卡 → DEPLOY 模式；交互范围 = 合法部署格
 	var i_leaf: int = _find_card(st, 0, "叶蜂")
 	eng.select_hand(0, i_leaf)
 	_chk("选单位卡 → hand_mode = DEPLOY", int(eng.hand_mode) == int(HM.DEPLOY))
-	var cells: Array = preload("res://scripts/battle/rules_preview.gd") 		.deploy_cells(st, 0, st.hand(0)[i_leaf])
+	var cells: Array = preload("res://src/battle/rules_preview.gd") 		.deploy_cells(st, 0, st.hand(0)[i_leaf])
 	_chk("该卡有合法部署格（否则断言无意义）", cells.size() > 0)
 	var ok_cell: Vector2i = cells[0]
 	_chk("**合法部署格在交互范围内**（→ 可部署）", eng.hand_range_has_cell(ok_cell))

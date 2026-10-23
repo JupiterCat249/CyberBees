@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="TerrainEffect" format=3]
 
-[ext_resource type="Script" path="res://scripts/data/effect_data.gd" id="1_vrowq"]
-[ext_resource type="Script" path="res://scripts/data/terrain_effect.gd" id="2_qs7mq"]
+[ext_resource type="Script" path="res://src/data/effect_data.gd" id="1_vrowq"]
+[ext_resource type="Script" path="res://src/data/terrain_effect.gd" id="2_qs7mq"]
 
 [sub_resource type="Resource" id="Resource_2rnuj"]
 script = ExtResource("1_vrowq")

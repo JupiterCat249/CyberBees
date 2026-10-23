@@ -10,14 +10,14 @@ extends Node
 ##   ⑥ 支援预览（己方 + 射程内）
 ##   ⑦ 引擎经 selection_changed 信号**带出预览资源**
 
-const PV := preload("res://scripts/battle/preview_data.gd")
-const K := preload("res://scripts/battle/preview_kind.gd")
-const Preview := preload("res://scripts/battle/rules_preview.gd")
-const EngLib := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
+const PV := preload("res://src/battle/preview_data.gd")
+const K := preload("res://src/battle/preview_kind.gd")
+const Preview := preload("res://src/battle/rules_preview.gd")
+const EngLib := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const Pool := preload("res://src/data/card_pool.gd")
 
 var _pass := 0
 var _fail := 0

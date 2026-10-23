@@ -11,8 +11,8 @@ extends Node
 ## 运行：先 `npm run start:test`（端口见 `net_config/net.test.json`），再 F6 本场景
 ## ⚠️ GDScript 闭包**按值捕获** → 所有断言状态用**成员变量**，不能在 lambda 里写局部变量
 ## ---------------------------------------------------------------------------
-const EngineLib := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
+const EngineLib := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
 const DECK := "res://game_data/decks/示范卡组.tres"
 
 var _pass := 0

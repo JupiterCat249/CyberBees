@@ -13,7 +13,7 @@ extends Node
 ##
 ## 生成后立刻**回读校验**：逐个 load 回来，核对字段与源数据一致。
 
-const CardPoolLib := preload("res://scripts/data/card_pool.gd")
+const CardPoolLib := preload("res://src/data/card_pool.gd")
 const ROOT := "res://game_data"
 const DIRS := ["cards", "effects", "skills", "decks", "maps"]
 
@@ -182,7 +182,7 @@ func _generate_maps() -> void:
 
 ## 按地图名生成地形效果资源（a500 场地效果表逐张对照）
 func _terrain_effect_for(map_name: String, field_flag: bool):
-	var T := preload("res://scripts/data/terrain_effect.gd")
+	var T := preload("res://src/data/terrain_effect.gd")
 	match map_name:
 		"铁锈":
 			## 位于特殊地形的单位获得 1 层[力场]

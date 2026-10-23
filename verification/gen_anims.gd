@@ -11,9 +11,9 @@ extends Node
 ##    无类型 `Array` 或字面量 `[a, b]` 会报 "Invalid assignment of property 'clips'"。
 ## 运行：F6 或 project_run(mode="custom", scene="res://verification/gen_anims.tscn")
 const DIR: String = "res://game_data/anims"
-const ClipLib := preload("res://scripts/anim/anim_clip.gd")
-const UnitLib := preload("res://scripts/anim/anim_unit.gd")
-const PatternLib := preload("res://scripts/anim/anim_pattern.gd")
+const ClipLib := preload("res://src/anim/anim_clip.gd")
+const UnitLib := preload("res://src/anim/anim_unit.gd")
+const PatternLib := preload("res://src/anim/anim_pattern.gd")
 
 # ---- 手感常量（唯一来源，T15：一处可调）----
 const SHAKE_FRAMES: int = 40        ## 受击抖动总帧数（迭代023–025 定稿；§六 旧字面值 36）

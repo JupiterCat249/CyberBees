@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="AnimPattern" format=3]
 
-[ext_resource type="Script" path="res://scripts/anim/anim_pattern.gd" id="1_cwux8"]
-[ext_resource type="Script" path="res://scripts/anim/anim_unit.gd" id="2_pw74v"]
-[ext_resource type="Script" path="res://scripts/anim/anim_clip.gd" id="3_tarl7"]
+[ext_resource type="Script" path="res://src/anim/anim_pattern.gd" id="1_cwux8"]
+[ext_resource type="Script" path="res://src/anim/anim_unit.gd" id="2_pw74v"]
+[ext_resource type="Script" path="res://src/anim/anim_clip.gd" id="3_tarl7"]
 
 [sub_resource type="Resource" id="Resource_kg8op"]
 script = ExtResource("3_tarl7")

@@ -2,11 +2,11 @@ extends Node
 ## 【验证用 · 非生产】迭代059 步2：弃牌机制（G-6）+ 主按钮弃牌态（人裁决 Q-3）
 ## 用法：project_run(mode="custom", scene="res://verification/iter059_discard_check.tscn")
 
-const Eng := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
+const Eng := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
 
 var _pass := 0
 var _fail := 0
@@ -136,7 +136,7 @@ func _t_regression() -> void:
 	var st = eng.state
 	st.phase = StateLib.Phase.DEPLOY
 	st.sides[0]["cost"] = 10
-	var Preview := preload("res://scripts/battle/rules_preview.gd")
+	var Preview := preload("res://src/battle/rules_preview.gd")
 	var leaf: UnitData = Pool.card("叶蜂") as UnitData
 	var cells: Array = Preview.deploy_cells(st, 0, leaf)
 	var ok: bool = eng.request_deploy(0, _find_card(st, 0, "叶蜂"), cells[0])

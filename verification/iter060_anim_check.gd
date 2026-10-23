@@ -6,10 +6,10 @@ extends Node
 ##   ③ 终帧精确归位（Σ 步 = 0，不污染视图拥有的 position）
 ##   ④ 播完自动结束 + 实例级回调
 ## 运行：F6 或 project_run(mode="custom", scene="res://verification/iter060_anim_check.tscn")
-const ClipLib := preload("res://scripts/anim/anim_clip.gd")
-const UnitLib := preload("res://scripts/anim/anim_unit.gd")
-const PatternLib := preload("res://scripts/anim/anim_pattern.gd")
-const PlayerLib := preload("res://scripts/anim/anim_player.gd")
+const ClipLib := preload("res://src/anim/anim_clip.gd")
+const UnitLib := preload("res://src/anim/anim_unit.gd")
+const PatternLib := preload("res://src/anim/anim_pattern.gd")
+const PlayerLib := preload("res://src/anim/anim_player.gd")
 
 var _pass: int = 0
 var _fail: int = 0

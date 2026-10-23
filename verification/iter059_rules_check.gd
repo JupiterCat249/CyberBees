@@ -6,15 +6,15 @@ extends Node
 ##
 ## ⚠️ 本脚本会**生成一张 X 费测试卡资源到 verification/**（不入 game_data/ 生产目录）
 
-const Eng := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
-const Effects := preload("res://scripts/battle/rules_effects.gd")
-const Combat := preload("res://scripts/battle/rules_combat.gd")
-const Command := preload("res://scripts/battle/rules_command.gd")
-const Preview := preload("res://scripts/battle/rules_preview.gd")
-const TerrainEff := preload("res://scripts/data/terrain_effect.gd")
+const Eng := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const Effects := preload("res://src/battle/rules_effects.gd")
+const Combat := preload("res://src/battle/rules_combat.gd")
+const Command := preload("res://src/battle/rules_command.gd")
+const Preview := preload("res://src/battle/rules_preview.gd")
+const TerrainEff := preload("res://src/data/terrain_effect.gd")
 
 const MAP_DIR := "res://game_data/maps/"
 const VER_DIR := "res://verification/"

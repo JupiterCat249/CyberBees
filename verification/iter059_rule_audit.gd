@@ -4,12 +4,12 @@ extends Node
 ## 用途：迭代059 规划前置 —— **不猜**，把 a500 每一条逐条断言，输出覆盖矩阵。
 ## 用法：project_run(mode="custom", scene="res://verification/iter059_rule_audit.tscn")
 
-const Eng := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
-const Command := preload("res://scripts/battle/rules_command.gd")
-const Preview := preload("res://scripts/battle/rules_preview.gd")
+const Eng := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const Command := preload("res://src/battle/rules_command.gd")
+const Preview := preload("res://src/battle/rules_preview.gd")
 
 var _ok := 0
 var _gap := 0
@@ -128,7 +128,7 @@ func _a_combat() -> void:
 	var d := UnitInstance.create(Pool.card("泥蜂") as UnitData, 1, Vector2i(2, 0))
 	d.instance_id = "d"
 	st.board.place(d)
-	var Combat := preload("res://scripts/battle/rules_combat.gd")
+	var Combat := preload("res://src/battle/rules_combat.gd")
 	var before_a: int = a.current_hp
 	var before_d: int = d.current_hp
 	Combat.resolve_attack(a, d, st.board)
@@ -141,7 +141,7 @@ func _a_combat() -> void:
 # ============ 效果 ============
 func _a_effects() -> void:
 	_section("效果 1~7")
-	var Effects := preload("res://scripts/battle/rules_effects.gd")
+	var Effects := preload("res://src/battle/rules_effects.gd")
 	_gap_if("1 相同效果最多一个（不叠加）", true)
 	_gap_if("2 单位类型不匹配则无法赋予", true)
 	var st = _engine().state
@@ -192,7 +192,7 @@ func _a_victory() -> void:
 		e1.state.board.manhattan(atk.cell, q0.cell) <= atk.attack_range())
 	## 泥蜂有 [被动]对蜂王×2 → 伤害远大于 1 血蜂王
 	var hit: bool = e1.request_attack(0, atk, q0)
-	var CombatLib := preload("res://scripts/battle/rules_combat.gd")
+	var CombatLib := preload("res://src/battle/rules_combat.gd")
 	var dbg: int = CombatLib.raw_damage(atk, q0, e1.state.board)
 	var qmax: int = q0.data.hp if q0.data != null else 0
 	_chk("1 击败蜂王触发结束（命中=%s, 原始伤害=%d, 蜂王血=%d/%d, 结束=%s）" % [
@@ -239,7 +239,7 @@ func _a_terrain() -> void:
 			n += 1
 	_chk("6 张地图资源已生成", n >= 6)
 	# 逐张效果能否落地
-	var Effects := preload("res://scripts/battle/rules_effects.gd")
+	var Effects := preload("res://src/battle/rules_effects.gd")
 	var src := FileAccess.get_file_as_string("scripts/battle/rules_effects.gd")
 	_chk("寒潮（回合性掉血）已实现", src.contains("damage_per_round"))
 	var esrc2 := FileAccess.get_file_as_string("scripts/battle/rules_effects.gd")

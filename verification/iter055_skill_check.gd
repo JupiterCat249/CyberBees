@@ -14,7 +14,7 @@ extends Node
 ##   ② 技能落地：被动倍伤 / 部署装甲 / 支援回费 / 回费 / 接触链 / 范围 / 治疗
 ##   ③ 示范卡组不含治疗卡
 
-const Pool := preload("res://scripts/data/card_pool.gd")
+const Pool := preload("res://src/data/card_pool.gd")
 const Combat := preload("res://scripts/game/battle_combat.gd")
 const GameStateScript := preload("res://scripts/game/game_state.gd")
 

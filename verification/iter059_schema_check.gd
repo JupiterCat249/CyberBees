@@ -7,11 +7,11 @@ extends Node
 ##
 ## 用法：project_run(mode="custom", scene="res://verification/iter059_schema_check.tscn")
 
-const Pool := preload("res://scripts/data/card_pool.gd")
-const Combat := preload("res://scripts/battle/rules_combat.gd")
-const Eng := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const Combat := preload("res://src/battle/rules_combat.gd")
+const Eng := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
 
 var _pass := 0
 var _fail := 0

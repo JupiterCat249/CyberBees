@@ -9,8 +9,8 @@ extends Node
 ## 运行：先起本地中继（`npm run start:test`，端口见 `net_config/net.test.json`），再 F6 本场景
 ## ⚠️ GDScript 闭包按值捕获 → 断言状态一律用**成员变量**
 ## ---------------------------------------------------------------------------
-const EngineLib := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
+const EngineLib := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
 const DECK := "res://game_data/decks/示范卡组.tres"
 
 var _pass := 0
