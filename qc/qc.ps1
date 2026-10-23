@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'lint', 'size', 'arch', 'signals', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup')]
+    [ValidateSet('all', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -191,18 +191,28 @@ function Invoke-Signals {
 ## 文档基线漂移（迭代116）：把《当前状态》的「基线快照」行与 counts.json 对账。
 ##   ⚠️ 路径相对**游戏仓根**；文档不存在则 skip（便于在其他机器/单独克隆上运行）。
 function Invoke-Docs {
+    param([switch]$Standalone)
     Assert-Python
     $docOut = Join-Path $Out 'docs.json'
     $docPath = Join-Path $Repo '../../项目规划蓝图/当前状态.md'
-    ## 防御（迭代120）：本闸**必须**在回归闸之后 —— 否则 test:* 计数还没入表，会拿 0 去对账。
+    ## 防御（迭代120）：**全闸模式**下本闸必须在回归闸之后 —— 否则 test:* 计数还没入表，会拿 0 去对账。
+    ##   ⚠️ 单跑（`qc docs`）时不会跑回归闸 ⇒ 复用上一轮 counts.json 对账，并**明说**这是旧数据。
+    $nowCounts = Join-Path $Out 'counts.now.json'
     if (-not $script:Counts.Contains('test:passing')) {
-        Write-Host '[qc] 文档闸：缺少 test:passing 计数 —— 说明它被排在回归闸之前（顺序错误）' -ForegroundColor Red
-        return $false
+        if ($Standalone -and (Test-Path $CountsFile)) {
+            Write-Host '[qc] 单跑 docs：用上一轮 counts.json 对账（全闸模式不允许这样）' -ForegroundColor Yellow
+            $nowCounts = $CountsFile
+        } else {
+            Write-Host '[qc] 文档闸：缺少 test:passing 计数 —— 说明它被排在回归闸之前（顺序错误）' -ForegroundColor Red
+            return $false
+        }
+    } else {
+        ## ⚠️ 必须用**本轮内存计数**（迭代120 冷启动实测）：counts.json 是在 Invoke-Ratchet 里才写的，
+        ##   早先直接读它会拿到**上一轮**的数字（甚至冷启动时根本不存在 ⇒ 闸判红/崩溃）。
+        ($script:Counts | ConvertTo-Json -Depth 4) | Out-File -FilePath $nowCounts -Encoding utf8
     }
     ## ⚠️ 必须用**本轮内存计数**（迭代120 冷启动实测）：counts.json 是在 Invoke-Ratchet 里才写的，
     ##   早先直接读它会拿到**上一轮**的数字（甚至冷启动时根本不存在 ⇒ 闸判红/崩溃）。
-    $nowCounts = Join-Path $Out 'counts.now.json'
-    ($script:Counts | ConvertTo-Json -Depth 4) | Out-File -FilePath $nowCounts -Encoding utf8
     $o = & $Py (Join-Path $QcRoot 'lib\docs_check.py') --counts $nowCounts --doc $docPath --out $docOut 2>&1
     $rc = $LASTEXITCODE
     $o | ForEach-Object { Write-Host ('[qc] ' + $_) }
@@ -330,6 +340,40 @@ function Invoke-Ratchet([switch]$Update) {
     return $LASTEXITCODE
 }
 
+
+## 产物完整性（迭代135）：一次全闸必须**重建**这些产物；缺一个 ⇒ 判红。
+##   为什么需要：2026-10-23 冷启动实测抓到"文档闸读上一轮 counts.json"的 bug ——
+##   那类问题只在"清空产物再跑"时出现，而这条路径此前**没有可执行入口**（只写在手册里）。
+function Confirm-Artifacts {
+    $required = @(
+        'lint.log', 'size.json', 'arch.json', 'graph.json', 'signals.json',
+        'docs.json', 'gutcheck.json', 'gut.log', 'counts.json'
+    )
+    $missing = @()
+    foreach ($f in $required) {
+        $fp = Join-Path $Out $f
+        if (-not (Test-Path $fp)) { $missing += $f }
+    }
+    if ($missing.Count -gt 0) {
+        Write-Host ("[qc] 产物缺失 {0} 个：{1}" -f $missing.Count, ($missing -join ", ")) -ForegroundColor Red
+        return $false
+    }
+    Write-Host ("[qc] 产物齐全：{0} 个 / {1}" -f $required.Count, $Out)
+    return $true
+}
+
+## 冷启动：清空产物 → 跑全闸 → 校验产物齐全（"依赖上一轮产物"的假绿只能在冷启动暴露）
+function Invoke-Coldstart {
+    Write-Host '=== qc · 冷启动验证（清空产物后重跑全闸） ===' -ForegroundColor Cyan
+    if (Test-Path $Out) { Get-ChildItem $Out -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue }
+    $script:Counts = [ordered]@{}
+    $script:GateFailed = $false
+    Invoke-Gates
+    $r = Invoke-Ratchet
+    $artOk = Confirm-Artifacts
+    if ($script:GateFailed -or $r -ne 0 -or (-not $artOk)) { return 1 }
+    return 0
+}
 function Invoke-Selftest {
     # 门禁自检（迭代089）：造已知坏输入，断言每个闸真会红 —— 专治"假绿"复发。
     # 本仓已发现三个「失败路径从未被执行」的 Bug，故把它变成每次 qc all 都会走的常规路径。
@@ -468,12 +512,14 @@ switch ($Command) {
     'size'     { if (Invoke-Size)    { exit 0 } else { exit 1 } }
     'arch'     { if (Invoke-Arch)    { exit 0 } else { exit 1 } }
     'signals'  { if (Invoke-Signals) { exit 0 } else { exit 1 } }
-    'docs'     { if (Invoke-Docs)    { exit 0 } else { exit 1 } }
+    'docs'     { if (Invoke-Docs -Standalone) { exit 0 } else { exit 1 } }
     'test'     { if (Invoke-Test)    { exit 0 } else { exit 1 } }
     'selftest' { if (Invoke-Selftest) { exit 0 } else { exit 1 } }
     'report'   { Show-Report; exit 0 }
     'import'   { Invoke-Import; exit 0 }
     'setup'    { Invoke-Setup; exit 0 }
+    'artifacts' { if (Confirm-Artifacts) { exit 0 } else { exit 1 } }
+    'coldstart' { exit (Invoke-Coldstart) }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
 }
