@@ -61,6 +61,12 @@ static func build(state, sel_kind: int, hand_index: int, sel_unit: UnitInstance,
 		2:
 			if not can_act:
 				return PV.make(K.Kind.NONE)
+			## ⭐ 迭代143（人 2026-10-23）：**已选目标（待确认）** ⇒ 预览收缩到这一对，给出双向后果。
+			##   此前 `pending_cell` 被忽略 ⇒ 第二步与第一步预览完全相同（"选完目标没变化"）。
+			if pending_cell.x >= 0 and sel_unit != null:
+				var pv_pair = _pending_attack_preview(state, sel_unit, pending_cell)
+				if pv_pair != null:
+					return pv_pair
 			return _unit_preview(state, sel_unit)
 		3:
 			if not can_act:
@@ -165,6 +171,29 @@ static func command_targets(state, side: int, cd: CommandData) -> Array:
 #  单位：移动格 + 攻击目标
 # ============================================================
 
+## 已锁定攻击目标（待确认）的**双向**预览：
+##   目标卡：我打它多少（dmg / 是否击杀 / 是否被抵挡）
+##   我方卡：它反击我多少（`incoming`；0 = 无反击）
+## 返回 null = 该格不是可攻击的敌方单位（交回普通单位预览）
+static func _pending_attack_preview(state, inst: UnitInstance, cell: Vector2i):
+	var foe = state.board.unit_at(cell)
+	if foe == null or int(foe.side) == int(inst.side) or not foe.is_alive():
+		return null
+	var fc: Dictionary = Combat.preview_attack(inst, foe, state.board)
+	var pv: Resource = PV.make(K.Kind.ATTACK, "确认攻击")
+	pv.add_cell(cell, K.Kind.ATTACK, true)
+	pv.add_unit(foe, K.Kind.ATTACK)
+	pv.add_hint(foe, {"dmg": int(fc["damage_to_defender"]), "hp": foe.current_hp,
+		"lethal": int(fc["damage_to_defender"]) >= foe.current_hp,
+		"blocked": Combat.has_defense_effect(foe)})
+	## 我方卡上的"被反击"读数（无反击 = 0，按人 2026-10-23 口径**仍然显示**）
+	pv.add_hint(inst, {"incoming": int(fc["damage_to_attacker"]),
+		"incoming_lethal": int(fc["damage_to_attacker"]) >= inst.current_hp,
+		"incoming_valid": bool(fc["counter_valid"]),
+		"incoming_blocked": Combat.has_defense_effect(inst)})
+	return pv
+
+
 static func _unit_preview(state, inst: UnitInstance) -> PreviewData:
 	if inst == null:
 		return PV.make(K.Kind.NONE)
@@ -182,11 +211,15 @@ static func _unit_preview(state, inst: UnitInstance) -> PreviewData:
 		var all: Array[UnitInstance] = state.board.all_units()
 		for u in state.board.attackable(inst, all):
 			pv.add_unit(u, K.Kind.ATTACK)        ## ⚠️ 显式 ATTACK，不能沿用顶层 kind
-			## ⭐ 迭代093（人 2026-10-23）：**攻击后果**也在这里算（视图不重算规则）——
-			##   与真正结算共用 RulesCombat.raw_damage，预览数字不会和实打结果漂移。
-			var dmg: int = Combat.raw_damage(inst, u, state.board)
-			pv.add_hint(u, {"dmg": dmg, "hp": u.current_hp, "lethal": dmg >= u.current_hp,
-				"blocked": Combat.has_defense_effect(u)})
+			## ⭐ 迭代093/143（人 2026-10-23）：**双向后果** —— 我打它多少 + **它反击我多少**。
+			##   与真正结算共用 RulesCombat.preview_attack（纯函数），预览数字不会和实打漂移。
+			var fc: Dictionary = Combat.preview_attack(inst, u, state.board)
+			pv.add_hint(u, {"dmg": int(fc["damage_to_defender"]), "hp": u.current_hp,
+				"lethal": int(fc["damage_to_defender"]) >= u.current_hp,
+				"blocked": Combat.has_defense_effect(u),
+				"counter_dmg": int(fc["damage_to_attacker"]),
+				"counter_valid": bool(fc["counter_valid"]),
+				"counter_lethal": int(fc["damage_to_attacker"]) >= inst.current_hp})
 	return pv
 
 

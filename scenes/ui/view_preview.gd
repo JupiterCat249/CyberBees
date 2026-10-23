@@ -8,6 +8,8 @@ const PreviewKind := preload("res://scripts/battle/preview_kind.gd")
 const Fx := preload("res://scenes/ui/view_fx.gd")
 ## 预览后果浮字颜色＝伤害红（与 arena_view.COL_DAMAGE 同色；0.9 透明度＝提示而非结算）
 const HINT_COLOR := Color(1.0, 0.125, 0.0, 0.9)
+## 反击浮字色（橙黄；与伤害红区分。批2 迁入 FxParams 资源）
+const HINT_COLOR_INCOMING := Color(1.0, 0.62, 0.12, 0.9)
 
 static func render(cells: Dictionary, unit_nodes: Dictionary, preview: Resource,
 		engine, find_unit: Callable, fx_root: Control = null,
@@ -94,6 +96,14 @@ static func render(cells: Dictionary, unit_nodes: Dictionary, preview: Resource,
 			if card == null or not is_instance_valid(card):
 				continue
 			var info: Dictionary = preview.hints[id]
+			if info.has("incoming"):
+				## 我方卡：**被反击**的预计数值（人 2026-10-23：无反击显示 0，不隐藏）
+				var inc: int = int(info.get("incoming", 0))
+				var itxt := "反击 0" if inc <= 0 else "反击 -%d" % inc
+				if inc > 0 and bool(info.get("incoming_lethal", false)):
+					itxt = "反击 -%d 阵亡" % inc
+				Fx.preview_hint(fx_root, float_scene, card, itxt, HINT_COLOR_INCOMING)
+				continue
 			var dmg: int = int(info.get("dmg", 0))
 			var txt := "-%d" % dmg
 			if bool(info.get("blocked", false)):
