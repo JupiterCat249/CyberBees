@@ -13,6 +13,7 @@
   · GUT 校验：全部加载 → 0；日志含解析错误 → 1；磁盘数 ≠ 加载数 → 1
   · lint 豁免：双向一致 → 0；新债未登记 → 1；豁免陈旧 → 1
   · 体积预警：达 91% 有预警但**不判红**；50% 无预警
+  · 体积口径：注释行不计入（注释多代码少必须绿）；代码超限必须红
   · 信号登记：全登记 → 0；新出现未登记 → 1；登记陈旧 → 1
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
@@ -515,6 +516,36 @@ def test_signals_accept(tmp, python):
     record("信号登记：陈旧登记必须红", rc == 1 and "STALE" in txt, "rc=%d" % rc)
 
 
+
+def test_size_measure_code(tmp, python):
+    """体积口径反例（迭代144 · 人 2026-10-23）：**只看生产代码** —— 注释/空行不计入上限。"""
+    pol = os.path.join(tmp, "m_policy.json")
+    with open(pol, "w", encoding="utf-8") as f:
+        json.dump({"max_lines": 100, "max_bytes": 100000, "include_ext": [".gd"],
+                   "exclude_dirs": [], "warn_ratio": 0.9, "measure": "code"}, f)
+    base = os.path.join(tmp, "m_base.json")
+    with open(base, "w", encoding="utf-8") as f:
+        json.dump({"exempt": {}}, f)
+    repo = os.path.join(tmp, "m_repo")
+    os.makedirs(repo, exist_ok=True)
+
+    def run_size(out, name="m_o.json"):
+        return run([python, SIZE_CHECK, "--repo", repo, "--policy", pol,
+                    "--baseline", base, "--out", os.path.join(tmp, out)])
+
+    heavy = os.path.join(repo, "heavy_comments.gd")
+    with open(heavy, "w", encoding="utf-8") as f:
+        # 10 行代码 + 500 行注释（含空行）⇒ 按"只看代码"口径必须绿
+        f.write("extends Node\n" + "var a := 1\n" * 9)
+        f.write("\n" + "# 注释\n" * 250 + "\n")
+    rc, txt = run_size("m_o1.json")
+    record("体积口径：注释不计入（注释多代码少必须绿）", rc == 0, "rc=%d" % rc)
+
+    with open(heavy, "w", encoding="utf-8") as f:
+        f.write("extends Node\n" + "var a := 1\n" * 101)   # 102 行代码 ⇒ 超限
+    rc, txt = run_size("m_o2.json")
+    record("体积口径：代码超限必须红", rc == 1, "rc=%d" % rc)
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -537,6 +568,8 @@ def main():
         test_lint_exempt(tmp, python)
         print("[qc] selftest 体积预警")
         test_size_warn(tmp, python)
+        print("[qc] selftest 体积口径")
+        test_size_measure_code(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:

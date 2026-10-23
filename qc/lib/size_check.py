@@ -55,6 +55,8 @@ def main():
     warnings = []
     used = {}
     max_seen_lines = 0
+    max_code_lines = 0
+    max_code_bytes = 0
     max_seen_bytes = 0
     over_cap = 0
     for path in files:
@@ -65,34 +67,46 @@ def main():
             continue
         nbytes = len(raw)
         nlines = raw.count(b"\n") + (0 if raw.endswith(b"\n") or nbytes == 0 else 1)
+        ## ⭐ 迭代144（人 2026-10-23 口径）：**注释单独归类** —— 审计只看生产代码；
+        ##   注释行与空行不计入上限判定（仍计入 total_* 供报告参考）。
+        text = raw.decode("utf-8", errors="replace")
+        code_lines, code_bytes = 0, 0
+        for ln in text.split("\n"):
+            st = ln.strip()
+            if st == "" or st.startswith("#"):
+                continue
+            code_lines += 1
+            code_bytes += len(ln.encode("utf-8")) + 1
         max_seen_lines = max(max_seen_lines, nlines)
         max_seen_bytes = max(max_seen_bytes, nbytes)
-        over = nlines > max_lines or nbytes > max_bytes
+        max_code_lines = max(max_code_lines, code_lines)
+        max_code_bytes = max(max_code_bytes, code_bytes)
+        over = code_lines > max_lines or code_bytes > max_bytes
         if over:
             over_cap += 1
         rec = exempt.get(rel)
         if over and rec is None:
-            violations.append({"kind": "NEW_OVERSIZE", "file": rel, "lines": nlines, "bytes": nbytes,
+            violations.append({"kind": "NEW_OVERSIZE", "file": rel, "lines": code_lines, "bytes": code_bytes,
                                "why": "超过上限且未登记祖父条款（新文件不允许一出生就超限）"})
         elif over and rec is not None:
-            used[rel] = {"lines": nlines, "bytes": nbytes}
+            used[rel] = {"lines": code_lines, "bytes": code_bytes}
             allow_lines = int(rec.get("lines", 0))
             allow_bytes = int(rec.get("bytes", 0))
             if nlines > allow_lines or nbytes > allow_bytes:
                 violations.append({"kind": "GREW", "file": rel,
-                                   "lines": nlines, "allow_lines": allow_lines,
-                                   "bytes": nbytes, "allow_bytes": allow_bytes,
+                                   "lines": code_lines, "allow_lines": allow_lines,
+                                   "bytes": code_bytes, "allow_bytes": allow_bytes,
                                    "why": "祖父条款只许变小：超限文件不得再生长"})
         elif (not over) and rec is not None:
-            violations.append({"kind": "STALE_EXEMPT", "file": rel, "lines": nlines,
+            violations.append({"kind": "STALE_EXEMPT", "file": rel, "lines": code_lines,
                                "why": "已降到上限以下 —— 请从 size_baseline.json 移除该条"})
         if (not over):
             ## P3（迭代127）：**预警线** —— 只提示不判红，让"快撞线"提前可见。
             ##   exempt 里的文件本来就超限（由祖父条款管），不再重复预警以免噪声。
-            lr = nlines / float(max_lines) if max_lines else 0.0
-            br = nbytes / float(max_bytes) if max_bytes else 0.0
+            lr = code_lines / float(max_lines) if max_lines else 0.0
+            br = code_bytes / float(max_bytes) if max_bytes else 0.0
             if max(lr, br) >= warn_ratio:
-                warnings.append({"file": rel, "lines": nlines, "bytes": nbytes,
+                warnings.append({"file": rel, "lines": code_lines, "bytes": code_bytes,
                                  "lines_ratio": round(lr, 3), "bytes_ratio": round(br, 3),
                                  "why": "已达上限的 %.1f%%（soft 预警，不判红）" % (max(lr, br) * 100)})
     for rel in exempt:
@@ -106,6 +120,8 @@ def main():
         "files": len(files),
         "over_cap": over_cap,
         "max_lines": max_seen_lines,
+        "max_code_lines": max_code_lines,
+        "max_code_bytes": max_code_bytes,
         "max_bytes": max_seen_bytes,
         "exempt_count": len(exempt),
         "exempt_used": used,
@@ -138,8 +154,8 @@ def main():
         if not changed and not dropped:
             print("  祖父条款无需调整")
 
-    print("files=%d  over_cap=%d  max_lines=%d  max_bytes=%d  exempt=%d"
-          % (len(files), over_cap, max_seen_lines, max_seen_bytes, len(exempt)))
+    print("files=%d  over_cap=%d  max_code_lines=%d  max_code_bytes=%d  exempt=%d"
+          % (len(files), over_cap, max_code_lines, max_code_bytes, len(exempt)))
     for w in warnings:
         print("  [预警] %s  %d 行 / %d 字节（%s）" % (w["file"], w["lines"], w["bytes"], w["why"]))
     for v in violations:

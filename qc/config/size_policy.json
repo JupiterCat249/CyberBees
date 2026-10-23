@@ -1,5 +1,5 @@
 {
-  "$comment": "文件体积/行数门禁（迭代082）。规则：① 单文件不得超过 max_lines / max_bytes；② 超限的历史文件必须登记在 size_baseline.json 的 exempt 里，且**只许变小**（长一行就红）；③ 掉到上限以下后必须从 exempt 移除（不许挂着占位）。由 qc/lib/size_check.py 执行，`qc all`（含 pre-commit 钩子）每次执行。",
+  "$comment": "文件体积/行数门禁。**口径（人 2026-10-23）**：体积审计**只看生产代码** —— 注释行与空行单独归类、不计入上限判定（仍计入 total_* 供报告参考）。规则：① 单文件**代码**行/字节不得超过 max_lines / max_bytes；② 超限的历史文件必须登记在 size_baseline.json 的 exempt 里且只许变小；③ 掉到上限以下后必须移除登记；④ 未超限但达 warn_ratio（默认 0.9）时只打印 [预警]、不判红。由 qc/lib/size_check.py 执行。",
   "max_lines": 1000,
   "max_bytes": 65536,
   "warn_lines": 800,
@@ -14,5 +14,6 @@
   ],
   "include_ext": [
     ".gd"
-  ]
+  ],
+  "measure": "code"
 }
