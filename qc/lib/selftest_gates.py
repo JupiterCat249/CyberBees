@@ -9,6 +9,7 @@
   · 架构闸：禁止依赖 → layer_violations>0 且退出码 1；干净图 → 0
   · 信号闸：死信号 / 只发不收 → 退出码 1；@dead 豁免 → 0；动态发射 → 计入 undetectable 且不假绿；总线缺失 → 2
   · 棘轮：债务上升必红、持平/下降必绿、覆盖率下跌必红、info 类上升不算红、新指标不算红、有上升项时拒绝写回
+  · 文档基线：与实测一致 → 0；漂移 → 1；文档缺失 → 0（skip）
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
 """
@@ -24,6 +25,7 @@ SIZE_CHECK = os.path.join(HERE, "size_check.py")
 ARCH_CHECK = os.path.join(HERE, "arch_check.py")
 SIGNALS_CHECK = os.path.join(HERE, "signals_check.py")
 RATCHET = os.path.join(HERE, "ratchet.py")
+DOCS_CHECK = os.path.join(HERE, "docs_check.py")
 
 results = []
 
@@ -300,6 +302,42 @@ def test_size_tighten(tmp, python):
            "rc=%d lines=%s" % (rc, ex4.get("a/big.gd")))
 
 
+def test_docs_check(tmp, python):
+    """文档基线漂移反例（迭代116）：那行数字是手改的，必须被对账钉住。"""
+    counts = {
+        "lint:total": 6, "test:passing": 113, "test:asserts": 404,
+        "qc:selftest_failures": 0,
+        "size:arena_view": 1720, "size:battle_engine": 995, "size:net_diag_dump": 721,
+        "signals:declared": 24, "signals:problems": 0,
+    }
+    cpath = os.path.join(tmp, "d_counts.json")
+    with open(cpath, "w", encoding="utf-8") as f:
+        json.dump(counts, f)
+
+    def write_doc(name, line):
+        p = os.path.join(tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("# 状态\n\n" + line + "\n")
+        return p
+
+    def run_docs(doc, out):
+        return run([python, DOCS_CHECK, "--counts", cpath, "--doc", doc, "--out", os.path.join(tmp, out)])
+
+    ok_doc = write_doc("d_ok.md",
+        "> **基线快照**：lint=6 · tests=113/404 · selftest=0 · size=1720/995/721 · signals=24/0")
+    rc, txt = run_docs(ok_doc, "d_o1.json")
+    record("文档基线：一致必须绿", rc == 0 and "一致" in txt, "rc=%d" % rc)
+
+    bad_doc = write_doc("d_bad.md",
+        "> **基线快照**：lint=99 · tests=113/404 · selftest=0 · size=1720/995/721 · signals=24/0")
+    rc, txt = run_docs(bad_doc, "d_o2.json")
+    record("文档基线：漂移必须红", rc == 1 and "lint" in txt, "rc=%d" % rc)
+
+    missing = os.path.join(tmp, "d_missing.md")
+    rc, txt = run_docs(missing, "d_o3.json")
+    record("文档基线：文档缺失应 skip", rc == 0 and "skip" in txt, "rc=%d" % rc)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -314,6 +352,8 @@ def main():
         test_ratchet(tmp, python)
         print("[qc] selftest 体积收紧")
         test_size_tighten(tmp, python)
+        print("[qc] selftest 文档基线")
+        test_docs_check(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

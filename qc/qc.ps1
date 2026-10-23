@@ -167,6 +167,19 @@ function Invoke-Signals {
     return $ok
 }
 
+
+## 文档基线漂移（迭代116）：把《当前状态》的「基线快照」行与 counts.json 对账。
+##   ⚠️ 路径相对**游戏仓根**；文档不存在则 skip（便于在其他机器/单独克隆上运行）。
+function Invoke-Docs {
+    Assert-Python
+    $docOut = Join-Path $Out 'docs.json'
+    $docPath = Join-Path $Repo '../../项目规划蓝图/当前状态.md'
+    $o = & $Py (Join-Path $QcRoot 'lib\docs_check.py') --counts (Join-Path $Out 'counts.json') --doc $docPath --out $docOut 2>&1
+    $rc = $LASTEXITCODE
+    $o | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    Add-Count 'docs:drift' ($(if ($rc -eq 1) { 1 } else { 0 }))
+    return ($rc -eq 0)
+}
 function Invoke-GutRun([string]$GodotBin) {
     return @(& $GodotBin --headless --path $Repo -s 'addons/gut/gut_cmdln.gd' -gdir='res://tests' -gexit 2>&1 | ForEach-Object { $_.ToString() })
 }
@@ -302,6 +315,7 @@ function Invoke-Gates {
     if (-not (Invoke-Size))     { $script:GateFailed = $true }
     if (-not (Invoke-Arch))     { $script:GateFailed = $true }
     if (-not (Invoke-Signals))  { $script:GateFailed = $true }
+    if (-not (Invoke-Docs))     { $script:GateFailed = $true }
     if (-not (Invoke-Test))     { $script:GateFailed = $true }
     Write-Host ''
     if ($script:GateFailed) { Write-Host '[qc] 有闸未通过（见上方红色/明细）—— 退出码将非零' -ForegroundColor Red }
@@ -410,6 +424,7 @@ switch ($Command) {
     'size'     { if (Invoke-Size)    { exit 0 } else { exit 1 } }
     'arch'     { if (Invoke-Arch)    { exit 0 } else { exit 1 } }
     'signals'  { if (Invoke-Signals) { exit 0 } else { exit 1 } }
+    'docs'     { if (Invoke-Docs)    { exit 0 } else { exit 1 } }
     'test'     { if (Invoke-Test)    { exit 0 } else { exit 1 } }
     'selftest' { if (Invoke-Selftest) { exit 0 } else { exit 1 } }
     'report'   { Show-Report; exit 0 }
