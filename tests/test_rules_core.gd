@@ -110,11 +110,8 @@ func test_deployed_unit_has_no_action_this_turn() -> void:
 	var inst: UnitInstance = e.state.board.unit_at(cell)
 	assert_true(inst.has_moved, "新部署单位应视为已移动")
 	assert_true(inst.has_acted, "新部署单位应视为已行动")
-	## ⭐ 迭代093（人 2026-10-23「除蜂王外都有一层奇怪的淡蓝色滤镜」）——
-	##   规则上"部署当回合没有行动机会"要挡，但**视图不能把它当成"已行动"上冷灰蓝**。
-	assert_true(inst.just_deployed, "新部署单位应带『刚部署』标记")
+	## 迭代094：「已行动改色」临时移除 ⇒ 视图不再需要"刚部署"标记；这里只锁规则本身。
 	inst.reset_turn_flags()
-	assert_false(inst.just_deployed, "回合重置后『刚部署』应清掉")
 	assert_false(inst.has_acted, "回合重置后行动机会应恢复")
 
 

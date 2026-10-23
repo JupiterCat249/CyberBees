@@ -51,9 +51,9 @@ var unit_id := ""
 ## ⭐ 迭代064 UI-11：设计色卡（`电子蜂A5策划案.md`）——亮橙 = 部署费用；深灰 = 蜂王回费量
 const COST_COLOR := Color("#FFA300")
 const REFUND_COLOR := Color("#5D5D5D")
-## ⭐ 迭代064 UI-16：已行动的单位卡做视觉差分（冷灰蓝压暗）
-##   ⚠️ 刻意不用 `Color(0.65,0.65,0.65)` —— 那是**手牌"不可用"的中性灰**，语义不同，避免撞色
-const ACTED_TINT := Color(0.62, 0.68, 0.78, 1)
+## ⚠️ 迭代094（人 2026-10-23 裁定）：「已行动 ＝ 冷灰蓝压暗」（迭代064 UI-16）**临时移除** ——
+##   它与真实设计不符，正式版会把"行动消耗"做成另一套机制（尚未设计）。
+##   ⇒ **不要在这里自己补一套替代色**（任何自造差分都会再次误导玩家）；等正式机制定稿再实现。
 
 
 func bind(data: Dictionary) -> void:
@@ -70,9 +70,9 @@ func bind(data: Dictionary) -> void:
 	else:
 		_set_text("CostPlate/Cost", str(data.get("cost", 0)))
 		_set_prop("CostPlate/Cost", "theme_override_colors/font_color", COST_COLOR)
-	## ⭐ 迭代064 UI-16（清单「双方单位需要有是否行动过的 UI 差分」）：
-	##   已行动（a500：使用主动攻击/支援后行动结束）→ 冷灰蓝压暗，一眼看出它本回合已用完。
-	modulate = ACTED_TINT if bool(data.get("acted", false)) else Color(1, 1, 1, 1)
+	## 迭代094：**不再按"是否行动过"改色**（临时移除，理由见文件上方）—— 一律恢复中性白。
+	##   ⚠️ 这一行**必须保留**：它还负责清掉场景里烤入的暗色 modulate（否则可出的牌也会显灰）。
+	modulate = Color(1, 1, 1, 1)
 	## ⭐ 迭代064 遗留修复（人 2026-10-05「第一回合第一个发起攻击的单位有时会奇怪的变黑」）防复发：
 	##   `modulate` 会被**动画系统**（淡入/闪红/退场）临时改写，而 `self_modulate` 是**本节点单独**乘子 ——
 	##   场景里曾烤入 `self_modulate = Color(0,0,0,1)`（纯黑，见 B8 的 `Mover` 同源坑），

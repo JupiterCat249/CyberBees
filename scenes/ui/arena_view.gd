@@ -1721,9 +1721,7 @@ func _unit_view(inst: UnitInstance, _cell: Vector2i) -> Dictionary:
 		"cost": inst.data.cost if inst.data != null else 0,
 		## ⭐ 迭代064 UI-11：设计口径要求**蜂王左上角显示"每回合回费量"而非部署费用** ⇒ 一并下发
 		"refund": inst.data.refund if inst.data != null else 0,
-		## ⭐ 迭代064 UI-16：**是否已行动**（a500：使用主动攻击/支援后行动结束）—— 卡面据此做视觉差分。
-		##   联机下两侧单位都读同一份引擎状态（对局经 op 回放保持同步）⇒ 对手单位的"行动过"同样看得出。
-		"acted": inst.has_acted and not inst.just_deployed,
+		## 迭代094：「已行动改色」已临时移除 ⇒ 视图不再下发 acted（正式机制定稿后在此重新接入）。
 		"atk": inst.atk(),
 		"hp": inst.current_hp,
 		"move": inst.move_range(),
