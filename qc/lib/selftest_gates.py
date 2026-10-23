@@ -633,6 +633,36 @@ def test_bug_binding(tmp, python):
     rc, txt = run_bb(cfg, "bb_o3.json")
     record("缺陷绑定：用例名不存在必须红", rc == 1 and "TEST_NAME_MISSING" in txt, "rc=%d" % rc)
 
+
+def test_sync_docs(tmp, python):
+    """数字单一来源反例（迭代157 · 第三轮 S1/WS6）：check 必须能发现手写差异，write 必须修好。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sync_docs.py")
+    counts = os.path.join(tmp, "sd_counts.json")
+    json.dump({"lint:total": 5, "test:passing": 147, "test:asserts": 705,
+               "qc:selftest_failures": 0, "qc:selftest_total": 49,
+               "size:arena_view": 1656, "size:battle_engine": 995, "size:net_diag_dump": 721,
+               "signals:declared": 24, "signals:problems": 0, "signals:undetectable": 5},
+              open(counts, "w", encoding="utf-8"))
+
+    def write_doc(name, status_line):
+        p = os.path.join(tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("# 状态\n\n"
+                    "> **基线快照**（机器可读）：lint=99 · tests=1/2 · selftest=9 · size=1/2/3 · signals=1/1\n\n"
+                    + status_line + "\n")
+        return p
+
+    stale = write_doc("sd_stale.md", "> **收尾状态**（iter0）：自检 **1/1** · lint **9** · 体积 **1 / 2 / 3** · 回归 **1 测试 / 2 断言**")
+    rc, txt = run([python, CHECK, "--counts", counts, "--doc", stale, "--iteration", "iterT", "--check"])
+    record("数字单一来源：手写差异必须被 check 发现", rc == 1, "rc=%d" % rc)
+
+    rc2, _ = run([python, CHECK, "--counts", counts, "--doc", stale, "--iteration", "iterT", "--exemptions", "5"])
+    rc3, _ = run([python, CHECK, "--counts", counts, "--doc", stale, "--iteration", "iterT", "--check"])
+    body = open(stale, encoding="utf-8").read()
+    ok = (rc2 == 0 and rc3 == 0 and "lint=5" in body and "tests=147/705" in body
+          and "自检 **49/49**" in body and "豁免 5" in body)
+    record("数字单一来源：write 后必须与 counts 一致", ok, "rc2=%d rc3=%d" % (rc2, rc3))
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -661,6 +691,8 @@ def main():
         test_layout_gate(tmp, python)
         print("[qc] selftest 缺陷绑定")
         test_bug_binding(tmp, python)
+        print("[qc] selftest 数字单一来源")
+        test_sync_docs(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:

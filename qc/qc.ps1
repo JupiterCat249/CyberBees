@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
+    [ValidateSet('all', 'bugbind', 'syncdocs', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -428,7 +428,27 @@ function Invoke-BugBind {
     return $ok
 }
 
+
+## 数字单一来源（迭代157 · S1/WS6）：跑全闸后用**本轮计数**重写《当前状态》两行。
+##   为什么必须跑全闸：counts 只有在各闸执行后才齐（尤其回归闸的 test:*）。
+function Invoke-SyncDocs {
+    param([string]$Iteration = "")
+    Assert-Python
+    Invoke-Gates -SkipDocs
+    if ($script:GateFailed) { Write-Host "[qc] 有闸未通过 —— 先修闸再同步文档" -ForegroundColor Red; return $false }
+    $nowCounts = Join-Path $Out 'counts.now.json'
+    ($script:Counts | ConvertTo-Json -Depth 4) | Out-File -FilePath $nowCounts -Encoding utf8
+    $docPath = Join-Path $Repo '../../项目规划蓝图/当前状态.md'
+    $args = @((Join-Path $QcRoot 'lib\sync_docs.py'), '--counts', $nowCounts, '--doc', $docPath)
+    if ($Iteration -ne '') { $args += @('--iteration', $Iteration) }
+    & $Py @args 2>&1 | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    if ($LASTEXITCODE -ne 0) { return $false }
+    ## 同步后再用文档闸复验（证明写进去的和 counts 真的一致）
+    return (Invoke-Docs -Standalone)
+}
+
 function Invoke-Gates {
+    param([switch]$SkipDocs)
     # 钩子自检：core.hooksPath 是**本地配置**，新克隆不会自动生效 → 每次全闸都提醒一次
     $hp = (& git -C $Repo config --get core.hooksPath 2>$null)
     if ((("$hp").Trim()) -ne 'qc/hooks') {
@@ -448,7 +468,7 @@ function Invoke-Gates {
     if (-not (Invoke-Arch))     { $script:GateFailed = $true }
     if (-not (Invoke-Signals))  { $script:GateFailed = $true }
     if (-not (Invoke-Test))     { $script:GateFailed = $true }
-    if (-not (Invoke-Docs))     { $script:GateFailed = $true }
+    if (-not $SkipDocs) { if (-not (Invoke-Docs)) { $script:GateFailed = $true } }
     Write-Host ''
     if ($script:GateFailed) { Write-Host '[qc] 有闸未通过（见上方红色/明细）—— 退出码将非零' -ForegroundColor Red }
 }
@@ -554,6 +574,7 @@ switch ($Command) {
     # 单闸的退出码必须反映该闸结果 —— 曾一律 exit 0，导致"单闸永远绿"的假象（迭代082 修）
     'layout'   { if (Invoke-Layout)  { exit 0 } else { exit 1 } }
     'bugbind'  { if (Invoke-BugBind) { exit 0 } else { exit 1 } }
+    'syncdocs' { if (Invoke-SyncDocs -Iteration $Iteration) { exit 0 } else { exit 1 } }
     'lint'     { if (Invoke-Lint)    { exit 0 } else { exit 1 } }
     'size'     { if (Invoke-Size)    { exit 0 } else { exit 1 } }
     'arch'     { if (Invoke-Arch)    { exit 0 } else { exit 1 } }
