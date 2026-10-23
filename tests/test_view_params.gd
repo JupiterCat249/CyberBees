@@ -165,3 +165,18 @@ func test_badge_value_fills_badge_and_uses_project_font() -> void:
 	assert_true(f is FontFile, "费用数字应绑定具体字体文件（不是 SystemFont）")
 	var fp := String(f.resource_path)
 	assert_true(fp.contains("NotoSansSC"), "应为项目自带 NotoSansSC：%s" % fp)
+
+func test_detail_attr_icon_keeps_scene_size() -> void:
+	## ⭐ 人 2026-10-23 裁定：详情区**以场景设计为权威** —— 属性行图标保持场景值（40×40），
+	##   参数（默认 24×24）**不得**缩小它；若冲突，应改参数而不是改设计。
+	_scene.apply_params()
+	await wait_frames(1)
+	var attrs = _scene.get_node_or_null("HUD/InfoPanel/Attributes")
+	assert_not_null(attrs, "前置：应有属性行容器")
+	var row = attrs.get_node_or_null("Attack")
+	assert_not_null(row, "四维行应以**真实节点名**存在（不是 Row1）")
+	var ic: TextureRect = row.get_node_or_null("Icon")
+	assert_not_null(ic, "前置：该行应有 Icon")
+	var prm = _scene.get("detail_params")
+	assert_ne(ic.size, prm.attr_icon_size, "图标尺寸不得被参数覆盖（参数 %s）" % str(prm.attr_icon_size))
+	assert_true(ic.size.x >= 30.0, "场景图标应保持设计尺寸（实测 %s）" % str(ic.size))

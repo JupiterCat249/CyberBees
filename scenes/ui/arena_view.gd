@@ -49,6 +49,8 @@ const UnitModel := preload("res://scenes/ui/view_unit_model.gd")
 const Cards := preload("res://scenes/ui/view_cards.gd")
 const CardArt := preload("res://scenes/ui/view_card_art.gd")
 const CardParams := preload("res://scenes/ui/view_card_params.gd")
+## 图标参数冲突只提示一次（场景为权威）
+var _detail_icon_warned := false
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
 const ATTR_ROWS := ["Attack", "Health", "Speed", "Range"]
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
@@ -357,9 +359,8 @@ func _connect_static_ui() -> void:
 	_make_overlays_click_through()
 
 
-## ⭐ 把所有扫描线特效层（`CrtFx`）设为**鼠标透明**
-##
-## 为什么必须做（迭代058 实测定案）：
+## ⭐ 扫描线特效层（`CrtFx`）必须鼠标透明（迭代058 实测定案）：
+##   它在场景里被撑成 1920×1080（单位卡只有 250×250）且 mouse_filter=STOP ⇒ 盖住整个棋盘、吞掉所有点击
 ##   `card_unit.tscn` / `card_hand.tscn` 的 `Artwork/ArtPlane/CrtFx` 是**扫描线叠加层**，
 ##   它在场景里被撑成 **1920×1080**（单位卡本身只有 250×250），且 `mouse_filter` 为默认 **STOP**。
 ##   于是它**盖住整个棋盘区**，把单位卡与格子的点击**全部吞掉** ——
@@ -442,14 +443,10 @@ func _fit_window_to_design() -> void:
 # ============================================================
 #  🧪 运行环境自测（2026-10-08 新增 · 为"异机不一致"提供可取证手段）
 # ============================================================
-## 为什么需要：本项目的 UI 坐标是**设计分辨率 1920×1080 下的绝对像素**，
-##   而 `canvas_items + expand` 在不同窗口/屏幕/缩放下会给到**不同的实际渲染区** ⇒
-##   "本机正常、别的机器下移/越界"。**不能靠假设两边一致，必须在运行时实测**。
-## 用法（任意机器、任意窗口大小）：
-##   · 游戏运行中按 **F8** → 控制台打印「实际视口 / Canvas 变换 / 各关键节点的全局矩形」，
-##     并存一张整屏 PNG 到 `user://diag_YYYYmmdd_HHMMSS.png`（可直接发回来核对）。
-##   · 想换尺寸复测：F11 全屏 / 拖动窗口 / 改 `[display] window/size` 后重跑，再按 F8。
-## 口径：`get_global_rect()` 是**渲染后的真实屏幕坐标**（含 canvas 变换）⇒ 可直接与视口比较判越界。
+## 为什么必须实测：UI 坐标是 1920×1080 下的**绝对像素**，而 `canvas_items+expand` 在异机/异窗口
+##   下给到的实际渲染区不同（"本机正常、别的机器越界"）⇒ 不能假设两边一致。
+## 用法：运行中按 **F8** ⇒ 打印实际视口/Canvas 变换/关键节点全局矩形 + 存整屏 PNG 到 `user://`；
+##   换尺寸复测（F11 / 拖窗 / 改 `[display]`）再按 F8。`get_global_rect()` 是渲染后真实屏幕坐标。
 ## 诊断实现已切到 scenes/ui/view_diagnostics.gd（迭代073 · B5 第一刀）
 const Diag := preload("res://scenes/ui/view_diagnostics.gd")
 ## ⚠️ 保留同名常量：net_diag_dump.gd 以 DIAG_NODES 作静态指纹，改名会打断取证口径
@@ -703,8 +700,7 @@ func _apply_detail_params() -> void:
 		var fit: Vector2 = frame.size if frame != null else p.art_size
 		portrait.size = fit if (fit.x > 1.0 and fit.y > 1.0) else p.art_size
 		portrait.position = Vector2.ZERO
-		## 垂直微调：**优先读 `Portrait` 节点上的 `metadata/art_offset_y`**（编辑器可改、可观察），
-		## 回退 `DetailParams.art_offset_y`（默认 0）。⚠️ 不动比例、不改字号。
+		## 垂直微调：meta `art_offset_y`（编辑器可调可观察）优先，回退参数；不动比例、不改字号。
 		var off_y: float = p.art_offset_y
 		if portrait.has_meta("art_offset_y"):
 			off_y = float(portrait.get_meta("art_offset_y"))
@@ -714,8 +710,9 @@ func _apply_detail_params() -> void:
 		## ⚠️ 不设 `label`/`clip`：立绘源图与框同量级时按比例居中即可
 	var attrs := $HUD/InfoPanel/Attributes
 	if attrs != null:
-		for i in int(p.attr_rows):
-			var row := attrs.get_node_or_null("Row%d" % (i + 1))
+		## ⚠️ 行名以 ATTR_ROWS 为唯一来源（场景里叫 Attack/Health/Speed/Range，**没有** Row1..Row4）
+		for i in mini(int(p.attr_rows), ATTR_ROWS.size()):
+			var row := attrs.get_node_or_null(String(ATTR_ROWS[i]))
 			if row == null:
 				continue
 			var v: Label = row.get_node_or_null("Value")
@@ -723,9 +720,12 @@ func _apply_detail_params() -> void:
 			##   人 2026-09-19：不要改字号 —— 之前这里把 42 覆盖成 24 导致属性区字号变小
 			if v != null and int(p.attr_value_font_size) > 0:
 				v.add_theme_font_size_override("font_size", int(p.attr_value_font_size))
+			## ⭐ 人 2026-10-23 裁定：**场景设计为权威** —— 图标是场景 40×40，参数不覆盖尺寸；
+			##   参数与场景冲突 ⇒ 参数偏离设计（改参数不改设计）；冲突时打一行日志，避免静默。
 			var ic: TextureRect = row.get_node_or_null("Icon")
-			if ic != null:
-				ic.size = p.attr_icon_size
+			if ic != null and ic.size != p.attr_icon_size and not _detail_icon_warned:
+				_detail_icon_warned = true
+				print("[VIEW] 属性行图标尺寸以场景为准：", ic.size, "（参数 ", p.attr_icon_size, " 已忽略）")
 
 
 func _apply_hand_params() -> void:
@@ -1145,8 +1145,7 @@ func set_my_seat(seat: int) -> void:
 		my_seat, str(BoardMirror.needs_mirror(my_seat))])
 
 
-## ⭐ 迭代064 B2：**HUD 也要跟着座位换边**（人 2026-09-27 清单 **UI-13**「自己的手牌无论如何都应该默认在玩家视图的右边」
-##   与 **UI-14**「手牌区域、玩家信息等基本 UI 在联机中都应该对齐默认绿方/玩家自己的视角」）
+## ⭐ 迭代064 B2：HUD 随座位换边（人清单 UI-13/UI-14：手牌与玩家信息对齐自己视角）
 ##
 ## 现状与根因：面板的**静态映射**是 `HandPanelRight`/`PlayerBesaInfoRight` = 我方 `SIDE_ALLY`（绿），
 ##   `HandPanelLeft`/`PlayerBesaInfoLift` = 敌方 `SIDE_ENEMY`（红）—— **与 `my_seat` 无关**。
@@ -1181,7 +1180,7 @@ func _cell_pos(cell: Vector2i) -> Vector2:
 
 
 ## ⭐ 迭代065 · **按数据镜像求"该座位视角下"的格局部坐标**（不做任何节点旋转）
-## 人 2026-10-10 口径：「需要的**不是旋转**，而是尝试**根据数据还原**出对面视角下应该看到的**对称的内容**」
+## 人 2026-10-10：要的是**按数据还原对面视角的对称内容**，不是旋转节点
 ##
 ## 旧实现（已废弃）＝ `MapView.rotation = PI` + 每张单位卡反向自转 `PI` 抵回来。代价：
 ##   · 旋转空间里坐标落在非整数位置 ⇒ 卡面文字/边框走**插值采样（亚像素模糊）**
@@ -1385,7 +1384,7 @@ func _on_hand_clicked(card_id: String, side: int) -> void:
 	##   根因＝这道"对手手牌不可点"的权限门**直接 `return`、连"取消选中"都不做** ⇒ 手牌选中态卡死，
 	##   只能靠点别的己方/敌方手牌或场地单位脱身 ✗。
 	##   修法：对手手牌**仍然不可操作**（权限门不变），但这一下点击在语义上属于
-	##   **「点击非交互区域」= 取消当前选中**（设计稿 §5.1「进入对象选择状态 → 点击不可交互区域取消选中」）✓。
+	##   点击非交互区域 = 取消选中（设计稿 §5.1）✓
 	## 两条权限口径（完整来历见迭代067 记录；决策已切到 CellDispatch.decide_hand）：
 	##   · 对手手牌 / 非行动方手牌：**不可操作、但必须可看**（先展示，后判权限）；
 	##   · 对手手牌那一下点击在语义上 =「点非交互区域」⇒ 顺带取消当前选中。
