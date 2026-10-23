@@ -28,3 +28,14 @@ static func window(p, vis, kind_key: String, tex_size: Vector2, plane_size: Vect
 		var adjust: Vector2 = p.crop_offset + (vis.crop_offset if vis != null else Vector2.ZERO)
 		off = (pw - draw) * 0.5 + adjust
 	return {"size": sz, "offset": off, "scale": sc}
+
+
+## 详情区立绘**适配几何**（自 arena_view._apply_detail_params 的立绘段切出 —— 迭代131）
+##   规则（与人 2026-10-10 的两条修正一致）：
+##     · 尺寸 = **父框实测尺寸**（父框无效时才回退参数 art_size）；定位相对父框原点 (0,0)；
+##     · 垂直微调：meta `art_offset_y` **优先**，回退参数；不动比例、不改字号。
+##   返回 {size: Vector2, y: float}
+static func detail_portrait_fit(frame_size: Vector2, art_size: Vector2, offset_meta: float,
+		offset_param: float, has_meta: bool) -> Dictionary:
+	var size: Vector2 = frame_size if (frame_size.x > 1.0 and frame_size.y > 1.0) else art_size
+	return {"size": size, "y": (offset_meta if has_meta else offset_param)}

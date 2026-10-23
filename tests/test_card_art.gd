@@ -49,3 +49,22 @@ func test_missing_texture_falls_back_to_base_window() -> void:
 	var p = _p()
 	var g: Dictionary = Art.window(p, null, "", Vector2.ZERO, Vector2.ZERO)
 	assert_eq(g["size"], Vector2(400, 454), "无贴图时应用 400×454 基准窗")
+
+## ── 详情区立绘适配（迭代131 切出，与手牌同法）──────────────────────────────
+
+func test_detail_portrait_fit_uses_frame_size() -> void:
+	## 尺寸 = 父框实测（曾写死 300×300 ⇒ 溢出 26px）
+	var g: Dictionary = Art.detail_portrait_fit(
+		Vector2(274, 274), Vector2(300, 300), 0.0, 0.0, false)
+	assert_eq(g["size"], Vector2(274, 274), "应铺满父框（而不是用参数 art_size）")
+	assert_almost_eq(g["y"], 0.0, 0.01, "无 meta 无参数时 y=0")
+
+
+func test_detail_portrait_fit_frame_fallback_and_meta_priority() -> void:
+	## 父框无效 ⇒ 回退 art_size；meta art_offset_y 优先于参数
+	var g1: Dictionary = Art.detail_portrait_fit(Vector2(0, 0), Vector2(300, 300), 0.0, 7.0, false)
+	assert_eq(g1["size"], Vector2(300, 300), "父框无效应回退参数尺寸")
+	assert_almost_eq(g1["y"], 7.0, 0.01, "无 meta 时用参数偏移")
+	var g2: Dictionary = Art.detail_portrait_fit(
+		Vector2(274, 274), Vector2(300, 300), -12.0, 7.0, true)
+	assert_almost_eq(g2["y"], -12.0, 0.01, "meta 优先于参数")

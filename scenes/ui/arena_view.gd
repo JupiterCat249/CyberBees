@@ -696,20 +696,16 @@ func _apply_detail_params() -> void:
 		ds.add_theme_constant_override("line_spacing", int(p.desc_line_spacing))
 	var portrait := $HUD/InfoPanel/DetailBlock/Artwork/Portrait as TextureRect
 	if portrait != null:
-		## 迭代067：立绘按**父框实测尺寸**铺满（曾写死 300×300 ⇒ 溢出）、定位相对父框原点、
-		##   场景 stretch_mode=5(COVERED) 会裁切 ⇒ 改 KEEP_ASPECT_CENTERED；垂直微调 meta 优先。
+		## 适配几何见 scenes/ui/view_card_art.gd::detail_portrait_fit（迭代131）
 		var frame := portrait.get_parent() as Control
-		var fit: Vector2 = frame.size if frame != null else p.art_size
-		portrait.size = fit if (fit.x > 1.0 and fit.y > 1.0) else p.art_size
-		portrait.position = Vector2.ZERO
-		## 垂直微调：meta `art_offset_y`（编辑器可调可观察）优先，回退参数；不动比例、不改字号。
-		var off_y: float = p.art_offset_y
-		if portrait.has_meta("art_offset_y"):
-			off_y = float(portrait.get_meta("art_offset_y"))
-		portrait.position.y = off_y
+		var has_y: bool = portrait.has_meta("art_offset_y")
+		var fit: Dictionary = CardArt.detail_portrait_fit(
+			frame.size if frame != null else Vector2.ZERO, p.art_size,
+			float(portrait.get_meta("art_offset_y")) if has_y else 0.0, p.art_offset_y, has_y)
+		portrait.size = fit["size"]
+		portrait.position = Vector2(0.0, fit["y"])
 		portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		## ⚠️ 不设 `label`/`clip`：立绘源图与框同量级时按比例居中即可
 	var attrs := $HUD/InfoPanel/Attributes
 	if attrs != null:
 		## ⚠️ 行名以 ATTR_ROWS 为唯一来源（场景里叫 Attack/Health/Speed/Range，**没有** Row1..Row4）
