@@ -11,9 +11,10 @@ const HINT_COLOR := Color(1.0, 0.125, 0.0, 0.9)
 ## 反击浮字色（橙黄；与伤害红区分。批2 迁入 FxParams 资源）
 const HINT_COLOR_INCOMING := Color(1.0, 0.62, 0.12, 0.9)
 
+## `fx` = FxParams 资源（可空；空则用资源化前的默认值）—— 迭代145
 static func render(cells: Dictionary, unit_nodes: Dictionary, preview: Resource,
 		engine, find_unit: Callable, fx_root: Control = null,
-		float_scene: PackedScene = null) -> void:
+		float_scene: PackedScene = null, fx = null) -> void:
 	## ⭐ 迭代064 UI-15：先把**对端选中**的格子记下来 —— 下面会清空所有格子的 selected，
 	##   而对端选中**不属于预览**、不能被预览清掉（否则对手选中会一帧就被自己的预览刷没）。
 	## ⭐ 迭代093（人 2026-10-23）：后果浮字**每次重算先清**（与下面标框同一套"先清再画"口径）
@@ -102,7 +103,8 @@ static func render(cells: Dictionary, unit_nodes: Dictionary, preview: Resource,
 				var itxt := "反击 0" if inc <= 0 else "反击 -%d" % inc
 				if inc > 0 and bool(info.get("incoming_lethal", false)):
 					itxt = "反击 -%d 阵亡" % inc
-				Fx.preview_hint(fx_root, float_scene, card, itxt, HINT_COLOR_INCOMING)
+				var c_in: Color = fx.preview_hint_counter_color if fx != null else HINT_COLOR_INCOMING
+				Fx.preview_hint(fx_root, float_scene, card, itxt, c_in, fx)
 				continue
 			var dmg: int = int(info.get("dmg", 0))
 			var txt := "-%d" % dmg
@@ -110,4 +112,5 @@ static func render(cells: Dictionary, unit_nodes: Dictionary, preview: Resource,
 				txt = "抵挡"          ## 装甲/护盾/力场：完全免伤，写 "-0" 会误导
 			elif bool(info.get("lethal", false)):
 				txt = "-%d 击杀" % dmg
-			Fx.preview_hint(fx_root, float_scene, card, txt, HINT_COLOR)
+			var c_dmg: Color = fx.preview_hint_damage_color if fx != null else HINT_COLOR
+			Fx.preview_hint(fx_root, float_scene, card, txt, c_dmg, fx)

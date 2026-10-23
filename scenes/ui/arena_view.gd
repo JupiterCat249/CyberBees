@@ -52,6 +52,10 @@ const CardParams := preload("res://scenes/ui/view_card_params.gd")
 const Coords := preload("res://scenes/ui/view_coords.gd")
 const Board := preload("res://scenes/ui/view_board.gd")
 const HudTint := preload("res://scenes/ui/view_hud_tint.gd")
+## 视觉特效参数（人 2026-10-23 意见B）：默认加载 game_data/fx/fx_params.tres；
+##   资源缺失/损坏时回退内置默认值（view_fx / view_preview 的 constants）。
+const FX_PARAMS_PATH := "res://game_data/fx/fx_params.tres"
+var fx_params = null
 ## 图标参数冲突只提示一次（场景为权威）
 var _detail_icon_warned := false
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
@@ -137,6 +141,11 @@ func _ready() -> void:
 	##   ⇒ `canvas_items + expand` 把视口撑成 **1965×1080**（宽 45px）⇒ 靠下的 UI 被推出屏幕。
 	##   本机 2560×1600 屏没有这个约束，所以"本机不复现"。此处按**实际可用区**自动兜住。
 	_fit_window_to_design()
+	## ⭐ 迭代145（人 2026-10-23 意见B）：视觉特效参数资源（缺失 ⇒ 回退内置默认值）
+	if ResourceLoader.exists(FX_PARAMS_PATH):
+		fx_params = load(FX_PARAMS_PATH)
+		if fx_params == null:
+			print("[VIEW] FxParams 加载失败（回退内置默认值）：", FX_PARAMS_PATH)
 	## 动画引擎（迭代060 v4）：唯一动画宿主；帧数计时 + 确定性推进（回放一致）
 	anim = preload("res://scripts/anim/anim_player.gd").new()
 	anim.name = "AnimPlayer"
@@ -1549,7 +1558,7 @@ func _find_unit(instance_id: String) -> UnitInstance:
 ## 预览渲染已切到 scenes/ui/view_preview.gd（085；093 起飘字层一并传入，承载"后果浮字"）
 func _render_preview() -> void:
 	PreviewRenderer.render(_cells, _unit_nodes, _preview, engine, _find_unit,
-		_fx_root, FLOAT_TEXT_SCENE)
+		_fx_root, FLOAT_TEXT_SCENE, fx_params)
 
 
 # ============================================================

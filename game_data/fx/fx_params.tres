@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="FxParams" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fx_params.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+float_font_base = 24
+float_font_max = 64
+float_font_ref = 10
+float_offset = Vector2(-100, -20)
+float_anim_name = "浮字上浮"
+preview_hint_font_size = 40
+preview_hint_offset = Vector2(-100, -26)
+preview_hint_damage_color = Color(1, 0.125, 0, 0.9)
+preview_hint_counter_color = Color(1, 0.62, 0.12, 0.9)
+anim_hit_shake = "受击抖动"
+anim_retire = "单位退场"
+anim_card_enter = "卡牌登场"

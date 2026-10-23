@@ -11,30 +11,37 @@ extends RefCounted
 ## 飘字（§二之1：回费/数值 buff/战斗结算；§二之2：三色 + **数值越大字体越大**）
 ## ⚠️ 颜色/字号放**子节点**：`浮字上浮` 的淡出是 TINT（绝对 modulate），
 ##   若把颜色放在动画目标本身会被白色冲掉（迭代060 实测踩坑）
+## `fx` = FxParams 资源（可空；空则用资源化前的默认值）—— 迭代145（人 2026-10-23 意见B）
 static func float_at(fx_root: Control, scene: PackedScene, anim, anchor: Control,
-		text: String, color: Color, value: int, fs: Dictionary) -> void:
+		text: String, color: Color, value: int, fs: Dictionary, fx = null) -> void:
 	if fx_root == null or anchor == null or not is_instance_valid(anchor):
 		return
 	var ft: Control = scene.instantiate()
 	var lb: Label = ft.get_node("Text")
 	lb.text = text
 	lb.modulate = color
-	var t: float = clampf(float(value) / float(fs["ref"]), 0.0, 1.0)
-	var px: int = int(round(lerpf(float(fs["base"]), float(fs["max"]), t)))
+	var px: int = 0
+	if fx != null:
+		px = int(fx.float_font_size(int(value)))
+	else:
+		var t: float = clampf(float(value) / float(fs["ref"]), 0.0, 1.0)
+		px = int(round(lerpf(float(fs["base"]), float(fs["max"]), t)))
 	lb.add_theme_font_size_override("font_size", px)
 	fx_root.add_child(ft)
 	## 坐标空间：飘字挂 EffectsTop（与视图根同原点的整屏 Control）→ 用 global 差值换算
-	ft.position = anchor.global_position + Vector2(anchor.size.x * 0.5 - 100.0, -20.0) \
-		- fx_root.global_position
+	var off: Vector2 = fx.float_offset if fx != null else Vector2(-100, -20)
+	ft.position = anchor.global_position + Vector2(anchor.size.x * 0.5, 0.0) \
+		+ off - fx_root.global_position
 	if anim != null:
-		anim.action("浮字上浮", ft)   # 注意：飘字直接对**节点**播；_play 是按 instance_id 找单位节点的另一条路
+		var pname: String = fx.float_anim_name if fx != null else "浮字上浮"
+		anim.action(pname, ft)
 
 
 ## 预览提示（**常驻、不播动画**的飘字）—— 攻击预览的"后果"：打多少 / 是否击杀
 ##   与 `float_at()` 的区别：它**不播 `浮字上浮`**（那会淡出并 queue_free），而是留在原地，
 ##   由 `clear_preview_hints()` 在**每次预览重算时统一清掉**（视图 `_render_preview()` 每次都调）。
 static func preview_hint(fx_root: Control, scene: PackedScene, anchor: Control,
-		text: String, color: Color) -> void:
+		text: String, color: Color, fx = null) -> void:
 	if fx_root == null or anchor == null or scene == null or not is_instance_valid(anchor):
 		return
 	var ft: Control = scene.instantiate()
@@ -45,11 +52,13 @@ static func preview_hint(fx_root: Control, scene: PackedScene, anchor: Control,
 	if lb != null:
 		lb.text = text
 		lb.modulate = color
-		lb.add_theme_font_size_override("font_size", 40)
+		var fs_ph: int = int(fx.preview_hint_font_size) if fx != null else 40
+		lb.add_theme_font_size_override("font_size", fs_ph)
 	fx_root.add_child(ft)
 	## 坐标空间与 `float_at` 一致：飘字层与视图根同原点 ⇒ 用 global 差值换算
-	ft.position = anchor.global_position + Vector2(anchor.size.x * 0.5 - 100.0, -26.0) \
-		- fx_root.global_position
+	var off: Vector2 = fx.preview_hint_offset if fx != null else Vector2(-100, -26)
+	ft.position = anchor.global_position \
+		+ Vector2(anchor.size.x * 0.5, 0.0) + off - fx_root.global_position
 
 
 ## 清掉上一次预览留下的提示（幂等；预览重算 / 预览消失都要调）

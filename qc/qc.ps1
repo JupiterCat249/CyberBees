@@ -303,8 +303,8 @@ function Invoke-Size {
         if (Test-Path $sizeOut) {
             $sj = [System.IO.File]::ReadAllText($sizeOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
             Add-Count 'size:over_cap_files' $sj.over_cap
-            Add-Count 'size:max_lines' $sj.max_lines
-            Add-Count 'size:max_bytes' $sj.max_bytes
+            Add-Count 'size:max_lines' $sj.max_code_lines
+            Add-Count 'size:max_bytes' $sj.max_code_bytes
             Add-Count 'size:violations' (@($sj.violations).Count)
             ## P3（迭代127）：soft 预警（只记录，不判红）
             Add-Count 'size:warn_files' (@($sj.warnings).Count)

@@ -23,7 +23,11 @@ UP_KEYS = ("test:passing",)
 ## info = 只记录、不判升降的指标（"变大"本身不是债务）
 ##   ⚠️ 新增 info 项必须同时说明理由：测试文件数/脚本数会随覆盖增长；断言数同理。
 INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable",
-             "test:scripts_loaded", "test:scripts_on_disk", "qc:selftest_total", "size:warn_files")
+             "test:scripts_loaded", "test:scripts_on_disk", "qc:selftest_total", "size:warn_files",
+             ## 体积趋势指标（迭代145 改 info）：硬上限由 size 闸（code 口径）守；
+             ##   合法功能开发会让代码增长，趋势只做看板、不再当作债务。
+             "size:arena_view", "size:battle_engine", "size:net_diag_dump",
+             "size:max_lines", "size:max_bytes")
 
 def direction(key):
     if key in INFO_KEYS:
