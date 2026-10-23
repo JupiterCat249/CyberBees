@@ -59,3 +59,53 @@ func test_no_preview_empty_cell_in_deploy_phase_explains() -> void:
 	var d: Dictionary = Dispatch.decide(e, cell)
 	assert_eq(String(d.get("type", "")), "msg", "部署阶段点空格应给'怎么部署'的提示")
 	assert_eq(String(d.get("msg", "")), Dispatch.MSG_DEPLOY_PHASE, "提示文案应保持原样")
+
+
+## ── 手牌执行路由（execute_hand）的桩测试 ─────────────────────────────
+## 用桩对象代替 NetIntent：只验"按模式分派到哪个请求 + 失败时的文案"。
+
+class StubIntent:
+	extends RefCounted
+	var deploy_calls: Array = []
+	var cmd_at_calls: Array = []
+	var cmd_calls: Array = []
+	var deploy_ok := false
+
+	func request_deploy(side: int, idx: int, cell: Vector2i) -> bool:
+		deploy_calls.append([side, idx, cell])
+		return deploy_ok
+
+	func request_use_command_at(side: int, idx: int, cell: Vector2i) -> bool:
+		cmd_at_calls.append([side, idx, cell])
+		return false
+
+	func request_use_command(side: int, idx: int, _u) -> bool:
+		cmd_calls.append([side, idx])
+		return false
+
+
+func test_execute_hand_routes_deploy_and_flashes_on_failure() -> void:
+	var stub := StubIntent.new()
+	var idx := Fixture.first_affordable_unit_index(e, 0)
+	assert_ne(idx, -1, "前置：应有可负担的单位卡")
+	e.select_hand(0, idx)
+	var cell: Vector2i = Fixture.empty_own_cell(e)
+	var msgs: Array = []
+	Dispatch.execute_hand(e, stub, cell, Callable(func(t): msgs.append(t)))
+	assert_eq(stub.deploy_calls.size(), 1, "DEPLOY 模式应调用 request_deploy 一次")
+	assert_eq(stub.deploy_calls[0][2], cell, "应把点击格原样传下去")
+	assert_eq(msgs.size(), 1, "失败时应给一条提示")
+	assert_eq(String(msgs[0]), Dispatch.MSG_DEPLOY, "提示文案应保持原样")
+
+
+func test_execute_hand_routes_aoe_command_by_cell() -> void:
+	## AOE 指令卡 ⇒ 走"以格为中心"（空地也能放），不是按单位
+	Fixture.push_card(e, 0, "巡航导弹")
+	var idx := 0
+	e.select_hand(0, idx)
+	assert_eq(int(e.hand_mode), 2, "前置：指令卡应进入 TARGET 模式")
+	var stub := StubIntent.new()
+	var msgs: Array = []
+	Dispatch.execute_hand(e, stub, Vector2i(1, 1), Callable(func(t): msgs.append(t)))
+	assert_eq(stub.cmd_at_calls.size(), 1, "AOE 应调用 request_use_command_at")
+	assert_eq(stub.cmd_calls.size(), 0, "AOE 不应走按单位的目标请求")

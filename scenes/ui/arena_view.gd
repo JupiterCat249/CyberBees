@@ -1378,27 +1378,9 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 			_flash_msg(String(d.get("msg", "")))
 
 
-## 手牌状态机：在交互范围内点击格 → 按卡种执行
+## 手牌状态机：在交互范围内点击格 → 按卡种执行（实现已切到 view_cell_dispatch.execute_hand）
 func _execute_hand_on_cell(cell: Vector2i) -> void:
-	var side: int = engine.state.active
-	match int(engine.hand_mode):
-		int(EngLib.HandMode.DEPLOY):
-			if not intent.request_deploy(side, engine.sel_hand_index, cell):
-				_flash_msg("该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）")
-		int(EngLib.HandMode.TARGET):
-			var u: UnitInstance = engine.state.board.unit_at(cell)
-			## ⭐ 迭代064 P-19（清单 机制-4）：**AOE 卡改走"以格为中心"** —— 空地也能放；
-			##   阶段1 只挂待确认（引擎返回 false ⇒ 不发 op），预览随即显示**效果范围**，按钮变「确认」。
-			var hcard: CardData = null
-			var hh: Array = engine.state.sides[side]["hand"]
-			if engine.sel_hand_index >= 0 and engine.sel_hand_index < hh.size():
-				hcard = hh[engine.sel_hand_index]
-			if hcard is CommandData:
-				intent.request_use_command_at(side, engine.sel_hand_index, cell)
-			elif u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
-				_flash_msg("该单位不是该指令的合法目标")
-		_:
-			pass
+	CellDispatch.execute_hand(engine, intent, cell, _flash_msg)
 
 
 ## 选中单位后，把"现在能做什么 / 为什么不能做"说清楚（迭代058 G3/G7）

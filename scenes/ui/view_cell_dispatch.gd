@@ -10,6 +10,7 @@ extends RefCounted
 ##     点己方单位 → select_unit（详情/可用动作由视图补）。
 
 const K := preload("res://scripts/battle/preview_kind.gd")
+const EngLib := preload("res://scripts/battle/battle_engine.gd")
 
 const MSG_DEPLOY := "该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）"
 const MSG_MOVE := "该格不可到达"
@@ -20,6 +21,7 @@ const MSG_ATTACK := "不能攻击该目标（射程外 / 已行动过 / 非行�
 const MSG_DEPLOY_PHASE := "部署阶段：点手牌选卡后点高亮格部署；要操作单位请先点右侧「完成部署 → 进入行动」"
 const MSG_SELECT_HINT := "点是自己的单位来选中它（选中后才能移动/攻击/支援）"
 const MSG_FOE_UNIT := "这是对方的单位（要攻击请先选中自己的单位）"
+const MSG_COMMAND_TARGET := "该单位不是该指令的合法目标"
 
 
 ## 返回字典：{"type": "...", "msg": "...", "unit": UnitInstance?}
@@ -56,3 +58,30 @@ static func decide(engine, cell: Vector2i) -> Dictionary:
 			if int(here.side) != int(engine.state.active):
 				return {"type": "msg", "msg": MSG_FOE_UNIT}
 			return {"type": "select_unit", "unit": here}
+
+
+## 手牌执行路由（自 arena_view._execute_hand_on_cell 切出 —— 迭代101）
+##   在交互范围内点击格 → 按**手牌交互模式**执行：
+##     DEPLOY → 就地部署；TARGET → 指令卡（AOE 走"以格为中心"，空地也能放）
+##   ⚠️ 与 decide() 一样只负责**路由**：真正的 intent 调用与提示由参数传入（flash），
+##      这样视图不必把整张网都暴露给模块。
+static func execute_hand(engine, intent, cell: Vector2i, flash: Callable) -> void:
+	var side: int = engine.state.active
+	match int(engine.hand_mode):
+		int(EngLib.HandMode.DEPLOY):
+			if not intent.request_deploy(side, engine.sel_hand_index, cell):
+				flash.call(MSG_DEPLOY)
+		int(EngLib.HandMode.TARGET):
+			var u: UnitInstance = engine.state.board.unit_at(cell)
+			## ⭐ 迭代064 P-19（清单 机制-4）：**AOE 卡改走"以格为中心"** —— 空地也能放；
+			##   阶段1 只挂待确认（引擎返回 false ⇒ 不发 op），预览随即显示**效果范围**，按钮变「确认」。
+			var hcard: CardData = null
+			var hh: Array = engine.state.sides[side]["hand"]
+			if engine.sel_hand_index >= 0 and engine.sel_hand_index < hh.size():
+				hcard = hh[engine.sel_hand_index]
+			if hcard is CommandData:
+				intent.request_use_command_at(side, engine.sel_hand_index, cell)
+			elif u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
+				flash.call(MSG_COMMAND_TARGET)
+		_:
+			pass
