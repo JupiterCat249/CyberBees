@@ -174,7 +174,16 @@ function Invoke-Docs {
     Assert-Python
     $docOut = Join-Path $Out 'docs.json'
     $docPath = Join-Path $Repo '../../项目规划蓝图/当前状态.md'
-    $o = & $Py (Join-Path $QcRoot 'lib\docs_check.py') --counts (Join-Path $Out 'counts.json') --doc $docPath --out $docOut 2>&1
+    ## 防御（迭代120）：本闸**必须**在回归闸之后 —— 否则 test:* 计数还没入表，会拿 0 去对账。
+    if (-not $script:Counts.Contains('test:passing')) {
+        Write-Host '[qc] 文档闸：缺少 test:passing 计数 —— 说明它被排在回归闸之前（顺序错误）' -ForegroundColor Red
+        return $false
+    }
+    ## ⚠️ 必须用**本轮内存计数**（迭代120 冷启动实测）：counts.json 是在 Invoke-Ratchet 里才写的，
+    ##   早先直接读它会拿到**上一轮**的数字（甚至冷启动时根本不存在 ⇒ 闸判红/崩溃）。
+    $nowCounts = Join-Path $Out 'counts.now.json'
+    ($script:Counts | ConvertTo-Json -Depth 4) | Out-File -FilePath $nowCounts -Encoding utf8
+    $o = & $Py (Join-Path $QcRoot 'lib\docs_check.py') --counts $nowCounts --doc $docPath --out $docOut 2>&1
     $rc = $LASTEXITCODE
     $o | ForEach-Object { Write-Host ('[qc] ' + $_) }
     Add-Count 'docs:drift' ($(if ($rc -eq 1) { 1 } else { 0 }))
@@ -315,8 +324,8 @@ function Invoke-Gates {
     if (-not (Invoke-Size))     { $script:GateFailed = $true }
     if (-not (Invoke-Arch))     { $script:GateFailed = $true }
     if (-not (Invoke-Signals))  { $script:GateFailed = $true }
-    if (-not (Invoke-Docs))     { $script:GateFailed = $true }
     if (-not (Invoke-Test))     { $script:GateFailed = $true }
+    if (-not (Invoke-Docs))     { $script:GateFailed = $true }
     Write-Host ''
     if ($script:GateFailed) { Write-Host '[qc] 有闸未通过（见上方红色/明细）—— 退出码将非零' -ForegroundColor Red }
 }
