@@ -131,3 +131,27 @@ func test_decide_hand_own_card_when_not_my_turn_is_blocked() -> void:
 	assert_eq(String(d.get("type", "")), "blocked", "非我方回合点自己的牌应被拦")
 	assert_true(String(d.get("msg", "")).begins_with("现在不是"), "应给出回合提示")
 	assert_not_null(d.get("card"), "但仍应带回这张牌（详情恒开放）")
+
+func test_decide_unit_own_unit_selects() -> void:
+	_to_action()
+	var q = Fixture.queen(e, 0)
+	var d: Dictionary = Dispatch.decide_unit(e, 0, q)
+	assert_eq(String(d.get("type", "")), "select", "己方回合点己方单位应判定为选中")
+	assert_false(bool(d.get("leave_first", true)), "无手牌选中态时不需要先退出")
+
+
+func test_decide_unit_enemy_unit_attacks_with_message() -> void:
+	_to_action()
+	var q = Fixture.queen(e, 0)
+	e.select_unit(0, q)
+	var foe := Fixture.place_unit(e, 1, "泥蜂", Vector2i(2, 2))
+	var d: Dictionary = Dispatch.decide_unit(e, 0, foe)
+	assert_eq(String(d.get("type", "")), "attack", "点敌方单位应判定为攻击")
+	assert_true(String(d.get("msg", "")).find("不能攻击") >= 0, "应带回失败提示（含单位名）")
+
+
+func test_decide_unit_when_not_my_turn_is_none() -> void:
+	e.state.active = 1
+	var q = Fixture.queen(e, 0)
+	var d: Dictionary = Dispatch.decide_unit(e, 0, q)
+	assert_eq(String(d.get("type", "")), "none", "非我方回合不得产生任何操作决策")

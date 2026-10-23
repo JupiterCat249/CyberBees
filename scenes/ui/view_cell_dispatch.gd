@@ -22,6 +22,7 @@ const MSG_DEPLOY_PHASE := "部署阶段：点手牌选卡后点高亮格部署�
 const MSG_SELECT_HINT := "点是自己的单位来选中它（选中后才能移动/攻击/支援）"
 const MSG_FOE_UNIT := "这是对方的单位（要攻击请先选中自己的单位）"
 const MSG_COMMAND_TARGET := "该单位不是该指令的合法目标"
+const MSG_ATTACK_UNIT := "不能攻击 %s（需先选中自己的单位，且目标在射程内）"
 
 
 ## 返回字典：{"type": "...", "msg": "...", "unit": UnitInstance?}
@@ -109,3 +110,34 @@ static func decide_hand(engine, my_seat: int, side: int, idx: int) -> Dictionary
 		var who := "绿方" if int(side) == 0 else "红方"
 		return {"type": "blocked", "card": card, "msg": "现在不是%s的回合" % who}
 	return {"type": "select", "idx": idx, "card": card}
+
+## 单位卡点击的**纯决策**（自 arena_view._on_unit_clicked 切出 —— 迭代104）
+##   ⚠️ 详情栏「先展示、后判权限」由视图完成（与决策无关）；
+##     本函数只回答"这一下该做什么"。
+##   返回：
+##     none            —— 引擎未就绪 / 单位不存在 / **不是自己回合**（权限门）
+##     hand_exec       —— 该单位是当前指令卡的合法目标 ⇒ 就地执行指令（带 cell）
+##     support_confirm —— 支援双击确认（已选中带支援的单位时点另一友方）
+##     select          —— 选中该单位
+##     attack          —— 以当前选中单位攻击它（失败时用 msg）
+##   leave_first：手牌选中态**不在交互范围内**时需先 hand_range_leave()（原实现就是"退出选中后继续"）。
+static func decide_unit(engine, my_seat: int, inst) -> Dictionary:
+	if engine == null or engine.state == null or inst == null:
+		return {"type": "none"}
+	if int(engine.state.active) != my_seat:
+		return {"type": "none"}
+	var side: int = int(engine.state.active)
+	var leave_first := false
+	if int(engine.sel_kind) == 1:
+		if engine.hand_range_has_cell(inst.cell):
+			return {"type": "hand_exec", "cell": inst.cell}
+		leave_first = true
+	## ── 同侧 ──
+	if int(inst.side) == side:
+		## 支援双击确认（原设计）：已选中带支援技能的单位时，点友方 → 待确认 → 再点执行
+		if int(engine.sel_kind) == 3 and engine.sel_unit != null and engine.sel_support != null \
+				and engine.sel_unit.instance_id != inst.instance_id:
+			return {"type": "support_confirm"}
+		return {"type": "select", "leave_first": leave_first}
+	return {"type": "attack", "leave_first": leave_first,
+		"msg": MSG_ATTACK_UNIT % inst.card_name()}

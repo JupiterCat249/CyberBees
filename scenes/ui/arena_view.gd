@@ -1730,35 +1730,27 @@ func _on_unit_clicked(instance_id: String) -> void:
 	## ⭐ 迭代067（人 2026-10-14 指示 · **详情栏恒开放**）：**先无条件更新详情栏**，
 	##   再判操作权限。⇒ 非本方回合点对手单位（或点自己的单位）都能看详情，
 	##   但不会因此获得选中/攻击能力（下面的门原样保留）。
-	var inst0 := _find_unit(instance_id)
-	if inst0 != null and inst0.data != null:
-		show_detail(inst0.data)
-	## ⭐ 迭代064 联机-2：**不是自己回合就不接受单位操作**（同上 —— 别先邀请）
-	if int(engine.state.active) != my_seat:
-		return
 	var inst := _find_unit(instance_id)
-	if inst == null:
-		return
-	var side: int = engine.state.active
-	## ⭐ 手牌状态机：若该单位是当前指令卡的合法目标 → 就地执行指令
-	if engine.sel_kind == 1:
-		if engine.hand_range_has_cell(inst.cell):
-			_execute_hand_on_cell(inst.cell)
-			return
-		engine.hand_range_leave()
-	if inst.side == side:
-		# ── 支援双击确认（原设计）：已选中带支援技能的单位时，点友方 → 待确认 → 再点执行 ──
-		if int(engine.sel_kind) == 3 and engine.sel_unit != null and engine.sel_support != null \
-				and engine.sel_unit.instance_id != inst.instance_id:
-			## 支援不针对特定单位（Y-5）→ 点己方单位即确认/进入待确认
-			intent.request_support(side, engine.sel_unit, engine.sel_support)
-			return
-		engine.select_unit(side, inst)
+	## ⭐ 迭代067（详情栏恒开放）：**先无条件展示**，再判操作权限 —— 与决策无关，留在视图
+	if inst != null and inst.data != null:
 		show_detail(inst.data)
-		_explain_actions(inst)
-	else:
-		if not intent.request_attack(side, engine.sel_unit, inst):
-			_flash_msg("不能攻击 %s（需先选中自己的单位，且目标在射程内）" % inst.card_name())
+	## 决策（纯函数）见 scenes/ui/view_cell_dispatch.gd（迭代104）
+	var d := CellDispatch.decide_unit(engine, my_seat, inst)
+	match String(d.get("type", "none")):
+		"hand_exec":
+			_execute_hand_on_cell(d["cell"])
+		"support_confirm":
+			intent.request_support(engine.state.active, engine.sel_unit, engine.sel_support)
+		"select":
+			if bool(d.get("leave_first", false)):
+				engine.hand_range_leave()
+			engine.select_unit(engine.state.active, inst)
+			_explain_actions(inst)
+		"attack":
+			if bool(d.get("leave_first", false)):
+				engine.hand_range_leave()
+			if not intent.request_attack(engine.state.active, engine.sel_unit, inst):
+				_flash_msg(String(d.get("msg", "")))
 
 
 func _find_unit(instance_id: String) -> UnitInstance:
