@@ -10,7 +10,8 @@
     "verification",
     "tools",
     "qc",
-    ".venv"
+    ".venv",
+    "dev"
   ],
   "include_ext": [
     ".gd"

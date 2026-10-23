@@ -1,5 +1,5 @@
 {
-  "$comment": "lint 豁免清单（迭代125 · P5）：每条 = 规则 + 文件（+ 函数名，可选）。qc lint 的**每条**产出都必须在这里有对应条目；清单里每一条也必须命中**至少一条**实际产出（防\"豁免变陈旧\"）。新增/删除实际产出而不同步本文件 ⇒ 闸红。",
+  "$comment": "lint 豁免清单（迭代125 · P5）：每条 = 规则 + 文件（+ 函数名，可选）。qc lint 的**每条**产出都必须在这里有对应条目；清单里每一条也必须命中**至少一条**实际产出（防\"豁免变陈旧\"）。新增/删除实际产出而不同步本文件 ⇒ 闸红。（迭代151：net_diag_dump 移入 dev/ 后，其 max-returns 豁免一并移除）",
   "exemptions": [
     {
       "rule": "max-file-lines",
@@ -35,13 +35,6 @@
       "symbol": "request_use_command",
       "reason": "同上：校验链早退",
       "review": "与上条同步复核"
-    },
-    {
-      "rule": "max-returns",
-      "file": "scripts/diag/net_diag_dump.gd",
-      "symbol": "_read_watched",
-      "reason": "诊断工具的条件分支早退，属排障代码",
-      "review": "工具大改时复核"
     }
   ]
 }

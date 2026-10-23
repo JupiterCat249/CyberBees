@@ -20,7 +20,7 @@
       "scripts/anim/"
     ],
     "diag": [
-      "scripts/diag/"
+      "dev/diagnostics/"
     ],
     "scene_root": [
       "scenes/"
@@ -64,6 +64,48 @@
         "ui"
       ],
       "why": "视图子模块（view_*.gd）不得反向依赖 scenes/ui 下的其它文件 —— 它们只接受外部传入的节点/回调，否则又会缠回 arena_view 这个主对象"
+    },
+    {
+      "from": "battle",
+      "to": [
+        "dev"
+      ],
+      "why": "规则层不得依赖开发期工具（dev/）"
+    },
+    {
+      "from": "data",
+      "to": [
+        "dev"
+      ],
+      "why": "数据层是叶子模块"
+    },
+    {
+      "from": "ui",
+      "to": [
+        "dev"
+      ],
+      "why": "视图不得依赖开发期工具"
+    },
+    {
+      "from": "net",
+      "to": [
+        "dev"
+      ],
+      "why": "网络层不得依赖开发期工具"
+    },
+    {
+      "from": "anim",
+      "to": [
+        "dev"
+      ],
+      "why": "动画层不得依赖开发期工具"
+    },
+    {
+      "from": "scene_root",
+      "to": [
+        "dev"
+      ],
+      "why": "场景根不得依赖开发期工具"
     }
   ],
   "unresolved_must_be_zero": true

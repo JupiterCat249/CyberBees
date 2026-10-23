@@ -10,6 +10,7 @@ excluded_directories: !!set
   archive: null
   verification: null
   tools: null
+  dev: null
 max-file-lines: 1000
 max-line-length: 100
 max-returns: 6

@@ -61,7 +61,7 @@ function Get-GodotBin {
 }
 
 function Get-SourceFiles {
-    $exclude = '\\addons\\|\\\.godot\\|\\archive\\|\\verification\\|\\tools\\|\\qc\\'
+    $exclude = '\\addons\\|\\.godot\\|\\archive\\|\\verification\\|\\tools\\|\\qc\\|\\dev\\'
     @(Get-ChildItem -Path $Repo -Filter *.gd -Recurse -File |
         Where-Object { $_.FullName -notmatch $exclude } |
         ForEach-Object { $_.FullName })

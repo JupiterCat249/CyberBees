@@ -11,7 +11,7 @@
     },
     {
       "key": "net_diag_dump",
-      "path": "scripts/diag/net_diag_dump.gd"
+      "path": "dev/diagnostics/net_diag_dump.gd"
     }
   ]
 }

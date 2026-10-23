@@ -25,8 +25,8 @@ extends Node
 ## 关闭方式：把 `net_config/diag.flag` 内容写 `0`（或删除该文件即恢复默认开启规则）。
 ## ============================================================================
 const DIAG_DIR := "user://diag"
-const DiagIO := preload("res://scripts/diag/diag_io.gd")
-const DiagStatic := preload("res://scripts/diag/diag_static.gd")
+const DiagIO := preload("res://dev/diagnostics/diag_io.gd")
+const DiagStatic := preload("res://dev/diagnostics/diag_static.gd")
 ## 采样间隔（帧）：60fps 下 = 每 0.5 秒一次；只比较少量标量，开销可忽略
 const SAMPLE_EVERY := 30
 ## 被持续监视的"关键量"（运行期被谁改动 —— 本工具的核心价值）
@@ -143,7 +143,7 @@ func _process(_dt: float) -> void:
 	if not _enabled:
 		return
 	_frame += 1
-	if preload("res://scripts/diag/diag_trigger.gd").poll(get_tree()): _log("检测到 diag_now.flag ⇒ 手动落盘")
+	if preload("res://dev/diagnostics/diag_trigger.gd").poll(get_tree()): _log("检测到 diag_now.flag ⇒ 手动落盘")
 	## ① 窗口尺寸变化（不依赖信号，直接观察）
 	var wsz := DisplayServer.window_get_size()
 	if wsz != _last_window_size:

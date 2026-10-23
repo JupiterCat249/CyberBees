@@ -4,7 +4,7 @@ extends RefCounted
 ## 判据：**只读文件与源码文本**，不碰节点树、不碰运行态 ⇒ 零行为风险。
 ## 用途：异机排查"是不是同一份代码"——脚本汇总哈希 + 关键文件逐个哈希 + 关键常量源码文本。
 
-const DiagIO := preload("res://scripts/diag/diag_io.gd")
+const DiagIO := preload("res://dev/diagnostics/diag_io.gd")
 
 
 ## 关键文件：异机 diff 时一眼看出哪一个不同
