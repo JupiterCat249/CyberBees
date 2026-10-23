@@ -23,3 +23,6 @@ _commit_msg.txt
 qc/.venv/
 qc/out/
 qc/config/local.json
+
+# 覆盖率注入临时备份（qc coverage 自动创建/还原，勿入库）
+.cov-backup/

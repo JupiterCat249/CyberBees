@@ -11,7 +11,8 @@
     "tools",
     "qc",
     ".venv",
-    "dev"
+    "dev",
+    ".cov-backup"
   ],
   "include_ext": [
     ".gd"

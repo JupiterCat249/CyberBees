@@ -12,6 +12,7 @@ excluded_directories: !!set
   legacy-verification: null
   tools: null
   dev: null
+  .cov-backup: null
 max-file-lines: 1000
 max-line-length: 100
 max-returns: 6

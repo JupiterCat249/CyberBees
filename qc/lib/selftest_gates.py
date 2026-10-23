@@ -764,6 +764,30 @@ def test_receipt(tmp, python):
     rc3, txt3 = verify()
     record("交付证据链：改 counts 必须红", rc3 == 1 and "COUNTS" in txt3, "rc=%d" % rc3)
 
+
+def test_coverage_probe(tmp, python):
+    """覆盖率注入/还原往返（迭代162 · 第三轮 S4/WS1）：必须能注入，也必须**逐字节还原**。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coverage_probe.py")
+    repo = os.path.join(tmp, "cov_repo")
+    os.makedirs(os.path.join(repo, "src", "battle"), exist_ok=True)
+    src = os.path.join(repo, "src", "battle", "demo.gd")
+    body = "extends RefCounted\n\n\nfunc add(a: int, b: int) -> int:\n\treturn a + b\n"
+    open(src, "w", encoding="utf-8").write(body)
+    proj = os.path.join(repo, "project.godot")
+    prow = "[application]\n\nconfig/name=\"demo\"\n"
+    open(proj, "w", encoding="utf-8").write(prow)
+
+    rc1, _ = run([python, CHECK, "--repo", repo, "inject"])
+    injected = open(src, encoding="utf-8").read()
+    proj_after = open(proj, encoding="utf-8").read()
+    ok_inject = rc1 == 0 and "CovProbe.touch" in injected and "CovProbe=" in proj_after
+    record("覆盖率探针：注入必须生效", ok_inject, "rc=%d has_touch=%s has_autoload=%s" % (
+           rc1, "CovProbe.touch" in injected, "CovProbe=" in proj_after))
+
+    rc2, _ = run([python, CHECK, "--repo", repo, "restore"])
+    same = open(src, encoding="utf-8").read() == body and open(proj, encoding="utf-8").read() == prow
+    record("覆盖率探针：还原必须逐字节一致", rc2 == 0 and same, "rc=%d same=%s" % (rc2, same))
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -800,6 +824,8 @@ def main():
         test_test_health(tmp, python)
         print("[qc] selftest 交付证据链")
         test_receipt(tmp, python)
+        print("[qc] selftest 覆盖率探针")
+        test_coverage_probe(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:

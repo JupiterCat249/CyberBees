@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -531,6 +531,42 @@ function Invoke-Receipt {
     return ($writeOk -and $verifyOk)
 }
 
+## 差异覆盖（迭代162 · S4/WS1）：注入探针 → 跑回归 → **必定还原** → 报告。
+##   不进 all（会临时改写 66 个源文件 + project.godot），由人/批次显式触发。
+function Invoke-Coverage {
+    param([string]$Ref = "HEAD")
+    Assert-Python
+    $godot = Get-GodotBin
+    if (-not $godot) { Write-Host '[qc] 找不到 Godot' -ForegroundColor Yellow; exit 2 }
+    $lib = Join-Path $QcRoot 'lib\coverage_probe.py'
+    & $Py $lib --repo $Repo inject | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    if ($LASTEXITCODE -ne 0) { Write-Host '[qc] 注入失败（要求 src/ 与 project.godot 干净）' -ForegroundColor Red; return $false }
+    try {
+        & $godot --headless --path $Repo --import 2>&1 | Out-Null
+        $raw = @(Invoke-GutRun $godot)
+        $raw | Set-Content -Path (Join-Path $Out 'gut.coverage.log') -Encoding UTF8
+        $line = ($raw | Where-Object { $_ -match 'Passing Tests' } | Select-Object -First 1)
+        Write-Host ('[qc] coverage run: ' + $line)
+    } finally {
+        & $Py $lib --repo $Repo restore | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    }
+    $rep = @(& $Py $lib --repo $Repo report --ref $Ref 2>&1 | ForEach-Object { $_.ToString() })
+    foreach ($l in $rep) { Write-Host ('[qc] ' + $l) }
+    $covRc = $LASTEXITCODE
+    $covOut = Join-Path $Out 'coverage.json'
+    if (Test-Path $covOut) {
+        $cj = [System.IO.File]::ReadAllText($covOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        Add-Count 'coverage:funcs_total' $cj.total
+        Add-Count 'coverage:funcs_covered' $cj.covered
+        Add-Count 'coverage:changed_uncovered' (@($cj.changed_uncovered).Count)
+        Add-Count 'coverage:percent' $cj.percent
+    }
+    ## 报告用完即删备份：陈旧的 .cov-backup 若被误 restore，会把旧代码写回去
+    $bk = Join-Path $Repo '.cov-backup'
+    if (Test-Path $bk) { Remove-Item $bk -Recurse -Force }
+    return ($covRc -eq 0)
+}
+
 function Invoke-Gates {
     param([switch]$SkipDocs)
     # 钩子自检：core.hooksPath 是**本地配置**，新克隆不会自动生效 → 每次全闸都提醒一次
@@ -672,6 +708,7 @@ switch ($Command) {
     'setup'    { Invoke-Setup; exit 0 }
     'artifacts' { if (Confirm-Artifacts) { exit 0 } else { exit 1 } }
     'receipt'   { if (Invoke-Receipt) { exit 0 } else { exit 1 } }
+    'coverage'  { if (Invoke-Coverage) { exit 0 } else { exit 1 } }
     'coldstart' { exit (Invoke-Coldstart) }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
