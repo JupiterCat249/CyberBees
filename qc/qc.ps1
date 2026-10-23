@@ -266,6 +266,22 @@ function Invoke-Test {
         ForEach-Object { Write-Host ('[qc] ' + $_) }
     $gutRc = $LASTEXITCODE
 
+    ## 自愈（迭代161）：目录搬迁/新增脚本后 .godot 的 class_name 缓存会过期，
+    ##   GUT 只加载部分脚本（本会话实测 20 → 6），报错形如 "Could not resolve external class member"。
+    ##   这不是测试失败，而是缓存问题 ⇒ 自动 --import 后重跑一次；仍不行才判红。
+    if (Test-Path $gutChk) {
+        $gc0 = [System.IO.File]::ReadAllText($gutChk, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        if (([int]$gc0.scripts_loaded) -lt ([int]$gc0.scripts_on_disk)) {
+            Write-Host ('[qc] GUT 少加载脚本（{0}/{1}）—— class_name 缓存过期，自动 --import 后重跑一次' -f $gc0.scripts_loaded, $gc0.scripts_on_disk) -ForegroundColor Yellow
+            & $godot --headless --path $Repo --import 2>&1 | Out-Null
+            $raw = @(Invoke-GutRun $godot)
+            $text = ($raw -join ' ')
+            $raw | Set-Content -Path $log -Encoding UTF8
+            & $Py (Join-Path $QcRoot 'lib\gut_check.py') --log $log --tests-dir (Join-Path $Repo 'tests') --out $gutChk | Out-Null
+            $gutRc = $LASTEXITCODE
+        }
+    }
+
     $harnessErrors = 0
     if ($gutRc -ne 0) { $harnessErrors = 1 }
     if ($text -match 'have not been imported') { $harnessErrors = 1; Write-Host '[qc] GUT class_name 未注册 —— 先跑 qc/qc.ps1 import（新增/升级 addon 后必做）' -ForegroundColor Yellow }
