@@ -8,6 +8,7 @@
   · 体积闸：新文件超限 → NEW_OVERSIZE；祖父文件生长 → GREW；达标 → 通过
   · 架构闸：禁止依赖 → layer_violations>0 且退出码 1；干净图 → 0
   · 信号闸：死信号 / 只发不收 → 退出码 1；@dead 豁免 → 0；动态发射 → 计入 undetectable 且不假绿；总线缺失 → 2
+  · 棘轮：债务上升必红、持平/下降必绿、覆盖率下跌必红、info 类上升不算红、新指标不算红、有上升项时拒绝写回
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
 """
@@ -22,6 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SIZE_CHECK = os.path.join(HERE, "size_check.py")
 ARCH_CHECK = os.path.join(HERE, "arch_check.py")
 SIGNALS_CHECK = os.path.join(HERE, "signals_check.py")
+RATCHET = os.path.join(HERE, "ratchet.py")
 
 results = []
 
@@ -172,6 +174,60 @@ def test_signals_gate(tmp, python):
     record("信号闸：总线缺失必须红", rc5 == 2, "rc=%d" % rc5)
 
 
+def test_ratchet(tmp, python):
+    """棘轮反例（迭代106）：它是本会话抓出最多回归的机制，此前却**没有**任何自检。"""
+    def write(name, obj):
+        p = os.path.join(tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(obj, f)
+        return p
+
+    def run_ratchet(base, cur, update=False):
+        cmd = [python, RATCHET, "--baseline", base, "--current", cur]
+        if update:
+            cmd.append("--update")
+        return run(cmd)
+
+    base = write("r_base.json", {"iteration": "t0", "counts": {"lint:total": 4, "test:passing": 5, "test:asserts": 10}})
+
+    # ① 债务上升 → 必红
+    cur = write("r_up.json", {"lint:total": 5, "test:passing": 5, "test:asserts": 10})
+    rc, txt = run_ratchet(base, cur)
+    record("棘轮：债务上升必红", rc == 1 and "FAIL" in txt, "rc=%d" % rc)
+
+    # ② 持平 → 必绿
+    cur = write("r_same.json", {"lint:total": 4, "test:passing": 5, "test:asserts": 10})
+    rc, txt = run_ratchet(base, cur)
+    record("棘轮：持平必绿", rc == 0 and "OK" in txt, "rc=%d" % rc)
+
+    # ③ 下降 → 必绿且报改善
+    cur = write("r_down.json", {"lint:total": 3, "test:passing": 5, "test:asserts": 10})
+    rc, txt = run_ratchet(base, cur)
+    record("棘轮：下降必绿（报改善）", rc == 0 and "改善" in txt, "rc=%d" % rc)
+
+    # ④ 覆盖率类下跌 → 必红（test:passing 方向相反）
+    cur = write("r_cov.json", {"lint:total": 4, "test:passing": 4, "test:asserts": 10})
+    rc, txt = run_ratchet(base, cur)
+    record("棘轮：覆盖率下跌必红", rc == 1 and "test:passing" in txt, "rc=%d" % rc)
+
+    # ⑤ info 类上升 → 不算红
+    cur = write("r_info.json", {"lint:total": 4, "test:passing": 5, "test:asserts": 99})
+    rc, _ = run_ratchet(base, cur)
+    record("棘轮：info 类上升不算红", rc == 0, "rc=%d" % rc)
+
+    # ⑥ 新指标 → 记为 new，不算红
+    cur = write("r_new.json", {"lint:total": 4, "test:passing": 5, "test:asserts": 10, "size:new_metric": 7})
+    rc, txt = run_ratchet(base, cur)
+    record("棘轮：新指标不算红", rc == 0 and "?" in txt, "rc=%d" % rc)
+
+    # ⑦ 有上升项时 --update 必须**拒绝写回**（基线文件字节不变）
+    cur = write("r_upd.json", {"lint:total": 9, "test:passing": 5, "test:asserts": 10})
+    before = open(base, encoding="utf-8").read()
+    rc, txt = run_ratchet(base, cur, update=True)
+    after = open(base, encoding="utf-8").read()
+    record("棘轮：上升时拒绝写回基线", rc == 1 and before == after and "skip" in txt, "rc=%d" % rc)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -182,6 +238,8 @@ def main():
         test_arch_gate(tmp, python)
         print("[qc] selftest 信号闸")
         test_signals_gate(tmp, python)
+        print("[qc] selftest 棘轮")
+        test_ratchet(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
