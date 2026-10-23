@@ -20,7 +20,10 @@ def load(path, default):
 UP_KEYS = ("test:passing",)
 # 参考类：随实现自然增减，不参与棘轮判定（否则"删掉一个死信号"会被误判成覆盖率下降）
 # arch:type_cycles 原为参考类；人 2026-10-22 裁定"类型环必须治理" → 转为棘轮指标（越低越好）
-INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable")
+## info = 只记录、不判升降的指标（"变大"本身不是债务）
+##   ⚠️ 新增 info 项必须同时说明理由：测试文件数/脚本数会随覆盖增长；断言数同理。
+INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable",
+             "test:scripts_loaded", "test:scripts_on_disk")
 
 def direction(key):
     if key in INFO_KEYS:
