@@ -728,6 +728,42 @@ def test_test_health(tmp, python):
                        "quarantine": [{"file": "tests/test_demo.gd", "test": "test_missing", "reason": "x"}]}, "h_o3.json")
     record("测试健康：隔离指向不存在必须红", rc3 == 1 and "QUARANTINE_UNKNOWN" in txt3, "rc=%d" % rc3)
 
+
+def test_receipt(tmp, python):
+    """交付证据链反例（迭代160 · 第三轮 S2/WS8）：交付后再改文件/改数字必须被发现。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "receipt.py")
+    repo = os.path.join(tmp, "rc_repo")
+    os.makedirs(os.path.join(repo, "tests"), exist_ok=True)
+    os.makedirs(os.path.join(repo, "qc", "lib"), exist_ok=True)
+    with open(os.path.join(repo, "tests", "test_a.gd"), "w", encoding="utf-8") as f:
+        f.write("extends GutTest\n")
+    with open(os.path.join(repo, "qc", "lib", "x.py"), "w", encoding="utf-8") as f:
+        f.write("print(1)\n")
+    counts = os.path.join(tmp, "rc_counts.json")
+    json.dump({"test:passing": 1, "lint:total": 0}, open(counts, "w", encoding="utf-8"))
+    rec = os.path.join(tmp, "rc_receipt.json")
+
+    def write_rec():
+        return run([python, CHECK, "--repo", repo, "--counts", counts, "--out", rec, "--iteration", "iterT"])
+
+    def verify():
+        return run([python, CHECK, "--repo", repo, "--counts", counts, "--out", rec, "--verify", rec])
+
+    rc, _ = write_rec()
+    rc_ok, _ = verify()
+    record("交付证据链：清单与文件一致必须绿", rc == 0 and rc_ok == 0, "write=%d verify=%d" % (rc, rc_ok))
+
+    with open(os.path.join(repo, "tests", "test_a.gd"), "a", encoding="utf-8") as f:
+        f.write("# tampered\n")
+    rc2, txt2 = verify()
+    record("交付证据链：交付后改文件必须红", rc2 == 1 and "CHANGED" in txt2, "rc=%d" % rc2)
+
+    with open(os.path.join(repo, "tests", "test_a.gd"), "w", encoding="utf-8") as f:
+        f.write("extends GutTest\n")
+    json.dump({"test:passing": 99, "lint:total": 0}, open(counts, "w", encoding="utf-8"))
+    rc3, txt3 = verify()
+    record("交付证据链：改 counts 必须红", rc3 == 1 and "COUNTS" in txt3, "rc=%d" % rc3)
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -762,6 +798,8 @@ def main():
         test_arch_reachability(tmp, python)
         print("[qc] selftest 测试健康")
         test_test_health(tmp, python)
+        print("[qc] selftest 交付证据链")
+        test_receipt(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:

@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -390,7 +390,9 @@ function Invoke-Coldstart {
     Invoke-Gates
     $r = Invoke-Ratchet
     $artOk = Confirm-Artifacts
-    if ($script:GateFailed -or $r -ne 0 -or (-not $artOk)) { return 1 }
+    $rcOk = $false
+    if (-not $script:GateFailed -and $r -eq 0 -and $artOk) { $rcOk = Invoke-Receipt }
+    if ($script:GateFailed -or $r -ne 0 -or (-not $artOk) -or (-not $rcOk)) { return 1 }
     return 0
 }
 function Invoke-Selftest {
@@ -484,6 +486,34 @@ function Invoke-Flaky {
     return ($LASTEXITCODE -eq 0)
 }
 
+
+## 交付证据链（迭代160 · S2/WS8）：写 receipt.json（manifest + counts + git），并当场校验一次。
+function Invoke-Receipt {
+    param([string]$VerifyOnly = "")
+    Assert-Python
+    $rcOut = Join-Path $Out 'receipt.json'
+    $counts = Join-Path $Out 'counts.json'
+    if (-not (Test-Path $counts)) { $counts = Join-Path $Out 'counts.now.json' }
+    $docsRepo = (Resolve-Path (Join-Path $Repo '../../')).Path
+    $lib = Join-Path $QcRoot 'lib\receipt.py'
+    if ($VerifyOnly -ne '') {
+        & $Py $lib --repo $Repo --counts $counts --out $rcOut --verify $VerifyOnly | ForEach-Object { Write-Host ('[qc] ' + $_) }
+        return ($LASTEXITCODE -eq 0)
+    }
+    & $Py $lib --repo $Repo --docs-repo $docsRepo --counts $counts --out $rcOut --iteration $Iteration | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    $writeOk = ($LASTEXITCODE -eq 0)
+    if (Test-Path $rcOut) {
+        $rj = [System.IO.File]::ReadAllText($rcOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        Add-Count 'delivery:manifest_files' (@($rj.manifest).Count)
+    }
+    $verifyOk = $false
+    if ($writeOk -and (Test-Path $rcOut)) {
+        & $Py $lib --repo $Repo --counts $counts --out $rcOut --verify $rcOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+        $verifyOk = ($LASTEXITCODE -eq 0)
+    }
+    Add-Count 'delivery:receipt_ok' ($(if ($verifyOk) { 1 } else { 0 }))
+    return ($writeOk -and $verifyOk)
+}
 
 function Invoke-Gates {
     param([switch]$SkipDocs)
@@ -625,6 +655,7 @@ switch ($Command) {
     'import'   { Invoke-Import; exit 0 }
     'setup'    { Invoke-Setup; exit 0 }
     'artifacts' { if (Confirm-Artifacts) { exit 0 } else { exit 1 } }
+    'receipt'   { if (Invoke-Receipt) { exit 0 } else { exit 1 } }
     'coldstart' { exit (Invoke-Coldstart) }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
