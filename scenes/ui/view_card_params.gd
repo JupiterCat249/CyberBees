@@ -9,6 +9,8 @@ extends RefCounted
 ##   费用数字用**与信息栏同一套几何居中**（Layout.center_badge_value_geometry），杜绝分叉。
 
 const Layout := preload("res://scenes/ui/view_layout.gd")
+const CardArt := preload("res://scenes/ui/view_card_art.gd")
+const Cards := preload("res://scenes/ui/view_cards.gd")
 
 
 ## 应用徽章（BadgeImage）与内描边（InnerLine）
@@ -28,3 +30,42 @@ static func apply_hand_extras(node: Node, p) -> void:
 	var line: Panel = node.get_node_or_null("InnerLine")
 	if line != null:
 		line.size = p.inner_line_size
+
+
+## 手牌卡的**视觉参数**（徽章/描边 + 立绘窗）—— 自 _apply_one_hand_params 整体搬入（迭代118）
+##   ⚠️ 立绘段的来历写在这里（原注释）：迭代064 逐字恢复 \`254d42a~1\` 的原始正确版本
+##   （基准窗固定 400×454、裁剪靠 ArtPlane.clip_contents、偏移走 final_art_offset），
+##   仅加"三型缩到 50% 并在窗内居中"这一条修正；贴图宽高比问题见 view_card_art。
+static func apply_hand_card_visuals(node: Node, p) -> void:
+	apply_hand_extras(node, p)
+	var img: TextureRect = node.get_node_or_null("Artwork/ArtPlane/Image")
+	if img == null or node.get("card_data") == null:
+		return
+	var cd: CardData = node.get("card_data") as CardData
+	var key := Cards.hand_kind_key(cd)
+	var tsz: Vector2 = img.texture.get_size() if img.texture != null else Vector2.ZERO
+	var plane: Control = img.get_parent()
+	var plane_sz: Vector2 = plane.size if plane != null else Vector2.ZERO
+	var g: Dictionary = CardArt.window(p, cd.visual, key, tsz, plane_sz)
+	var sz: Vector2 = g["size"]
+	img.offset_left = g["offset"].x
+	img.offset_top = g["offset"].y
+	img.offset_right = g["offset"].x + sz.x
+	img.offset_bottom = g["offset"].y + sz.y
+	img.scale = g["scale"]
+
+
+## 手牌卡的**状态滤镜**（对称滤镜 + 费用可用性）—— 自 _render_hand 循环体搬入（迭代118）
+##   口径：整卡滤镜 = "该侧是不是当前行动方"（与费用够不够无关）；
+##         费用够不够由费用图标/数字单独表达（hand_affordable 是显示口径）。
+static func apply_hand_card_filters(node: Node, engine, side: int, my_seat: int,
+		index: int) -> void:
+	var active_side0: int = int(engine.state.active) if engine != null else my_seat
+	_call_opt(node, "set_playable", [true, int(side) != active_side0])
+	var cost_ok0: bool = engine.hand_affordable(side, index) if engine != null else false
+	_call_opt(node, "set_cost_affordable", [cost_ok0])
+
+
+static func _call_opt(node: Object, method: String, args: Array) -> void:
+	if node != null and is_instance_valid(node) and node.has_method(method):
+		node.callv(method, args)

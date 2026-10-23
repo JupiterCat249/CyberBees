@@ -31,3 +31,17 @@ static func create_unit_card(host: Control, scene: PackedScene, inst: UnitInstan
 	node.pivot_offset = Vector2.ZERO
 	host.add_child(node)
 	return node
+
+
+## 手牌卡种键（供 UI 参数查表）—— 参数类不得引用 \`CardData\`，故转换放在视图侧
+static func hand_kind_key(cd: CardData) -> String:
+	if cd == null:
+		return ""
+	match cd.kind:
+		CardData.CardKind.QUEEN:
+			return "queen"
+		CardData.CardKind.BUILDING:
+			return "building"
+		CardData.CardKind.COMMAND, CardData.CardKind.COMMAND_X:
+			return "order"
+	return "unit"

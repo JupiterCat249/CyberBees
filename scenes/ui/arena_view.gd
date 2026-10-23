@@ -737,63 +737,11 @@ func _apply_hand_params() -> void:
 		for id in _hand_nodes[side].keys():
 			var node = _hand_nodes[side][id]
 			if node != null and is_instance_valid(node):
-				_apply_one_hand_params(node, p)
+				CardParams.apply_hand_card_visuals(node, p)
 
 
-func _apply_one_hand_params(node, p) -> void:
-	## 徽章（正方形 + 贴图按比例居中）与内描边 —— 见 scenes/ui/view_card_params.gd（迭代115）
-	##   ⚠️ 那里的两条历史结论不要改回去：① 徽章本体是正方形（不按贴图拉长）；
-	##      ② 费用数字与信息栏共用同一套几何居中（两处分叉 = 曾经的"对端数字靠下"）。
-	CardParams.apply_hand_extras(node, p)
-	var img: TextureRect = node.get_node_or_null("Artwork/ArtPlane/Image")
-	if img != null and node.get("card_data") != null:
-		var cd: CardData = node.get("card_data") as CardData
-		var vis: CardVisual = cd.visual
-		## ⭐ 迭代064 **回归修复 v2**（人 2026-10-05 指出"回退后的效果和按问题清单修改前不同…可能没有回到原始正确版本"）：
-		##   以下逐字恢复**原始正确版本**（`254d42a~1`）：
-		##     · 基准窗**固定 `Vector2(400, 454)`**（源图量级），**不是**贴图实际尺寸 —— UI-8 与 Stage1 都错在这里
-		##     · 裁剪靠 **`ArtPlane.clip_contents = true`（UI 控件自带裁剪）**，不靠整图缩放
-		##     · 偏移 = `p.final_art_offset(vis)`（兵蜂即"头部居中、多出部分裁掉"的原始构图）
-		##   仅在此基础上加**清单要求的那一条**修正：蜂王/建筑/指令按参数表 `kind_art_scale` 缩到 **50%**
-		##   并在裁剪窗内**居中**（原方案直接套用兵蜂参数 ⇒ 水平居中但垂直偏上、缩放系数过大 ✗）。
-		var key := _hand_kind_key(cd)
-		## ⚠️ 人 2026-10-05 实测"指令卡等部分卡：横向纵向压缩程度不同、整体偏瘦"的**真因**：
-		##   `Image` 是 `TextureRect` 且**未设 `stretch_mode`**（默认＝拉伸填满控件）——
-		##   贴图实际 **250×258** 被硬拉进 **400×454** 的窗：横向 400/250=1.60×、纵向 454/258=1.76×
-		##   ⇒ **宽高比被破坏**，卡片内容看起来被压瘦 ✗。
-		##   修法：窗高按**贴图自身宽高比**推导（基准宽仍取原始版本的 400，保持偏移语义不变）。
-		## 几何纯计算见 scenes/ui/view_card_art.gd（迭代114）—— 居中/原偏移链的分支也在那里
-		var tsz: Vector2 = img.texture.get_size() if img.texture != null else Vector2.ZERO
-		var plane: Control = img.get_parent()
-		var plane_sz: Vector2 = plane.size if plane != null else Vector2.ZERO
-		var g: Dictionary = CardArt.window(p, vis, key, tsz, plane_sz)
-		var sz: Vector2 = g["size"]
-		var sc: Vector2 = g["scale"]
-		var off: Vector2 = g["offset"]
-		## 居中作基准、参数作微调（增量式）—— 该策略与"194×196 回退窗"都在 view_card_art.gd
-		img.offset_left = off.x
-		img.offset_top = off.y
-		img.offset_right = off.x + sz.x
-		img.offset_bottom = off.y + sz.y
-		img.scale = sc
-
-
-## 手牌卡种键（供 UI 参数查表）—— 参数类不得引用 `CardData`，故转换放在视图侧
-func _hand_kind_key(cd: CardData) -> String:
-	if cd == null:
-		return ""
-	match cd.kind:
-		CardData.CardKind.QUEEN:
-			return "queen"
-		CardData.CardKind.BUILDING:
-			return "building"
-		CardData.CardKind.COMMAND, CardData.CardKind.COMMAND_X:
-			return "order"
-		CardData.CardKind.SOLDIER:
-			return "unit"
-		_:
-			return ""
-
+## 手牌参数落地已整体切到 scenes/ui/view_card_params.gd（迭代118）——
+##   visuals（徽章/描边/立绘窗）与 filters（对称滤镜 + 费用可用性）都由那边提供。
 
 func _on_battle_started(first_side: int, round_no: int, an: String, en: String) -> void:
 	_set_names(an, en)
@@ -1384,18 +1332,12 @@ func _render_hand(side: int, hand: Array, _playable: Array) -> void:
 			node.hand_clicked.connect(_on_hand_clicked.bind(side))
 		_hand_nodes[side][data.id] = node
 		_hand_order[side].append(data.id)
-		## ⚠️ 手牌 UI 参数（立绘裁剪/取窗）必须在这里应用 —— 每次 `bind()` 重建卡面后都要重施
+		## 手牌卡参数（徽章/描边/立绘窗）与状态滤镜 —— 见 scenes/ui/view_card_params.gd（迭代118）
+		##   ⚠️ 口径：整卡滤镜 = "该侧是不是当前行动方"（**与费用够不够无关**）；
+		##      费用够不够只由费用图标/数字表达（人 2026-10-17 纠正：变灰的是图标本体，数字恒白）。
 		if hand_params != null:
-			_apply_one_hand_params(node, hand_params)
-		## ⭐ 迭代067（人 2026-10-14 指示 · **对称滤镜**）：
-		##   整卡滤镜＝「**该侧是不是当前行动方**」——行动方一侧不加滤镜（全白），
-		##   非行动方一侧一律变黑；**与费用是否够无关**（费用不够改由**费用图标**变灰表达 ——
-		##   ⚠️ 人 2026-10-17 纠正：变灰的是 `BadgeImage` 图标本体，**费用数字恒为白**）。
-		var active_side0: int = int(engine.state.active) if engine != null else my_seat
-		_call_opt(node, "set_playable", [true, int(side) != active_side0])
-		## 费用数字单独表达"够不够"（与上面的整卡滤镜解耦）
-		var cost_ok0: bool = engine.hand_affordable(side, i) if engine != null else false
-		_call_opt(node, "set_cost_affordable", [cost_ok0])
+			CardParams.apply_hand_card_visuals(node, hand_params)
+		CardParams.apply_hand_card_filters(node, engine, side, my_seat, i)
 	## ⭐ 每次渲染后都把子卡内部节点设为鼠标透明（**保留卡根节点可点**）
 	##   （`_ready` 里那次跑在首次渲染之前 → 容器还是空的，等于没跑）
 	_ignore_descendants(parent)
