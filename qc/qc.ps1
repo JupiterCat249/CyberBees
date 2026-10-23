@@ -139,7 +139,7 @@ function Invoke-Arch {
 
     $graph = Join-Path $Out 'graph.json'
     $archOut = Join-Path $Out 'arch.json'
-    & $cruiser $Repo -f json --exclude addons --exclude archive --exclude '\.godot' --exclude qc --exclude tests -o $graph 2>&1 | Out-Null
+    & $cruiser $Repo -f json --exclude addons --exclude archive --exclude '\.godot' --exclude qc --exclude tests --exclude dev -o $graph 2>&1 | Out-Null
     & $Py (Join-Path $QcRoot 'lib\arch_check.py') --graph $graph --rules $RulesFile --out $archOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
 
     $arch = [System.IO.File]::ReadAllText($archOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json

@@ -9,6 +9,7 @@ excluded_directories: !!set
   addons: null
   archive: null
   verification: null
+  legacy-verification: null
   tools: null
   dev: null
 max-file-lines: 1000
