@@ -50,6 +50,7 @@ const Cards := preload("res://scenes/ui/view_cards.gd")
 const CardArt := preload("res://scenes/ui/view_card_art.gd")
 const CardParams := preload("res://scenes/ui/view_card_params.gd")
 const Coords := preload("res://scenes/ui/view_coords.gd")
+const Board := preload("res://scenes/ui/view_board.gd")
 ## 图标参数冲突只提示一次（场景为权威）
 var _detail_icon_warned := false
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
@@ -1082,17 +1083,9 @@ func _adopt_cells() -> void:
 	for x in 4:
 		for y in 4:
 			var c := Vector2i(x, y)
-			var node := _cells_root.get_node_or_null("Cell_%d_%d" % [x, y]) as Control
-			if node == null:
-				node = Control.new()
-				node.name = "Cell_%d_%d" % [x, y]
-				## 迭代065：位置按**当前座位视角**给（不再依赖父节点旋转）
-				node.position = _view_cell_pos(c)
-				node.size = Vector2(PITCH, PITCH)
-				_cells_root.add_child(node)
-			node.set_script(CELL_SCRIPT)
-			node.set("cell", c)
-			node.set("mouse_filter", Control.MOUSE_FILTER_STOP)
+			## 装配细节见 scenes/ui/view_board.gd（迭代130）；信号连接与登记留在本函数
+			var node: Control = Board.ensure_cell(_cells_root, "Cell_%d_%d" % [x, y],
+				Vector2(PITCH, PITCH), _view_cell_pos(c), CELL_SCRIPT, c)
 			if node.has_signal("cell_clicked") and not node.cell_clicked.is_connected(_on_cell_clicked):
 				node.cell_clicked.connect(_on_cell_clicked)
 			## ⭐ 迭代064 联机-1（清单「点地图外取消选中在联机下无反应」）：**右键 = 取消选中**

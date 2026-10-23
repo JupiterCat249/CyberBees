@@ -12,7 +12,8 @@ const BOARD := 1000.0
 
 func test_seat0_is_canonical_grid() -> void:
 	assert_eq(Coords.view_cell_pos(Vector2i(0, 0), PITCH, BOARD, false), Vector2(0, 0))
-	assert_eq(Coords.view_cell_pos(Vector2i(1, 2), PITCH, BOARD, false), Vector2(250, 500))
+	## ⚠️ 规范坐标：cell.x = 行 → 像素 y；cell.y = 列 → 像素 x
+	assert_eq(Coords.view_cell_pos(Vector2i(1, 2), PITCH, BOARD, false), Vector2(500, 250))
 	assert_eq(Coords.view_cell_pos(Vector2i(3, 3), PITCH, BOARD, false), Vector2(750, 750))
 
 
