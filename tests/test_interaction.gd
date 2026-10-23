@@ -295,3 +295,17 @@ func test_support_confirm_on_friendly_unit() -> void:
 	_scene._on_unit_clicked(mate.instance_id)
 	await wait_frames(1)
 	assert_not_null(e.support_pending, "点另一友方应进入支援待确认")
+
+
+## 遗留②（人 2026-10-05）：点对手手牌 = 点非交互区域 ⇒ **顺带取消自己的选中**
+##   （此前权限门直接 return，连"取消选中"都不做 ⇒ 手牌选中态卡死）
+func test_opponent_hand_click_cancels_own_selection() -> void:
+	var e = _engine()
+	e.state.active = 0
+	e.select_hand(0, 0)
+	assert_eq(int(e.sel_kind), 1, "前置：先选中自己一张牌")
+	var hand1: Array = e.state.sides[1]["hand"]
+	assert_gt(hand1.size(), 0, "前置：对手应有手牌")
+	_scene._on_hand_clicked(String(hand1[0].id), 1)
+	await wait_frames(1)
+	assert_eq(int(e.sel_kind), 0, "点对手手牌应取消自己的选中")
