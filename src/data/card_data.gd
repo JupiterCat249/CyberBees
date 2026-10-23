@@ -5,7 +5,7 @@ extends Resource
 ##   —— 无 current_hp / 无 position / 无 has_acted / 无 effects
 ##   Godot 对同一路径的资源只加载一份实例（手册），写运行态会污染全场 → 运行态放 UnitInstance
 
-const CardKindLib := preload("res://scripts/data/card_kind.gd")
+const CardKindLib := preload("res://src/data/card_kind.gd")
 ## 兼容转发：`CardData.CardKind.QUEEN` 等 102 处既有写法（含封存 verification 脚本）保持可用
 const CardKind := CardKindLib.Kind   # gdlint:ignore=constant-name
 

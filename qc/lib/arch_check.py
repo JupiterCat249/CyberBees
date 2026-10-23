@@ -33,7 +33,7 @@ def find_cycles(edges_map):
 
 
 def layer_of(path, layers):
-    # path 形如 res://scripts/battle/battle_engine.gd
+    # path 形如 res://src/battle/battle_engine.gd
     p = path.replace("res://", "")
     best = None
     for name, prefixes in layers.items():

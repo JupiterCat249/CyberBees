@@ -46,10 +46,20 @@ def iter_gd(root):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", required=True)
-    ap.add_argument("--bus", default="scripts/battle/battle_signal_bus.gd")
+    ap.add_argument("--bus", default="")   ## 空 = 自动探测（src/battle 优先，兼容旧 scripts/battle）
     ap.add_argument("--out", required=True)
     ap.add_argument("--accept", default="", help="undetectable 登记表（JSON）：与实际名单**双向**对账，不一致即判红")
     a = ap.parse_args()
+
+    ## 总线路径：显式给了就用；否则自动探测（迭代152 目录重排：src/battle 为新位置）
+    if not a.bus:
+        for cand in ("src/battle/battle_signal_bus.gd", "scripts/battle/battle_signal_bus.gd"):
+            if os.path.isfile(os.path.join(a.repo, cand.replace("/", os.sep))):
+                a.bus = cand
+                break
+        if not a.bus:
+            print("[signals] 找不到 battle_signal_bus.gd（src/battle 与 scripts/battle 均无）")
+            return 2
 
     bus_path = os.path.join(a.repo, a.bus.replace("/", os.sep))
     if not os.path.isfile(bus_path):

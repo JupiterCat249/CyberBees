@@ -97,7 +97,7 @@ def test_arch_gate(tmp, python):
     rules = os.path.join(tmp, "rules.json")
     with open(rules, "w", encoding="utf-8") as f:
         json.dump({
-            "layers": {"ui_component": ["src/view/view_"], "ui": ["src/view/"], "battle": ["scripts/battle/"]},
+            "layers": {"ui_component": ["src/view/view_"], "ui": ["src/view/"], "battle": ["src/battle/"]},
             "forbid": [{"from": "ui_component", "to": ["ui"], "why": "测试用：子模块不得回指"}],
             "unresolved_must_be_zero": True,
         }, f, ensure_ascii=False)
@@ -146,11 +146,11 @@ def test_signals_gate(tmp, python):
     """信号闸反例（迭代095）：判定逻辑必须真的红/真的豁免。"""
     def make_repo(name, bus_text, user_text=""):
         root = os.path.join(tmp, name)
-        os.makedirs(os.path.join(root, "scripts", "battle"), exist_ok=True)
-        with open(os.path.join(root, "scripts", "battle", "battle_signal_bus.gd"), "w", encoding="utf-8") as f:
+        os.makedirs(os.path.join(root, "src", "battle"), exist_ok=True)
+        with open(os.path.join(root, "src", "battle", "battle_signal_bus.gd"), "w", encoding="utf-8") as f:
             f.write(bus_text)
         if user_text:
-            with open(os.path.join(root, "scripts", "battle", "user.gd"), "w", encoding="utf-8") as f:
+            with open(os.path.join(root, "src", "battle", "user.gd"), "w", encoding="utf-8") as f:
                 f.write(user_text)
         return root
 
@@ -479,9 +479,9 @@ def test_signals_accept(tmp, python):
     """undetectable 登记表反例（迭代128 · P4）：名单与登记**双向**必须一致。"""
     repo = os.path.join(tmp, "sa_repo")
     os.makedirs(os.path.join(repo, "scenes", "ui"), exist_ok=True)
-    os.makedirs(os.path.join(repo, "scripts", "battle"), exist_ok=True)
+    os.makedirs(os.path.join(repo, "src", "battle"), exist_ok=True)
 
-    bus = os.path.join(repo, "scripts", "battle", "battle_signal_bus.gd")
+    bus = os.path.join(repo, "src", "battle", "battle_signal_bus.gd")
     with open(bus, "w", encoding="utf-8") as f:
         f.write('extends Node\nconst SIG_X := "x_changed"\nsignal x_changed\n')
 
@@ -502,7 +502,7 @@ def test_signals_accept(tmp, python):
 
     def run_sig(accept, out):
         return run([python, SIGNALS_CHECK, "--repo", repo, "--bus",
-                    "scripts/battle/battle_signal_bus.gd", "--out", os.path.join(tmp, out),
+                    "src/battle/battle_signal_bus.gd", "--out", os.path.join(tmp, out),
                     "--accept", accept])
 
     rc, txt = run_sig(write_accept("sa_ok.json", one), "sa_o1.json")

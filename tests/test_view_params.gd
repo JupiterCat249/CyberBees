@@ -58,7 +58,7 @@ func test_detail_font_sizes_follow_params_when_positive() -> void:
 func test_attr_rows_show_selected_unit_values() -> void:
 	## 迭代108 实测 bug：`_rows()` 曾按 "Row1..Row4" 找节点，而场景里叫 Attack/Health/Speed/Range
 	##   ⇒ 详情区四维数值**从未更新过**。本用例锁住"点了单位，四行数值 = 该单位数据"。
-	var Pool := preload("res://scripts/data/card_pool.gd")
+	var Pool := preload("res://src/data/card_pool.gd")
 	var data = Pool.card("泥蜂")
 	assert_not_null(data, "前置：应能取到泥蜂卡数据")
 	_scene.show_detail(data)

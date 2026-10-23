@@ -12,8 +12,8 @@ extends RefCounted
 ##  · 攻击/反击的计算**优先于**根据生命值条件发动的技能
 ##  · **攻击不会被单位阻挡**；**移动会被单位阻挡**
 
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
 
 
 ## 攻击力修正后的伤害（含条件倍伤），再扣伤害减免 —— 减免只在此处算一次

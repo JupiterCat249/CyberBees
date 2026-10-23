@@ -5,10 +5,10 @@ extends RefCounted
 ## ⚠️ **零 UI 依赖**：本文件不 preload 任何 scenes/、不 get_node、不引用 Control/Node。
 ## 只接受 BattleState + UnitInstance，通过 BattleSignalBus 广播结果。
 
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const TerrainEff := preload("res://scripts/data/terrain_effect.gd")
-const CardKindLib := preload("res://scripts/data/card_kind.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const TerrainEff := preload("res://src/data/terrain_effect.gd")
+const CardKindLib := preload("res://src/data/card_kind.gd")
 
 ## a500 效果 4：若效果的消失与赋予在相同阶段 —— **先计算消失，再计算赋予**
 static func tick_and_grant(_state, inst: UnitInstance,

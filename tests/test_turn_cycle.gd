@@ -4,7 +4,7 @@ extends GutTest
 ## 判据来源：a500 抽卡 4~6（补手牌 / 洗回 / 弃牌）、回合流程 1~8。
 
 const Fixture := preload("res://tests/support/battle_fixture.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
+const Pool := preload("res://src/data/card_pool.gd")
 
 var e: BattleEngine = null
 

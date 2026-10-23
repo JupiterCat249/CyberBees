@@ -15,16 +15,16 @@ extends RefCounted
 ##   已有回合方走完四阶段后换手；双方都走完 → 回合数 +1
 ##   ⚠️ 与旧实现差异 P-1：回费/场地由引擎**自动**推进（不由玩家连点），部署/行动等玩家按钮
 
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const Effects := preload("res://scripts/battle/rules_effects.gd")
-const Combat := preload("res://scripts/battle/rules_combat.gd")
-const Command := preload("res://scripts/battle/rules_command.gd")
-const Preview := preload("res://scripts/battle/rules_preview.gd")
-const Queries := preload("res://scripts/battle/rules_queries.gd")
-const Assets := preload("res://scripts/battle/arena_assets.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const Effects := preload("res://src/battle/rules_effects.gd")
+const Combat := preload("res://src/battle/rules_combat.gd")
+const Command := preload("res://src/battle/rules_command.gd")
+const Preview := preload("res://src/battle/rules_preview.gd")
+const Queries := preload("res://src/battle/rules_queries.gd")
+const Assets := preload("res://src/battle/arena_assets.gd")
+const Pool := preload("res://src/data/card_pool.gd")
 
 var state: BattleState = null
 var config: BattleConfig = null

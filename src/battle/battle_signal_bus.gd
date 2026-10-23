@@ -2,7 +2,7 @@ extends Node
 ## BattleSignalBus —— 战斗**信号总线**（**唯一通信中枢**）
 ##
 ## 用法（不注册 Autoload，避免全局名冲突与加载顺序坑）：
-##   const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
+##   const Bus := preload("res://src/battle/battle_signal_bus.gd")
 ##   Bus.shared()                     # 取全局唯一实例（脚本内静态持有）
 ##   Bus.SIG_XXX                      # 信号名常量（发射用，不写裸字符串）
 ##
@@ -160,7 +160,7 @@ static var _instance: Node = null
 
 static func shared() -> Node:
 	if _instance == null or not is_instance_valid(_instance):
-		_instance = preload("res://scripts/battle/battle_signal_bus.gd").new()
+		_instance = preload("res://src/battle/battle_signal_bus.gd").new()
 		_instance.name = "BattleSignalBus"
 		var tree := Engine.get_main_loop() as SceneTree
 		if tree != null and tree.root != null:

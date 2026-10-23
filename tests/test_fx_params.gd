@@ -4,7 +4,7 @@ extends GutTest
 ## 目的：资源默认值必须与**资源化之前**的硬编码逐项一致 —— 迁移不得顺手改观感。
 ##   这些数值来自改动前的源码（见迭代145 记录"旧值来源"一节）。
 
-const Fx := preload("res://scripts/data/fx_params.gd")
+const Fx := preload("res://src/data/fx_params.gd")
 const PATH := "res://game_data/fx/fx_params.tres"
 
 

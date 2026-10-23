@@ -10,28 +10,28 @@
     },
     {
       "rule": "max-public-methods",
-      "file": "scripts/battle/battle_engine.gd",
+      "file": "src/battle/battle_engine.gd",
       "symbol": "",
       "reason": "引擎公共 API 面（request_* 族），拆分属于规则层重构，非本轮范围",
       "review": "若做引擎分层重构时复核"
     },
     {
       "rule": "max-returns",
-      "file": "scripts/battle/battle_engine.gd",
+      "file": "src/battle/battle_engine.gd",
       "symbol": "request_deploy",
       "reason": "部署请求的分支式早退（校验链），改写成表驱动会降低可读性",
       "review": "与上条同步复核"
     },
     {
       "rule": "max-returns",
-      "file": "scripts/battle/battle_engine.gd",
+      "file": "src/battle/battle_engine.gd",
       "symbol": "request_use_command_at",
       "reason": "同上：校验链早退",
       "review": "与上条同步复核"
     },
     {
       "rule": "max-returns",
-      "file": "scripts/battle/battle_engine.gd",
+      "file": "src/battle/battle_engine.gd",
       "symbol": "request_use_command",
       "reason": "同上：校验链早退",
       "review": "与上条同步复核"

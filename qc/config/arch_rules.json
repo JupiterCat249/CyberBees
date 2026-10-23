@@ -8,16 +8,16 @@
       "src/view/"
     ],
     "battle": [
-      "scripts/battle/"
+      "src/battle/"
     ],
     "data": [
-      "scripts/data/"
+      "src/data/"
     ],
     "net": [
-      "scripts/net/"
+      "src/net/"
     ],
     "anim": [
-      "scripts/anim/"
+      "src/anim/"
     ],
     "diag": [
       "dev/diagnostics/"

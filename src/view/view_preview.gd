@@ -4,7 +4,7 @@ extends RefCounted
 ## 判据：**只读 PreviewData 资源**并把高亮/标框打到既有节点上，不重算规则、不改布局数值。
 ##   视图看到的一切都来自规则层算好的 `PreviewData`（与试算同源）—— 这条口径不要在这里破坏。
 
-const PreviewKind := preload("res://scripts/battle/preview_kind.gd")
+const PreviewKind := preload("res://src/battle/preview_kind.gd")
 const Fx := preload("res://src/view/view_fx.gd")
 ## 预览后果浮字颜色＝伤害红（与 arena_view.COL_DAMAGE 同色；0.9 透明度＝提示而非结算）
 const HINT_COLOR := Color(1.0, 0.125, 0.0, 0.9)

@@ -20,8 +20,8 @@ extends GutTest
 ##     `_on_cell_clicked` 里 ATTACK/SUPPORT 分支实际只有"经程序调用"才会走到（首版测试因此误判成"攻击坏了"）。
 
 const BattleScene := preload("res://scenes/ui/battle_scene.tscn")
-const PreviewLib := preload("res://scripts/battle/rules_preview.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
+const PreviewLib := preload("res://src/battle/rules_preview.gd")
+const Pool := preload("res://src/data/card_pool.gd")
 const FixtureLib := preload("res://tests/support/battle_fixture.gd")
 
 var _scene: Node = null

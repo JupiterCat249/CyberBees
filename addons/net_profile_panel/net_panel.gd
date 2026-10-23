@@ -11,7 +11,7 @@ extends VBoxContainer
 ## 档位解析优先级：见 `scripts/net/net_config.gd::default_profile()`
 ## ⚠️ 本脚本只在**编辑器进程**内运行（`@tool`），不进入导出产物。
 
-const NC := preload("res://scripts/net/net_config.gd")
+const NC := preload("res://src/net/net_config.gd")
 
 var plugin: EditorPlugin = null
 

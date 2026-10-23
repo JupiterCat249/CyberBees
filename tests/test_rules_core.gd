@@ -10,10 +10,10 @@ extends GutTest
 ##      否则后续扣血会先被 clamp 掉（首版测试因此误判过）。
 
 const Fixture := preload("res://tests/support/battle_fixture.gd")
-const CombatLib := preload("res://scripts/battle/rules_combat.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
-const CardKindLib := preload("res://scripts/data/card_kind.gd")
-const PreviewLib := preload("res://scripts/battle/rules_preview.gd")
+const CombatLib := preload("res://src/battle/rules_combat.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const CardKindLib := preload("res://src/data/card_kind.gd")
+const PreviewLib := preload("res://src/battle/rules_preview.gd")
 
 var e: BattleEngine = null
 

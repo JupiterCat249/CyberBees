@@ -7,7 +7,7 @@
     },
     {
       "key": "battle_engine",
-      "path": "scripts/battle/battle_engine.gd"
+      "path": "src/battle/battle_engine.gd"
     },
     {
       "key": "net_diag_dump",

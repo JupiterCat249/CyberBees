@@ -17,11 +17,11 @@ extends RefCounted
 ##   · 范围 3：**移动会被单位阻挡**
 ##   · 卡牌类型：兵蜂→蜂王相邻格部署；建筑→己方领地任意格
 
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const PV := preload("res://scripts/battle/preview_data.gd")
-const K := preload("res://scripts/battle/preview_kind.gd")
-const Combat := preload("res://scripts/battle/rules_combat.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const PV := preload("res://src/battle/preview_data.gd")
+const K := preload("res://src/battle/preview_kind.gd")
+const Combat := preload("res://src/battle/rules_combat.gd")
 
 
 ## 主入口：按当前选中算出预览资源

@@ -12,14 +12,14 @@ extends Control
 ##   · 不在本类里算射程/费用/胜负 —— 一律读引擎给的 `PreviewData` 与信号参数
 ##   · 不直接改引擎内部状态 —— 只调 `request_*` / `select_*`
 
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const EngLib := preload("res://scripts/battle/battle_engine.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
-const K := preload("res://scripts/battle/preview_kind.gd")
-const Pool := preload("res://scripts/data/card_pool.gd")
-const DetailP := preload("res://scripts/data/detail_params.gd")
-const HandP := preload("res://scripts/data/hand_card_params.gd")
-const TerrainP := preload("res://scripts/data/terrain_params.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const EngLib := preload("res://src/battle/battle_engine.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
+const K := preload("res://src/battle/preview_kind.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const DetailP := preload("res://src/data/detail_params.gd")
+const HandP := preload("res://src/data/hand_card_params.gd")
+const TerrainP := preload("res://src/data/terrain_params.gd")
 const HAND_CARD_SCENE := preload("res://scenes/ui/card_hand.tscn")
 ## 飘字场景（迭代060 v4）
 const FLOAT_TEXT_SCENE := preload("res://scenes/ui/float_text.tscn")
@@ -147,7 +147,7 @@ func _ready() -> void:
 		if fx_params == null:
 			print("[VIEW] FxParams 加载失败（回退内置默认值）：", FX_PARAMS_PATH)
 	## 动画引擎（迭代060 v4）：唯一动画宿主；帧数计时 + 确定性推进（回放一致）
-	anim = preload("res://scripts/anim/anim_player.gd").new()
+	anim = preload("res://src/anim/anim_player.gd").new()
 	anim.name = "AnimPlayer"
 	add_child(anim)
 	anim.instance_finished.connect(_on_anim_finished)

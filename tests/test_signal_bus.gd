@@ -6,7 +6,7 @@ extends GutTest
 ##   gdlint / gdcruiser 都看不见收发关系 ⇒ 静态闸只有一半，运行期必须有对账。
 ##   本测试只看"声明与常量表是否自洽"；接线是否完整由 qc 的 G3 信号闸负责。
 
-const BusLib := preload("res://scripts/battle/battle_signal_bus.gd")
+const BusLib := preload("res://src/battle/battle_signal_bus.gd")
 
 
 func _const_map() -> Dictionary:

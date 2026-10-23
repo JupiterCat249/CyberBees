@@ -13,7 +13,7 @@ extends Resource
 
 ## 预览类型 —— **枚举定义在 PreviewKind**（独立命名空间，避免与 BattleState.Phase 值域撞车）
 ## ⚠️ 本类是 Resource，不应承载会被 Phase 混淆的枚举；统一引用 `PreviewKind.XXX`
-const K := preload("res://scripts/battle/preview_kind.gd")
+const K := preload("res://src/battle/preview_kind.gd")
 
 ## 一组预览区域：同一种高亮样式下的若干格
 class PreviewCell:
@@ -50,7 +50,7 @@ class PreviewCell:
 
 ## ⚠️ 返回值不写 `-> PreviewData`：新 class_name 注册前自引用会报 Identifier not found
 static func make(p_kind: int, p_caption: String = ""):
-	var d = load("res://scripts/battle/preview_data.gd").new()
+	var d = load("res://src/battle/preview_data.gd").new()
 	d.kind = p_kind
 	d.caption = p_caption
 	return d

@@ -13,7 +13,7 @@ extends EditorPlugin
 ## ⚠️ 仅编辑器进程内运行，**不进入导出产物**。
 
 const DockScript := preload("res://addons/net_profile_panel/net_panel.gd")
-const NC := preload("res://scripts/net/net_config.gd")
+const NC := preload("res://src/net/net_config.gd")
 
 var dock: Control = null
 

@@ -1,6 +1,6 @@
 extends RefCounted
 
-const StateLib := preload("res://scripts/battle/battle_state.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
 ## 规则层**纯查询**（自 BattleEngine 切出 —— 迭代075 · B5 第二刀）
 ##
 ## 判据（切片时立的规矩，后续加入者请遵守）：

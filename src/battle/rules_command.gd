@@ -12,9 +12,9 @@ extends RefCounted
 ##  · 蜂王**免疫指令伤害**；护盾/力场**抵挡指令伤害**（T14）
 ##  · X 费卡：使用费用 = 目标单位的**部署费用**，**无法对蜂王使用**
 
-const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
-const StateLib := preload("res://scripts/battle/battle_state.gd")
-const Combat := preload("res://scripts/battle/rules_combat.gd")
+const Bus := preload("res://src/battle/battle_signal_bus.gd")
+const StateLib := preload("res://src/battle/battle_state.gd")
+const Combat := preload("res://src/battle/rules_combat.gd")
 
 
 ## a500 费用 4：X 费卡的"使用费用" = 目标单位的部署费用（蜂王不可为目标 → 返回 -1）

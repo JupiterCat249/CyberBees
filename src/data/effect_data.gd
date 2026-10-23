@@ -1,6 +1,6 @@
 class_name EffectData
 extends Resource
-const CardKindLib := preload("res://scripts/data/card_kind.gd")
+const CardKindLib := preload("res://src/data/card_kind.gd")
 ## 效果（buff / 减益）静态数据 —— A5 十种效果
 ## id 为 UUID（D-4）；T14：相同效果最多一个 → stacking 固定 NONE
 ##

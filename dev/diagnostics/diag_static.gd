@@ -10,16 +10,16 @@ const DiagIO := preload("res://dev/diagnostics/diag_io.gd")
 ## 关键文件：异机 diff 时一眼看出哪一个不同
 const KEY_FILES := [
 	"res://src/view/arena_view.gd", "res://scenes/ui/battle_ui_alpha.tscn",
-	"res://scripts/data/card_pool.gd", "res://game_data/decks/示范卡组.tres",
+	"res://src/data/card_pool.gd", "res://game_data/decks/示范卡组.tres",
 	"res://project.godot", "res://scenes/ui/battle_scene.tscn",
 ]
 
 
 ## 关键常量（防"同一常量在不同机器上被改"）：[文件, 常量名]
 const KEY_CONSTS := [
-	["res://scripts/data/card_pool.gd", "DECK_NAMES"],
+	["res://src/data/card_pool.gd", "DECK_NAMES"],
 	["res://src/view/arena_view.gd", "DIAG_NODES"],
-	["res://scripts/battle/battle_engine.gd", "PITCH"],
+	["res://src/battle/battle_engine.gd", "PITCH"],
 ]
 
 

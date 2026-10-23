@@ -9,7 +9,7 @@ extends RefCounted
 ##   · mine = (inst.side == my_seat)：联机下"每个玩家看到自己都是绿方"；
 ##   · effects **只取 inst.effects**（运行态）；卡牌自带被动在 UnitData.passives，绝不进徽标。
 
-const CardKindLib := preload("res://scripts/data/card_kind.gd")
+const CardKindLib := preload("res://src/data/card_kind.gd")
 const STATUS_ICON_DIR := "res://assets/status_icons/"
 
 

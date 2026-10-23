@@ -9,8 +9,8 @@ extends RefCounted
 ##   · 无预览：点空格 → 只给"为什么没反应"的提示（或什么都不做）；点敌方单位 → 提示；
 ##     点己方单位 → select_unit（详情/可用动作由视图补）。
 
-const K := preload("res://scripts/battle/preview_kind.gd")
-const EngLib := preload("res://scripts/battle/battle_engine.gd")
+const K := preload("res://src/battle/preview_kind.gd")
+const EngLib := preload("res://src/battle/battle_engine.gd")
 
 const MSG_DEPLOY := "该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）"
 const MSG_MOVE := "该格不可到达"

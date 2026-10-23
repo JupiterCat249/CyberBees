@@ -4,8 +4,8 @@ extends RefCounted
 ## 为什么不用 `battle_scene.tscn`：视图会带来引擎级警告与 3~4s 启动开销，
 ## 而规则契约应当在**最窄的装配**上验证；场景级冒烟另有一支（test_battle_smoke）。
 
-const Pool := preload("res://scripts/data/card_pool.gd")
-const ConfigLib := preload("res://scripts/battle/battle_config.gd")
+const Pool := preload("res://src/data/card_pool.gd")
+const ConfigLib := preload("res://src/battle/battle_config.gd")
 
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1

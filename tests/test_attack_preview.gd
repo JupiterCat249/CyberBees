@@ -5,8 +5,8 @@ extends GutTest
 ## 本文件只测数据层（不起场景）；视图浮字由 test_attack_preview_view 覆盖。
 
 const Fixture := preload("res://tests/support/battle_fixture.gd")
-const Combat := preload("res://scripts/battle/rules_combat.gd")
-const Preview := preload("res://scripts/battle/rules_preview.gd")
+const Combat := preload("res://src/battle/rules_combat.gd")
+const Preview := preload("res://src/battle/rules_preview.gd")
 
 var e: BattleEngine = null
 

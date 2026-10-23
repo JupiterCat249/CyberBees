@@ -30,7 +30,7 @@ extends Resource
 ## 由 MapData 构造（md 可为 null，此时只填背景回退值）
 static func make(md: MapData, fallback_bg: Texture2D = null):
 	## ⚠️ 返回值不写 `-> ArenaAssets`：新建 class_name 注册前自引用会报 Identifier not found
-	var a = load("res://scripts/battle/arena_assets.gd").new()
+	var a = load("res://src/battle/arena_assets.gd").new()
 	if md != null:
 		a.map_texture = md.terrain_texture
 		a.background_texture = md.background_texture
