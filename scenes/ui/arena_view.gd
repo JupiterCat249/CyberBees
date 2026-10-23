@@ -48,6 +48,7 @@ const Layout := preload("res://scenes/ui/view_layout.gd")
 const PreviewRenderer := preload("res://scenes/ui/view_preview.gd")
 const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
 const CellDispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
+const RemoteFlow := preload("res://scenes/ui/view_remote_flow.gd")
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
 const ATTR_ROWS := ["Attack", "Health", "Speed", "Range"]
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
@@ -548,12 +549,10 @@ func _on_remote_select(side: int, cell: Vector2i) -> void:
 	## ⭐ ③ 新目标：若对端选中的格上有**对端单位** ⇒ 本地**纯计算**它的可作用范围，
 	##   并用**既有范围样式**渲染 ✓（"事前提醒"的核心视觉：对手在看哪、能打到哪）
 	##   ⚠️ 只读计算、不改本地选中态；`side` 是**发送方**的 side（故 `side != my_seat` 即对端 ✓）
-	var rp: Resource = null
-	var ru: UnitInstance = null
-	if side != my_seat and engine != null and cell.x >= 0:
-		ru = engine.state.board.unit_at(cell)
-		if ru != null and ru.side != my_seat:
-			rp = engine.remote_preview_of(ru)
+	## 纯查询见 scenes/ui/view_remote_flow.gd（迭代110）
+	var hit := RemoteFlow.remote_unit_preview(engine, my_seat, side, cell)
+	var rp: Resource = hit.get("preview")
+	var ru = hit.get("unit")
 	if rp != null:
 		_preview = rp
 		## ⭐ 迭代064 遗留③（人 2026-10-05）：登记这条远端预览**挂在谁身上** ——
@@ -616,19 +615,13 @@ func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 		##   本地**纯算出该卡在该中心格上的效果范围**并用既有样式渲染 ✓
 		##   （此前只显示落点、不显示范围 ✗）；放在 _on_remote_select 之后 ⇒ 范围优先生效 ✓
 		if text.begins_with("选中手牌 ") and engine != null and engine.state != null:
-			var nm := text.replace("选中手牌 ", "")
-			var hh: Array = engine.state.sides[side]["hand"]
-			for i in hh.size():
-				if String(hh[i].display_name) == nm:
-					var rp: Resource = engine.remote_command_preview(i, cell)
-					if rp != null:
-						_preview = rp
-						## ⭐ 迭代064 遗留③（人 2026-10-05）：登记这条**对端指令卡效果范围**挂在哪一格 ——
-						##   对端一旦清掉待确认（`sel` 不带 cell / 换目标），`_on_remote_select` 会作废登记；
-						##   这里补上"以格为键"的记忆，避免效果范围以幽灵形式留在对手屏幕上 ✗。
-						_remote.bind_command(cell)
-						_render_preview()
-					break
+			var rp: Resource = RemoteFlow.remote_command_preview(engine, side, text, cell)
+			if rp != null:
+				_preview = rp
+				## 迭代064 遗留③：把这条指令效果范围**以格为键**登记 ⇒ 对端清掉待确认时 _on_remote_select 会作废它，
+				##   避免效果范围以幽灵形式留在屏幕上（登记语义见 view_remote_state.gd）。
+				_remote.bind_command(cell)
+				_render_preview()
 		else:
 			## ⭐ 迭代064 遗留③（人 2026-10-05）：对端的"非选牌"动作（移动/攻击/支援…）不携带待确认格 ⇒
 			##   作废上一条指令效果范围，否则它会在对手操作已推进后仍留在屏幕上 ✗。

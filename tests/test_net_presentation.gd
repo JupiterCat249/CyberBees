@@ -6,6 +6,7 @@ extends GutTest
 const BattleScene := preload("res://scenes/ui/battle_scene.tscn")
 const NetPanel := preload("res://addons/net_profile_panel/net_panel.gd")
 const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
+const FixtureLib := preload("res://tests/support/battle_fixture.gd")
 
 var _scene: Node = null
 
@@ -121,3 +122,26 @@ func test_remote_select_without_remote_unit_clears_binding() -> void:
 	st.bind_unit("ghost-unit")
 	_scene._on_remote_select(1, Vector2i(0, 0))
 	assert_eq(st.preview_id, "", "挂载登记必须清空")
+
+func test_remote_select_on_enemy_unit_binds_preview() -> void:
+	## 远端选中**对端单位** ⇒ 登记"这条预览挂在谁身上"（死亡时要靠它作废）
+	var e = _scene.get("engine")
+	var foe := FixtureLib.place_unit(e, 1, "泥蜂", Vector2i(1, 2))
+	assert_not_null(foe, "前置：应能放下敌方单位")
+	_scene._on_remote_select(1, foe.cell)
+	await wait_frames(1)
+	var st = _scene.get("_remote")
+	assert_eq(st.preview_id, foe.instance_id, "应登记到该敌方单位")
+	assert_not_null(_scene.get("_preview"), "应同时算出它的可作用范围预览")
+
+
+func test_remote_command_action_binds_command_cell() -> void:
+	## 对端用**指令卡**并带待确认格 ⇒ 本地算效果范围并**以格为键**登记（幽灵范围防护）
+	var e = _scene.get("engine")
+	FixtureLib.push_card(e, 1, "电击")
+	var target := Vector2i(2, 2)
+	_scene._on_remote_action(1, "选中手牌 电击", target)
+	await wait_frames(1)
+	var st = _scene.get("_remote")
+	assert_eq(st.command_cell, target, "应把指令待确认格登记下来")
+	assert_not_null(_scene.get("_preview"), "应渲染该指令的效果范围/目标预览")
