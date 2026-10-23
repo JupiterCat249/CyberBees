@@ -98,7 +98,7 @@ func test_remote_state_begin_select_drops_old_binding() -> void:
 	st.begin_select(Vector2i(1, 1))
 	st.bind_unit("u-1")
 	st.bind_command(Vector2i(2, 2))
-	assert_true(st.is_remote, "登记后应标记为远端来源")
+	assert_eq(st.preview_id, "u-1", "登记后应记住挂载单位")
 	st.begin_select(Vector2i(3, 3))
 	assert_eq(st.preview_id, "", "换选中必须清掉挂单位的登记")
 	assert_eq(st.command_cell, Vector2i(-1, -1), "换选中必须清掉指令待确认格")
@@ -112,14 +112,12 @@ func test_remote_state_holds_and_reset() -> void:
 	assert_false(st.holds("u-8"), "别的单位不算持有者")
 	st.reset()
 	assert_false(st.holds("u-9"), "reset 后不再持有")
-	assert_false(st.is_remote, "reset 后来源标记应清")
 	assert_eq(st.sel_cell, Vector2i(-1, -1), "reset 后选中格应清")
 
-func test_remote_select_without_remote_unit_clears_flag() -> void:
+func test_remote_select_without_remote_unit_clears_binding() -> void:
 	## 守卫（迭代096）：本轮切分时**补丁参数多传一位**，把 `else` 分支吞掉 ⇒
-	##   "对端选了个空格"时来源标记仍为 true（幽灵来源）。这条锁住 else 必须存在。
+	##   "对端选了个空格"时挂载登记没被清掉（幽灵登记）。这条锁住 else 必须存在。
 	var st = _scene.get("_remote")
 	st.bind_unit("ghost-unit")
 	_scene._on_remote_select(1, Vector2i(0, 0))
-	assert_false(st.is_remote, "对端没选中单位时，来源标记必须清掉")
 	assert_eq(st.preview_id, "", "挂载登记必须清空")

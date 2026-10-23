@@ -216,7 +216,7 @@ func test_main_button_confirms_pending_move() -> void:
 
 func test_main_button_with_selected_card_discards() -> void:
 	## 选中手牌时，主按钮＝**弃牌**（G-6 Q-3）
-	## ⚠️ 实测：`HandMode.DISCARD`（枚举值 3）**全项目没有任何写入点** —— 弃牌的真实路径
+	## ⚠️ 实测：`HandMode.DISCARD` 曾是**死枚举**（全项目无写入点）⇒ 迭代099 已真删；弃牌的真实路径
 	##   就是「选中手牌 → 主按钮」，与 hand_mode 无关（死枚举已记入路线图待复核）。
 	_to_action()
 	var e = _engine()

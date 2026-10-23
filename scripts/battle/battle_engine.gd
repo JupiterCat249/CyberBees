@@ -40,7 +40,6 @@ enum HandMode {
 	IDLE,      ## 无手牌交互
 	DEPLOY,    ## 单位卡·待部署 —— 交互范围 = 该卡的合法部署格
 	TARGET,    ## 指令卡·待指定目标 —— 交互范围 = 合法目标单位
-	DISCARD,   ## 单位卡·弃牌态（主按钮「弃牌」）—— 交互范围 = 手牌区以外任意处
 }
 var hand_mode: int = HandMode.IDLE
 var sel_hand_card: CardData = null   ## 当前选中的手牌（记录卡种，供状态机判定）
@@ -698,12 +697,9 @@ func hand_range_has_cell(cell: Vector2i) -> bool:
 		##   引擎不认可时给出**明确提示**（而不是"点了没反应" ⇒ 观感即"不可选"）✓。
 		##   AOE 的"以格为中心 + 阶段1挂待确认 + 阶段2执行"在 `request_use_command_at` 内处理 ✓。
 		return cell.x >= 0 and cell.x < Board.ROWS and cell.y >= 0 and cell.y < Board.COLS
-	if hand_mode == HandMode.DISCARD:
-		## ⭐ 弃牌 BUG 修复（人 2026-10-05「无法顺利的通过点击其他手牌或其他区域（地图之外的区域）来执行弃牌」）：
-		##   弃牌态的**交互范围 = 手牌区以外任意处** ⇒ 盘内格一律放行 ✓
-		##   此前本函数**没有 DISCARD 分支** ⇒ 返回 false ⇒ 视图 `_on_cell_clicked` 走
-		##   `engine.hand_range_leave()`（只退出选中 ✗）⇒ **点地图任何地方都不弃牌** ✓（根因）
-		return cell.x >= 0 and cell.x < Board.ROWS and cell.y >= 0 and cell.y < Board.COLS
+	## ⚠️ 迭代099：这里曾有 `HandMode.DISCARD` 分支（"弃牌态点手牌区以外任意处即弃牌"）。
+	##   但 DISCARD **从未被任何入口置入**（全项目无写入点）⇒ 分支不可达，已按"死码真删"口径删除。
+	##   若将来要恢复"点空白处弃牌"，需在进入弃牌时显式置 DISCARD，并**先补一条交互回归**。
 	return false
 
 

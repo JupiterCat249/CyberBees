@@ -2,8 +2,8 @@
   "$comment": "祖父条款：历史上已超限的文件登记于此，只许变小（长一行/一字节即红）。snapshot 自动收紧登记值；降到上限以下或消失的条目自动移除。",
   "exempt": {
     "scenes/ui/arena_view.gd": {
-      "lines": 1928,
-      "bytes": 100662
+      "lines": 1914,
+      "bytes": 99651
     }
   }
 }

@@ -563,7 +563,6 @@ func _on_remote_select(side: int, cell: Vector2i) -> void:
 		##   （旧注释「远端只渲染范围格、绝不给单位打 attack 标记」据人口径**作废**；
 		##     那条修正真正要挡的是「选指令卡时对手单位被套红框」，已由 `_render_preview()` 里的
 		##     **AOE 跳过单位打标** 覆盖，不再靠"远端一律不打标"这种一刀切。）
-		_remote.is_remote = true
 	else:
 		_remote.clear_unit()
 	_render_preview()
@@ -621,7 +620,6 @@ func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 					var rp: Resource = engine.remote_command_preview(i, cell)
 					if rp != null:
 						_preview = rp
-						_remote.is_remote = true
 						## ⭐ 迭代064 遗留③（人 2026-10-05）：登记这条**对端指令卡效果范围**挂在哪一格 ——
 						##   对端一旦清掉待确认（`sel` 不带 cell / 换目标），`_on_remote_select` 会作废登记；
 						##   这里补上"以格为键"的记忆，避免效果范围以幽灵形式留在对手屏幕上 ✗。
@@ -1038,7 +1036,6 @@ func _on_unit_removed(inst: UnitInstance, _reason: String) -> void:
 			_cells[_remote.sel_cell].set_selected(false)
 		_remote.sel_cell = Vector2i(-1, -1)
 		_preview = null
-		_remote.is_remote = false
 		_render_preview()
 	var n: Control = _unit_nodes.get(inst.instance_id, null)
 	_unit_nodes.erase(inst.instance_id)
@@ -1097,8 +1094,8 @@ func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: A
 	## ⚠️ 预览范围**由规则层算好装在 PreviewData 里** —— 视图只读不重算
 	_preview = preview
 	## ⭐ 迭代064 遗留③（人 2026-10-05）：**本地选中变化 ⇒ 这条预览归本地** ——
-	##   显式清掉远端登记，否则「先看过对端选中、再选自己的单位」时残留的 `_remote.is_remote=true`
-	##   会继续影响渲染分支（历史踩坑：`_render_preview` 曾用它一刀切跳过单位打标）。
+	##   显式清掉远端登记，否则「先看过对端选中、再选自己的单位」时会残留"这条预览属于对端"的错觉
+	##   （历史踩坑：`_render_preview` 曾用来源标记一刀切跳过单位打标 —— 该标记已于迭代099 删除）。
 	_remote.clear_unit()
 	_remote.clear_command()
 	_render_preview()
@@ -1415,12 +1412,6 @@ func _execute_hand_on_cell(cell: Vector2i) -> void:
 				intent.request_use_command_at(side, engine.sel_hand_index, cell)
 			elif u == null or not intent.request_use_command(side, engine.sel_hand_index, u):
 				_flash_msg("该单位不是该指令的合法目标")
-		int(EngLib.HandMode.DISCARD):
-			## ⭐ 弃牌 BUG 修复：弃牌态点"手牌区以外任意处" ⇒ **执行弃牌** ✓
-			##   （此前 `_execute_hand_on_cell` 无 DISCARD 分支、且 `hand_range_has_cell` 先把它挡掉 ✗）
-			var dc: int = engine.discard_cost_of(engine.sel_hand_card) if engine.sel_hand_card != null else 0
-			if not intent.request_discard(side, engine.sel_hand_index):
-				_flash_msg("弃牌失败：需 %d 费，当前 %d" % [dc, engine.state.cost(side)])
 		_:
 			pass
 
@@ -1564,11 +1555,6 @@ func _on_hand_clicked(card_id: String, side: int) -> void:
 			show_detail(hand_inactive[idx])
 		_flash_msg("现在不是%s的回合" % ("绿方" if side == SIDE_ALLY else "红方"))
 		return
-	## ⭐ 弃牌 BUG 修复（人 2026-10-05）：处于**弃牌态**时，**点另一张手牌 = 对当前选中的那张执行弃牌** ✓
-	##   （此前这里只会 `select_hand(idx)` ⇒ 只是换了个选中，永远弃不掉 ✗）；随后仍选中被点的这张 ✓
-	if int(engine.hand_mode) == int(EngLib.HandMode.DISCARD) and int(engine.sel_hand_index) >= 0 \
-			and int(engine.sel_hand_index) != idx:
-		intent.request_discard(side, engine.sel_hand_index)
 	engine.select_hand(side, idx)
 	var hand: Array = engine.state.sides[side]["hand"]
 	if idx < hand.size():

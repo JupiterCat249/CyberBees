@@ -16,8 +16,8 @@ var sel_cell := Vector2i(-1, -1)
 var preview_id := ""
 ## 对端**指令卡**的待确认中心格；x < 0 = 无
 var command_cell := Vector2i(-1, -1)
-## 当前 arena_view._preview 是否来自对端（旧"远端不给单位打标"口径已作废，仅作来源标记）
-var is_remote := false
+## ⚠️ 迭代099：这里曾有 `is_remote`（"当前预览是否来自对端"）—— 实测**只写不读**（唯一读者是测试），
+##   按"死状态真删"口径删除。若将来要按来源区分渲染，请重新引入**并当场加消费点**（否则又会变成装饰性字段）。
 
 
 ## 对端换选中：**先作废旧登记**，再记新格
@@ -30,19 +30,16 @@ func begin_select(cell: Vector2i) -> void:
 ## 对端单位预览：登记挂在该单位上
 func bind_unit(instance_id: String) -> void:
 	preview_id = instance_id
-	is_remote = true
 
 
 ## 对端指令卡效果范围：登记以格为键
 func bind_command(cell: Vector2i) -> void:
 	command_cell = cell
-	is_remote = true
 
 
 ## 撤销"挂单位"的登记（对端没选中单位 / 本地开始操作时）
 func clear_unit() -> void:
 	preview_id = ""
-	is_remote = false
 
 
 ## 撤销"指令待确认格"的登记
@@ -60,4 +57,3 @@ func reset() -> void:
 	sel_cell = Vector2i(-1, -1)
 	preview_id = ""
 	command_cell = Vector2i(-1, -1)
-	is_remote = false
