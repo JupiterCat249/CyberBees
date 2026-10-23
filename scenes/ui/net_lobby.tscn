@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bj7m48na3e1mc"]
 
-[ext_resource type="Script" uid="uid://bysv4202750g" path="res://scenes/ui/net_lobby.gd" id="1_hgxbl"]
+[ext_resource type="Script" uid="uid://bysv4202750g" path="res://src/view/net_lobby.gd" id="1_hgxbl"]
 
 [node name="NetLobby" type="Control" unique_id=1883302818]
 layout_mode = 3

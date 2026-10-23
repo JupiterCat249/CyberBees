@@ -3,7 +3,7 @@ extends GutTest
 ##
 ## 不起场景：几何只吃参数 + 两个尺寸 ⇒ 可直接手算核对"居中公式"与"原偏移链"。
 
-const Art := preload("res://scenes/ui/view_card_art.gd")
+const Art := preload("res://src/view/view_card_art.gd")
 const Params := preload("res://scripts/data/hand_card_params.gd")
 
 

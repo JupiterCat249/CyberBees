@@ -5,7 +5,7 @@ extends GutTest
 ## ⇒ 这些用例**不起场景**，毫秒级，且能覆盖"提示文案"这类容易在搬家中改坏的细节。
 
 const Fixture := preload("res://tests/support/battle_fixture.gd")
-const Dispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
+const Dispatch := preload("res://src/view/view_cell_dispatch.gd")
 
 var e: BattleEngine = null
 

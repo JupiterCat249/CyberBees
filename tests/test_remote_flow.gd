@@ -4,7 +4,7 @@ extends GutTest
 ## 不起场景：查询只读引擎状态 ⇒ 毫秒级，且能精确覆盖"该不该给预览"的判定。
 
 const Fixture := preload("res://tests/support/battle_fixture.gd")
-const Flow := preload("res://scenes/ui/view_remote_flow.gd")
+const Flow := preload("res://src/view/view_remote_flow.gd")
 
 var e: BattleEngine = null
 

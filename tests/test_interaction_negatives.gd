@@ -6,7 +6,7 @@ extends GutTest
 ## 判据都取**可读读数**（字段/数量/布尔返回），不看观感。
 
 const Fixture := preload("res://tests/support/battle_fixture.gd")
-const Dispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
+const Dispatch := preload("res://src/view/view_cell_dispatch.gd")
 
 var e: BattleEngine = null
 

@@ -37,21 +37,21 @@ const PHASE_RECOVER := 0
 const PHASE_TERRAIN := 1
 const UNIT_CARD_SCENE := preload("res://scenes/ui/card_unit.tscn")
 ## 状态图标目录 / 图标缓存已随数据装配一起切到 scenes/ui/view_unit_model.gd（迭代112）
-const CELL_SCRIPT := preload("res://scenes/ui/board_cell.gd")
-const InputUtils := preload("res://scenes/ui/view_input_utils.gd")
-const Fx := preload("res://scenes/ui/view_fx.gd")
-const Layout := preload("res://scenes/ui/view_layout.gd")
-const PreviewRenderer := preload("res://scenes/ui/view_preview.gd")
-const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
-const CellDispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
-const RemoteFlow := preload("res://scenes/ui/view_remote_flow.gd")
-const UnitModel := preload("res://scenes/ui/view_unit_model.gd")
-const Cards := preload("res://scenes/ui/view_cards.gd")
-const CardArt := preload("res://scenes/ui/view_card_art.gd")
-const CardParams := preload("res://scenes/ui/view_card_params.gd")
-const Coords := preload("res://scenes/ui/view_coords.gd")
-const Board := preload("res://scenes/ui/view_board.gd")
-const HudTint := preload("res://scenes/ui/view_hud_tint.gd")
+const CELL_SCRIPT := preload("res://src/view/board_cell.gd")
+const InputUtils := preload("res://src/view/view_input_utils.gd")
+const Fx := preload("res://src/view/view_fx.gd")
+const Layout := preload("res://src/view/view_layout.gd")
+const PreviewRenderer := preload("res://src/view/view_preview.gd")
+const RemoteState := preload("res://src/view/view_remote_state.gd")
+const CellDispatch := preload("res://src/view/view_cell_dispatch.gd")
+const RemoteFlow := preload("res://src/view/view_remote_flow.gd")
+const UnitModel := preload("res://src/view/view_unit_model.gd")
+const Cards := preload("res://src/view/view_cards.gd")
+const CardArt := preload("res://src/view/view_card_art.gd")
+const CardParams := preload("res://src/view/view_card_params.gd")
+const Coords := preload("res://src/view/view_coords.gd")
+const Board := preload("res://src/view/view_board.gd")
+const HudTint := preload("res://src/view/view_hud_tint.gd")
 ## 视觉特效参数（人 2026-10-23 意见B）：默认加载 game_data/fx/fx_params.tres；
 ##   资源缺失/损坏时回退内置默认值（view_fx / view_preview 的 constants）。
 const FX_PARAMS_PATH := "res://game_data/fx/fx_params.tres"
@@ -60,9 +60,9 @@ var fx_params = null
 var _detail_icon_warned := false
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
 const ATTR_ROWS := ["Attack", "Health", "Speed", "Range"]
-const ResultPanel := preload("res://scenes/ui/view_result.gd")
-const PhaseText := preload("res://scenes/ui/view_phase_text.gd")
-const RemoteMarks := preload("res://scenes/ui/view_remote_marks.gd")
+const ResultPanel := preload("res://src/view/view_result.gd")
+const PhaseText := preload("res://src/view/view_phase_text.gd")
+const RemoteMarks := preload("res://src/view/view_remote_marks.gd")
 
 const SIDE_ALLY := 0
 const SIDE_ENEMY := 1
@@ -82,7 +82,7 @@ var intent: NetIntent = null
 var net_client: RelayClient = null
 var net_seat: int = 0
 ## 结算浮层（迭代063）：代码构建，不落场景（避开编辑器回退坑）
-const RESULT_PANEL := preload("res://scenes/ui/result_panel.gd")
+const RESULT_PANEL := preload("res://src/view/result_panel.gd")
 var _result_panel: Control = null
 var _leaving := false
 ## 动画引擎（迭代060 v4）：Pattern→Unit→Clip **数据驱动**，数据在 `game_data/anims/*.tres`
@@ -458,7 +458,7 @@ func _fit_window_to_design() -> void:
 ## 用法：运行中按 **F8** ⇒ 打印实际视口/Canvas 变换/关键节点全局矩形 + 存整屏 PNG 到 `user://`；
 ##   换尺寸复测（F11 / 拖窗 / 改 `[display]`）再按 F8。`get_global_rect()` 是渲染后真实屏幕坐标。
 ## 诊断实现已切到 scenes/ui/view_diagnostics.gd（迭代073 · B5 第一刀）
-const Diag := preload("res://scenes/ui/view_diagnostics.gd")
+const Diag := preload("res://src/view/view_diagnostics.gd")
 ## ⚠️ 保留同名常量：net_diag_dump.gd 以 DIAG_NODES 作静态指纹，改名会打断取证口径
 const DIAG_NODES := Diag.NODES
 

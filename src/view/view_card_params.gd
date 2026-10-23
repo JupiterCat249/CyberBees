@@ -8,9 +8,9 @@ extends RefCounted
 ## ⚠️ 迭代067 的两个实测结论也在这里：徽章本体是**正方形**（贴图按比例居中，不按贴图拉长），
 ##   费用数字用**与信息栏同一套几何居中**（Layout.center_badge_value_geometry），杜绝分叉。
 
-const Layout := preload("res://scenes/ui/view_layout.gd")
-const CardArt := preload("res://scenes/ui/view_card_art.gd")
-const Cards := preload("res://scenes/ui/view_cards.gd")
+const Layout := preload("res://src/view/view_layout.gd")
+const CardArt := preload("res://src/view/view_card_art.gd")
+const Cards := preload("res://src/view/view_cards.gd")
 
 
 ## 应用徽章（BadgeImage）与内描边（InnerLine）

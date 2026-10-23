@@ -4,31 +4,31 @@
   "entries": [
     {
       "kind": "connect",
-      "file": "scenes\\ui\\view_layout.gd",
+      "file": "src\\view\\view_layout.gd",
       "arg": "on_center_label",
       "why": "中心对齐回调（Callable）"
     },
     {
       "kind": "connect",
-      "file": "scenes\\ui\\view_layout.gd",
+      "file": "src\\view\\view_layout.gd",
       "arg": "on_center_badge.bind(badge",
       "why": "徽章居中回调，绑定实例参数"
     },
     {
       "kind": "connect",
-      "file": "scenes\\ui\\view_layout.gd",
+      "file": "src\\view\\view_layout.gd",
       "arg": "on_fit_stroke",
       "why": "描边适配回调（Callable）"
     },
     {
       "kind": "connect",
-      "file": "scenes\\ui\\view_result.gd",
+      "file": "src\\view\\view_result.gd",
       "arg": "on_rematch",
       "why": "结算面板\"再来一局\"回调"
     },
     {
       "kind": "connect",
-      "file": "scenes\\ui\\view_result.gd",
+      "file": "src\\view\\view_result.gd",
       "arg": "on_lobby",
       "why": "结算面板\"返回大厅\"回调"
     }

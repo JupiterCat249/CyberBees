@@ -5,7 +5,7 @@ extends GutTest
 
 const BattleScene := preload("res://scenes/ui/battle_scene.tscn")
 const NetPanel := preload("res://addons/net_profile_panel/net_panel.gd")
-const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
+const RemoteState := preload("res://src/view/view_remote_state.gd")
 const FixtureLib := preload("res://tests/support/battle_fixture.gd")
 
 var _scene: Node = null

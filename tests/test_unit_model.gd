@@ -4,7 +4,7 @@ extends GutTest
 ## 不起场景：装配只读 UnitInstance ⇒ 能精确断言"类型键 / 阵营色 / 效果徽标"三件事实。
 
 const Fixture := preload("res://tests/support/battle_fixture.gd")
-const Model := preload("res://scenes/ui/view_unit_model.gd")
+const Model := preload("res://src/view/view_unit_model.gd")
 
 var e: BattleEngine = null
 

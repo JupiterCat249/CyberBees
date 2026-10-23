@@ -3,7 +3,7 @@
   "exemptions": [
     {
       "rule": "max-file-lines",
-      "file": "scenes/ui/arena_view.gd",
+      "file": "src/view/arena_view.gd",
       "symbol": "",
       "reason": "视图主文件，B5 切片中（1661 行）；收口前不可能 <1000",
       "review": "每轮切片后复核：行数只降不升"

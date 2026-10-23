@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cftew331eyj7"]
 
-[ext_resource type="Script" uid="uid://chucwtivyc48j" path="res://scenes/ui/card_unit.gd" id="1_hg6cp"]
+[ext_resource type="Script" uid="uid://chucwtivyc48j" path="res://src/view/card_unit.gd" id="1_hg6cp"]
 [ext_resource type="Texture2D" uid="uid://dk81qb7rdglue" path="res://assets/type_icons/soldier.png" id="2_hg6cp"]
 [ext_resource type="Texture2D" uid="uid://dilglfy5t7c5d" path="res://assets/card_art/熊蜂.png" id="3_hg6cp"]
 [ext_resource type="Texture2D" uid="uid://dmqbe4txap05g" path="res://assets/ui/fx/crt_scanline_tile.png" id="3_k5t5m"]

@@ -10,7 +10,7 @@ extends GutTest
 ##    第二条测试就会拿到 previously freed 引用（本文件首版实测踩到）。
 
 const BattleScene := preload("res://scenes/ui/battle_scene.tscn")
-const ViewDiag := preload("res://scenes/ui/view_diagnostics.gd")
+const ViewDiag := preload("res://src/view/view_diagnostics.gd")
 
 var _scene: Node = null
 
@@ -231,9 +231,9 @@ func test_show_result_builds_panel() -> void:
 	## 迭代087：结算浮层构造切到 view_result.gd。
 	##   ⚠️ 这里**不挂进场景树**：result_panel.gd 的 _ready 会在设 size 时触发引擎 WARNING
 	##   （"non-equal opposite anchors"），GUT 会把它当测试错误 ⇒ 只验证"构造"这一层。
-	var ResultMod := preload("res://scenes/ui/view_result.gd")
+	var ResultMod := preload("res://src/view/view_result.gd")
 	var panel = ResultMod.build_panel(
-		preload("res://scenes/ui/result_panel.gd"), 1, "测试用原因", 0,
+		preload("res://src/view/result_panel.gd"), 1, "测试用原因", 0,
 		_scene.get("engine"), "ROOM01", false,
 		func() -> void: pass, func() -> void: pass)
 	assert_not_null(panel, "应构造出结算浮层面板")

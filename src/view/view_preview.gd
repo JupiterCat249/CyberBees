@@ -5,7 +5,7 @@ extends RefCounted
 ##   视图看到的一切都来自规则层算好的 `PreviewData`（与试算同源）—— 这条口径不要在这里破坏。
 
 const PreviewKind := preload("res://scripts/battle/preview_kind.gd")
-const Fx := preload("res://scenes/ui/view_fx.gd")
+const Fx := preload("res://src/view/view_fx.gd")
 ## 预览后果浮字颜色＝伤害红（与 arena_view.COL_DAMAGE 同色；0.9 透明度＝提示而非结算）
 const HINT_COLOR := Color(1.0, 0.125, 0.0, 0.9)
 ## 反击浮字色（橙黄；与伤害红区分。批2 迁入 FxParams 资源）

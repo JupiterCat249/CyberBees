@@ -5,7 +5,7 @@ extends GutTest
 ##   而当时的"对拍验证"拿被替换掉的旧实现当基准 ⇒ 把"与错误等价"当成了正确。
 ##   这里改为**设计事实**断言：镜像后的左上角必须落在 [0, BOARD-PITCH] 内。
 
-const Coords := preload("res://scenes/ui/view_coords.gd")
+const Coords := preload("res://src/view/view_coords.gd")
 const PITCH := 250.0
 const BOARD := 1000.0
 

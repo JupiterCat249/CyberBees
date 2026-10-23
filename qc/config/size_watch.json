@@ -3,7 +3,7 @@
   "watch": [
     {
       "key": "arena_view",
-      "path": "scenes/ui/arena_view.gd"
+      "path": "src/view/arena_view.gd"
     },
     {
       "key": "battle_engine",

@@ -97,7 +97,7 @@ def test_arch_gate(tmp, python):
     rules = os.path.join(tmp, "rules.json")
     with open(rules, "w", encoding="utf-8") as f:
         json.dump({
-            "layers": {"ui_component": ["scenes/ui/view_"], "ui": ["scenes/ui/"], "battle": ["scripts/battle/"]},
+            "layers": {"ui_component": ["src/view/view_"], "ui": ["src/view/"], "battle": ["scripts/battle/"]},
             "forbid": [{"from": "ui_component", "to": ["ui"], "why": "测试用：子模块不得回指"}],
             "unresolved_must_be_zero": True,
         }, f, ensure_ascii=False)
@@ -109,10 +109,10 @@ def test_arch_gate(tmp, python):
     bad = os.path.join(tmp, "g_bad.json")
     with open(bad, "w", encoding="utf-8") as f:
         json.dump(graph({
-            "res://scenes/ui/view_fx.gd": {"dependencies": [
-                {"target": "res://scenes/ui/arena_view.gd", "type": "preload", "line": 2, "resolved": True}
+            "res://src/view/view_fx.gd": {"dependencies": [
+                {"target": "res://src/view/arena_view.gd", "type": "preload", "line": 2, "resolved": True}
             ]},
-            "res://scenes/ui/arena_view.gd": {"dependencies": []},
+            "res://src/view/arena_view.gd": {"dependencies": []},
         }), f)
     out = os.path.join(tmp, "a_bad.json")
     rc, txt = run([python, ARCH_CHECK, "--graph", bad, "--rules", rules, "--out", out])
@@ -124,7 +124,7 @@ def test_arch_gate(tmp, python):
     # ③ 未解析依赖 → 必须红（resolved=false 且规则要求 unresolved_must_be_zero）
     unresolved = os.path.join(tmp, "g_unres.json")
     with open(unresolved, "w", encoding="utf-8") as f:
-        json.dump(graph({"res://scenes/ui/view_fx.gd": {"dependencies": [
+        json.dump(graph({"res://src/view/view_fx.gd": {"dependencies": [
             {"target": "./missing.gd", "type": "preload", "line": 3, "resolved": False}
         ]}}), f)
     out_u = os.path.join(tmp, "a_unres.json")
@@ -136,7 +136,7 @@ def test_arch_gate(tmp, python):
 
     good = os.path.join(tmp, "g_good.json")
     with open(good, "w", encoding="utf-8") as f:
-        json.dump(graph({"res://scenes/ui/view_fx.gd": {"dependencies": []}}), f)
+        json.dump(graph({"res://src/view/view_fx.gd": {"dependencies": []}}), f)
     out2 = os.path.join(tmp, "a_good.json")
     rc2, _ = run([python, ARCH_CHECK, "--graph", good, "--rules", rules, "--out", out2])
     record("架构闸：干净图必须绿", rc2 == 0, "rc=%d" % rc2)
