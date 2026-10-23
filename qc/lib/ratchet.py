@@ -27,7 +27,9 @@ INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable",
              ## 体积趋势指标（迭代145 改 info）：硬上限由 size 闸（code 口径）守；
              ##   合法功能开发会让代码增长，趋势只做看板、不再当作债务。
              "size:arena_view", "size:battle_engine", "size:net_diag_dump",
-             "size:max_lines", "size:max_bytes")
+             "size:max_lines", "size:max_bytes",
+             ## 测试健康（迭代159）：耗时天然波动；隔离是显式决定，二者都只做看板
+             "test:slowest_ms", "test:total_ms", "test:quarantined")
 
 def direction(key):
     if key in INFO_KEYS:

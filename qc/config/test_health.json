@@ -1,0 +1,6 @@
+{
+  "$comment": "测试健康预算（迭代159 · 第三轮 S2/WS7）。slow_budget_ms = 单条用例耗时上限（超过判红）；total_budget_ms = 整轮上限；quarantine = 易碎/暂不可信用例，每条必须写 reason 且指向真实用例（陈旧条目会判红）。",
+  "slow_budget_ms": 3000,
+  "total_budget_ms": 180000,
+  "quarantine": []
+}

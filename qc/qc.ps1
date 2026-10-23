@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'syncdocs', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -220,7 +220,7 @@ function Invoke-Docs {
     return ($rc -eq 0)
 }
 function Invoke-GutRun([string]$GodotBin) {
-    return @(& $GodotBin --headless --path $Repo -s 'addons/gut/gut_cmdln.gd' -gdir='res://tests' -gexit 2>&1 | ForEach-Object { $_.ToString() })
+    return @(& $GodotBin --headless --path $Repo -s 'addons/gut/gut_cmdln.gd' -gdir='res://tests' -gexit '-gjunit_xml_file=res://qc/out/gut.junit.xml' 2>&1 | ForEach-Object { $_.ToString() })
 }
 
 function Invoke-Test {
@@ -285,9 +285,28 @@ function Invoke-Test {
         Add-Count 'test:scripts_loaded' ([int]$gc.scripts_loaded)
         Add-Count 'test:scripts_on_disk' ([int]$gc.scripts_on_disk)
     }
+    ## S2/WS7（迭代159）：测试健康 —— junit 里的单测耗时 + 隔离名单校验
+    $healthOut = Join-Path $Out 'health.json'
+    $healthCfg = Join-Path $QcRoot 'config\test_health.json'
+    $junit = Join-Path $Out 'gut.junit.xml'
+    $healthOk = $true
+    if (Test-Path $junit) {
+        & $Py (Join-Path $QcRoot 'lib\test_health.py') --junit $junit --config $healthCfg --out $healthOut |
+            ForEach-Object { Write-Host ('[qc] ' + $_) }
+        $healthOk = ($LASTEXITCODE -eq 0)
+        if (Test-Path $healthOut) {
+            $hj = [System.IO.File]::ReadAllText($healthOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+            Add-Count 'test:slowest_ms' $hj.counts.slowest_ms
+            Add-Count 'test:total_ms' $hj.counts.total_ms
+            Add-Count 'test:quarantined' $hj.counts.quarantined
+            Add-Count 'test:health_violations' $hj.counts.health_violations
+        }
+    } else {
+        Write-Host '[qc] 没有 junit（GUT 未生成）—— 健康检查跳过' -ForegroundColor Yellow
+    }
     Write-Host ('[qc] test   passing={0} failing={1} asserts={2}  (明细 {3})' -f $passing, $failing, $asserts, $log)
     if ($harnessErrors -ne 0) { Write-Host '[qc] 回归闸未能正常执行（不是测试失败），见上方提示与 gut.log' -ForegroundColor Red }
-    return (($failing -eq 0) -and ($harnessErrors -eq 0))
+    return (($failing -eq 0) -and ($harnessErrors -eq 0) -and $healthOk)
 }
 
 function Invoke-Size {
@@ -447,6 +466,25 @@ function Invoke-SyncDocs {
     return (Invoke-Docs -Standalone)
 }
 
+function Invoke-Flaky {
+    param([int]$Runs = 3)
+    Assert-Python
+    $godot = Get-GodotBin
+    if (-not $godot) { Write-Host '[qc] 找不到 Godot' -ForegroundColor Yellow; exit 2 }
+    $files = @()
+    for ($i = 1; $i -le $Runs; $i++) {
+        $jf = Join-Path $Out ("gut.run$i.junit.xml")
+        & $godot --headless --path $Repo -s 'addons/gut/gut_cmdln.gd' -gdir='res://tests' -gexit "-gjunit_xml_file=res://qc/out/gut.run$i.junit.xml" 2>&1 |
+            Select-String -Pattern 'Passing Tests|Failing Tests' | ForEach-Object { Write-Host ('[qc] run' + $i + ' ' + $_.Line) }
+        $files += $jf
+    }
+    $list = ($files | ForEach-Object { if (Test-Path $_) { $_ } }) -join ','
+    & $Py (Join-Path $QcRoot 'lib\flaky_check.py') --junit $list --out (Join-Path $Out 'flaky.json') |
+        ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
+
+
 function Invoke-Gates {
     param([switch]$SkipDocs)
     # 钩子自检：core.hooksPath 是**本地配置**，新克隆不会自动生效 → 每次全闸都提醒一次
@@ -574,6 +612,7 @@ switch ($Command) {
     # 单闸的退出码必须反映该闸结果 —— 曾一律 exit 0，导致"单闸永远绿"的假象（迭代082 修）
     'layout'   { if (Invoke-Layout)  { exit 0 } else { exit 1 } }
     'bugbind'  { if (Invoke-BugBind) { exit 0 } else { exit 1 } }
+    'flaky'    { if (Invoke-Flaky -Runs 3) { exit 0 } else { exit 1 } }
     'syncdocs' { if (Invoke-SyncDocs -Iteration $Iteration) { exit 0 } else { exit 1 } }
     'lint'     { if (Invoke-Lint)    { exit 0 } else { exit 1 } }
     'size'     { if (Invoke-Size)    { exit 0 } else { exit 1 } }

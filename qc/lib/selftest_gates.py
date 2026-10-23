@@ -699,6 +699,35 @@ def test_arch_reachability(tmp, python):
     rc2, _ = run([python, CHECK, "--graph", g_ok, "--rules", rules, "--out", out2])
     record("可达层界：无越界必须绿", rc2 == 0, "rc=%d" % rc2)
 
+
+def test_test_health(tmp, python):
+    """测试健康闸反例（迭代159 · 第三轮 S2/WS7）。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_health.py")
+    junit = os.path.join(tmp, "h_junit.xml")
+    with open(junit, "w", encoding="utf-8") as f:
+        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        f.write('<testsuites name="GutTests" tests="2">\n')
+        f.write('  <testsuite name="tests/test_demo.gd" tests="2">\n')
+        f.write('    <testcase name="test_fast" classname="tests/test_demo.gd" status="pass" time="0.01"/>\n')
+        f.write('    <testcase name="test_slow" classname="tests/test_demo.gd" status="pass" time="5.0"/>\n')
+        f.write("  </testsuite>\n</testsuites>\n")
+
+    def run_h(cfg_obj, out):
+        cfg = os.path.join(tmp, out.replace(".json", "_cfg.json"))
+        json.dump(cfg_obj, open(cfg, "w", encoding="utf-8"))
+        return run([python, CHECK, "--junit", junit, "--config", cfg, "--out", os.path.join(tmp, out)])
+
+    rc, txt = run_h({"slow_budget_ms": 1000, "total_budget_ms": 180000, "quarantine": []}, "h_o1.json")
+    record("测试健康：慢用例超预算必须红", rc == 1 and "SLOW_TEST" in txt, "rc=%d" % rc)
+
+    rc2, txt2 = run_h({"slow_budget_ms": 10000, "total_budget_ms": 180000,
+                       "quarantine": [{"file": "tests/test_demo.gd", "test": "test_fast", "reason": ""}]}, "h_o2.json")
+    record("测试健康：隔离缺 reason 必须红", rc2 == 1 and "QUARANTINE_NO_REASON" in txt2, "rc=%d" % rc2)
+
+    rc3, txt3 = run_h({"slow_budget_ms": 10000, "total_budget_ms": 180000,
+                       "quarantine": [{"file": "tests/test_demo.gd", "test": "test_missing", "reason": "x"}]}, "h_o3.json")
+    record("测试健康：隔离指向不存在必须红", rc3 == 1 and "QUARANTINE_UNKNOWN" in txt3, "rc=%d" % rc3)
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -731,6 +760,8 @@ def main():
         test_sync_docs(tmp, python)
         print("[qc] selftest 可达层界")
         test_arch_reachability(tmp, python)
+        print("[qc] selftest 测试健康")
+        test_test_health(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:
