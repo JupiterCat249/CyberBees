@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
+    [ValidateSet('all', 'bugbind', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -410,6 +410,24 @@ function Invoke-Layout {
     return $ok
 }
 
+
+function Invoke-BugBind {
+    Assert-Python
+    # 第三轮 S1 / WS5（迭代156）：缺陷-用例绑定硬闸 —— baseline 之后每个 [fix] 提交都必须登记用例
+    $outB = Join-Path $Out 'bugbind.json'
+    & $Py (Join-Path $QcRoot 'lib\bug_binding_check.py') --repo $Repo --config (Join-Path $QcRoot 'config\bug_regressions.json') --out $outB |
+        ForEach-Object { Write-Host ('[qc] ' + $_) }
+    $ok = ($LASTEXITCODE -eq 0)
+    if (Test-Path $outB) {
+        $bj = [System.IO.File]::ReadAllText($outB, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        Add-Count 'bugs:fix_commits' $bj.counts.fix_commits
+        Add-Count 'bugs:entries' $bj.counts.entries
+        Add-Count 'bugs:unbound' $bj.counts.unbound
+        Add-Count 'bugs:bad_tests' $bj.counts.bad_tests
+    }
+    return $ok
+}
+
 function Invoke-Gates {
     # 钩子自检：core.hooksPath 是**本地配置**，新克隆不会自动生效 → 每次全闸都提醒一次
     $hp = (& git -C $Repo config --get core.hooksPath 2>$null)
@@ -424,6 +442,7 @@ function Invoke-Gates {
     Write-Host '=== qc · 四道闸 ===' -ForegroundColor Cyan
     # 每一闸的返回值都要收集：门禁失败必须让退出码非零，不能只靠棘轮比较计数
     if (-not (Invoke-Layout))   { $script:GateFailed = $true }
+    if (-not (Invoke-BugBind))  { $script:GateFailed = $true }
     if (-not (Invoke-Lint))     { $script:GateFailed = $true }
     if (-not (Invoke-Size))     { $script:GateFailed = $true }
     if (-not (Invoke-Arch))     { $script:GateFailed = $true }
@@ -534,6 +553,7 @@ function Invoke-Setup {
 switch ($Command) {
     # 单闸的退出码必须反映该闸结果 —— 曾一律 exit 0，导致"单闸永远绿"的假象（迭代082 修）
     'layout'   { if (Invoke-Layout)  { exit 0 } else { exit 1 } }
+    'bugbind'  { if (Invoke-BugBind) { exit 0 } else { exit 1 } }
     'lint'     { if (Invoke-Lint)    { exit 0 } else { exit 1 } }
     'size'     { if (Invoke-Size)    { exit 0 } else { exit 1 } }
     'arch'     { if (Invoke-Arch)    { exit 0 } else { exit 1 } }

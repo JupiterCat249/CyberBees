@@ -597,6 +597,42 @@ def test_layout_gate(tmp, python):
     rc, txt = run_lay(devref, "l_o4.json")
     record("布局闸：生产引 dev 必须红", rc == 1 and "PROD_REFERS_DEV" in txt, "rc=%d" % rc)
 
+
+def test_bug_binding(tmp, python):
+    """缺陷绑定闸反例（迭代156 · 第三轮 S1/WS5）：硬措施必须真红。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bug_binding_check.py")
+    repo = os.path.join(tmp, "bb_repo")
+    os.makedirs(os.path.join(repo, "tests"), exist_ok=True)
+    test_file = os.path.join(repo, "tests", "test_demo.gd")
+    with open(test_file, "w", encoding="utf-8") as f:
+        f.write("extends GutTest\n\nfunc test_bugfix_keeps_state() -> void:\n\tassert_true(true)\n")
+
+    cfg = os.path.join(repo, "bug_regressions.json")
+    commits = os.path.join(repo, "commits.tsv")
+    with open(commits, "w", encoding="utf-8") as f:
+        f.write("aaaa1111\t[fix] 修复甲\nbbbb2222\t[feat] 新功能\n")
+
+    def run_bb(cfg_path, out):
+        return run([python, CHECK, "--repo", repo, "--config", cfg_path,
+                    "--commits", commits, "--out", os.path.join(tmp, out)])
+
+    # ① 未登记 ⇒ 红
+    json.dump({"entries": []}, open(cfg, "w", encoding="utf-8"))
+    rc, txt = run_bb(cfg, "bb_o1.json")
+    record("缺陷绑定：未登记的 [fix] 必须红", rc == 1 and "FIX_UNBOUND" in txt, "rc=%d" % rc)
+
+    # ② 已登记且用例存在 ⇒ 绿
+    json.dump({"entries": [{"commit": "aaaa1111", "tests": ["tests/test_demo.gd::test_bugfix_keeps_state"]}]},
+              open(cfg, "w", encoding="utf-8"))
+    rc, txt = run_bb(cfg, "bb_o2.json")
+    record("缺陷绑定：登记且用例存在必须绿", rc == 0, "rc=%d" % rc)
+
+    # ③ 登记的用例名不存在 ⇒ 红
+    json.dump({"entries": [{"commit": "aaaa1111", "tests": ["tests/test_demo.gd::test_does_not_exist"]}]},
+              open(cfg, "w", encoding="utf-8"))
+    rc, txt = run_bb(cfg, "bb_o3.json")
+    record("缺陷绑定：用例名不存在必须红", rc == 1 and "TEST_NAME_MISSING" in txt, "rc=%d" % rc)
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -623,6 +659,8 @@ def main():
         test_size_measure_code(tmp, python)
         print("[qc] selftest 布局闸")
         test_layout_gate(tmp, python)
+        print("[qc] selftest 缺陷绑定")
+        test_bug_binding(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:

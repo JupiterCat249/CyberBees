@@ -1,0 +1,32 @@
+{
+  "$comment": "缺陷-用例绑定表（迭代156 · 第三轮 S1/WS5）。人 2026-10-23 裁定：硬措施 —— baseline_commit 之后每个 [fix] 提交都必须在此登记，且用例必须是真实存在的 file::test。新增修复时：登记 commit 前缀 + 至少一条\"先红后绿\"的用例。",
+  "baseline_commit": "434f2a5",
+  "entries": [
+    {
+      "bug": "攻击后果预览只有单向伤害、待确认不收缩、无反击读数",
+      "commit": "bcd93ba",
+      "date": "2026-10-23",
+      "tests": [
+        "tests/test_attack_preview.gd::test_pending_target_preview_is_pair_scoped_and_bidirectional",
+        "tests/test_attack_preview_view.gd::test_pending_attack_shows_both_sides"
+      ]
+    },
+    {
+      "bug": "预选阶段就弹后果 + 取消后浮字残留 + 插件破坏编辑器 UI",
+      "commit": "e48892c",
+      "date": "2026-10-23",
+      "tests": [
+        "tests/test_attack_preview_view.gd::test_selecting_unit_alone_shows_no_consequence",
+        "tests/test_attack_preview_view.gd::test_cancel_clears_consequence_floats"
+      ]
+    },
+    {
+      "bug": "Fx 预览窗口高度失控（wrap_controls 回环）",
+      "commit": "60bb2e0",
+      "date": "2026-10-23",
+      "tests": [
+        "tests/test_editor_plugin_safety.gd::test_window_size_is_clamped_and_not_wrapping"
+      ]
+    }
+  ]
+}
