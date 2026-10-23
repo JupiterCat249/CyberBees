@@ -10,6 +10,7 @@
   · 信号闸：死信号 / 只发不收 → 退出码 1；@dead 豁免 → 0；动态发射 → 计入 undetectable 且不假绿；总线缺失 → 2
   · 棘轮：债务上升必红、持平/下降必绿、覆盖率下跌必红、info 类上升不算红、新指标不算红、有上升项时拒绝写回
   · 文档基线：与实测一致 → 0；漂移 → 1；文档缺失 → 0（skip）
+  · GUT 校验：全部加载 → 0；日志含解析错误 → 1；磁盘数 ≠ 加载数 → 1
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
 """
@@ -26,6 +27,7 @@ ARCH_CHECK = os.path.join(HERE, "arch_check.py")
 SIGNALS_CHECK = os.path.join(HERE, "signals_check.py")
 RATCHET = os.path.join(HERE, "ratchet.py")
 DOCS_CHECK = os.path.join(HERE, "docs_check.py")
+GUT_CHECK = os.path.join(HERE, "gut_check.py")
 
 results = []
 
@@ -338,6 +340,40 @@ def test_docs_check(tmp, python):
     record("文档基线：文档缺失应 skip", rc == 0 and "skip" in txt, "rc=%d" % rc)
 
 
+def test_gut_check(tmp, python):
+    """GUT 结果校验反例（迭代124 · P1）：测试文件语法错时 GUT 只是少加载，必须由本闸判红。"""
+    tdir = os.path.join(tmp, "g_tests")
+    os.makedirs(tdir, exist_ok=True)
+
+    def write_test(name):
+        with open(os.path.join(tdir, name), "w", encoding="utf-8") as f:
+            f.write("extends GutTest\n")
+
+    def write_log(name, scripts, extra=""):
+        p = os.path.join(tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("Godot Engine\n" + extra +
+                    "\n= Run Summary\n\nTotals\n------\n\nScripts              %d\n"
+                    "Tests                3\nPassing Tests        3\nAsserts              7\n" % scripts)
+        return p
+
+    def run_check(log, out):
+        return run([python, GUT_CHECK, "--log", log, "--tests-dir", tdir, "--out", os.path.join(tmp, out)])
+
+    write_test("test_a.gd")
+    ok = write_log("g_ok.log", 1)
+    rc, txt = run_check(ok, "g_o1.json")
+    record("GUT 校验：全部加载必须绿", rc == 0 and "全部加载" in txt, "rc=%d" % rc)
+
+    bad = write_log("g_bad.log", 1, "SCRIPT ERROR: Parse Error: No constructor matches\n")
+    rc, txt = run_check(bad, "g_o2.json")
+    record("GUT 校验：解析错误必须红", rc == 1 and "解析" in txt, "rc=%d" % rc)
+
+    write_test("test_b.gd")          # 磁盘 2 个，但日志只说加载 1 个
+    rc, txt = run_check(ok, "g_o3.json")
+    record("GUT 校验：少加载必须红", rc == 1, "rc=%d" % rc)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -354,6 +390,8 @@ def main():
         test_size_tighten(tmp, python)
         print("[qc] selftest 文档基线")
         test_docs_check(tmp, python)
+        print("[qc] selftest GUT 校验")
+        test_gut_check(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

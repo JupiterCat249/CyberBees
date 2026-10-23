@@ -229,7 +229,15 @@ function Invoke-Test {
 
     $raw | Set-Content -Path $log -Encoding UTF8
 
+    ## P1（迭代124）：GUT 结果校验 —— 解析错误 / 脚本少加载 一律判红。
+    ##   背景：测试文件语法错时 GUT 只是"少加载一个脚本"，passing 变小、退出码仍 0（本会话两次踩到）。
+    $gutChk = Join-Path $Out 'gutcheck.json'
+    & $Py (Join-Path $QcRoot 'lib\gut_check.py') --log $log --tests-dir (Join-Path $Repo 'tests') --out $gutChk |
+        ForEach-Object { Write-Host ('[qc] ' + $_) }
+    $gutRc = $LASTEXITCODE
+
     $harnessErrors = 0
+    if ($gutRc -ne 0) { $harnessErrors = 1 }
     if ($text -match 'have not been imported') { $harnessErrors = 1; Write-Host '[qc] GUT class_name 未注册 —— 先跑 qc/qc.ps1 import（新增/升级 addon 后必做）' -ForegroundColor Yellow }
     if ($text -notmatch 'Passing Tests') { $harnessErrors = 1 }
 
@@ -242,6 +250,11 @@ function Invoke-Test {
     Add-Count 'test:asserts' $asserts
     Add-Count 'test:failures' $failing
     Add-Count 'test:harness_errors' $harnessErrors
+    if (Test-Path $gutChk) {
+        $gc = [System.IO.File]::ReadAllText($gutChk, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        Add-Count 'test:scripts_loaded' ([int]$gc.scripts_loaded)
+        Add-Count 'test:scripts_on_disk' ([int]$gc.scripts_on_disk)
+    }
     Write-Host ('[qc] test   passing={0} failing={1} asserts={2}  (明细 {3})' -f $passing, $failing, $asserts, $log)
     if ($harnessErrors -ne 0) { Write-Host '[qc] 回归闸未能正常执行（不是测试失败），见上方提示与 gut.log' -ForegroundColor Red }
     return (($failing -eq 0) -and ($harnessErrors -eq 0))
