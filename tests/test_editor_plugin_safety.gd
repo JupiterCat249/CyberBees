@@ -43,3 +43,12 @@ func test_plugin_uses_tool_menu_window() -> void:
 	var code := _strip_comments(_read(PLUGIN))
 	assert_true(code.contains("add_tool_menu_item"), "预览入口应走 Project ▸ Tools 菜单")
 	assert_true(code.contains("Window.new()"), "预览面板应是独立窗口（不参与编辑器布局）")
+
+
+func test_window_size_is_clamped_and_not_wrapping() -> void:
+	## 迭代148（人 2026-10-23 实测）：`wrap_controls` 与子节点 EXPAND_FILL 会形成"内容撑窗口"回环
+	##   ⇒ 窗口高度远超屏幕。要求：显式关闭 wrap_controls，并按屏幕可用区夹紧尺寸。
+	var code := _strip_comments(_read(PLUGIN))
+	assert_false(code.contains("wrap_controls = true"), "不得开启 wrap_controls（会回环撑高窗口）")
+	assert_true(code.contains("wrap_controls = false"), "必须显式关闭 wrap_controls")
+	assert_true(code.contains("screen_get_usable_rect"), "窗口尺寸必须按屏幕可用区夹紧")

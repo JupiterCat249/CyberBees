@@ -17,8 +17,8 @@ var _canvas: Control = null
 
 
 func _ready() -> void:
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	size_flags_vertical = Control.SIZE_EXPAND_FILL
+	## 作为 Window 的直接子节点：**铺满窗口**（不反向撑窗口）
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_theme_constant_override("separation", 8)
 	var title := Label.new()
 	title.text = "Fx 参数预览"
@@ -47,9 +47,11 @@ func _ready() -> void:
 	add_child(_err)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(scroll)
 	_canvas = Control.new()
-	_canvas.custom_minimum_size = Vector2(0, 160)
+	## 只给"示例画布"一个**小的**最小高度；不给大值，避免再次反向撑窗口
+	_canvas.custom_minimum_size = Vector2(0, 140)
 	_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_canvas)
 	_on_load()
