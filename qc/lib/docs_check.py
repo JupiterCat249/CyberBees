@@ -87,6 +87,33 @@ def main():
     if got["signals"] != want["signals"]:
         drift.append("signals: 文档 %s/%s ≠ 实测 %s/%s" % (*got["signals"], *want["signals"]))
 
+    ## 迭代139：**收尾状态行**也要对账（此前只有"基线快照"一行被覆盖 ⇒ 该行曾悄悄漂到 17 批之前）。
+    ##   要求同一组数字出现且一致：自检 N/N · lint N · 体积 A/B/C · 回归 T 测试 / A 断言。
+    ##   行不存在 ⇒ 跳过（向后兼容早期文档）。
+    status = next((l for l in lines if l.startswith("> **收尾状态**")), None)
+    if status:
+        def grab(rx, label):
+            m = re.search(rx, status)
+            if not m:
+                drift.append("收尾状态：缺 %s 字段" % label)
+                return None
+            return tuple(int(g) for g in m.groups())
+        st_self = grab(r"自检 \*\*(\d+)/(\d+)\*\*", "自检 N/N")
+        st_lint = grab(r"lint \*\*(\d+)\*\*", "lint N")
+        st_size = grab(r"体积 \*\*(\d+) / (\d+) / (\d+)\*\*", "体积 A/B/C")
+        st_test = grab(r"回归 \*\*(\d+) 测试 / (\d+) 断言\*\*", "回归 T/A")
+        want_total = counts.get("qc:selftest_total")
+        if st_self and want_total:
+            want_self = (int(want_total), int(want_total))
+            if st_self != want_self:
+                drift.append("收尾状态·自检: 文档 %s/%s ≠ 实测 %s/%s" % (*st_self, *want_self))
+        if st_lint and st_lint[0] != want["lint"]:
+            drift.append("收尾状态·lint: 文档 %s ≠ 实测 %s" % (st_lint[0], want["lint"]))
+        if st_size and st_size != want["size"]:
+            drift.append("收尾状态·体积: 文档 %s/%s/%s ≠ 实测 %s/%s/%s" % (*st_size, *want["size"]))
+        if st_test and st_test != want["tests"]:
+            drift.append("收尾状态·回归: 文档 %s/%s ≠ 实测 %s/%s" % (*st_test, *want["tests"]))
+
     result = {"status": "drift" if drift else "ok", "doc_line": hit.strip(), "drift": drift}
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
@@ -96,7 +123,7 @@ def main():
         print("[docs] 文档基线漂移 %d 处：" % len(drift))
         for d in drift:
             print("  - " + d)
-        print("  → 请更新《当前状态》的「基线快照」行（或跑 qc snapshot 后再改）")
+        print("  → 请更新《当前状态》的「基线快照」/「收尾状态」行（或跑 qc snapshot 后再改）")
         return 1
     print("[docs] 文档基线与实测一致 [OK]")
     return 0

@@ -311,10 +311,11 @@ def test_size_tighten(tmp, python):
 def test_docs_check(tmp, python):
     """文档基线漂移反例（迭代116）：那行数字是手改的，必须被对账钉住。"""
     counts = {
-        "lint:total": 6, "test:passing": 113, "test:asserts": 404,
+        "lint:total": 6, "test:passing": 133, "test:asserts": 650,
         "qc:selftest_failures": 0,
-        "size:arena_view": 1720, "size:battle_engine": 995, "size:net_diag_dump": 721,
+        "size:arena_view": 1635, "size:battle_engine": 995, "size:net_diag_dump": 721,
         "signals:declared": 24, "signals:problems": 0,
+        "qc:selftest_total": 37,
     }
     cpath = os.path.join(tmp, "d_counts.json")
     with open(cpath, "w", encoding="utf-8") as f:
@@ -330,16 +331,38 @@ def test_docs_check(tmp, python):
         return run([python, DOCS_CHECK, "--counts", cpath, "--doc", doc, "--out", os.path.join(tmp, out)])
 
     ok_doc = write_doc("d_ok.md",
-        "> **基线快照**：lint=6 · tests=113/404 · selftest=0 · size=1720/995/721 · signals=24/0")
+        "> **基线快照**：lint=6 · tests=133/650 · selftest=0 · size=1635/995/721 · signals=24/0")
     rc, txt = run_docs(ok_doc, "d_o1.json")
     record("文档基线：一致必须绿", rc == 0 and "一致" in txt, "rc=%d" % rc)
 
     bad_doc = write_doc("d_bad.md",
-        "> **基线快照**：lint=99 · tests=113/404 · selftest=0 · size=1720/995/721 · signals=24/0")
+        "> **基线快照**：lint=99 · tests=133/650 · selftest=0 · size=1635/995/721 · signals=24/0")
     rc, txt = run_docs(bad_doc, "d_o2.json")
     record("文档基线：漂移必须红", rc == 1 and "lint" in txt, "rc=%d" % rc)
 
     missing = os.path.join(tmp, "d_missing.md")
+    ## 迭代139：**收尾状态行**也要对账（此前只有基线快照一行被覆盖 ⇒ 该行曾漂 17 批）
+    def write_status_doc(name, self_ok: bool):
+        st = ("> **收尾状态**（iter137）：自检 **37/37** · lint **6**（= 豁免 6）· 体积 **1635 / 995 / 721** · "
+              "回归 **133 测试 / 650 断言**")
+        if not self_ok:
+            st = st.replace("自检 **37/37**", "自检 **26/26**")
+        ## ⚠️ 必须同时带「基线快照」行（缺它会返回 rc=2，掩盖本用例要测的判据）
+        base = ("> **基线快照**：lint=6 · tests=133/650 · selftest=0 · "
+                "size=1635/995/721 · signals=24/0")
+        pth = os.path.join(tmp, name)
+        with open(pth, "w", encoding="utf-8") as f:
+            f.write("# 状态\n\n" + base + "\n\n" + st + "\n")
+        return pth
+
+    ok_st = write_status_doc("d_st_ok.md", True)
+    rc, txt = run_docs(ok_st, "d_o4.json")
+    record("收尾状态行：一致必须绿", rc == 0, "rc=%d" % rc)
+
+    bad_st = write_status_doc("d_st_bad.md", False)
+    rc, txt = run_docs(bad_st, "d_o5.json")
+    record("收尾状态行：漂移必须红", rc == 1 and "收尾状态" in txt, "rc=%d" % rc)
+
     rc, txt = run_docs(missing, "d_o3.json")
     record("文档基线：文档缺失应 skip", rc == 0 and "skip" in txt, "rc=%d" % rc)
 

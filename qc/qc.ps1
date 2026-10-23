@@ -383,6 +383,10 @@ function Invoke-Selftest {
     foreach ($line in $out) { Write-Host ('[qc] ' + $line) }
     $fails = @($out | Where-Object { $_ -match '\[FAIL\]' }).Count
     Add-Count 'qc:selftest_failures' $fails
+    ## 总数（"合计 N 项"）—— 供《当前状态》收尾状态行对账（迭代139）
+    $total = 0
+    foreach ($line in $out) { if ($line -match '合计\s+(\d+)\s+项') { $total = [int]$matches[1] } }
+    Add-Count 'qc:selftest_total' $total
     return ($code -eq 0 -and $fails -eq 0)
 }
 
