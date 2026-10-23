@@ -11,6 +11,7 @@
   · 棘轮：债务上升必红、持平/下降必绿、覆盖率下跌必红、info 类上升不算红、新指标不算红、有上升项时拒绝写回
   · 文档基线：与实测一致 → 0；漂移 → 1；文档缺失 → 0（skip）
   · GUT 校验：全部加载 → 0；日志含解析错误 → 1；磁盘数 ≠ 加载数 → 1
+  · lint 豁免：双向一致 → 0；新债未登记 → 1；豁免陈旧 → 1
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
 """
@@ -28,6 +29,7 @@ SIGNALS_CHECK = os.path.join(HERE, "signals_check.py")
 RATCHET = os.path.join(HERE, "ratchet.py")
 DOCS_CHECK = os.path.join(HERE, "docs_check.py")
 GUT_CHECK = os.path.join(HERE, "gut_check.py")
+LINT_EXEMPT = os.path.join(HERE, "lint_exempt_check.py")
 
 results = []
 
@@ -374,6 +376,50 @@ def test_gut_check(tmp, python):
     record("GUT 校验：少加载必须红", rc == 1, "rc=%d" % rc)
 
 
+def test_lint_exempt(tmp, python):
+    """lint 豁免清单反例（迭代125 · P5）：新债必须红、陈旧豁免也必须红。"""
+    repo = os.path.join(tmp, "le_repo")
+    os.makedirs(os.path.join(repo, "scenes", "ui"), exist_ok=True)
+    target = os.path.join(repo, "scenes", "ui", "a.gd")
+    open(target, "w").close()
+
+    def write_log(name, extra_line=""):
+        p = os.path.join(tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("\ufeff%s:10: Error: Max allowed file lines num (1000) exceeded (max-file-lines)\n" % target)
+            if extra_line:
+                f.write(extra_line + "\n")
+            else:
+                f.write("Failure: 1 problems found\n")
+        return p
+
+    def write_ex(name, items):
+        p = os.path.join(tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"exemptions": items}, f)
+        return p
+
+    one = [{"rule": "max-file-lines", "file": "scenes/ui/a.gd", "symbol": ""}]
+    ex_ok = write_ex("le_ok.json", one)
+    log_ok = write_log("le_ok.log")
+
+    def run_check(log, ex, out):
+        return run([python, LINT_EXEMPT, "--log", log, "--exemptions", ex, "--repo", repo,
+                    "--out", os.path.join(tmp, out)])
+
+    rc, txt = run_check(log_ok, ex_ok, "le_o1.json")
+    record("lint 豁免：一致必须绿", rc == 0, "rc=%d" % rc)
+
+    log_new = write_log("le_new.log",
+        "%s:20: Error: Function \"bad_fn\" has more than 6 return statements (max-returns)" % target)
+    rc, txt = run_check(log_new, ex_ok, "le_o2.json")
+    record("lint 豁免：新债未登记必须红", rc == 1 and "未登记" in txt, "rc=%d" % rc)
+
+    ex_stale = write_ex("le_stale.json", one + [{"rule": "max-returns", "file": "scenes/ui/gone.gd", "symbol": ""}])
+    rc, txt = run_check(log_ok, ex_stale, "le_o3.json")
+    record("lint 豁免：陈旧豁免必须红", rc == 1 and "陈旧" in txt, "rc=%d" % rc)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -392,6 +438,8 @@ def main():
         test_docs_check(tmp, python)
         print("[qc] selftest GUT 校验")
         test_gut_check(tmp, python)
+        print("[qc] selftest lint 豁免")
+        test_lint_exempt(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

@@ -1,0 +1,47 @@
+{
+  "$comment": "lint 豁免清单（迭代125 · P5）：每条 = 规则 + 文件（+ 函数名，可选）。qc lint 的**每条**产出都必须在这里有对应条目；清单里每一条也必须命中**至少一条**实际产出（防\"豁免变陈旧\"）。新增/删除实际产出而不同步本文件 ⇒ 闸红。",
+  "exemptions": [
+    {
+      "rule": "max-file-lines",
+      "file": "scenes/ui/arena_view.gd",
+      "symbol": "",
+      "reason": "视图主文件，B5 切片中（1661 行）；收口前不可能 <1000",
+      "review": "每轮切片后复核：行数只降不升"
+    },
+    {
+      "rule": "max-public-methods",
+      "file": "scripts/battle/battle_engine.gd",
+      "symbol": "",
+      "reason": "引擎公共 API 面（request_* 族），拆分属于规则层重构，非本轮范围",
+      "review": "若做引擎分层重构时复核"
+    },
+    {
+      "rule": "max-returns",
+      "file": "scripts/battle/battle_engine.gd",
+      "symbol": "request_deploy",
+      "reason": "部署请求的分支式早退（校验链），改写成表驱动会降低可读性",
+      "review": "与上条同步复核"
+    },
+    {
+      "rule": "max-returns",
+      "file": "scripts/battle/battle_engine.gd",
+      "symbol": "request_use_command_at",
+      "reason": "同上：校验链早退",
+      "review": "与上条同步复核"
+    },
+    {
+      "rule": "max-returns",
+      "file": "scripts/battle/battle_engine.gd",
+      "symbol": "request_use_command",
+      "reason": "同上：校验链早退",
+      "review": "与上条同步复核"
+    },
+    {
+      "rule": "max-returns",
+      "file": "scripts/diag/net_diag_dump.gd",
+      "symbol": "_read_watched",
+      "reason": "诊断工具的条件分支早退，属排障代码",
+      "review": "工具大改时复核"
+    }
+  ]
+}

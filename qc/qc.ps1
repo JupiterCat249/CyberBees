@@ -106,13 +106,30 @@ function Invoke-Lint {
         }
     }
     foreach ($k in ($byRule.Keys | Sort-Object)) { Add-Count ('lint:' + $k) $byRule[$k] }
+    ## P5（迭代125）：豁免清单对账 —— 实际产出与 qc/config/lint_exemptions.json **双向**必须一致。
+    ##   ① 未登记的产出 = 新债；② 未命中的豁免 = 陈旧；③ 日志声明数 ≠ 解析数 = 日志被截断。
+    $exemptCfg = Join-Path $QcRoot 'config\lint_exemptions.json'
+    $exemptOut = Join-Path $Out 'lint_exempt.json'
+    $exemptOk = $true
+    if ((Test-Path $exemptCfg) -and (Test-Path $log)) {
+        & $Py (Join-Path $QcRoot 'lib\lint_exempt_check.py') --log $log --exemptions $exemptCfg --repo $Repo --out $exemptOut |
+            ForEach-Object { Write-Host ('[qc] ' + $_) }
+        $exemptOk = ($LASTEXITCODE -eq 0)
+        if (Test-Path $exemptOut) {
+            $ej = [System.IO.File]::ReadAllText($exemptOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+            Add-Count 'lint:exemptions' (@($ej.exemptions).Count)
+            Add-Count 'lint:unregistered' (@($ej.unregistered).Count)
+        }
+    }
+
     Add-Count 'lint:total' $total
     $n = $files.Count
     Write-Host ('[qc] lint   files={0}  problems={1}  (明细 {2})' -f $n, $total, $log)
     # ⚠️ 不把"有 lint 问题"当硬失败：本仓有 25 条**已裁定接受**的历史债（理由写在迭代记录里），
     #    lint 的增量由棘轮（qc/baseline.json）把关 —— 涨一条就红。
     #    硬失败的闸是那些"零容忍"的：体积门禁 / 加载环 / 信号问题 / 测试失败。
-    return $true
+    #    P5：**豁免对账**属零容忍 —— 不一致即判红。
+    return $exemptOk
 }
 
 function Invoke-Arch {
