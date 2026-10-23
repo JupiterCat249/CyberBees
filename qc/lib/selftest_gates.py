@@ -228,6 +228,65 @@ def test_ratchet(tmp, python):
     record("棘轮：上升时拒绝写回基线", rc == 1 and before == after and "skip" in txt, "rc=%d" % rc)
 
 
+def test_size_tighten(tmp, python):
+    """体积闸 --tighten 反例（迭代109）：它只在 snapshot 跑过，此前**从未被自检覆盖**。
+
+    契约：① 变小则收紧；② 不带 --tighten 绝不改基线；③ 已达标/消失的条目被移除；
+          ④ 只降不升（实际变大时不得把基线放大）。
+    """
+    pol = os.path.join(tmp, "t_policy.json")
+    with open(pol, "w", encoding="utf-8") as f:
+        json.dump({"max_lines": 50, "max_bytes": 4096, "include_ext": [".gd"], "exclude_dirs": []}, f)
+
+    repo = os.path.join(tmp, "t_repo")
+    os.makedirs(os.path.join(repo, "a"), exist_ok=True)
+    big = os.path.join(repo, "a", "big.gd")
+    with open(big, "w", encoding="utf-8") as f:
+        f.write("extends Node\n" + "var x := 0\n" * 80)      # 81 行 → 超限
+
+    def write_base(name, exempt):
+        pth = os.path.join(tmp, name)
+        with open(pth, "w", encoding="utf-8") as f:
+            json.dump({"exempt": exempt}, f)
+        return pth
+
+    def read_base(pth):
+        return json.load(open(pth, encoding="utf-8-sig")).get("exempt", {})
+
+    def run_size(base, out, tighten=False):
+        cmd = [python, SIZE_CHECK, "--repo", repo, "--policy", pol, "--baseline", base, "--out", os.path.join(tmp, out)]
+        if tighten:
+            cmd.append("--tighten")
+        return run(cmd)
+
+    # ① 变小 → 收紧
+    base = write_base("t_b1.json", {"a/big.gd": {"lines": 200, "bytes": 99999}})
+    rc, txt = run_size(base, "t_o1.json", tighten=True)
+    ex = read_base(base)
+    record("体积闸 --tighten：变小则收紧", rc == 0 and int(ex["a/big.gd"]["lines"]) == 81,
+           "rc=%d lines=%s" % (rc, ex.get("a/big.gd")))
+
+    # ② 不带 --tighten → 绝不改基线
+    base2 = write_base("t_b2.json", {"a/big.gd": {"lines": 200, "bytes": 99999}})
+    before = open(base2, encoding="utf-8-sig").read()
+    run_size(base2, "t_o2.json", tighten=False)
+    after = open(base2, encoding="utf-8-sig").read()
+    record("体积闸 --tighten：不带开关时基线不变", before == after, "baseline changed")
+
+    # ③ 已消失的条目 → 移除
+    base3 = write_base("t_b3.json", {"a/gone.gd": {"lines": 200, "bytes": 99999}})
+    rc, _ = run_size(base3, "t_o3.json", tighten=True)
+    ex3 = read_base(base3)
+    record("体积闸 --tighten：消失条目被移除", "a/gone.gd" not in ex3, "exempt=%s" % ex3)
+
+    # ④ 只降不升：实际变大时不得放大基线
+    base4 = write_base("t_b4.json", {"a/big.gd": {"lines": 10, "bytes": 10}})
+    rc, _ = run_size(base4, "t_o4.json", tighten=True)
+    ex4 = read_base(base4)
+    record("体积闸 --tighten：只降不升", int(ex4["a/big.gd"]["lines"]) == 10 and rc == 1,
+           "rc=%d lines=%s" % (rc, ex4.get("a/big.gd")))
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -240,6 +299,8 @@ def main():
         test_signals_gate(tmp, python)
         print("[qc] selftest 棘轮")
         test_ratchet(tmp, python)
+        print("[qc] selftest 体积收紧")
+        test_size_tighten(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
