@@ -48,6 +48,7 @@ const RemoteFlow := preload("res://scenes/ui/view_remote_flow.gd")
 const UnitModel := preload("res://scenes/ui/view_unit_model.gd")
 const Cards := preload("res://scenes/ui/view_cards.gd")
 const CardArt := preload("res://scenes/ui/view_card_art.gd")
+const CardParams := preload("res://scenes/ui/view_card_params.gd")
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
 const ATTR_ROWS := ["Attack", "Health", "Speed", "Range"]
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
@@ -740,31 +741,10 @@ func _apply_hand_params() -> void:
 
 
 func _apply_one_hand_params(node, p) -> void:
-	var badge: TextureRect = node.get_node_or_null("BadgeImage")
-	if badge != null:
-		## ⚠️ 人 2026-10-05：费用图标"疑似横向被压缩" —— 与立绘窗**同一类问题**：
-		##   徽章贴图被硬拉进固定 `60×65` 矩形 ⇒ 宽高比被破坏 ✗。
-		##   修法同立绘：宽取参数值，**高按贴图自身宽高比推导** ✓（参数仍是被尊重的"宽"基准）。
-		## ⭐ 迭代067 追加（人 2026-10-10：「费用数字相对父节点过度靠下」）：
-		##   实测徽章贴图 **91×101**（纵向比 **1.110**）⇒ 按上一行推导会把节点撑成 **60×66.6**，
-		##   而节点自身是 **60×60** ⇒ 贴图被**纵向拉长**、六边形比设计稿更"高"
-		##   ⇒ 数字虽在**节点内**居中（实测 ΔY=+1.0px），却相对这个**被拉长的六边形**显得靠下 ✗
-		##   依据：策划案 §2.4「费用徽章标注区域 **100×100**」+ §2.7「费用/徽章**内描边 4px**」
-		##   ⇒ 徽章本体是**正方形**，贴图应按比例**居中**而不是撑满。
-		##   修法：节点保持参数给的**正方形**尺寸，贴图 `KEEP_ASPECT_CENTERED`（不再拉伸、不再改变节点高）。
-		badge.size = p.badge_size
-		badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		var bv: Label = badge.get_node_or_null("Value")
-		## ⚠️ 只在显式给正数时覆盖字号（人 2026-09-19：不要改字号）
-		##    素材原值 48；之前这里覆盖成 26 → 变小
-		if bv != null and int(p.badge_font_size) > 0:
-			bv.add_theme_font_size_override("font_size", int(p.badge_font_size))
-		## ⭐ 迭代067：与信息栏**共用同一套几何居中**（人反馈"对端数字过度靠下" ⇒ 两处统一，杜绝分叉）
-		_center_badge_value_geometry(badge)
-	var line: Panel = node.get_node_or_null("InnerLine")
-	if line != null:
-		line.size = p.inner_line_size
+	## 徽章（正方形 + 贴图按比例居中）与内描边 —— 见 scenes/ui/view_card_params.gd（迭代115）
+	##   ⚠️ 那里的两条历史结论不要改回去：① 徽章本体是正方形（不按贴图拉长）；
+	##      ② 费用数字与信息栏共用同一套几何居中（两处分叉 = 曾经的"对端数字靠下"）。
+	CardParams.apply_hand_extras(node, p)
 	var img: TextureRect = node.get_node_or_null("Artwork/ArtPlane/Image")
 	if img != null and node.get("card_data") != null:
 		var cd: CardData = node.get("card_data") as CardData

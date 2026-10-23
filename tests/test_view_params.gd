@@ -143,3 +143,25 @@ func test_unit_spawn_creates_bound_node_at_cell() -> void:
 	assert_eq(node.get_meta("cell"), u.cell, "规范格应记入 meta（供切座位时重算）")
 	assert_eq(node.position, _scene._view_cell_pos(u.cell), "位置应按视角坐标摆放")
 	assert_eq(String(node.get("unit_id")), u.instance_id, "单位卡应绑定该实例 id（_unit_view 的 id 字段）")
+
+func test_badge_value_fills_badge_and_uses_project_font() -> void:
+	## 锁住迭代065/067 的两条修复：① 费用数字**铺满徽章**并对齐居中（不按行盒算尺寸）
+	##   ② 显式绑定**项目自带字体**（两端行盒一致，否则"对端数字偏下"）
+	var nodes: Dictionary = _scene.get("_hand_nodes")
+	var card = null
+	for id in nodes[0].keys():
+		card = nodes[0][id]
+		break
+	assert_not_null(card, "前置：应有手牌卡")
+	var badge = card.get_node_or_null("BadgeImage")
+	assert_not_null(badge, "前置：应有徽章")
+	var bv = badge.get_node_or_null("Value")
+	assert_not_null(bv, "前置：徽章应有 Value（路径 BadgeImage/Value 被多处按路径取用）")
+	assert_almost_eq(bv.size.x, badge.size.x, 0.5, "Value 宽应铺满徽章")
+	assert_almost_eq(bv.size.y, badge.size.y, 0.5, "Value 高应铺满徽章")
+	assert_eq(int(bv.horizontal_alignment), int(HORIZONTAL_ALIGNMENT_CENTER), "水平居中")
+	assert_eq(int(bv.vertical_alignment), int(VERTICAL_ALIGNMENT_CENTER), "垂直居中")
+	var f = bv.get_theme_font("font")
+	assert_true(f is FontFile, "费用数字应绑定具体字体文件（不是 SystemFont）")
+	var fp := String(f.resource_path)
+	assert_true(fp.contains("NotoSansSC"), "应为项目自带 NotoSansSC：%s" % fp)
