@@ -176,3 +176,49 @@ func test_cost_label_written_to_correct_panel() -> void:
 	await wait_frames(1)
 	var left_val = _scene.get_node("Battle/PlayerBesaInfoLift/BadgeImage/Value") as Label
 	assert_eq(String(left_val.text), "3", "敌方费用应写左面板")
+
+## ── 单位离场时的"远端登记释放"（迭代133：自 _on_unit_removed 切出的纯状态方法）───
+
+func test_release_if_holds_clears_both_bindings() -> void:
+	var st = RemoteState.new()
+	st.bind_unit("u1")
+	st.bind_command(Vector2i(2, 2))
+	assert_true(st.release_if_holds("u1"), "持有该单位 ⇒ 应释放并返回 true")
+	assert_eq(st.preview_id, "", "单位挂载应清空")
+	assert_eq(st.command_cell, Vector2i(-1, -1), "指令待确认格也应清空（否则留幽灵范围）")
+
+
+func test_release_if_holds_ignores_other_unit() -> void:
+	var st = RemoteState.new()
+	st.bind_unit("u1")
+	assert_false(st.release_if_holds("u2"), "不是它 ⇒ 不释放")
+	assert_eq(st.preview_id, "u1", "登记应原样保留")
+
+
+func test_unit_removed_clears_remote_preview_and_white_frame() -> void:
+	## 端到端：单位离场 ⇒ 远端预览作废 + 格白框清掉（迭代064 遗留③ 的实测补漏）
+	var e = _scene.get("engine")
+	## ⚠️ 本文件共享同一个场景实例 ⇒ 不能写死格子（前面的用例可能已占）
+	var empty := Vector2i(-1, -1)
+	for x in 4:
+		for y in 4:
+			if e.state.board.is_empty(Vector2i(x, y)):
+				empty = Vector2i(x, y)
+				break
+		if empty.x >= 0:
+			break
+	assert_true(empty.x >= 0, "前置：棋盘应有空格")
+	var foe := FixtureLib.place_unit(e, 1, "泥蜂", empty)
+	assert_not_null(foe, "前置：放一个敌方单位")
+	assert_eq(e.state.board.unit_at(empty), foe, "前置：该格确实属于这个新单位")
+	_scene._on_remote_select(1, foe.cell)
+	await wait_frames(1)
+	var st = _scene.get("_remote")
+	assert_eq(st.preview_id, foe.instance_id, "前置：远端预览已挂在它身上")
+	e.state.board.remove(foe)
+	_scene._on_unit_removed(foe, "死亡")
+	await wait_frames(1)
+	assert_eq(st.preview_id, "", "离场后应清空单位挂载")
+	assert_null(_scene.get("_preview"), "离场后预览应作废")
+	var cells: Dictionary = _scene.get("_cells")
+	assert_false(cells[foe.cell].selected, "该格白框应清掉")

@@ -57,3 +57,15 @@ func reset() -> void:
 	sel_cell = Vector2i(-1, -1)
 	preview_id = ""
 	command_cell = Vector2i(-1, -1)
+
+
+## 该单位已离场 ⇒ **一次释放**所有挂在它身上的远端登记（自 arena_view._on_unit_removed 切出 —— 迭代133）
+##   返回 true = 确实持有过（调用方据此清白框 + 重渲染）。
+##   ⚠️ 必须同时清 unit 与 command：两者都以"某条预览现在挂在谁/哪格"为语义，
+##      只清一个会留下幽灵范围或幽灵待确认格。
+func release_if_holds(instance_id: String) -> bool:
+	if instance_id == "" or not holds(instance_id):
+		return false
+	clear_unit()
+	clear_command()
+	return true

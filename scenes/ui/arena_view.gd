@@ -923,12 +923,10 @@ func _on_unit_healed(inst: UnitInstance, amt: int, hp_after: int) -> void:
 
 func _on_unit_removed(inst: UnitInstance, _reason: String) -> void:
 	## ⭐ 迭代064 遗留③（人 2026-10-05）：**这条单位正是当前远端预览的持有者 ⇒ 立即作废该预览**。
-	##   根因：`_preview` 还挂着这条 PreviewData，而它下面 6 行就会因"取不到节点"而 `return` ⇒
-	##   预览/高亮**永不重算** ⇒ 对手视角下"我方被选中单位的范围"在该单位死后一直残留（人反馈）。
-	##   放在 `return` **之前**是有意的：被杀死的单位的卡节点可能已经不在了，但这道清理必须执行 ✓。
-	if inst != null and _remote.holds(inst.instance_id):
-		_remote.clear_unit()
-		_remote.clear_command()
+	##   根因：旧 `_preview` 还挂着该单位 ⇒ 下面"取不到节点"就 return ⇒ 预览永不重算（对手范围残留）。
+	##   必须放在 `return` 之前：卡节点可能已不在，但清理要执行。
+	## 释放语义见 scenes/ui/view_remote_state.gd::release_if_holds（迭代133）
+	if inst != null and _remote.release_if_holds(inst.instance_id):
 		## ⚠️ 实测补漏（本探针 ③ 第一次跑出来）：光清 `_preview` 还不够 ——
 		##   对端选中留在格上的**白框**是另一条通道（`board_cell.set_selected`），
 		##   它由 `_render_preview()` 依据"该格仍被选中"重打 ⇒ 不一起清就会留下一个孤零零的选中框 ✗。
