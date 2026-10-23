@@ -153,7 +153,10 @@ function Invoke-Arch {
 function Invoke-Signals {
     Assert-Python
     $sigOut = Join-Path $Out 'signals.json'
-    & $Py (Join-Path $QcRoot 'lib\signals_check.py') --repo $Repo --out $sigOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    $sigAccept = Join-Path $QcRoot 'config\signals_undetectable.json'
+    $sigArgs = @((Join-Path $QcRoot 'lib\signals_check.py'), '--repo', $Repo, '--out', $sigOut)
+    if (Test-Path $sigAccept) { $sigArgs = $sigArgs + @('--accept', $sigAccept) }
+    & $Py @sigArgs | ForEach-Object { Write-Host ('[qc] ' + $_) }
 
     $sigRc = $LASTEXITCODE
     ## ⚠️ 迭代095 假绿修复：检查器**没跑成**（总线文件被改名 / 崩溃）时不会产出 JSON，

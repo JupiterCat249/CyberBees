@@ -13,6 +13,7 @@
   · GUT 校验：全部加载 → 0；日志含解析错误 → 1；磁盘数 ≠ 加载数 → 1
   · lint 豁免：双向一致 → 0；新债未登记 → 1；豁免陈旧 → 1
   · 体积预警：达 91% 有预警但**不判红**；50% 无预警
+  · 信号登记：全登记 → 0；新出现未登记 → 1；登记陈旧 → 1
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
 """
@@ -450,6 +451,47 @@ def test_size_warn(tmp, python):
     record("体积预警：50% 不应有预警", rc == 0 and "预警" not in txt, "rc=%d" % rc)
 
 
+def test_signals_accept(tmp, python):
+    """undetectable 登记表反例（迭代128 · P4）：名单与登记**双向**必须一致。"""
+    repo = os.path.join(tmp, "sa_repo")
+    os.makedirs(os.path.join(repo, "scenes", "ui"), exist_ok=True)
+    os.makedirs(os.path.join(repo, "scripts", "battle"), exist_ok=True)
+
+    bus = os.path.join(repo, "scripts", "battle", "battle_signal_bus.gd")
+    with open(bus, "w", encoding="utf-8") as f:
+        f.write('extends Node\nconst SIG_X := "x_changed"\nsignal x_changed\n')
+
+    app = os.path.join(repo, "scenes", "ui", "a.gd")
+    with open(app, "w", encoding="utf-8") as f:
+        ## ⚠️ 必须用**无法静态判定**的实参（classify_arg 对 _on_x 判为 handler）⇒ 用变量 cb；
+        ##   同时要有 emit，否则会因"无发射点"判别的红（与本用例无关）
+        f.write('extends Control\nfunc _ready():\n\tvar cb = Callable(self, "_on_x")\n'
+                '\tbus.x_changed.connect(cb)\n\tbus.emit_signal(SIG_X)\n')
+
+    def write_accept(name, entries):
+        p = os.path.join(tmp, name)
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump({"entries": entries}, f)
+        return p
+
+    one = [{"kind": "connect", "file": os.path.join("scenes", "ui", "a.gd"), "arg": "cb"}]
+
+    def run_sig(accept, out):
+        return run([python, SIGNALS_CHECK, "--repo", repo, "--bus",
+                    "scripts/battle/battle_signal_bus.gd", "--out", os.path.join(tmp, out),
+                    "--accept", accept])
+
+    rc, txt = run_sig(write_accept("sa_ok.json", one), "sa_o1.json")
+    record("信号登记：全登记必须绿", rc == 0, "rc=%d" % rc)
+
+    rc, txt = run_sig(write_accept("sa_empty.json", []), "sa_o2.json")
+    record("信号登记：未登记必须红", rc == 1 and "NOT-ACCEPTED" in txt, "rc=%d" % rc)
+
+    two = one + [{"kind": "connect", "file": os.path.join("scenes", "ui", "gone.gd"), "arg": "_on_gone"}]
+    rc, txt = run_sig(write_accept("sa_stale.json", two), "sa_o3.json")
+    record("信号登记：陈旧登记必须红", rc == 1 and "STALE" in txt, "rc=%d" % rc)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -472,6 +514,8 @@ def main():
         test_lint_exempt(tmp, python)
         print("[qc] selftest 体积预警")
         test_size_warn(tmp, python)
+        print("[qc] selftest 信号登记")
+        test_signals_accept(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

@@ -48,6 +48,7 @@ def main():
     ap.add_argument("--repo", required=True)
     ap.add_argument("--bus", default="scripts/battle/battle_signal_bus.gd")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--accept", default="", help="undetectable 登记表（JSON）：与实际名单**双向**对账，不一致即判红")
     a = ap.parse_args()
 
     bus_path = os.path.join(a.repo, a.bus.replace("/", os.sep))
@@ -123,6 +124,8 @@ def main():
         "problems": len(dead) + len(unsub) + len(unemit),
         "undetectable_emit": undetect_emit,
         "undetectable_connect": undetect_connect,
+        ## P4（迭代128）：undetectable 的**名单**（不只是计数）—— 文档与输出要能对账
+        "undetectable_list": unknown,
         "signal_without_const": missing_const,
         "const_without_signal": missing_decl,
     }
@@ -132,6 +135,8 @@ def main():
 
     print("signals=%d  problems=%d (dead=%d unsubscribed=%d unemitted=%d)  undetectable=%d/%d"
           % (len(decls), result["problems"], len(dead), len(unsub), len(unemit), undetect_emit, undetect_connect))
+    for u in unknown:
+        print("  UNDETECTABLE  %-8s %s  arg=%s" % (u["kind"], u["file"], u["arg"]))
     for r in dead:
         print("  DEAD          %-28s (bus line %d)" % (r["signal"], r["line"]))
     for r in unsub:
@@ -145,6 +150,32 @@ def main():
     ## ⭐ 迭代095：**退出码必须反映判定** —— 此前恒 return 0，单跑 `qc signals` 永远绿（与迭代082 修掉的
     ##   "单闸恒 0" 属同一类假绿）。problems 现基线为 0 ⇒ 零容忍：任何死信号/单向信号/结构不配对都判红。
     bad = result["problems"] + len(missing_const) + len(missing_decl)
+
+    ## P4（迭代128）：undetectable 名单与登记表**双向**对账
+    ##   ① 实际出现但未登记 ⇒ 新出现的"静态不可判定"用法（要人看一眼）；
+    ##   ② 登记了但实际没出现 ⇒ 登记表陈旧（应删，否则它会掩盖将来同类问题）。
+    if a.accept and os.path.isfile(a.accept):
+        try:
+            doc = json.load(open(a.accept, encoding="utf-8-sig"))
+            accepted = {(e.get("kind"), e.get("file"), e.get("arg")) for e in doc.get("entries", [])}
+        except Exception as ex:
+            print("  ACCEPT-READ-ERROR: %s" % ex)
+            accepted = None
+        if accepted is not None:
+            actual = {(u["kind"], u["file"], u["arg"]) for u in unknown}
+            new_ones = sorted(actual - accepted)
+            stale = sorted(accepted - actual)
+            if new_ones:
+                print("  UNDETECTABLE-NOT-ACCEPTED %d 条（新出现，未登记）：" % len(new_ones))
+                for k, f, arg in new_ones:
+                    print("    + %s %s arg=%s" % (k, f, arg))
+                bad += len(new_ones)
+            if stale:
+                print("  ACCEPT-STALE %d 条（登记但未出现）：" % len(stale))
+                for k, f, arg in stale:
+                    print("    - %s %s arg=%s" % (k, f, arg))
+                bad += len(stale)
+
     return 1 if bad > 0 else 0
 
 if __name__ == "__main__":

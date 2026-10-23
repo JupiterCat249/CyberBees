@@ -1,0 +1,36 @@
+{
+  "$comment": "undetectable 登记表（迭代128 · P4）：这些是 .connect(<Callable>) 形式的连接 —— 静态分析无法把可调用对象映射回具体信号名，因此既不能判\"死\"，也不能核对。名单必须与实际输出**双向**一致（qc signals 会判红）。新增一条 = 有新写法需要人看一眼；登记了但没出现 = 表陈旧，应删除。",
+  "rationale": "全部为 .connect(Callable)（方法名 / 方法.bind(...)），而非 .connect(\"signal_name\") 字符串形式；不是死连接，只是无法静态反向核对。",
+  "entries": [
+    {
+      "kind": "connect",
+      "file": "scenes\\ui\\view_layout.gd",
+      "arg": "on_center_label",
+      "why": "中心对齐回调（Callable）"
+    },
+    {
+      "kind": "connect",
+      "file": "scenes\\ui\\view_layout.gd",
+      "arg": "on_center_badge.bind(badge",
+      "why": "徽章居中回调，绑定实例参数"
+    },
+    {
+      "kind": "connect",
+      "file": "scenes\\ui\\view_layout.gd",
+      "arg": "on_fit_stroke",
+      "why": "描边适配回调（Callable）"
+    },
+    {
+      "kind": "connect",
+      "file": "scenes\\ui\\view_result.gd",
+      "arg": "on_rematch",
+      "why": "结算面板\"再来一局\"回调"
+    },
+    {
+      "kind": "connect",
+      "file": "scenes\\ui\\view_result.gd",
+      "arg": "on_lobby",
+      "why": "结算面板\"返回大厅\"回调"
+    }
+  ]
+}
