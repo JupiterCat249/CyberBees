@@ -85,3 +85,27 @@ static func execute_hand(engine, intent, cell: Vector2i, flash: Callable) -> voi
 				flash.call(MSG_COMMAND_TARGET)
 		_:
 			pass
+
+
+## 手牌点击的**纯决策**（自 arena_view._on_hand_clicked 切出 —— 迭代103）
+##   idx = 该卡在 hand 数组里的下标（视图从 _hand_order 解析后传入；-1 = 不在手牌）
+##   返回：
+##     none        —— 无事可做（引擎未就绪 / idx 无效）
+##     show_only   —— 只想"看"（对手手牌）：可带 card（无效则 null）；clear_selection 表示顺带取消当前选中
+##     blocked     —— 是自己的牌但**不是自己回合**：可带 card + 一条 msg（先展示，后判权限）
+##     select      —— 正常选中：带 idx 与 card
+static func decide_hand(engine, my_seat: int, side: int, idx: int) -> Dictionary:
+	if engine == null or engine.state == null:
+		return {"type": "none"}
+	var hand: Array = engine.state.sides[side]["hand"]
+	var card = hand[idx] if idx >= 0 and idx < hand.size() else null
+	## 对手的手牌：不可操作，但**必须可看**；这一下点击在语义上=「点非交互区域」⇒ 顺带取消选中
+	if side != my_seat:
+		return {"type": "show_only", "card": card, "clear_selection": int(engine.sel_kind) != 0}
+	if idx < 0:
+		return {"type": "none"}
+	## 非行动方的手牌不可操作（本地双人热座）——但详情栏恒开放
+	if side != int(engine.state.active):
+		var who := "绿方" if int(side) == 0 else "红方"
+		return {"type": "blocked", "card": card, "msg": "现在不是%s的回合" % who}
+	return {"type": "select", "idx": idx, "card": card}

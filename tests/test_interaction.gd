@@ -237,3 +237,20 @@ func test_main_button_with_selected_card_discards() -> void:
 	assert_eq(e.state.sides[0]["discard"].size(), discard_before + 1, "弃掉的牌应进墓地")
 	assert_eq(e.state.cost(0), cost_before - need, "弃牌应扣掉弃牌费")
 	assert_eq(int(e.sel_kind), 0, "弃牌后应清掉选中态")
+
+func test_own_hand_card_readable_when_not_my_turn() -> void:
+	## 迭代067 的「漏网分支」：**我的牌、但不是我的回合** ⇒ 不可操作，但详情栏必须显示
+	var e = _engine()
+	var saved: int = int(e.state.active)
+	e.state.active = 1 if saved == 0 else 0
+	var card_id := _first_hand_id(0)
+	assert_ne(card_id, "", "前置：应有手牌")
+	var idx: int = (_scene.get("_hand_order")[0] as Array).find(card_id)
+	var hand: Array = e.state.sides[0]["hand"]
+	var want := String(hand[idx].display_name)
+	_scene._on_hand_clicked(card_id, 0)
+	await wait_frames(1)
+	assert_eq(int(e.sel_kind), 0, "非我方回合时，自己的牌也不得被选中")
+	var name_node = _scene.get_node_or_null("HUD/InfoPanel/CardName")
+	assert_eq(String(name_node.text), want, "但详情栏必须显示这张牌")
+	e.state.active = saved

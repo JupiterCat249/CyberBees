@@ -109,3 +109,25 @@ func test_execute_hand_routes_aoe_command_by_cell() -> void:
 	Dispatch.execute_hand(e, stub, Vector2i(1, 1), Callable(func(t): msgs.append(t)))
 	assert_eq(stub.cmd_at_calls.size(), 1, "AOE 应调用 request_use_command_at")
 	assert_eq(stub.cmd_calls.size(), 0, "AOE 不应走按单位的目标请求")
+
+func test_decide_hand_opponent_card_is_show_only() -> void:
+	e.select_hand(0, 0)                     # 先造一个选中态，验证"顺带取消"
+	var idx: int = 0
+	var d: Dictionary = Dispatch.decide_hand(e, 0, 1, idx)   # side=1 = 对手
+	assert_eq(String(d.get("type", "")), "show_only", "对手手牌只能是'只看'")
+	assert_true(bool(d.get("clear_selection", false)), "且应顺带取消当前选中")
+	assert_not_null(d.get("card"), "应带回那张牌（详情栏要用）")
+
+
+func test_decide_hand_own_card_on_my_turn_selects() -> void:
+	var d: Dictionary = Dispatch.decide_hand(e, 0, 0, 0)
+	assert_eq(String(d.get("type", "")), "select", "己方回合点自己的牌应选中")
+	assert_eq(int(d.get("idx", -1)), 0, "应带回下标")
+
+
+func test_decide_hand_own_card_when_not_my_turn_is_blocked() -> void:
+	e.state.active = 1
+	var d: Dictionary = Dispatch.decide_hand(e, 0, 0, 0)
+	assert_eq(String(d.get("type", "")), "blocked", "非我方回合点自己的牌应被拦")
+	assert_true(String(d.get("msg", "")).begins_with("现在不是"), "应给出回合提示")
+	assert_not_null(d.get("card"), "但仍应带回这张牌（详情恒开放）")

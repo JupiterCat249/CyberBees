@@ -1494,40 +1494,26 @@ func _on_hand_clicked(card_id: String, side: int) -> void:
 	##   只能靠点别的己方/敌方手牌或场地单位脱身 ✗。
 	##   修法：对手手牌**仍然不可操作**（权限门不变），但这一下点击在语义上属于
 	##   **「点击非交互区域」= 取消当前选中**（设计稿 §5.1「进入对象选择状态 → 点击不可交互区域取消选中」）✓。
-	if side != my_seat:
-		## ⭐ 迭代067（人 2026-10-14 指示 · **详情栏恒开放**）：
-		##   「无论是否处于自己的行动阶段，玩家都可以通过任何点击操作查看对方和自己的手牌
-		##     和战场单位的详细信息」⇒ 对手手牌虽**不可操作**，但**必须可看**。
-		##   故这里先按该牌更新左下详情栏，再执行原有权限语义（清掉当前选中）。
-		var opp_idx: int = _hand_order[side].find(card_id)
-		var opp_hand: Array = engine.state.sides[side]["hand"] if engine.state != null else []
-		if opp_idx >= 0 and opp_idx < opp_hand.size():
-			show_detail(opp_hand[opp_idx])
-		if int(engine.sel_kind) != 0:
-			intent.request_clear_selection()
-		return
+	## 两条权限口径（完整来历见迭代067 记录；决策已切到 CellDispatch.decide_hand）：
+	##   · 对手手牌 / 非行动方手牌：**不可操作、但必须可看**（先展示，后判权限）；
+	##   · 对手手牌那一下点击在语义上 =「点非交互区域」⇒ 顺带取消当前选中。
 	var idx: int = _hand_order[side].find(card_id)
-	if idx < 0:
-		return
-	## 非行动方的手牌不可操作（本地双人热座：只有轮到的一方能动）
-	if side != engine.state.active:
-		## ⭐ 迭代067 补（人 2026-10-15 反馈 · 「详情栏恒开放」的**漏网分支**）：
-		##   走到这里的是「**我自己**的牌，但**不是我回合**」——它与上面「对手手牌」那条是**两个分支**，
-		##   而此前只在对手那条加了 `show_detail` ⇒ 人实测报："点非行动方手牌不显示详细信息" ✗
-		##   （本轮实测复现：详情栏先显示「金刚蜂王」，点非行动方手牌后**仍是**「金刚蜂王」。）
-		##   修法：权限语义**不变**（仍不可操作、仍给回合提示），只把 `show_detail` 提到 `return` 之前 ——
-		##   与对手手牌那条同一条口径：「先展示，后判权限」。
-		var hand_inactive: Array = engine.state.sides[side]["hand"]
-		if idx < hand_inactive.size():
-			show_detail(hand_inactive[idx])
-		_flash_msg("现在不是%s的回合" % ("绿方" if side == SIDE_ALLY else "红方"))
-		return
-	engine.select_hand(side, idx)
-	var hand: Array = engine.state.sides[side]["hand"]
-	if idx < hand.size():
-		var card: CardData = hand[idx]
-		show_detail(card)
-		_explain_hand(card, side)
+	var d := CellDispatch.decide_hand(engine, my_seat, side, idx)
+	match String(d.get("type", "none")):
+		"show_only":
+			if d.get("card") != null:
+				show_detail(d["card"])
+			if bool(d.get("clear_selection", false)):
+				intent.request_clear_selection()
+		"blocked":
+			if d.get("card") != null:
+				show_detail(d["card"])
+			_flash_msg(String(d.get("msg", "")))
+		"select":
+			engine.select_hand(side, int(d.get("idx", -1)))
+			if d.get("card") != null:
+				show_detail(d["card"])
+				_explain_hand(d["card"], side)
 
 
 ## 选卡后的可发现性说明（迭代058 G3）
