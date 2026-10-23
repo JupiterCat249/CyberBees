@@ -46,6 +46,7 @@ const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
 const CellDispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
 const RemoteFlow := preload("res://scenes/ui/view_remote_flow.gd")
 const UnitModel := preload("res://scenes/ui/view_unit_model.gd")
+const Cards := preload("res://scenes/ui/view_cards.gd")
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
 const ATTR_ROWS := ["Attack", "Health", "Speed", "Range"]
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
@@ -1409,10 +1410,7 @@ func _render_hand(side: int, hand: Array, _playable: Array) -> void:
 		var data: CardData = hand[i]
 		if data == null:
 			continue
-		var node: Control = HAND_CARD_SCENE.instantiate()
-		parent.add_child(node)
-		if node.has_method("bind"):
-			node.call("bind", data)
+		var node: Control = Cards.create_hand_card(parent, HAND_CARD_SCENE, data)
 		if node.has_signal("hand_clicked"):
 			node.hand_clicked.connect(_on_hand_clicked.bind(side))
 		_hand_nodes[side][data.id] = node
@@ -1523,16 +1521,9 @@ func _spawn_unit(inst: UnitInstance, cell: Vector2i) -> void:
 	if inst == null or _unit_nodes.has(inst.instance_id):
 		return
 	_clear_preview_units_once()
-	var node: Control = UNIT_CARD_SCENE.instantiate()
-	node.name = "Unit_" + inst.instance_id.substr(0, 8)
-	## ⭐ 迭代065：单位卡**不再旋转**（旧实现自转 PI 抵父节点旋转）——
-	##   位置直接按"该座位视角"的数据坐标摆放 ⇒ 卡面天然正向、且不做两次变换（更锐利）。
-	##   规范格记进 `metadata/cell`，供 `set_my_seat()` 里 `_relayout_units()` 重算。
-	node.set_meta("cell", cell)
-	node.position = _view_cell_pos(cell)
-	node.rotation = 0.0
-	node.pivot_offset = Vector2.ZERO
-	_units_root.add_child(node)
+	## 实例化 / 命名 / 规范格元数据 / 视角坐标 / 不旋转 —— 见 scenes/ui/view_cards.gd（迭代113）
+	var node: Control = Cards.create_unit_card(
+		_units_root, UNIT_CARD_SCENE, inst, cell, _view_cell_pos(cell))
 	## ⭐ 运行时新建的单位卡也会带 CrtFx 叠加层 → 必须单独设鼠标穿透，
 	##    否则新部署的单位会**盖住整块棋盘**、吞掉所有点击（迭代058 实测教训）
 	_set_ignore_recursive(node)
