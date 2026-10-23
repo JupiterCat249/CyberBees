@@ -4,6 +4,7 @@ extends GutTest
 ## 覆盖「对手动作可视化」：对端选中格、手牌标记唯一性、带格动作清标记、面板描边 top_level。
 
 const BattleScene := preload("res://scenes/ui/battle_scene.tscn")
+const NetPanel := preload("res://addons/net_profile_panel/net_panel.gd")
 
 var _scene: Node = null
 
@@ -76,3 +77,15 @@ func test_flash_remote_panel_creates_overlay() -> void:
 		return
 	assert_true(mark.top_level, "描边必须 top_level（容器会重排子节点）")
 	assert_eq(mark.mouse_filter, Control.MOUSE_FILTER_IGNORE, "描边不得挡点击")
+
+
+func test_resolve_node_exe_is_single_path() -> void:
+	## 迭代092：面板曾把 `where node` 的**整段多行输出**当可执行路径 ⇒ 命令里夹换行
+	##   ⇒ Windows 报 ERR_CANT_FORK ⇒ 本地双开的中继永远起不来。这条锁住"只能是单条真实路径"。
+	var path: String = NetPanel.resolve_node_exe()
+	if path == "":
+		pending("本机未装 node —— 跳过（中继会用「未找到 node」提示）")
+		return
+	assert_false(path.contains("\n"), "node 路径不得含换行（含换行必然起不动子进程）")
+	assert_true(path.ends_with(".exe"), "应解析到 .exe")
+	assert_true(FileAccess.file_exists(path), "解析出的路径必须真实存在：%s" % path)

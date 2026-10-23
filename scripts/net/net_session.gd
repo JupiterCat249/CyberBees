@@ -50,7 +50,11 @@ static var auto_steps: int = 0
 
 
 static func detect_auto() -> void:
+	## ⚠️ 迭代092：`--` 之前的参数不算 user_args ⇒ 两处都读，否则 --net-auto 会被静默忽略
 	for a in OS.get_cmdline_user_args():
+		if String(a) == "--net-auto":
+			auto = true
+	for a in OS.get_cmdline_args():
 		if String(a) == "--net-auto":
 			auto = true
 	if OS.get_environment("SB_NET_AUTO") == "1":

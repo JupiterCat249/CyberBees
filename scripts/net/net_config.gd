@@ -19,6 +19,20 @@ const DEFAULT_PROFILE := "test"
 const SETTING := "net/profile"
 
 
+## 命令行参数**合并视图**：`--` 之前的算 args、之后的算 user_args。
+## ⚠️ 迭代092 实测：插件/命令行常把 `--net-profile=test` 放在 `--` **之前**，
+##   那时 `OS.get_cmdline_user_args()` 是**空数组** ⇒ 档位参数被静默忽略、回落到其它来源。
+##   这里两者合并，谁在前都能读到。
+static func _all_args() -> Array:
+	var merged: Array = []
+	for a in OS.get_cmdline_user_args():
+		merged.append(a)
+	for a in OS.get_cmdline_args():
+		if not merged.has(a):
+			merged.append(a)
+	return merged
+
+
 ## 枚举可用配置
 static func profiles() -> Array[String]:
 	var out: Array[String] = []
@@ -35,8 +49,7 @@ static func profiles() -> Array[String]:
 
 ## 当前应使用的 profile（命令行 > 环境变量 > **项目设置 net/profile** > profile.flag > 默认）
 static func default_profile() -> String:
-	var args := OS.get_cmdline_user_args()
-	for a in args:
+	for a in _all_args():
 		var s := String(a)
 		if s.begins_with("--net-profile="):
 			return s.substr(14)
@@ -60,7 +73,7 @@ static func default_profile() -> String:
 
 ## 当前档位的**来源**（供编辑器面板显示；与 default_profile() 同一套优先级）
 static func profile_source() -> String:
-	for a in OS.get_cmdline_user_args():
+	for a in _all_args():
 		if String(a).begins_with("--net-profile="):
 			return "命令行"
 	if OS.get_environment("SB_NET_PROFILE") != "":
@@ -95,7 +108,7 @@ static func load_profile(name: String) -> Dictionary:
 ## 临时覆盖（优先级最高）：命令行 `--net-url=ws://ip:port/relay` 或环境变量 `SB_NET_URL`
 ## 用途：不改任何文件即可切换目标（联机排查、直连/域名切换、指到别人的测试服）
 static func url_override() -> String:
-	for a in OS.get_cmdline_user_args():
+	for a in _all_args():
 		var s := String(a)
 		if s.begins_with("--net-url="):
 			return s.substr(10)

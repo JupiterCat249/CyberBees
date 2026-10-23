@@ -169,6 +169,23 @@ func _on_open_dir() -> void:
 	OS.shell_open(ProjectSettings.globalize_path(NC.DIR))
 
 
+## 解析 node 可执行文件**绝对路径**（只取一条；找不到返回空串）
+## ⚠️ 迭代092 实测教训：`OS.execute("where", ["node"], out, true)` 的 out[0] 可能是**整段多行输出**
+##   （本机两条：D:\JSSupports\Node\node.exe 与 nvm 的 shim）⇒ 若直接拼进 create_process，
+##   命令里会夹 \r\n ⇒ Windows 报 **ERR_CANT_FORK / Could not create child process** ⇒ 中继永远起不来。
+##   故这里**按行切分并逐条校验存在性**，只返回第一个真实存在的 .exe。
+static func resolve_node_exe() -> String:
+	var out: Array = []
+	if OS.execute("where", ["node"], out, true) != 0:
+		return ""
+	for raw in out:
+		for line in String(raw).replace("\r\n", "\n").split("\n"):
+			var path := line.strip_edges()
+			if path.ends_with(".exe") and FileAccess.file_exists(path):
+				return path
+	return ""
+
+
 ## ⭐ 迭代064 新增（人 2026-10-05 裁定方案 A）：「本地双开」一键拉起本地联机验收环境
 ##   ① 写 **test 档 + 自动模式**（与 NetConfig 口径一致的两处来源：ProjectSettings + flag 文件）
 ##   ② 起**本地中继**（`联机服务器/server.js --config config.test.json`，测试端口 8091）
@@ -197,14 +214,15 @@ func _on_launch_duo() -> void:
 	var relay_dir := ProjectSettings.globalize_path("res://联机服务器")
 	var server_js := relay_dir + "/server.js"
 	if FileAccess.file_exists(server_js):
-		var node_exe := "node"
-		var where_out: Array = []
-		if OS.execute("where", ["node"], where_out, true) == 0 and where_out.size() > 0:
-			var line := String(where_out[0]).strip_edges()
-			if line != "":
-				node_exe = line
-		OS.create_process(node_exe, [server_js, "--config", relay_dir + "/config.test.json"], false)
-		notes.append("已请求启动中继(8091)")
+		var node_exe := resolve_node_exe()
+		if node_exe == "":
+			notes.append("未找到 node（中继未起；先装 Node 或把它加入 PATH）")
+		else:
+			var relay_pid := OS.create_process(node_exe, [server_js, "--config", relay_dir + "/config.test.json"], false)
+			if relay_pid > 0:
+				notes.append("中继已启动(8091, pid=%d)" % relay_pid)
+			else:
+				notes.append("中继启动失败(node=%s)" % node_exe)
 	else:
 		notes.append("缺 联机服务器/server.js，中继未起")
 	# ③ 两个实例 —— **都进「联机大厅」**（大厅原生自动：连上即入队、配对即进对局）
@@ -216,7 +234,7 @@ func _on_launch_duo() -> void:
 	var exe := OS.get_executable_path()
 	var proj := ProjectSettings.globalize_path("res://")
 	var lobby_scene := proj + "scenes/ui/net_lobby.tscn"
-	var pid_a := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test"], false)
+	var pid_a := OS.create_process(exe, ["--path", proj, lobby_scene, "--", "--net-profile=test"], false)
 	var pid_b := OS.create_process(exe, ["--path", proj, lobby_scene, "--net-profile=test"], false)
 	if pid_a > 0 and pid_b > 0:
 		notes.append("两个大厅实例 pid=%d / %d（请在各窗口点「开始匹配」）" % [pid_a, pid_b])
