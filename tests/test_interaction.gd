@@ -21,6 +21,8 @@ extends GutTest
 
 const BattleScene := preload("res://scenes/ui/battle_scene.tscn")
 const PreviewLib := preload("res://scripts/battle/rules_preview.gd")
+const Pool := preload("res://scripts/data/card_pool.gd")
+const FixtureLib := preload("res://tests/support/battle_fixture.gd")
 
 var _scene: Node = null
 
@@ -42,6 +44,10 @@ func after_each() -> void:
 
 func _engine():
 	return _scene.get("engine")
+
+
+func _push_card(e, card_name: String) -> int:
+	return FixtureLib.push_card(e, 0, card_name)
 
 
 func _first_hand_id(side: int) -> String:
@@ -112,7 +118,6 @@ func test_cell_click_on_own_unit_selects_and_shows_detail() -> void:
 func test_attack_takes_two_clicks() -> void:
 	## 规则口径：移动/攻击与指令卡同构 —— 第一次只挂待确认（返回 false），第二次执行
 	var e = _engine()
-	var Pool := preload("res://scripts/data/card_pool.gd")
 	var atk = UnitInstance.create(Pool.card("泥蜂"), 0, Vector2i(2, 1))
 	e.state.board.place(atk)
 	_scene._on_unit_spawned(atk, atk.cell)
@@ -254,3 +259,39 @@ func test_own_hand_card_readable_when_not_my_turn() -> void:
 	var name_node = _scene.get_node_or_null("HUD/InfoPanel/CardName")
 	assert_eq(String(name_node.text), want, "但详情栏必须显示这张牌")
 	e.state.active = saved
+
+func test_unit_card_as_command_target_executes_hand() -> void:
+	## 覆盖 decide_unit 的 hand_exec 分支：选中**指令卡**后点单位卡 ⇒ 就地执行该指令
+	## （此前只有决策层断言，没有端到端路径）
+	_to_action()
+	var e = _engine()
+	assert_eq(_push_card(e, "电击"), 0, "前置：应能把电击塞进手牌")
+	e.select_hand(0, 0)
+	assert_eq(int(e.sel_kind), 1, "前置：应处于选中手牌态")
+	var foe = UnitInstance.create(Pool.card("泥蜂"), 1, Vector2i(2, 2))
+	e.state.board.place(foe)
+	_scene._on_unit_spawned(foe, foe.cell)
+	_scene._on_unit_clicked(foe.instance_id)
+	await wait_frames(1)
+	assert_eq(e.command_cell, foe.cell, "点单位卡应把指令落到该格（进入待确认）")
+
+
+func test_support_confirm_on_friendly_unit() -> void:
+	## 覆盖 decide_unit 的 support_confirm 分支：选中带【支援】的单位 → 点另一友方 ⇒ 进入支援待确认
+	_to_action()
+	var e = _engine()
+
+	var bear = UnitInstance.create(Pool.card("熊蜂"), 0, Vector2i(2, 1))
+	e.state.board.place(bear)
+	_scene._on_unit_spawned(bear, bear.cell)
+	assert_true(e.has_support_skill(bear), "前置：熊蜂应带支援技能")
+	_scene._on_unit_clicked(bear.instance_id)
+	await wait_frames(1)
+	assert_eq(int(e.sel_kind), 3, "选中带支援的单位应进入支援选中态")
+	assert_not_null(e.sel_support, "前置：应自动带上支援技能")
+	var mate = UnitInstance.create(Pool.card("泥蜂"), 0, Vector2i(2, 0))
+	e.state.board.place(mate)
+	_scene._on_unit_spawned(mate, mate.cell)
+	_scene._on_unit_clicked(mate.instance_id)
+	await wait_frames(1)
+	assert_not_null(e.support_pending, "点另一友方应进入支援待确认")
