@@ -47,6 +47,7 @@ const CellDispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
 const RemoteFlow := preload("res://scenes/ui/view_remote_flow.gd")
 const UnitModel := preload("res://scenes/ui/view_unit_model.gd")
 const Cards := preload("res://scenes/ui/view_cards.gd")
+const CardArt := preload("res://scenes/ui/view_card_art.gd")
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
 const ATTR_ROWS := ["Attack", "Health", "Speed", "Range"]
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
@@ -781,27 +782,15 @@ func _apply_one_hand_params(node, p) -> void:
 		##   贴图实际 **250×258** 被硬拉进 **400×454** 的窗：横向 400/250=1.60×、纵向 454/258=1.76×
 		##   ⇒ **宽高比被破坏**，卡片内容看起来被压瘦 ✗。
 		##   修法：窗高按**贴图自身宽高比**推导（基准宽仍取原始版本的 400，保持偏移语义不变）。
-		var tsz: Vector2 = img.texture.get_size() if img.texture != null else Vector2(400, 454)
-		var sz := Vector2(400, 400.0 * tsz.y / maxf(tsz.x, 1.0))
-		var sc: Vector2 = p.art_scale_for_key(key, vis)
-		var off: Vector2 = p.final_art_offset(vis)
-		if p.should_center_key(key):
-			var plane: Control = img.get_parent()
-			var pw: Vector2 = Vector2(194, 196)
-			if plane != null and plane.size.x > 4.0 and plane.size.y > 4.0:
-				pw = plane.size
-			var draw: Vector2 = Vector2(sz.x * sc.x, sz.y * sc.y)
-			## ⭐ 2026-10-15（人报告「**位置调节参数没有生效**」）：
-			##   此前这里**无条件**把 off 覆盖成居中值 ⇒ 命中卡种表的三型（蜂王 / 建筑 / 指令）的
-			##   `p.crop_offset` 与逐卡 `vis.crop_offset`（以及 `art_base_offset`）**全被丢弃**，
-			##   位置参数怎么填都不动 ✗。
-			##   现改为**增量式**：居中作**基准**、参数作**微调** ——
-			##     · 不填参数 ⇒ 纯居中（与改动前**逐字一致**）
-			##     · 填了参数 ⇒ 居中 + 偏移量 ⇒ 位置参数生效 ✓
-			##   ⚠️ 不用"填了就完全弃用居中"：那样 off 会被**整段替换**成参数偏移，
-			##      在 194×196 的裁剪窗里极可能裁出空帧（独立静态审查指出过这一点）。
-			var adjust: Vector2 = p.crop_offset + (vis.crop_offset if vis != null else Vector2.ZERO)
-			off = (pw - draw) * 0.5 + adjust
+		## 几何纯计算见 scenes/ui/view_card_art.gd（迭代114）—— 居中/原偏移链的分支也在那里
+		var tsz: Vector2 = img.texture.get_size() if img.texture != null else Vector2.ZERO
+		var plane: Control = img.get_parent()
+		var plane_sz: Vector2 = plane.size if plane != null else Vector2.ZERO
+		var g: Dictionary = CardArt.window(p, vis, key, tsz, plane_sz)
+		var sz: Vector2 = g["size"]
+		var sc: Vector2 = g["scale"]
+		var off: Vector2 = g["offset"]
+		## 居中作基准、参数作微调（增量式）—— 该策略与"194×196 回退窗"都在 view_card_art.gd
 		img.offset_left = off.x
 		img.offset_top = off.y
 		img.offset_right = off.x + sz.x
