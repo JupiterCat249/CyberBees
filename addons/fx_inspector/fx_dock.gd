@@ -38,6 +38,10 @@ func _ready() -> void:
 	refresh_btn.text = "刷新样例"
 	refresh_btn.pressed.connect(_refresh)
 	row.add_child(refresh_btn)
+	var pick_btn := Button.new()
+	pick_btn.text = "选择…"
+	pick_btn.pressed.connect(_on_pick)
+	row.add_child(pick_btn)
 	_info = Label.new()
 	_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(_info)
@@ -60,6 +64,19 @@ func set_params(p: Resource) -> void:
 	if _path_edit != null and p.resource_path != "":
 		_path_edit.text = p.resource_path
 	_refresh()
+
+
+## 用编辑器文件对话框挑 FxParams（Dock 独立可用，不依赖 Inspector 选中）
+func _on_pick() -> void:
+	var dlg := EditorFileDialog.new()
+	dlg.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
+	dlg.access = EditorFileDialog.ACCESS_RESOURCES
+	dlg.add_filter("*.tres", "资源")
+	dlg.file_selected.connect(func(p: String) -> void:
+		_path_edit.text = p
+		_on_load())
+	add_child(dlg)
+	dlg.popup_centered_ratio(0.5)
 
 
 func _on_load() -> void:

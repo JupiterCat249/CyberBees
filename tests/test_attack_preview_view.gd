@@ -104,3 +104,47 @@ func test_no_counter_shows_zero() -> void:
 		if String(t) == "反击 0":
 			has_zero = true
 	assert_true(has_zero, "无反击时应显示「反击 0」：%s" % str(texts))
+
+
+func test_selecting_unit_alone_shows_no_consequence() -> void:
+	## 人 2026-10-23：「一靠近对方就自动弹出攻击结果预览」= 错。
+	##   **只选中我方单位（还没选目标）**时不得有任何后果浮字。
+	var e = _scene.get("engine")
+	e.state.active = 0
+	e.state.phase = e.state.Phase.ACTION
+	e.cancel_selection()
+	await wait_frames(1)
+	var pair := _first_empty_pair(e)
+	assert_eq(pair.size(), 2, "前置：应能找到一个相邻空格对")
+	var atk := Fixture.place_unit(e, 0, "泥蜂", pair[0])
+	var foe := Fixture.place_unit(e, 1, "泥蜂", pair[1])
+	_scene._on_unit_spawned(atk, atk.cell)
+	_scene._on_unit_spawned(foe, foe.cell)
+	await wait_frames(1)
+	_scene._on_unit_clicked(atk.instance_id)
+	await wait_frames(1)
+	assert_eq(_hint_texts().size(), 0, "仅选中单位时不得出现后果浮字：%s" % str(_hint_texts()))
+
+
+func test_cancel_clears_consequence_floats() -> void:
+	## 人 2026-10-23：「执行或取消执行后浮字不自动消失」——取消后必须清空。
+	var e = _scene.get("engine")
+	e.state.active = 0
+	e.state.phase = e.state.Phase.ACTION
+	e.cancel_selection()
+	await wait_frames(1)
+	var pair := _first_empty_pair(e)
+	assert_eq(pair.size(), 2, "前置：应能找到一个相邻空格对")
+	var atk := Fixture.place_unit(e, 0, "泥蜂", pair[0])
+	var foe := Fixture.place_unit(e, 1, "泥蜂", pair[1])
+	_scene._on_unit_spawned(atk, atk.cell)
+	_scene._on_unit_spawned(foe, foe.cell)
+	await wait_frames(1)
+	_scene._on_unit_clicked(atk.instance_id)
+	await wait_frames(1)
+	_scene._on_unit_clicked(foe.instance_id)
+	await wait_frames(1)
+	assert_eq(_hint_texts().size(), 2, "前置：待确认应有两条后果")
+	e.cancel_selection()
+	await wait_frames(1)
+	assert_eq(_hint_texts().size(), 0, "取消后不得残留浮字：%s" % str(_hint_texts()))

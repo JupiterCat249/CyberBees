@@ -211,15 +211,9 @@ static func _unit_preview(state, inst: UnitInstance) -> PreviewData:
 		var all: Array[UnitInstance] = state.board.all_units()
 		for u in state.board.attackable(inst, all):
 			pv.add_unit(u, K.Kind.ATTACK)        ## ⚠️ 显式 ATTACK，不能沿用顶层 kind
-			## ⭐ 迭代093/143（人 2026-10-23）：**双向后果** —— 我打它多少 + **它反击我多少**。
-			##   与真正结算共用 RulesCombat.preview_attack（纯函数），预览数字不会和实打漂移。
-			var fc: Dictionary = Combat.preview_attack(inst, u, state.board)
-			pv.add_hint(u, {"dmg": int(fc["damage_to_defender"]), "hp": u.current_hp,
-				"lethal": int(fc["damage_to_defender"]) >= u.current_hp,
-				"blocked": Combat.has_defense_effect(u),
-				"counter_dmg": int(fc["damage_to_attacker"]),
-				"counter_valid": bool(fc["counter_valid"]),
-				"counter_lethal": int(fc["damage_to_attacker"]) >= inst.current_hp})
+			## ⚠️ 迭代146（人 2026-10-23）：「一靠近对方就自动弹出攻击结果预览」= 错。
+			##   **后果数字只在"已选定目标、待确认"阶段出现**（见 _pending_attack_preview）；
+			##   这里只给可打目标（标框），不产出 hints。
 	return pv
 
 

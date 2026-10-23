@@ -119,6 +119,3 @@ static func dump(root: Node, save_shot: bool = true) -> Dictionary:
 		info["shot"] = abs_path
 	print("========================================")
 	return info
-
-
-

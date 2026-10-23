@@ -1217,6 +1217,7 @@ func _relayout_units() -> void:
 
 ## 点格 → 翻译成引擎请求（**不在视图里做规则判定**：种类看预览资源给的 kind）
 func _on_cell_clicked(cell: Vector2i) -> void:
+	_clear_hints_when_idle()   ## 迭代146：入口先清残留浮字（无预览时）
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return
@@ -1357,6 +1358,7 @@ func refresh_hand_affordability() -> void:
 
 
 func _on_hand_clicked(card_id: String, side: int) -> void:
+	_clear_hints_when_idle()   ## 迭代146：入口先清残留浮字（无预览时）
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null:
 		return
@@ -1515,6 +1517,7 @@ func _update_unit(inst: UnitInstance, hp_after: int) -> void:
 
 
 func _on_unit_clicked(instance_id: String) -> void:
+	_clear_hints_when_idle()   ## 迭代146：入口先清残留浮字（无预览时）
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return
@@ -1559,6 +1562,14 @@ func _find_unit(instance_id: String) -> UnitInstance:
 func _render_preview() -> void:
 	PreviewRenderer.render(_cells, _unit_nodes, _preview, engine, _find_unit,
 		_fx_root, FLOAT_TEXT_SCENE, fx_params)
+
+
+## 迭代146（人 2026-10-23）：「执行或取消执行后浮字不消失」。
+##   根因：某些取消路径（点空地/无效目标）**不触发选中信号** ⇒ 不会走 _render_preview ⇒ 浮字残留。
+##   这里在四个交互入口末尾兜底：没有预览就清掉所有 preview_hint。
+func _clear_hints_when_idle() -> void:
+	if _preview == null:
+		Fx.clear_preview_hints(_fx_root)
 
 
 # ============================================================
@@ -1613,6 +1624,7 @@ func _call_opt(node: Object, method: String, args: Array) -> void:
 
 ## 主按钮 → 按当前选中分流（G-6 Q-3：选中手牌时按钮兼顾弃牌）
 func _on_main_pressed() -> void:
+	_clear_hints_when_idle()   ## 迭代146：入口先清残留浮字（无预览时）
 	if _ui_locked: return   ## 规则4：block_ui 动画期间禁交互
 	if engine == null or engine.state == null:
 		return

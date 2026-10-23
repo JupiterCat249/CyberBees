@@ -129,10 +129,16 @@ func test_attack_preview_carries_consequence_hints() -> void:
 	var foe := Fixture.place_unit(e, 1, "泥蜂", Vector2i(2, 3))
 	assert_not_null(atk, "前置：应能放下攻击方")
 	assert_not_null(foe, "前置：应能放下目标")
+	## ⚠️ 迭代146（人 2026-10-23）改口径：**预选阶段（只选中单位、未选目标）不出后果数字** ——
+	##   「一靠近对方就自动弹攻击结果预览」是错误行为；后果只在待确认阶段给（见下一段断言）。
 	var pv = PreviewLib.build(e.state, 2, -1, atk)
-	assert_true(pv.units.has(foe), "前置：该敌应在攻击目标里")
-	assert_true(pv.hints.has(foe.instance_id), "攻击预览必须带后果数据（视图才有浮字可显示）")
-	assert_eq(int(pv.hints[foe.instance_id]["dmg"]), CombatLib.raw_damage(atk, foe, e.state.board),
+	assert_true(pv.units.has(foe), "预选阶段仍应把该敌列为可打目标（用于标框）")
+	assert_true(pv.hints.is_empty(), "预选阶段**不得**有后果 hints")
+	## 待确认（pending_cell = 目标格）⇒ 双向后果都出现
+	var pv2 = PreviewLib.build(e.state, 2, -1, atk, null, true, foe.cell)
+	assert_true(pv2.hints.has(foe.instance_id), "待确认：目标卡应有后果数据")
+	assert_true(pv2.hints.has(atk.instance_id), "待确认：我方卡应有被反击数据")
+	assert_eq(int(pv2.hints[foe.instance_id]["dmg"]), CombatLib.raw_damage(atk, foe, e.state.board),
 		"预览伤害必须与结算同源（RulesCombat.raw_damage）")
 
 

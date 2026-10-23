@@ -24,12 +24,7 @@ func _exit_tree() -> void:
 		_dock = null
 
 
-## 在编辑器里选中资源时，把 FxParams 自动送进面板（"所见即所改"）
-func _handles(object: Object) -> bool:
-	return object is Resource and object.get_script() != null \
-		and String(object.get_script().resource_path).ends_with("fx_params.gd")
-
-
-func _edit(object: Object) -> void:
-	if _dock != null and object != null:
-		_dock.set_params(object)
+## ⚠️ 迭代146（人 2026-10-23 实测）：**绝不要实现 `_handles` / `_edit` / `_make_visible`**。
+##   这三个是 **main-screen 插件**三件套：一旦实现，编辑器会把主工作区交给本插件，
+##   表现为"UI 被破坏 / 资源打不开"（本轮实测踩到）。
+##   ⇒ 本插件只做 Dock，资源由面板里的路径 + 加载按钮选择。
