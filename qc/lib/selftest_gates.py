@@ -546,6 +546,57 @@ def test_size_measure_code(tmp, python):
     rc, txt = run_size("m_o2.json")
     record("体积口径：代码超限必须红", rc == 1, "rc=%d" % rc)
 
+
+def test_layout_gate(tmp, python):
+    """布局闸反例（迭代155 · M6）：四条禁止规则都必须真的红。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "layout_check.py")
+
+    def make_repo(name):
+        root = os.path.join(tmp, name)
+        os.makedirs(os.path.join(root, "src", "battle"), exist_ok=True)
+        os.makedirs(os.path.join(root, "scenes"), exist_ok=True)
+        os.makedirs(os.path.join(root, "qc"), exist_ok=True)
+        os.makedirs(os.path.join(root, "tests"), exist_ok=True)
+        with open(os.path.join(root, "src", "battle", "a.gd"), "w", encoding="utf-8") as f:
+            f.write("extends Node\n")
+        return root
+
+    def run_lay(root, out):
+        return run([python, CHECK, "--repo", root, "--out", os.path.join(tmp, out)])
+
+    # ① 干净仓库 ⇒ 绿
+    clean = make_repo("l_clean")
+    rc, txt = run_lay(clean, "l_o0.json")
+    record("布局闸：干净仓库必须绿", rc == 0, "rc=%d" % rc)
+
+    # ② scenes/ 下放 .gd ⇒ 红
+    scene_gd = make_repo("l_scene")
+    with open(os.path.join(scene_gd, "scenes", "bad.gd"), "w", encoding="utf-8") as f:
+        f.write("extends Node\n")
+    rc, txt = run_lay(scene_gd, "l_o1.json")
+    record("布局闸：scenes 下的 .gd 必须红", rc == 1 and "SCENE_HAS_GD" in txt, "rc=%d" % rc)
+
+    # ③ qc/ 下放 .gd ⇒ 红
+    qc_gd = make_repo("l_qc")
+    with open(os.path.join(qc_gd, "qc", "probe.gd"), "w", encoding="utf-8") as f:
+        f.write("extends SceneTree\n")
+    rc, txt = run_lay(qc_gd, "l_o2.json")
+    record("布局闸：qc 下的 .gd 必须红", rc == 1 and "QC_HAS_GD" in txt, "rc=%d" % rc)
+
+    # ④ *.deprecated ⇒ 红（archive/ 豁免）
+    dep = make_repo("l_dep")
+    with open(os.path.join(dep, "src", "battle", "old.gd.deprecated"), "w", encoding="utf-8") as f:
+        f.write("extends Node\n")
+    rc, txt = run_lay(dep, "l_o3.json")
+    record("布局闸：.deprecated 必须红", rc == 1 and "DEPRECATED_FILE" in txt, "rc=%d" % rc)
+
+    # ⑤ 生产代码引用 res://dev/ ⇒ 红
+    devref = make_repo("l_devref")
+    with open(os.path.join(devref, "src", "battle", "b.gd"), "w", encoding="utf-8") as f:
+        f.write('const P := preload("res://dev/probes/p.gd")\n')
+    rc, txt = run_lay(devref, "l_o4.json")
+    record("布局闸：生产引 dev 必须红", rc == 1 and "PROD_REFERS_DEV" in txt, "rc=%d" % rc)
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -570,6 +621,8 @@ def main():
         test_size_warn(tmp, python)
         print("[qc] selftest 体积口径")
         test_size_measure_code(tmp, python)
+        print("[qc] selftest 布局闸")
+        test_layout_gate(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:
