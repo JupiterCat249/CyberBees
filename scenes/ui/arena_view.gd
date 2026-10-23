@@ -46,6 +46,7 @@ const InputUtils := preload("res://scenes/ui/view_input_utils.gd")
 const Fx := preload("res://scenes/ui/view_fx.gd")
 const Layout := preload("res://scenes/ui/view_layout.gd")
 const PreviewRenderer := preload("res://scenes/ui/view_preview.gd")
+const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
 const PhaseText := preload("res://scenes/ui/view_phase_text.gd")
 const RemoteMarks := preload("res://scenes/ui/view_remote_marks.gd")
@@ -98,16 +99,9 @@ var _unit_nodes := {}                 ## instance_id -> UnitCard
 var _hand_nodes := {SIDE_ALLY: {}, SIDE_ENEMY: {}}   ## side -> {card_id: HandCard}
 var _hand_order := {SIDE_ALLY: [], SIDE_ENEMY: []}
 var _preview: Resource = null
-## `_preview_is_remote`：远端预览来源标记（旧口径「远端不给单位打标」已于迭代064 作废）
-var _preview_is_remote := false
-## ⭐ 迭代064 遗留③（人 2026-10-05）：**远端预览当前挂在谁/哪一格上** —— 远端预览有两个来源：
-##   · `_remote_preview_id`：对端选中的**单位**（`_on_remote_select`）—— 它死亡/被移除时必须作废；
-##   · `_remote_command_cell`：对端**指令卡**的待确认中心格（`_on_remote_action`）—— 对端清掉待确认时必须作废；
-##   · `_remote_sel_cell`：对端当前选中的格（白框通道），用于识别"对端换了目标"。
-##   三者一起构成远端预览的**生命周期登记**（此前的缺口：预览会被无限期持有 ⇒ 幽灵范围）。
-var _remote_preview_id := ""
-var _remote_command_cell := Vector2i(-1, -1)
-var _remote_sel_cell := Vector2i(-1, -1)
+## 对端呈现的**生命周期登记**（迭代096 切到 scenes/ui/view_remote_state.gd）——
+##   选中格 / 挂预览的单位 / 指令待确认格 三者的不变式收在那个对象里，本文件只负责渲染。
+var _remote := RemoteState.new()
 var _preview_cleared := false
 
 ## 两套 UI 参数（**各自独立**，人要求：详情区 / 手牌卡不共用）
@@ -542,9 +536,7 @@ func _connect_bus() -> void:
 func _on_remote_select(side: int, cell: Vector2i) -> void:
 	## ⭐ 迭代064 遗留③（人 2026-10-05）：每次对端选中变化都**先作废上一条远端预览的登记**。
 	##   （下面若确实是对端单位选中，会在同一函数内重新登记 ✓）
-	_remote_preview_id = ""
-	_remote_command_cell = Vector2i(-1, -1)
-	_remote_sel_cell = cell
+	_remote.begin_select(cell)
 	for c in _cells.keys():
 		if _cells[c].selected:
 			_cells[c].set_selected(false)
@@ -563,7 +555,7 @@ func _on_remote_select(side: int, cell: Vector2i) -> void:
 		_preview = rp
 		## ⭐ 迭代064 遗留③（人 2026-10-05）：登记这条远端预览**挂在谁身上** ——
 		##   该单位一旦死亡/被移除，必须由 `_on_unit_removed()` 立即作废（否则幽灵范围残留）。
-		_remote_preview_id = ru.instance_id
+		_remote.bind_unit(ru.instance_id)
 		## ⭐ 迭代064 遗留①（**人 2026-10-05 口径澄清：这一条是「应该」**）：
 		##   「敌方**应该**能够看到我方选中单位在进入攻击状态后的**攻击范围**以及**选择的攻击目标**，
 		##     而不是单纯的静态设计」—— 这是**联机信息完全透明的主动设计** ⇒ 对端视图必须把
@@ -571,10 +563,9 @@ func _on_remote_select(side: int, cell: Vector2i) -> void:
 		##   （旧注释「远端只渲染范围格、绝不给单位打 attack 标记」据人口径**作废**；
 		##     那条修正真正要挡的是「选指令卡时对手单位被套红框」，已由 `_render_preview()` 里的
 		##     **AOE 跳过单位打标** 覆盖，不再靠"远端一律不打标"这种一刀切。）
-		_preview_is_remote = true
+		_remote.is_remote = true
 	else:
-		_remote_preview_id = ""
-		_preview_is_remote = false
+		_remote.clear_unit()
 	_render_preview()
 
 
@@ -630,17 +621,17 @@ func _on_remote_action(side: int, text: String, cell: Vector2i) -> void:
 					var rp: Resource = engine.remote_command_preview(i, cell)
 					if rp != null:
 						_preview = rp
-						_preview_is_remote = true
+						_remote.is_remote = true
 						## ⭐ 迭代064 遗留③（人 2026-10-05）：登记这条**对端指令卡效果范围**挂在哪一格 ——
 						##   对端一旦清掉待确认（`sel` 不带 cell / 换目标），`_on_remote_select` 会作废登记；
 						##   这里补上"以格为键"的记忆，避免效果范围以幽灵形式留在对手屏幕上 ✗。
-						_remote_command_cell = cell
+						_remote.bind_command(cell)
 						_render_preview()
 					break
 		else:
 			## ⭐ 迭代064 遗留③（人 2026-10-05）：对端的"非选牌"动作（移动/攻击/支援…）不携带待确认格 ⇒
 			##   作废上一条指令效果范围，否则它会在对手操作已推进后仍留在屏幕上 ✗。
-			_remote_command_cell = Vector2i(-1, -1)
+			_remote.clear_command()
 
 
 ## 地图与背景资产变化
@@ -1037,17 +1028,17 @@ func _on_unit_removed(inst: UnitInstance, _reason: String) -> void:
 	##   根因：`_preview` 还挂着这条 PreviewData，而它下面 6 行就会因"取不到节点"而 `return` ⇒
 	##   预览/高亮**永不重算** ⇒ 对手视角下"我方被选中单位的范围"在该单位死后一直残留（人反馈）。
 	##   放在 `return` **之前**是有意的：被杀死的单位的卡节点可能已经不在了，但这道清理必须执行 ✓。
-	if _remote_preview_id != "" and inst != null and _remote_preview_id == inst.instance_id:
-		_remote_preview_id = ""
-		_remote_command_cell = Vector2i(-1, -1)
+	if inst != null and _remote.holds(inst.instance_id):
+		_remote.clear_unit()
+		_remote.clear_command()
 		## ⚠️ 实测补漏（本探针 ③ 第一次跑出来）：光清 `_preview` 还不够 ——
 		##   对端选中留在格上的**白框**是另一条通道（`board_cell.set_selected`），
 		##   它由 `_render_preview()` 依据"该格仍被选中"重打 ⇒ 不一起清就会留下一个孤零零的选中框 ✗。
-		if _remote_sel_cell.x >= 0 and _cells.has(_remote_sel_cell):
-			_cells[_remote_sel_cell].set_selected(false)
-		_remote_sel_cell = Vector2i(-1, -1)
+		if _remote.sel_cell.x >= 0 and _cells.has(_remote.sel_cell):
+			_cells[_remote.sel_cell].set_selected(false)
+		_remote.sel_cell = Vector2i(-1, -1)
 		_preview = null
-		_preview_is_remote = false
+		_remote.is_remote = false
 		_render_preview()
 	var n: Control = _unit_nodes.get(inst.instance_id, null)
 	_unit_nodes.erase(inst.instance_id)
@@ -1106,11 +1097,10 @@ func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: A
 	## ⚠️ 预览范围**由规则层算好装在 PreviewData 里** —— 视图只读不重算
 	_preview = preview
 	## ⭐ 迭代064 遗留③（人 2026-10-05）：**本地选中变化 ⇒ 这条预览归本地** ——
-	##   显式清掉远端登记，否则「先看过对端选中、再选自己的单位」时残留的 `_preview_is_remote=true`
+	##   显式清掉远端登记，否则「先看过对端选中、再选自己的单位」时残留的 `_remote.is_remote=true`
 	##   会继续影响渲染分支（历史踩坑：`_render_preview` 曾用它一刀切跳过单位打标）。
-	_preview_is_remote = false
-	_remote_preview_id = ""
-	_remote_command_cell = Vector2i(-1, -1)
+	_remote.clear_unit()
+	_remote.clear_command()
 	_render_preview()
 	## ⭐ ③ 迭代064 遗留修复（目标轮8）：**把"本地选中"广播给对端**（`sel` op）。
 	##   实测根因（双端真机定位）：`NetIntent.send_selection()` **全项目 0 处调用**（死代码 ✗）——
