@@ -788,6 +788,25 @@ def test_coverage_probe(tmp, python):
     same = open(src, encoding="utf-8").read() == body and open(proj, encoding="utf-8").read() == prow
     record("覆盖率探针：还原必须逐字节一致", rc2 == 0 and same, "rc=%d same=%s" % (rc2, same))
 
+
+def test_mutation_score(tmp, python):
+    """变异分数判定（迭代163 · S4/WS2）：分数与 min_score 的比较必须真的红/绿。"""
+    CHECK = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mutation_probe.py")
+    cfg = os.path.join(tmp, "mut_cfg.json")
+    json.dump({"targets": [], "max_mutants": 2, "min_score": 60}, open(cfg, "w", encoding="utf-8"))
+    out = os.path.join(tmp, "mut_out.json")
+
+    def run_sim(results):
+        return run([python, CHECK, "--repo", tmp, "--config", cfg, "--godot", "x", "--out", out,
+                    "--simulate", json.dumps(results)])
+
+    rc1, _ = run_sim([{"killed": True}, {"killed": True}])
+    record("变异分数：全部杀死（100%）必须绿", rc1 == 0, "rc=%d" % rc1)
+
+    rc2, txt2 = run_sim([{"killed": False}, {"killed": False}])
+    data = json.load(open(out, encoding="utf-8"))
+    record("变异分数：全部存活（0%）必须红", rc2 == 1 and data.get("score") == 0, "rc=%d score=%s" % (rc2, data.get("score")))
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -826,6 +845,8 @@ def main():
         test_receipt(tmp, python)
         print("[qc] selftest 覆盖率探针")
         test_coverage_probe(tmp, python)
+        print("[qc] selftest 变异分数")
+        test_mutation_score(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
     finally:

@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
     [string]$Command = 'all',
 
     [string]$Iteration = ''
@@ -567,6 +567,27 @@ function Invoke-Coverage {
     return ($covRc -eq 0)
 }
 
+## 变异测试（迭代163 · S4/WS2）：定点变异核心模块 → 跑回归 → "存活"即断言没抓到。
+##   不进 all（每个变异体 ~20s），显式触发：qc mutation [-MaxMutants 8]。
+function Invoke-Mutation {
+    param([int]$MaxMutants = 0)
+    Assert-Python
+    $godot = Get-GodotBin
+    if (-not $godot) { Write-Host '[qc] 找不到 Godot' -ForegroundColor Yellow; exit 2 }
+    $cfg = Join-Path $QcRoot 'config\mutation.json'
+    $outM = Join-Path $Out 'mutation.json'
+    $mArgs = @((Join-Path $QcRoot 'lib\mutation_probe.py'), '--repo', $Repo, '--config', $cfg, '--godot', $godot, '--out', $outM)
+    if ($MaxMutants -gt 0) { $mArgs += @('--max-mutants', $MaxMutants) }
+    & $Py @mArgs 2>&1 | ForEach-Object { Write-Host ('[qc] ' + $_.ToString()) }
+    $rc = $LASTEXITCODE
+    if (Test-Path $outM) {
+        $mj = [System.IO.File]::ReadAllText($outM, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        Add-Count 'mutation:score_core' $mj.score
+        Add-Count 'mutation:total' $mj.total
+        Add-Count 'mutation:survivors' (@($mj.survivors).Count)
+    }
+    return ($rc -eq 0)
+}
 function Invoke-Gates {
     param([switch]$SkipDocs)
     # 钩子自检：core.hooksPath 是**本地配置**，新克隆不会自动生效 → 每次全闸都提醒一次
@@ -709,6 +730,7 @@ switch ($Command) {
     'artifacts' { if (Confirm-Artifacts) { exit 0 } else { exit 1 } }
     'receipt'   { if (Invoke-Receipt) { exit 0 } else { exit 1 } }
     'coverage'  { if (Invoke-Coverage) { exit 0 } else { exit 1 } }
+    'mutation'  { if (Invoke-Mutation) { exit 0 } else { exit 1 } }
     'coldstart' { exit (Invoke-Coldstart) }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
