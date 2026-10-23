@@ -48,6 +48,8 @@ const Layout := preload("res://scenes/ui/view_layout.gd")
 const PreviewRenderer := preload("res://scenes/ui/view_preview.gd")
 const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
 const CellDispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
+## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
+const ATTR_ROWS := ["Attack", "Health", "Speed", "Range"]
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
 const PhaseText := preload("res://scenes/ui/view_phase_text.gd")
 const RemoteMarks := preload("res://scenes/ui/view_remote_marks.gd")
@@ -702,17 +704,8 @@ func _apply_detail_params() -> void:
 		ds.add_theme_constant_override("line_spacing", int(p.desc_line_spacing))
 	var portrait := $HUD/InfoPanel/DetailBlock/Artwork/Portrait as TextureRect
 	if portrait != null:
-		## ⭐ 迭代067（人 2026-10-10：详情区尺寸调整后立绘要跟着修）：
-		##   原实现 `portrait.size = p.art_size`（**写死 300×300**）—— 而详情区重排后
-		##   `DetailBlock` = 284×284、内框 `Artwork` = **274×274** ⇒ 立绘**溢出 26px 且贴左上角** ✗
-		##   （实测：`Portrait size=(300,300)` / `Artwork (274,274)`）
-		##   修法：**以父框实测尺寸为准铺满**（不写死），并保持宽高比居中 —— 区再改也不用回来改这里。
-		## ⚠️ 2026-10-10 **二次修正**（人：「立绘还是偏右而不是居中」—— 实测定位到残留问题）：
-		##   ① 定位要**相对父框原点**：`Portrait` 的父 `Artwork` 自身在 `(4,4)`，
-		##      `Portrait.position=(0,0)` 是**相对 Artwork** 的 ⇒ 观感**偏左上 4px**
-		##      （实测：框心 `(141,141)` / 立绘心 `(137,137)`）✗
-		##   ② 场景里 `stretch_mode = 5` 是 **KEEP_ASPECT_COVERED（会裁切）** ⇒
-		##      构图偏右的立绘右侧被切掉 ⇒ 观感"偏右"；改为 **KEEP_ASPECT_CENTERED（按比例居中、不裁）** ✓
+		## 迭代067：立绘按**父框实测尺寸**铺满（曾写死 300×300 ⇒ 溢出）、定位相对父框原点、
+		##   场景 stretch_mode=5(COVERED) 会裁切 ⇒ 改 KEEP_ASPECT_CENTERED；垂直微调 meta 优先。
 		var frame := portrait.get_parent() as Control
 		var fit: Vector2 = frame.size if frame != null else p.art_size
 		portrait.size = fit if (fit.x > 1.0 and fit.y > 1.0) else p.art_size
@@ -1797,8 +1790,8 @@ func show_detail(data: CardData) -> void:
 
 func _rows(a: String, b: String, c: String, d: String) -> void:
 	var vals := [a, b, c, d]
-	for i in 4:
-		var row := $HUD/InfoPanel/Attributes.get_node_or_null("Row%d" % (i + 1))
+	for i in ATTR_ROWS.size():
+		var row := $HUD/InfoPanel/Attributes.get_node_or_null(String(ATTR_ROWS[i]))
 		if row != null:
 			var v: Label = row.get_node_or_null("Value")
 			if v != null:
