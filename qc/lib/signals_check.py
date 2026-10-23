@@ -142,7 +142,10 @@ def main():
         print("  SIGNAL-WITHOUT-CONST: " + ", ".join(missing_const))
     if missing_decl:
         print("  CONST-WITHOUT-SIGNAL: " + ", ".join(missing_decl))
-    return 0
+    ## ⭐ 迭代095：**退出码必须反映判定** —— 此前恒 return 0，单跑 `qc signals` 永远绿（与迭代082 修掉的
+    ##   "单闸恒 0" 属同一类假绿）。problems 现基线为 0 ⇒ 零容忍：任何死信号/单向信号/结构不配对都判红。
+    bad = result["problems"] + len(missing_const) + len(missing_decl)
+    return 1 if bad > 0 else 0
 
 if __name__ == "__main__":
     sys.exit(main())

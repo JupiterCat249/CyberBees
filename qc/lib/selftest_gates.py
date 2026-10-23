@@ -7,6 +7,7 @@
 测的是「判定逻辑」这一层（Python 检查器），不启动 Godot：
   · 体积闸：新文件超限 → NEW_OVERSIZE；祖父文件生长 → GREW；达标 → 通过
   · 架构闸：禁止依赖 → layer_violations>0 且退出码 1；干净图 → 0
+  · 信号闸：死信号 / 只发不收 → 退出码 1；@dead 豁免 → 0；动态发射 → 计入 undetectable 且不假绿；总线缺失 → 2
 
 输出：每条 [PASS]/[FAIL] + 末尾汇总；有任何 FAIL 则退出码 1。
 """
@@ -20,6 +21,7 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 SIZE_CHECK = os.path.join(HERE, "size_check.py")
 ARCH_CHECK = os.path.join(HERE, "arch_check.py")
+SIGNALS_CHECK = os.path.join(HERE, "signals_check.py")
 
 results = []
 
@@ -116,6 +118,60 @@ def test_arch_gate(tmp, python):
     record("架构闸：干净图必须绿", rc2 == 0, "rc=%d" % rc2)
 
 
+def test_signals_gate(tmp, python):
+    """信号闸反例（迭代095）：判定逻辑必须真的红/真的豁免。"""
+    def make_repo(name, bus_text, user_text=""):
+        root = os.path.join(tmp, name)
+        os.makedirs(os.path.join(root, "scripts", "battle"), exist_ok=True)
+        with open(os.path.join(root, "scripts", "battle", "battle_signal_bus.gd"), "w", encoding="utf-8") as f:
+            f.write(bus_text)
+        if user_text:
+            with open(os.path.join(root, "scripts", "battle", "user.gd"), "w", encoding="utf-8") as f:
+                f.write(user_text)
+        return root
+
+    def run_sig(root, out_name):
+        out = os.path.join(tmp, out_name)
+        rc, txt = run([python, SIGNALS_CHECK, "--repo", root, "--out", out])
+        data = json.load(open(out, encoding="utf-8")) if os.path.exists(out) else {}
+        return rc, data, txt
+
+    # ① 死信号（有声明、零发射零订阅）→ 必须红
+    dead_bus = 'signal dead_one()\nconst SIG_DEAD := "dead_one"\n'
+    rc1, d1, _ = run_sig(make_repo("s_dead", dead_bus), "s1.json")
+    record("信号闸：死信号必须红", rc1 == 1 and len(d1.get("dead", [])) == 1,
+           "rc=%d dead=%s" % (rc1, d1.get("dead")))
+
+    # ② @dead 豁免 → 必须绿（豁免必须在代码里看得见）
+    exempt_bus = 'signal dead_one()\nconst SIG_DEAD := "dead_one"  ## @dead 测试用：显式豁免\n'
+    rc2, d2, _ = run_sig(make_repo("s_exempt", exempt_bus), "s2.json")
+    record("信号闸：@dead 豁免必须绿", rc2 == 0 and int(d2.get("problems", -1)) == 0,
+           "rc=%d problems=%s" % (rc2, d2.get("problems")))
+
+    # ③ 只发不收 → 必须红（unsubscribed）
+    emit_bus = 'signal ping()\nconst SIG_PING := "ping"\n'
+    emit_user = 'func f(bus) -> void:\n\tbus.emit_signal(Bus.SIG_PING)\n'
+    rc3, d3, _ = run_sig(make_repo("s_unsub", emit_bus, emit_user), "s3.json")
+    record("信号闸：只发不收必须红", rc3 == 1 and len(d3.get("unsubscribed", [])) == 1,
+           "rc=%d unsub=%s" % (rc3, d3.get("unsubscribed")))
+
+    # ④ 动态发射 → 必须计入 undetectable（宁可报未知，不许假绿）
+    dyn_bus = 'signal ok_sig()\nconst SIG_OK := "ok_sig"\n'
+    dyn_user = ('func f(bus) -> void:\n\tbus.emit_signal(Bus.SIG_OK)\n'
+                '\tbus.connect(Bus.SIG_OK, func() -> void: pass)\n'
+                'func g(bus, name) -> void:\n\tbus.emit_signal(name)\n')
+    rc4, d4, _ = run_sig(make_repo("s_dyn", dyn_bus, dyn_user), "s4.json")
+    record("信号闸：动态发射计入 undetectable",
+           rc4 == 0 and int(d4.get("problems", -1)) == 0 and int(d4.get("undetectable_emit", 0)) >= 1,
+           "rc=%d undet=%s" % (rc4, d4.get("undetectable_emit")))
+
+    # ⑤ 总线文件缺失 → 必须红（rc=2；这正是 qc.ps1 曾把 $null 当 0 判绿的那种情形）
+    no_bus = os.path.join(tmp, "s_nobus")
+    os.makedirs(no_bus, exist_ok=True)
+    rc5, _d5, _ = run_sig(no_bus, "s5.json")
+    record("信号闸：总线缺失必须红", rc5 == 2, "rc=%d" % rc5)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -124,6 +180,8 @@ def main():
         test_size_gate(tmp, python)
         print("[qc] selftest 架构闸")
         test_arch_gate(tmp, python)
+        print("[qc] selftest 信号闸")
+        test_signals_gate(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

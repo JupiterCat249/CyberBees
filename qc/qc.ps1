@@ -138,7 +138,19 @@ function Invoke-Signals {
     $sigOut = Join-Path $Out 'signals.json'
     & $Py (Join-Path $QcRoot 'lib\signals_check.py') --repo $Repo --out $sigOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
 
-    $sig = [System.IO.File]::ReadAllText($sigOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+    $sigRc = $LASTEXITCODE
+    ## ⚠️ 迭代095 假绿修复：检查器**没跑成**（总线文件被改名 / 崩溃）时不会产出 JSON，
+    ##   而此前直接 ReadAllText ⇒ $sig=$null ⇒ [int]$null=0 ⇒ 闸门"全绿"。
+    if (-not (Test-Path $sigOut)) {
+        Write-Host ("[qc] 信号闸：检查器未产出结果（rc=" + $sigRc + "）—— 判红") -ForegroundColor Red
+        return $false
+    }
+    $sig = $null
+    try { $sig = [System.IO.File]::ReadAllText($sigOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json } catch { $sig = $null }
+    if ($null -eq $sig) {
+        Write-Host "[qc] 信号闸：结果不是合法 JSON —— 判红" -ForegroundColor Red
+        return $false
+    }
     $dead = @($sig.dead).Count
     $unsub = @($sig.unsubscribed).Count
     $unemit = @($sig.unemitted).Count
@@ -148,7 +160,11 @@ function Invoke-Signals {
     Add-Count 'signals:unemitted' $unemit
     Add-Count 'signals:undetectable' ([int]$sig.undetectable_emit + [int]$sig.undetectable_connect)
     Add-Count 'signals:declared' $sig.declared_signals
-    return ([int]$sig.problems -eq 0)
+    $ok = ([int]$sig.problems -eq 0) -and ($sigRc -eq 0)
+    if (-not $ok) {
+        Write-Host ("[qc] 信号闸：problems=" + [int]$sig.problems + " rc=" + $sigRc + " —— 判红") -ForegroundColor Red
+    }
+    return $ok
 }
 
 function Invoke-GutRun([string]$GodotBin) {
