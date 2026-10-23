@@ -3,7 +3,7 @@
   "exempt": {
     "scenes/ui/arena_view.gd": {
       "lines": 1881,
-      "bytes": 97767
+      "bytes": 97757
     }
   }
 }

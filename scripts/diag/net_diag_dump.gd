@@ -58,7 +58,6 @@ var _period_frames := 3600
 var _last_dump_abs := ""
 var _diff_pass := 0
 
-
 func _ready() -> void:
 	_enabled = _read_flag()
 	## 常驻（场景切换不销毁）
@@ -389,12 +388,12 @@ func probe_colors(points: Array = []) -> void:
 	var pts: Array = points
 	if pts.is_empty():
 		## 默认采样：红方信息栏徽章 / 绿方信息栏徽章 / 左右手牌卡面 / 地图底
-		pts = [Vector2i(40, 45), Vector2i(1500, 45), Vector2i(70, 190), Vector2i(1520, 190), Vector2i(960, 540)]
+		pts=[Vector2i(40,45), Vector2i(1500,45), Vector2i(70,190), Vector2i(1520,190), Vector2i(960,540)]
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	var lines: PackedStringArray = []
 	lines.append("========== 🎨 COLOR PROBE ==========")
-	lines.append("视口=%s · 窗口=%s" % [str(get_viewport().get_visible_rect().size), str(get_window().size)])
+	lines.append("视口=%s 窗口=%s" % [str(get_viewport().get_visible_rect().size), str(get_window().size)])
 	for p in pts:
 		var v: Vector2i = p
 		if v.x < 0 or v.y < 0 or v.x >= img.get_width() or v.y >= img.get_height():
@@ -619,8 +618,9 @@ func _section_turnstate(out: PackedStringArray) -> void:
 	## ⭐ 迭代067：详情栏状态（口径③「详情栏恒开放」的机器取证位）—— 点任意手牌/单位后本行应随 CardName 变化，而 sel_kind 不变（可看 ≠ 可操作）。
 	var ip_name := cs.get_node_or_null("HUD/InfoPanel/CardName")
 	var ip_desc := cs.get_node_or_null("HUD/InfoPanel/SkillDesc")
-	out.append("  详情栏 CardName            = %s" % (String(ip_name.text) if ip_name is Label else "<缺失>"))
-	out.append("  详情栏 SkillDesc 前 24 字   = %s" % (String(ip_desc.text).substr(0, 24) if ip_desc is Label else "<缺失>"))
+	out.append("  详情栏 CardName        = %s" % (String(ip_name.text) if ip_name is Label else "<缺失>"))
+	var desc_head = String(ip_desc.text).substr(0, 24) if ip_desc is Label else "<缺失>"
+	out.append("  详情栏 SkillDesc(前24) = %s" % desc_head)
 	var eng = cs.get("engine")
 	if eng != null and eng.get("state") != null:
 		var st = eng.get("state")
@@ -677,7 +677,7 @@ func _section_turnstate(out: PackedStringArray) -> void:
 				idx += 1
 				if c == null or not is_instance_valid(c):
 					continue
-				out.append("  手牌 side=%s #%d modulate=(%.3f,%.3f,%.3f,%.2f) 图标底色dim=%.2f 费用数字=(%.3f,%.3f,%.3f,%.2f)" % [
+				out.append("  手牌 side=%s #%d mod=(%.3f,%.3f,%.3f,%.2f) odim=%.2f cost=(%.3f,%.3f,%.3f,%.2f)" % [
 					str(sidek), idx, c.modulate.r, c.modulate.g, c.modulate.b, c.modulate.a,
 					_badge_dim_of(c),
 					_digit_color_of(c).r, _digit_color_of(c).g, _digit_color_of(c).b, _digit_color_of(c).a])
@@ -704,7 +704,7 @@ func _section_turnstate(out: PackedStringArray) -> void:
 				if cn != null:
 					cell_local = str(cn.position)
 					cell_global = str(cn.global_position)
-			out.append("    %-20s 规范格=%s | 单位 local=%s global=%s rot=%.4f | 该格 local=%s global=%s | 吻合=%s" % [
+			out.append("    %-20s 规范格=%s | 单位 local=%s global=%s rot=%.4f | 该格 local=%s global=%s 吻合=%s" % [
 				String(uc.name), str(canon), str(uc.position), str(uc.global_position), uc.rotation,
 				cell_local, cell_global,
 				str(str(uc.position) == cell_local)])

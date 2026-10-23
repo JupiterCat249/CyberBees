@@ -185,7 +185,8 @@ func _setup_net() -> void:
 		net_client.start(NetSession.url, "godot-battle")
 		_flash_msg("重新连接中继（%s）" % NetSession.url)
 	intent.client = net_client
-	net_client.op_received.connect(func(seat: int, _seq: int, _frame: int, payload, _sseq: int) -> void:
+	net_client.op_received.connect(
+		func(seat: int, _seq: int, _frame: int, payload, _sseq: int) -> void:
 		if not intent.apply_remote(seat, payload):
 			_flash_msg("收到无法应用的操作（%s）" % intent.stats_text()))
 	net_client.peer_left.connect(func(_seat: int, reason: String, ended: bool) -> void:
@@ -196,7 +197,6 @@ func _setup_net() -> void:
 		_flash_msg("与中继的连接已断开"))
 	net_client.start(NetSession.url, "godot-battle")
 	_flash_msg("联机中：%s" % NetSession.describe())
-
 
 func _process(_dt: float) -> void:
 	if net_client != null:
@@ -1378,7 +1378,7 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 			_flash_msg(String(d.get("msg", "")))
 
 
-## 手牌状态机：在交互范围内点击格 → 按卡种执行（实现已切到 view_cell_dispatch.execute_hand）
+## 手牌状态机：交互范围内点格 → 按卡种执行（已切到 view_cell_dispatch.execute_hand）
 func _execute_hand_on_cell(cell: Vector2i) -> void:
 	CellDispatch.execute_hand(engine, intent, cell, _flash_msg)
 
