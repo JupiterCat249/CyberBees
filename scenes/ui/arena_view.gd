@@ -47,6 +47,7 @@ const Fx := preload("res://scenes/ui/view_fx.gd")
 const Layout := preload("res://scenes/ui/view_layout.gd")
 const PreviewRenderer := preload("res://scenes/ui/view_preview.gd")
 const RemoteState := preload("res://scenes/ui/view_remote_state.gd")
+const CellDispatch := preload("res://scenes/ui/view_cell_dispatch.gd")
 const ResultPanel := preload("res://scenes/ui/view_result.gd")
 const PhaseText := preload("res://scenes/ui/view_phase_text.gd")
 const RemoteMarks := preload("res://scenes/ui/view_remote_marks.gd")
@@ -1350,47 +1351,31 @@ func _on_cell_clicked(cell: Vector2i) -> void:
 			_execute_hand_on_cell(cell)
 			return
 		engine.hand_range_leave()
-	var spec = engine.current_preview()
-	var kind: int = int(spec.kind) if spec != null else 0
+	## 决策（纯函数）与执行分离：切分见 scenes/ui/view_cell_dispatch.gd（迭代100）
+	var d := CellDispatch.decide(engine, cell)
 	var side: int = engine.state.active
-	match kind:
-		K.Kind.DEPLOY:
+	match String(d.get("type", "none")):
+		"deploy":
 			if not intent.request_deploy(side, engine.sel_hand_index, cell):
-				_flash_msg("该格不能部署（兵蜂需蜂王相邻空格；建筑需己方领地空格）")
-		K.Kind.MOVE:
+				_flash_msg(String(d.get("msg", "")))
+		"move":
 			if not intent.request_move(side, engine.sel_unit, cell):
-				_flash_msg("该格不可到达")
-		K.Kind.COMMAND, K.Kind.SUPPORT, K.Kind.ATTACK:
-			var target: UnitInstance = engine.state.board.unit_at(cell)
-			if target == null:
-				_flash_msg("该格没有目标单位")
-				return
-			if kind == K.Kind.COMMAND:
-				if not intent.request_use_command(side, engine.sel_hand_index, target):
-					_flash_msg("指令目标不合法或费用不足")
-			elif kind == K.Kind.SUPPORT:
-				## 支援不针对特定单位（人澄清 Y-5）→ 点任意己方单位即进入待确认
-				if not intent.request_support(side, engine.sel_unit, engine.sel_support):
-					_flash_msg("再次点击（或点主按钮「确认」）才执行【支援】")
-			else:
-				if not intent.request_attack(side, engine.sel_unit, target):
-					_flash_msg("不能攻击该目标（射程外 / 已行动过 / 非行动阶段）")
-		_:
-			## 无预览 → 尝试选中该格上的己方单位（并说明"为什么不能操作"）
-			var here: UnitInstance = engine.state.board.unit_at(cell)
-			if here == null:
-				## 空且无预览：最常见的原因是阶段不对
-				if engine.state.phase == 2:
-					_flash_msg("部署阶段：点手牌选卡后点高亮格部署；要操作单位请先点右侧「完成部署 → 进入行动」")
-				elif engine.state.phase == 3 and engine.sel_unit == null:
-					_flash_msg("点是自己的单位来选中它（选中后才能移动/攻击/支援）")
-				return
-			if here.side != side:
-				_flash_msg("这是对方的单位（要攻击请先选中自己的单位）")
-				return
-			engine.select_unit(side, here)
-			show_detail(here.data)
-			_explain_actions(here)
+				_flash_msg(String(d.get("msg", "")))
+		"command":
+			if not intent.request_use_command(side, engine.sel_hand_index, d["unit"]):
+				_flash_msg(String(d.get("msg", "")))
+		"support":
+			if not intent.request_support(side, engine.sel_unit, engine.sel_support):
+				_flash_msg(String(d.get("msg", "")))
+		"attack":
+			if not intent.request_attack(side, engine.sel_unit, d["unit"]):
+				_flash_msg(String(d.get("msg", "")))
+		"select_unit":
+			engine.select_unit(side, d["unit"])
+			show_detail(d["unit"].data)
+			_explain_actions(d["unit"])
+		"msg":
+			_flash_msg(String(d.get("msg", "")))
 
 
 ## 手牌状态机：在交互范围内点击格 → 按卡种执行
