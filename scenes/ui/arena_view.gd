@@ -49,6 +49,7 @@ const UnitModel := preload("res://scenes/ui/view_unit_model.gd")
 const Cards := preload("res://scenes/ui/view_cards.gd")
 const CardArt := preload("res://scenes/ui/view_card_art.gd")
 const CardParams := preload("res://scenes/ui/view_card_params.gd")
+const Coords := preload("res://scenes/ui/view_coords.gd")
 ## 图标参数冲突只提示一次（场景为权威）
 var _detail_icon_warned := false
 ## 四维行真实节点名（旧代码按 Row1..Row4 找 ⇒ 数值从未更新，迭代108 修）；顺序=攻/命/速/射
@@ -1009,24 +1010,12 @@ func _on_selection_changed(_kind: int, _id: String, preview: Resource, _units: A
 	##   ⚠️ 不会回环：对端收到的是 `SIG_REMOTE_SELECT`（另一条信号），**不会**再触发本函数 ✓
 	##   ⚠️ 离线时 `send_selection` 内部已用 `is_online()` 直接返回 ⇒ 单机无副作用 ✓
 	if intent != null:
-		var sc := Vector2i(-1, -1)
-		var hi := -1
-		var nm := ""
-		if engine != null:
-			## ⭐ 人 2026-10-05：**事前提醒**（而非事后解释）—— 双步确认的**阶段1「待确认」**就要把目标格
-			##   广播出去，让对手在"确认之前"就看到落点/范围 ✓（`command_cell` 即阶段1 挂上的中心格；
-			##   支援的 `support_pending` 同理，走 `sel_unit` 分支）
-			if engine.command_cell.x >= 0:
-				sc = engine.command_cell
-			elif engine.sel_unit != null:
-				sc = engine.sel_unit.cell
-			## ⭐ 新目标 ①：选中的是**手牌**时，把卡号与卡名一并广播
-			##   （对手据此在提示中看到"选中手牌 <卡名>"；旧端忽略未知键 ⇒ 兼容 ✓）
-			if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:
-				var h: Array = engine.state.sides[engine.state.active]["hand"]
-				if int(engine.sel_hand_index) < h.size():
-					hi = int(engine.sel_hand_index)
-					nm = String(h[hi].display_name)
+		## 广播内容（纯读引擎）见 scenes/ui/view_cell_dispatch.gd::selection_broadcast（迭代129）
+		var bc: Dictionary = CellDispatch.selection_broadcast(engine)
+		var sc: Vector2i = bc["cell"]
+		var hi: int = bc["hand_index"]
+		var nm: String = bc["name"]
+		## （原"算广播内容"的 14 行已搬走：见上方 selection_broadcast）
 		intent.send_selection(sc if sc.x >= 0 else null, hi, nm)
 
 
@@ -1198,10 +1187,8 @@ func _cell_pos(cell: Vector2i) -> Vector2:
 ##      **教训：基准必须来自设计/物理事实**（格心↔格心、且结果必须落在棋盘范围内），
 ##      不能拿**被替换掉的实现**当真理。
 func _view_cell_pos(cell: Vector2i) -> Vector2:
-	var p := _cell_pos(cell)
-	if not BoardMirror.needs_mirror(my_seat):
-		return p
-	return Vector2(BOARD_PX, BOARD_PX) - p - Vector2(PITCH, PITCH)
+	## 纯计算见 scenes/ui/view_coords.gd（迭代129）—— 含 "- PITCH" 的来历
+	return Coords.view_cell_pos(cell, PITCH, BOARD_PX, BoardMirror.needs_mirror(my_seat))
 
 
 ## 把 `_cells` 里所有格节点按**当前座位视角**重排（幂等；`set_my_seat` 与初始化各调一次）

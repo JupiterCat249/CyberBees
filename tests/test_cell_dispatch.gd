@@ -183,3 +183,26 @@ func test_decide_main_confirm_support_when_pending() -> void:
 	var d: Dictionary = Dispatch.decide_main(e)
 	assert_eq(String(d.get("type", "")), "confirm_support", "支援待确认时主按钮=确认支援")
 	assert_not_null(mate, "（保持引用，避免未用变量）")
+
+## ── 本地选中广播内容（迭代129：自 _on_selection_changed 切出的纯函数）─────────
+
+func test_selection_broadcast_prefers_command_cell() -> void:
+	## 双步确认的**阶段1**就要广播落点（对手在"确认之前"就能看到）
+	var e = Fixture.new_engine()
+	e.command_cell = Vector2i(2, 2)
+	var bc: Dictionary = Dispatch.selection_broadcast(e)
+	assert_eq(bc["cell"], Vector2i(2, 2), "应优先广播 command_cell")
+	assert_eq(int(bc["hand_index"]), -1, "未选手牌时无卡号")
+
+
+func test_selection_broadcast_hand_card_name() -> void:
+	## 选中手牌时一并广播卡号与卡名（对手看到"选中手牌 <卡名>"）
+	var e = Fixture.new_engine()
+	Fixture.push_card(e, 0, "电击")
+	e.sel_kind = 1
+	e.sel_hand_index = 0
+	e.command_cell = Vector2i(-1, -1)
+	var bc: Dictionary = Dispatch.selection_broadcast(e)
+	assert_eq(int(bc["hand_index"]), 0, "应带卡号")
+	assert_eq(String(bc["name"]), "电击", "应带卡名")
+	assert_eq(bc["cell"], Vector2i(-1, -1), "未选单位时无格（= 取消广播）")

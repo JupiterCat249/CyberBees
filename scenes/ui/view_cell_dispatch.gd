@@ -162,3 +162,24 @@ static func decide_main(engine) -> Dictionary:
 	if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:
 		return {"type": "discard"}
 	return {"type": "end_phase"}
+
+## 本地选中变化时**广播什么**（自 arena_view._on_selection_changed 切出 —— 迭代129）
+##   纯读引擎状态，返回 {cell: Vector2i(-1,-1)=取消, hand_index: int(-1)=无, name: String}
+##   口径（人 2026-10-05）：
+##     · 双步确认的**阶段1**（command_cell）就要广播 ⇒ 对手在"确认之前"看到落点/范围；
+##     · 否则播当前选中单位的格；
+##     · 选中的是**手牌**时一并带卡号与卡名（对手看到"选中手牌 <卡名>"；旧端忽略未知键 ⇒ 兼容）。
+static func selection_broadcast(engine) -> Dictionary:
+	var out := {"cell": Vector2i(-1, -1), "hand_index": -1, "name": ""}
+	if engine == null or engine.state == null:
+		return out
+	if int(engine.command_cell.x) >= 0:
+		out["cell"] = engine.command_cell
+	elif engine.sel_unit != null:
+		out["cell"] = engine.sel_unit.cell
+	if int(engine.sel_kind) == 1 and int(engine.sel_hand_index) >= 0:
+		var h: Array = engine.state.sides[engine.state.active]["hand"]
+		if int(engine.sel_hand_index) < h.size():
+			out["hand_index"] = int(engine.sel_hand_index)
+			out["name"] = String(h[out["hand_index"]].display_name)
+	return out
