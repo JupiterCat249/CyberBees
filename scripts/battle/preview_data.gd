@@ -36,6 +36,10 @@ class PreviewCell:
 @export var cells: Array = []
 ## 受影响单位（如攻击目标、被治疗单位）—— 视图可直接取对象
 @export var units: Array = []
+## 攻击预览的**后果**（规则层算、视图只读）：`{instance_id: {dmg:int, hp:int, lethal:bool}}`
+##   人 2026-10-23：「攻击类操作的**后果预览浮字不存在**，无法预览攻击后果」——
+##   此前预览只有格子与标框、**没有任何数字**；这里把"打多少 / 会不会打死"一并交给视图。
+@export var hints: Dictionary = {}
 ## 文案（可选，视图显示在提示区）
 @export var caption: String = ""
 ## 预览是否为空（视图可据此跳过渲染）
@@ -70,6 +74,13 @@ func add_unit(inst: UnitInstance, cell_kind: int = -1) -> void:
 	empty = false
 	var k: int = kind if cell_kind < 0 else cell_kind
 	add_cell(inst.cell, k, true)
+
+
+## 记一条**后果提示**（攻击预览用：预计伤害 / 是否击杀）
+func add_hint(inst: UnitInstance, info: Dictionary) -> void:
+	if inst == null:
+		return
+	hints[inst.instance_id] = info
 
 
 ## 取某类格的坐标列表（视图渲染用）

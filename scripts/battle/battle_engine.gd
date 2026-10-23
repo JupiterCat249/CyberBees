@@ -327,11 +327,11 @@ func request_deploy(side: int, hand_index: int, cell: Vector2i) -> bool:
 	bus().emit_signal(Bus.SIG_COST_CHANGED, side, state.cost(side), -maxi(0, ud.cost))
 	hand.remove_at(hand_index)
 	state.sides[side]["discard"].append(data)
-	# 入场：行动机会 3 —— 部署当回合**没有**行动机会
 	var inst := UnitInstance.create(ud, side, cell)
 	inst.instance_id = _next_instance_id()
 	inst.has_moved = true
 	inst.has_acted = true
+	inst.just_deployed = true   ## 入场行动机会 3：当回合无行动机会（视图据此不涂"已行动"色）
 	state.board.place(inst)
 	_apply_deploy_skills(inst, ud)
 	bus().emit_signal(Bus.SIG_UNIT_SPAWNED, inst, cell)

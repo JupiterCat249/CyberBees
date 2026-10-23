@@ -98,8 +98,7 @@ var _unit_nodes := {}                 ## instance_id -> UnitCard
 var _hand_nodes := {SIDE_ALLY: {}, SIDE_ENEMY: {}}   ## side -> {card_id: HandCard}
 var _hand_order := {SIDE_ALLY: [], SIDE_ENEMY: []}
 var _preview: Resource = null
-## ⭐ ② 修正（人 2026-10-05）：当前 `_preview` 是否来自**对端**（远端预览）——
-##   远端预览**只渲染范围格，绝不给单位打 attack 标记** ✗（实测：选指令卡时对手单位套红框）
+## `_preview_is_remote`：远端预览来源标记（旧口径「远端不给单位打标」已于迭代064 作废）
 var _preview_is_remote := false
 ## ⭐ 迭代064 遗留③（人 2026-10-05）：**远端预览当前挂在谁/哪一格上** —— 远端预览有两个来源：
 ##   · `_remote_preview_id`：对端选中的**单位**（`_on_remote_select`）—— 它死亡/被移除时必须作废；
@@ -1724,7 +1723,7 @@ func _unit_view(inst: UnitInstance, _cell: Vector2i) -> Dictionary:
 		"refund": inst.data.refund if inst.data != null else 0,
 		## ⭐ 迭代064 UI-16：**是否已行动**（a500：使用主动攻击/支援后行动结束）—— 卡面据此做视觉差分。
 		##   联机下两侧单位都读同一份引擎状态（对局经 op 回放保持同步）⇒ 对手单位的"行动过"同样看得出。
-		"acted": inst.has_acted,
+		"acted": inst.has_acted and not inst.just_deployed,
 		"atk": inst.atk(),
 		"hp": inst.current_hp,
 		"move": inst.move_range(),
@@ -1846,9 +1845,10 @@ func _find_unit(instance_id: String) -> UnitInstance:
 #  预览渲染（读 PreviewData 资源，**不重算规则**）
 # ============================================================
 
-## 预览渲染已切到 scenes/ui/view_preview.gd（迭代085）
+## 预览渲染已切到 scenes/ui/view_preview.gd（085；093 起飘字层一并传入，承载"后果浮字"）
 func _render_preview() -> void:
-	PreviewRenderer.render(_cells, _unit_nodes, _preview, engine, _find_unit)
+	PreviewRenderer.render(_cells, _unit_nodes, _preview, engine, _find_unit,
+		_fx_root, FLOAT_TEXT_SCENE)
 
 
 # ============================================================

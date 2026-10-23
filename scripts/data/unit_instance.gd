@@ -16,6 +16,11 @@ var current_hp: int = 0                  ## ← 可变的在这里
 var effects: Array[EffectRuntime] = []
 var has_moved: bool = false
 var has_acted: bool = false
+## **刚部署**标记（a500 行动机会 3：部署当回合没有行动机会）
+##   ⚠️ 引擎为挡住行动会把 has_moved/has_acted 都置 true；若视图直接拿 has_acted 上"已行动"色，
+##   刚部署的单位就**一落地整卡变冷灰蓝**（人 2026-10-23 反馈"奇怪的淡蓝色滤镜"）。
+##   ⇒ 单列这个标记让视图区分"用完了"与"当回合本来就没有"；**它不参与规则判定**（门仍是 has_acted）。
+var just_deployed: bool = false
 var instance_id: String = ""             ## UUID（D-4）：每个实例独立 ID
 
 
@@ -130,4 +135,5 @@ func mark_acted() -> void:
 func reset_turn_flags() -> void:
 	has_moved = false
 	has_acted = false
+	just_deployed = false
 	acted_changed.emit(self)

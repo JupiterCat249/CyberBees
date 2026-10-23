@@ -5,11 +5,20 @@ extends RefCounted
 ##   视图看到的一切都来自规则层算好的 `PreviewData`（与试算同源）—— 这条口径不要在这里破坏。
 
 const PreviewKind := preload("res://scripts/battle/preview_kind.gd")
+const Fx := preload("res://scenes/ui/view_fx.gd")
+## 预览后果浮字颜色＝伤害红（与 arena_view.COL_DAMAGE 同色；0.9 透明度＝提示而非结算）
+const HINT_COLOR := Color(1.0, 0.125, 0.0, 0.9)
 
 static func render(cells: Dictionary, unit_nodes: Dictionary, preview: Resource,
-		engine, find_unit: Callable) -> void:
+		engine, find_unit: Callable, fx_root: Control = null,
+		float_scene: PackedScene = null) -> void:
 	## ⭐ 迭代064 UI-15：先把**对端选中**的格子记下来 —— 下面会清空所有格子的 selected，
 	##   而对端选中**不属于预览**、不能被预览清掉（否则对手选中会一帧就被自己的预览刷没）。
+	## ⭐ 迭代093（人 2026-10-23）：后果浮字**每次重算先清**（与下面标框同一套"先清再画"口径）
+	if fx_root != null:
+		for ch in fx_root.get_children():
+			if ch.has_meta("preview_hint"):
+				ch.queue_free()
 	var rsel := Vector2i(-1, -1)
 	for c in cells.keys():
 		if cells[c].selected:
@@ -76,3 +85,19 @@ static func render(cells: Dictionary, unit_nodes: Dictionary, preview: Resource,
 			var un = unit_nodes.get(u.instance_id, null)
 			if un != null and is_instance_valid(un) and un.has_method("set_mark"):
 				un.set_mark(mark_kind)
+	## ⭐ 迭代093（人 2026-10-23「攻击类操作的**后果预览浮字不存在**」）：
+	##   把规则层算好的后果（PreviewData.hints：打多少 / 是否击杀）摆到对应单位卡上方。
+	##   常驻不播动画（`浮字上浮` 会淡出并 queue_free）；预览一变就整体重画 ⇒ 不会残留旧数字。
+	if fx_root != null and float_scene != null and not preview.hints.is_empty():
+		for id in preview.hints.keys():
+			var card = unit_nodes.get(id, null)
+			if card == null or not is_instance_valid(card):
+				continue
+			var info: Dictionary = preview.hints[id]
+			var dmg: int = int(info.get("dmg", 0))
+			var txt := "-%d" % dmg
+			if bool(info.get("blocked", false)):
+				txt = "抵挡"          ## 装甲/护盾/力场：完全免伤，写 "-0" 会误导
+			elif bool(info.get("lethal", false)):
+				txt = "-%d 击杀" % dmg
+			Fx.preview_hint(fx_root, float_scene, card, txt, HINT_COLOR)

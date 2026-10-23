@@ -13,6 +13,7 @@ const Fixture := preload("res://tests/support/battle_fixture.gd")
 const CombatLib := preload("res://scripts/battle/rules_combat.gd")
 const Pool := preload("res://scripts/data/card_pool.gd")
 const CardKindLib := preload("res://scripts/data/card_kind.gd")
+const PreviewLib := preload("res://scripts/battle/rules_preview.gd")
 
 var e: BattleEngine = null
 
@@ -109,12 +110,33 @@ func test_deployed_unit_has_no_action_this_turn() -> void:
 	var inst: UnitInstance = e.state.board.unit_at(cell)
 	assert_true(inst.has_moved, "新部署单位应视为已移动")
 	assert_true(inst.has_acted, "新部署单位应视为已行动")
+	## ⭐ 迭代093（人 2026-10-23「除蜂王外都有一层奇怪的淡蓝色滤镜」）——
+	##   规则上"部署当回合没有行动机会"要挡，但**视图不能把它当成"已行动"上冷灰蓝**。
+	assert_true(inst.just_deployed, "新部署单位应带『刚部署』标记")
+	inst.reset_turn_flags()
+	assert_false(inst.just_deployed, "回合重置后『刚部署』应清掉")
+	assert_false(inst.has_acted, "回合重置后行动机会应恢复")
 
 
 func test_deploy_rejected_outside_deploy_phase() -> void:
 	_to_action()
 	assert_eq(e.state.phase, BattleState.Phase.ACTION, "前置：应已进入行动阶段")
 	assert_false(e.request_deploy(0, 1, Fixture.empty_own_cell(e)), "行动阶段不得部署")
+
+
+func test_attack_preview_carries_consequence_hints() -> void:
+	## ⭐ 迭代093（人 2026-10-23「攻击类操作的后果预览浮字不存在」）——
+	##   规则层必须把**后果**一起交给视图，否则视图没有数字可画（也不能自己重算规则）。
+	_to_action()
+	var atk := Fixture.place_unit(e, 0, "泥蜂", Vector2i(2, 2))
+	var foe := Fixture.place_unit(e, 1, "泥蜂", Vector2i(2, 3))
+	assert_not_null(atk, "前置：应能放下攻击方")
+	assert_not_null(foe, "前置：应能放下目标")
+	var pv = PreviewLib.build(e.state, 2, -1, atk)
+	assert_true(pv.units.has(foe), "前置：该敌应在攻击目标里")
+	assert_true(pv.hints.has(foe.instance_id), "攻击预览必须带后果数据（视图才有浮字可显示）")
+	assert_eq(int(pv.hints[foe.instance_id]["dmg"]), CombatLib.raw_damage(atk, foe, e.state.board),
+		"预览伤害必须与结算同源（RulesCombat.raw_damage）")
 
 
 # ---------------------------------------------------------------- 移动（双步）

@@ -30,6 +30,37 @@ static func float_at(fx_root: Control, scene: PackedScene, anim, anchor: Control
 		anim.action("浮字上浮", ft)   # 注意：飘字直接对**节点**播；_play 是按 instance_id 找单位节点的另一条路
 
 
+## 预览提示（**常驻、不播动画**的飘字）—— 攻击预览的"后果"：打多少 / 是否击杀
+##   与 `float_at()` 的区别：它**不播 `浮字上浮`**（那会淡出并 queue_free），而是留在原地，
+##   由 `clear_preview_hints()` 在**每次预览重算时统一清掉**（视图 `_render_preview()` 每次都调）。
+static func preview_hint(fx_root: Control, scene: PackedScene, anchor: Control,
+		text: String, color: Color) -> void:
+	if fx_root == null or anchor == null or scene == null or not is_instance_valid(anchor):
+		return
+	var ft: Control = scene.instantiate()
+	ft.name = "PreviewHint"
+	ft.set_meta("preview_hint", true)
+	ft.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var lb := ft.get_node_or_null("Text") as Label
+	if lb != null:
+		lb.text = text
+		lb.modulate = color
+		lb.add_theme_font_size_override("font_size", 40)
+	fx_root.add_child(ft)
+	## 坐标空间与 `float_at` 一致：飘字层与视图根同原点 ⇒ 用 global 差值换算
+	ft.position = anchor.global_position + Vector2(anchor.size.x * 0.5 - 100.0, -26.0) \
+		- fx_root.global_position
+
+
+## 清掉上一次预览留下的提示（幂等；预览重算 / 预览消失都要调）
+static func clear_preview_hints(fx_root: Control) -> void:
+	if fx_root == null:
+		return
+	for ch in fx_root.get_children():
+		if ch.has_meta("preview_hint"):
+			ch.queue_free()
+
+
 ## 受击抖动（§二之2：受到攻击即抖；**数值越大越剧烈**）
 ##   触发条件是"受到攻击/伤害的事件"，不是"血量是否变化"（人 2026-09-21）
 ##   同一帧多来源只算一次 → 按帧号去重（shake_frame: instance_id → 帧号）

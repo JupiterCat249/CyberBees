@@ -21,6 +21,7 @@ const Bus := preload("res://scripts/battle/battle_signal_bus.gd")
 const StateLib := preload("res://scripts/battle/battle_state.gd")
 const PV := preload("res://scripts/battle/preview_data.gd")
 const K := preload("res://scripts/battle/preview_kind.gd")
+const Combat := preload("res://scripts/battle/rules_combat.gd")
 
 
 ## 主入口：按当前选中算出预览资源
@@ -181,6 +182,11 @@ static func _unit_preview(state, inst: UnitInstance) -> PreviewData:
 		var all: Array[UnitInstance] = state.board.all_units()
 		for u in state.board.attackable(inst, all):
 			pv.add_unit(u, K.Kind.ATTACK)        ## ⚠️ 显式 ATTACK，不能沿用顶层 kind
+			## ⭐ 迭代093（人 2026-10-23）：**攻击后果**也在这里算（视图不重算规则）——
+			##   与真正结算共用 RulesCombat.raw_damage，预览数字不会和实打结果漂移。
+			var dmg: int = Combat.raw_damage(inst, u, state.board)
+			pv.add_hint(u, {"dmg": dmg, "hp": u.current_hp, "lethal": dmg >= u.current_hp,
+				"blocked": Combat.has_defense_effect(u)})
 	return pv
 
 
