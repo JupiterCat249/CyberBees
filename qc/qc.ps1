@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean', 'verify-head', 'aicheck', 'docs-health')]
     [string]$Command = 'all',
 
     [string]$Iteration = '',
@@ -531,7 +531,10 @@ function Invoke-Receipt {
         & $Py $lib --repo $Repo --counts $counts --out $rcOut --verify $VerifyOnly | ForEach-Object { Write-Host ('[qc] ' + $_) }
         return ($LASTEXITCODE -eq 0)
     }
-    & $Py $lib --repo $Repo --docs-repo $docsRepo --counts $counts --out $rcOut --iteration $Iteration | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    ## 迭代169 修：$Iteration 为空时 PowerShell 会丢掉空串参数，argparse 报 "--iteration: expected one argument"
+    $rcArgs = @($lib, '--repo', $Repo, '--docs-repo', $docsRepo, '--counts', $counts, '--out', $rcOut)
+    if ($Iteration -ne '') { $rcArgs += @('--iteration', $Iteration) }
+    & $Py @rcArgs | ForEach-Object { Write-Host ('[qc] ' + $_) }
     $writeOk = ($LASTEXITCODE -eq 0)
     if (Test-Path $rcOut) {
         $rj = [System.IO.File]::ReadAllText($rcOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
@@ -790,26 +793,29 @@ function Invoke-Nightly {
             $json = $payload | ConvertTo-Json -Depth 6
             [System.IO.File]::WriteAllText((Join-Path $nightDir ($date + '.json')), $json, [System.Text.Encoding]::UTF8)
             [System.IO.File]::WriteAllText((Join-Path $nightDir 'latest.json'), $json, [System.Text.Encoding]::UTF8)
-            return $failNow
         }
 
         ## 先落一版结果，再让 handoff 读到"今天的夜检"（否则事实块与 latest 互相打架）
-        $fail = Write-Nightly -Steps $steps
+        Write-Nightly -Steps $steps | Out-Null
         if (-not $Quick) {
             $steps += Invoke-QcChild 'handoff'
-            $fail = Write-Nightly -Steps $steps
+            $steps += Invoke-QcChild 'aicheck'
+            $steps += Invoke-QcChild 'docs-health'
+            $steps += Invoke-QcChild 'verify-head'
+            Write-Nightly -Steps $steps | Out-Null
         }
 
-        if ($fail.Count -gt 0) {
+        $failedSteps = @($steps | Where-Object { $_.exit -ne 0 })
+        if ($failedSteps.Count -gt 0) {
             $tails = [ordered]@{}
-            foreach ($s in $fail) { $tails[$s.name] = @(Get-Content $s.log -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 30) }
-            $fpayload = [ordered]@{ stamp = $stamp; head = $head; failed = @($fail | ForEach-Object { $_.name }); exit = 1; tails = $tails }
+            foreach ($s in $failedSteps) { $tails[$s.name] = @(Get-Content $s.log -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 30) }
+            $fpayload = [ordered]@{ stamp = $stamp; head = $head; failed = @($failedSteps | ForEach-Object { $_.name }); exit = 1; tails = $tails }
             [System.IO.File]::WriteAllText((Join-Path $failDir ($stamp + '.json')), ($fpayload | ConvertTo-Json -Depth 6), [System.Text.Encoding]::UTF8)
-            Write-Host ('[nightly] 失败步骤：' + (($fail | ForEach-Object { $_.name }) -join ', ') + ' —— 已留痕 ' + $stamp + '.json') -ForegroundColor Red
+            Write-Host ('[nightly] 失败步骤：' + (($failedSteps | ForEach-Object { $_.name }) -join ', ') + ' —— 已留痕 ' + $stamp + '.json') -ForegroundColor Red
         } else {
             Write-Host ('[nightly] 全绿 · 结果 ' + $date + '.json') -ForegroundColor Green
         }
-        return ($fail.Count -eq 0)
+        return ($failedSteps.Count -eq 0)
     } finally {
         Remove-Item $lock -Force -ErrorAction SilentlyContinue
     }
@@ -835,6 +841,31 @@ function Invoke-Bookkeep {
     return ($LASTEXITCODE -eq 0)
 }
 
+## 证据链闭合（迭代169 · G4 批次2）：HEAD 必须在最近 receipt/nightly 里出现过。
+function Invoke-VerifyHead {
+    Assert-Python
+    $vOut = Join-Path $Out 'verify_head.json'
+    & $Py (Join-Path $QcRoot 'lib\verify_head.py') --repo $Repo --out $vOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
+
+## AI 行为契约（迭代169 · G4 批次2）：把 AGENTS.md 里已明文的规则变成判红。
+function Invoke-AiCheck {
+    Assert-Python
+    $docsRepo = (Resolve-Path (Join-Path $Repo '../../')).Path
+    $aOut = Join-Path $Out 'aicheck.json'
+    & $Py (Join-Path $QcRoot 'lib\aicheck.py') --repo $Repo --docs-repo $docsRepo --config (Join-Path $QcRoot 'config\ai_contract.json') --out $aOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
+
+## 文档健康（迭代169 · G4 批次2）：死链 + 时间戳 + 变更记录陈旧。
+function Invoke-DocsHealth {
+    Assert-Python
+    $docsRepo = (Resolve-Path (Join-Path $Repo '../../')).Path
+    $dOut = Join-Path $Out 'docs_health.json'
+    & $Py (Join-Path $QcRoot 'lib\docs_health.py') --docs-repo $docsRepo --config (Join-Path $QcRoot 'config\docs_health.json') --out $dOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
 ## 清理：只删 qc/out 下的中间文件（白名单之外）与陈旧的 .cov-backup；不碰 9 件产物与 baseline。
 function Invoke-Clean {
     param([switch]$DryRun)
@@ -882,6 +913,9 @@ switch ($Command) {
     'handoff-check' { if (Invoke-Handoff -Check) { exit 0 } else { exit 1 } }
     'bookkeep' { if (Invoke-Bookkeep) { exit 0 } else { exit 1 } }
     'clean'    { Invoke-Clean -DryRun:$DryRun | Out-Null; exit 0 }
+    'verify-head' { if (Invoke-VerifyHead) { exit 0 } else { exit 1 } }
+    'aicheck'  { if (Invoke-AiCheck) { exit 0 } else { exit 1 } }
+    'docs-health' { if (Invoke-DocsHealth) { exit 0 } else { exit 1 } }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
 }

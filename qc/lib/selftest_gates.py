@@ -882,6 +882,105 @@ def test_handoff(tmp, python):
     record("交接事实块：重跑能纠正", rc == 0 and rc2 == 0, "rc=%d rc2=%d" % (rc, rc2))
 
 
+
+VERIFY_HEAD = os.path.join(HERE, "verify_head.py")
+AICHECK = os.path.join(HERE, "aicheck.py")
+DOCS_HEALTH = os.path.join(HERE, "docs_health.py")
+
+
+def _git(repo, *args):
+    return run(["git", "-C", repo, "-c", "user.email=qc@example.com", "-c", "user.name=qc", *args])
+
+
+def _init_repo(repo):
+    os.makedirs(repo, exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "commit", "--allow-empty", "-q", "-m", "[qc] 迭代999: 初始化")
+    return _git(repo, "rev-parse", "--short=7", "HEAD")[1].strip()
+
+
+def test_verify_head(tmp, python):
+    """证据链（迭代169 · G4）：HEAD 无证据必须红；有匹配 receipt 必须绿；head 不符必须红。"""
+    repo = os.path.join(tmp, "vh_repo")
+    head = _init_repo(repo)
+    out = os.path.join(repo, "vh.json")
+    rcpt = os.path.join(repo, "qc", "out", "receipt.json")
+    os.makedirs(os.path.dirname(rcpt), exist_ok=True)
+
+    rc, _ = run([python, VERIFY_HEAD, "--repo", repo, "--out", out])
+    record("证据链：无证据必须红", rc == 1, "rc=%d" % rc)
+
+    json.dump({"git": {"game": {"head_short": head}}}, open(rcpt, "w", encoding="utf-8"))
+    rc, _ = run([python, VERIFY_HEAD, "--repo", repo, "--out", out])
+    record("证据链：匹配 receipt 必须绿", rc == 0, "rc=%d" % rc)
+
+    json.dump({"git": {"game": {"head_short": "deadbee"}}}, open(rcpt, "w", encoding="utf-8"))
+    rc, _ = run([python, VERIFY_HEAD, "--repo", repo, "--out", out])
+    record("证据链：head 不符必须红", rc == 1, "rc=%d" % rc)
+
+
+def test_aicheck(tmp, python):
+    """AI 契约（迭代169 · G4）：提交格式不合规 / 触碰禁改字段 必须红。"""
+    root = os.path.join(tmp, "ai")
+    repo = os.path.join(root, "repo")
+    docs = os.path.join(root, "docs")
+    os.makedirs(os.path.join(docs, "实时开发记录", "迭代记录", "迭代999"), exist_ok=True)
+    open(os.path.join(docs, "实时开发记录", "迭代记录", "迭代999", "记录.md"), "w", encoding="utf-8").write("## 验证\nqc all exit 0\n")
+    _init_repo(repo)
+    cfg = os.path.join(root, "ai_contract.json")
+    json.dump({"commit_regex": r"^\[[a-z]+\] (迭代\d{3}|G4)",
+               "record_require_any": ["验证"],
+               "forbidden": [{"id": "font-size", "pattern": r"font_size\s*="}],
+               "waivers": []}, open(cfg, "w", encoding="utf-8"))
+    out = os.path.join(root, "ai.json")
+
+    def run_ai():
+        return run([python, AICHECK, "--repo", repo, "--docs-repo", docs, "--config", cfg, "--out", out])
+
+    rc, _ = run_ai()
+    record("AI 契约：合规提交必须绿", rc == 0, "rc=%d" % rc)
+
+    open(os.path.join(repo, "x.gd"), "w", encoding="utf-8").write("var a = 1\nvar b = 2\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "[qc] 迭代999: 合规提交含 gd")
+    with open(os.path.join(repo, "x.gd"), "w", encoding="utf-8") as f:
+        f.write("var a = 1\nvar b = 2\nx.font_size = 24\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "[qc] 迭代999: 改字号")
+    rc, txt = run_ai()
+    record("AI 契约：改 font_size 必须红", rc == 1 and "C3" in txt, "rc=%d" % rc)
+
+    _git(repo, "commit", "--allow-empty", "-q", "-m", "随手改改")
+    rc, txt = run_ai()
+    record("AI 契约：提交格式不合规必须红", rc == 1 and "C1" in txt, "rc=%d" % rc)
+
+
+def test_docs_health(tmp, python):
+    """文档健康（迭代169 · G4）：死链/缺时间戳 必须红。"""
+    docs = os.path.join(tmp, "dh_docs")
+    mdir = os.path.join(docs, "系统维护")
+    os.makedirs(mdir, exist_ok=True)
+    cfg = os.path.join(tmp, "docs_health.json")
+    json.dump({"stamp_dirs": ["系统维护"], "stamp_skip": [], "stamp_exempt": [], "dead_link_exempt": []},
+              open(cfg, "w", encoding="utf-8"))
+    out = os.path.join(tmp, "dh.json")
+
+    def run_dh():
+        return run([python, DOCS_HEALTH, "--docs-repo", docs, "--config", cfg, "--out", out])
+
+    open(os.path.join(mdir, "a.md"), "w", encoding="utf-8").write("> 最后更新：2026-01-01\n\n[缺](b.md)\n")
+    rc, txt = run_dh()
+    record("文档健康：死链必须红", rc == 1 and "死链" in txt, "rc=%d" % rc)
+
+    open(os.path.join(mdir, "b.md"), "w", encoding="utf-8").write("> 最后更新：2026-01-01\n")
+    rc, _ = run_dh()
+    record("文档健康：链接齐全 + 有时间戳必须绿", rc == 0, "rc=%d" % rc)
+
+    open(os.path.join(mdir, "c.md"), "w", encoding="utf-8").write("# 无时间戳\n")
+    rc, txt = run_dh()
+    record("文档健康：缺时间戳必须红", rc == 1 and "时间戳" in txt, "rc=%d" % rc)
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -928,6 +1027,12 @@ def main():
         test_bookkeep(tmp, python)
         print("[qc] selftest 交接事实块")
         test_handoff(tmp, python)
+        print("[qc] selftest 证据链")
+        test_verify_head(tmp, python)
+        print("[qc] selftest AI 契约")
+        test_aicheck(tmp, python)
+        print("[qc] selftest 文档健康")
+        test_docs_health(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
