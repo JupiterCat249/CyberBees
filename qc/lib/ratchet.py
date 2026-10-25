@@ -29,7 +29,10 @@ INFO_KEYS = ("test:asserts", "signals:declared", "signals:undetectable",
              "size:arena_view", "size:battle_engine", "size:net_diag_dump",
              "size:max_lines", "size:max_bytes",
              ## 测试健康（迭代159）：耗时天然波动；隔离是显式决定，二者都只做看板
-             "test:slowest_ms", "test:total_ms", "test:quarantined")
+             "test:slowest_ms", "test:total_ms", "test:quarantined",
+             ## 豁免条数（迭代167 审计）：它是**配置规模**，不是债务；债务看 lint:total。
+             ##   原实现把 "exemptions": 5（数字）当数组取元素个数，恒得 1（X1 缺陷）。
+             "lint:exemptions")
 
 def direction(key):
     if key in INFO_KEYS:

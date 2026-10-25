@@ -117,7 +117,15 @@ function Invoke-Lint {
         $exemptOk = ($LASTEXITCODE -eq 0)
         if (Test-Path $exemptOut) {
             $ej = [System.IO.File]::ReadAllText($exemptOut, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
-            Add-Count 'lint:exemptions' (@($ej.exemptions).Count)
+            ## 迭代167（X1 审计）：lint_exempt_check.py 输出的 exemptions 是**数字**（如 5），
+            ##   旧写法 @($ej.exemptions).Count 对数字取元素个数 ⇒ 恒为 1，债务曲线长期显示错误读数。
+            ##   这里兼容两种形状：数字直接取值；数组才计数。
+            $exVal = $ej.exemptions
+            if ($exVal -is [int] -or $exVal -is [long] -or $exVal -is [double]) {
+                Add-Count 'lint:exemptions' ([int]$exVal)
+            } else {
+                Add-Count 'lint:exemptions' (@($exVal).Count)
+            }
             Add-Count 'lint:unregistered' (@($ej.unregistered).Count)
         }
     }

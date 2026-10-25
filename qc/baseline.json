@@ -15,7 +15,7 @@
     "layout:scene_gd": 0,
     "layout:unknown_tops": 0,
     "layout:violations": 0,
-    "lint:exemptions": 1,
+    "lint:exemptions": 5,
     "lint:max-file-lines": 1,
     "lint:max-public-methods": 1,
     "lint:max-returns": 3,
@@ -45,8 +45,8 @@
     "test:quarantined": 0,
     "test:scripts_loaded": 20,
     "test:scripts_on_disk": 20,
-    "test:slowest_ms": 1028,
-    "test:total_ms": 15592
+    "test:slowest_ms": 979,
+    "test:total_ms": 12528
   },
   "history": [
     {
@@ -3062,8 +3062,61 @@
       },
       "date": "2026-10-23",
       "iteration": "iter163"
+    },
+    {
+      "counts": {
+        "arch:cycles": 0,
+        "arch:layer_violations": 0,
+        "arch:type_cycles": 0,
+        "arch:unresolved_edges": 0,
+        "bugs:bad_tests": 0,
+        "bugs:entries": 3,
+        "bugs:fix_commits": 0,
+        "bugs:unbound": 0,
+        "docs:drift": 0,
+        "layout:deprecated": 0,
+        "layout:prod_refers_dev": 0,
+        "layout:qc_gd": 0,
+        "layout:scene_gd": 0,
+        "layout:unknown_tops": 0,
+        "layout:violations": 0,
+        "lint:exemptions": 5,
+        "lint:max-file-lines": 1,
+        "lint:max-public-methods": 1,
+        "lint:max-returns": 3,
+        "lint:total": 5,
+        "lint:unregistered": 0,
+        "qc:selftest_failures": 0,
+        "qc:selftest_total": 63,
+        "signals:dead": 0,
+        "signals:declared": 24,
+        "signals:problems": 0,
+        "signals:undetectable": 5,
+        "signals:unemitted": 0,
+        "signals:unsubscribed": 0,
+        "size:arena_view": 1656,
+        "size:battle_engine": 995,
+        "size:max_bytes": 39916,
+        "size:max_lines": 967,
+        "size:net_diag_dump": 721,
+        "size:over_cap_files": 0,
+        "size:violations": 0,
+        "size:warn_files": 1,
+        "test:asserts": 711,
+        "test:failures": 0,
+        "test:harness_errors": 0,
+        "test:health_violations": 0,
+        "test:passing": 150,
+        "test:quarantined": 0,
+        "test:scripts_loaded": 20,
+        "test:scripts_on_disk": 20,
+        "test:slowest_ms": 979,
+        "test:total_ms": 12528
+      },
+      "date": "2026-10-25",
+      "iteration": "iter167"
     }
   ],
-  "iteration": "iter163",
-  "updated": "2026-10-23"
+  "iteration": "iter167",
+  "updated": "2026-10-25"
 }
