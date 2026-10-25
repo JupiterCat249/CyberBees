@@ -1,0 +1,5 @@
+{
+  "$comment": "性能读数（迭代171）。mode=info 只报告；转 strict 前先观察两轮，避免 noisy 判红。",
+  "tolerance": 0.35,
+  "mode": "info"
+}

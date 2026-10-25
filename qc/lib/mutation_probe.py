@@ -29,23 +29,34 @@ OPS = [
 SKIP = re.compile(r"^\s*(#|##|@|\[)")
 
 
-def gen_mutants(repo, targets, cap):
+def candidates_for(repo, rel, limit=12):
+    p = os.path.join(repo, rel)
+    if not os.path.isfile(p):
+        return []
     out = []
-    for rel in targets:
-        p = os.path.join(repo, rel)
-        if not os.path.isfile(p):
+    for i, ln in enumerate(open(p, encoding="utf-8").read().split("\n")):
+        if SKIP.match(ln) or not ln.strip():
             continue
-        lines = open(p, encoding="utf-8").read().split("\n")
-        for i, ln in enumerate(lines):
-            if SKIP.match(ln) or not ln.strip():
-                continue
-            for old, new in OPS:
-                if old in ln:
-                    out.append({"file": rel, "line": i, "old": old, "new": new,
-                                "text": ln.strip()[:100]})
-                    break
-            if len(out) >= cap:
-                return out
+        for old, new in OPS:
+            if old in ln:
+                out.append({"file": rel, "line": i, "old": old, "new": new,
+                            "text": ln.strip()[:100]})
+                break
+        if len(out) >= limit:
+            break
+    return out
+
+
+def gen_mutants(repo, targets, cap):
+    """轮转分配（迭代171）：每个 target 都先出 1 个变异体，避免"前一个文件吃满 cap、后面的文件永远轮不到"。"""
+    pools = [candidates_for(repo, rel) for rel in targets]
+    out = []
+    while len(out) < cap and any(pools):
+        for pool in pools:
+            if pool and len(out) < cap:
+                out.append(pool.pop(0))
+        if not any(pools):
+            break
     return out
 
 

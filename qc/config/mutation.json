@@ -1,8 +1,10 @@
 {
-  "$comment": "变异测试配置（迭代163 · S4/WS2）。targets = 允许变异的**核心模块**；max_mutants = 每次跑的变异体上限（耗时 ~20s/个）；min_score = 变异分数下限（人批准：60% 起、每轮只升）。不进 qc all，显式触发。",
+  "$comment": "变异测试配置（迭代171 扩面）。targets = 核心模块；轮转分配保证每个模块都被抽到；max_mutants = 每次上限（~20s/个）；min_score = 下限（60% 起，只升）。不进 qc all。",
   "targets": [
     "src/battle/rules_combat.gd",
-    "src/data/unit_instance.gd"
+    "src/data/unit_instance.gd",
+    "src/battle/board.gd",
+    "src/battle/battle_state.gd"
   ],
   "max_mutants": 8,
   "min_score": 60

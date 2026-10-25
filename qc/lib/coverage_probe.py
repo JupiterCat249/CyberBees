@@ -158,13 +158,15 @@ def report(repo, ref):
         "percent": round(100.0 * len(covered & all_keys) / max(1, len(all_keys)), 1),
         "changed_ref": ref,
         "changed_uncovered": changed_uncovered,
+        "uncovered_count": len(uncovered),
+        "uncovered_all": uncovered,
         "uncovered_sample": uncovered[:80],
     }
     os.makedirs(os.path.join(repo, "qc", "out"), exist_ok=True)
     json.dump(result, open(os.path.join(repo, "qc", "out", "coverage.json"), "w", encoding="utf-8"),
               ensure_ascii=False, indent=2)
-    print("[cov] 函数覆盖 %d/%d（%.1f%%）；改动函数未覆盖 %d 个（ref=%s）" % (
-        result["covered"], result["total"], result["percent"], len(changed_uncovered), ref))
+    print("[cov] 函数覆盖 %d/%d（%.1f%%）；未覆盖 %d 个；改动函数未覆盖 %d 个（ref=%s）" % (
+        result["covered"], result["total"], result["percent"], result["uncovered_count"], len(changed_uncovered), ref))
     for k in changed_uncovered[:15]:
         print("  - UNCOVERED %s" % k)
     return 1 if changed_uncovered else 0

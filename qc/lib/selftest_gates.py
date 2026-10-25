@@ -1022,6 +1022,49 @@ def test_backup(tmp, python):
     files = os.listdir(dest) if os.path.isdir(dest) else []
     record("备份：创建并校验 bundle 必须绿", rc == 0 and len(files) == 1 and files[0].endswith(".bundle"), "rc=%d files=%s" % (rc, files))
 
+
+PERF = os.path.join(HERE, "perf_probe.py")
+MUTATION = os.path.join(HERE, "mutation_probe.py")
+
+
+def test_perf(tmp, python):
+    """性能读数（迭代171 · G4）：首次写基线；strict 下回归必须红。"""
+    junit = os.path.join(tmp, "perf_junit.xml")
+    open(junit, "w", encoding="utf-8").write(
+        '<testsuites><testsuite><testcase classname="A" name="a" time="1.0"/>'
+        '<testcase classname="A" name="b" time="1.0"/></testsuite></testsuites>')
+    cfg = os.path.join(tmp, "perf.json")
+    base = os.path.join(tmp, "perf_base.json")
+    out = os.path.join(tmp, "perf_out.json")
+    json.dump({"tolerance": 0.3, "mode": "info"}, open(cfg, "w", encoding="utf-8"))
+
+    rc, _ = run([python, PERF, "--junit", junit, "--config", cfg, "--baseline", base, "--out", out])
+    record("性能读数：首次写基线必须绿", rc == 0 and os.path.isfile(base), "rc=%d" % rc)
+
+    rc, _ = run([python, PERF, "--junit", junit, "--config", cfg, "--baseline", base, "--out", out])
+    record("性能读数：持平必须绿", rc == 0, "rc=%d" % rc)
+
+    open(junit, "w", encoding="utf-8").write(
+        '<testsuites><testsuite><testcase classname="A" name="a" time="5.0"/>'
+        '<testcase classname="A" name="b" time="5.0"/></testsuite></testsuites>')
+    json.dump({"tolerance": 0.3, "mode": "strict"}, open(cfg, "w", encoding="utf-8"))
+    rc, txt = run([python, PERF, "--junit", junit, "--config", cfg, "--baseline", base, "--out", out])
+    record("性能读数：strict 下回归必须红", rc == 1 and "总耗时" in txt, "rc=%d" % rc)
+
+
+def test_mutation_rr(tmp, python):
+    """变异扩面（迭代171）：轮转分配必须让每个 target 都拿到变异体。"""
+    repo = os.path.join(tmp, "mut_rr")
+    os.makedirs(repo, exist_ok=True)
+    for name, body in (("a.gd", "var x = 1\nif x == 1:\n    pass\n"),
+                       ("b.gd", "var y = 2\nif y >= 1:\n    pass\n")):
+        open(os.path.join(repo, name), "w", encoding="utf-8").write(body)
+    cfg = os.path.join(tmp, "mut_rr.json")
+    json.dump({"targets": ["a.gd", "b.gd"], "max_mutants": 2, "min_score": 0}, open(cfg, "w", encoding="utf-8"))
+    rc, txt = run([python, MUTATION, "--repo", repo, "--config", cfg, "--godot", "x",
+                   "--out", os.path.join(tmp, "mut_rr_out.json"), "--dry-run"])
+    record("变异扩面：轮转必须覆盖每个 target", rc == 0 and "a.gd:" in txt and "b.gd:" in txt, "rc=%d" % rc)
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -1078,6 +1121,10 @@ def main():
         test_security(tmp, python)
         print("[qc] selftest 文档备份")
         test_backup(tmp, python)
+        print("[qc] selftest 性能读数")
+        test_perf(tmp, python)
+        print("[qc] selftest 变异扩面")
+        test_mutation_rr(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

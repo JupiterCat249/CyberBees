@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean', 'verify-head', 'aicheck', 'docs-health', 'security', 'backup')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean', 'verify-head', 'aicheck', 'docs-health', 'security', 'backup', 'perf')]
     [string]$Command = 'all',
 
     [string]$Iteration = '',
@@ -24,7 +24,8 @@ param(
     [switch]$Deep,
     [switch]$Quick,
     [switch]$Check,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$Update
 )
 
 $ErrorActionPreference = 'Continue'
@@ -770,6 +771,7 @@ function Invoke-Nightly {
         Write-Host ('=== qc nightly · ' + $date + ' · HEAD ' + $head + ' ===') -ForegroundColor Cyan
         $steps = @()
         $steps += Invoke-QcChild 'all'
+        $steps += Invoke-QcChild 'perf'
         if (-not $Quick) { $steps += Invoke-QcChild 'bookkeep'; $steps += Invoke-QcChild 'security' }
         if ($Deep -and -not $Quick) {
             foreach ($n in @('coverage', 'mutation', 'flaky')) {
@@ -883,6 +885,18 @@ function Invoke-Backup {
     & $Py (Join-Path $QcRoot 'lib\backup.py') --docs-repo $docsRepo --config (Join-Path $QcRoot 'config\backup.json') --out $bOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
     return ($LASTEXITCODE -eq 0)
 }
+## 性能读数（迭代171 · G4 批次3）：读 junit 的耗时，与基线比较（默认只报告）。
+function Invoke-Perf {
+    param([switch]$Update)
+    Assert-Python
+    $pOut = Join-Path $Out 'perf.json'
+    $pArgs = @((Join-Path $QcRoot 'lib\perf_probe.py'), '--junit', (Join-Path $Out 'gut.junit.xml'),
+               '--config', (Join-Path $QcRoot 'config\perf.json'),
+               '--baseline', (Join-Path $QcRoot 'config\perf_baseline.json'), '--out', $pOut)
+    if ($Update) { $pArgs += '--update' }
+    & $Py @pArgs | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
 ## 清理：只删 qc/out 下的中间文件（白名单之外）与陈旧的 .cov-backup；不碰 9 件产物与 baseline。
 function Invoke-Clean {
     param([switch]$DryRun)
@@ -935,6 +949,7 @@ switch ($Command) {
     'docs-health' { if (Invoke-DocsHealth) { exit 0 } else { exit 1 } }
     'security' { if (Invoke-Security) { exit 0 } else { exit 1 } }
     'backup'   { if (Invoke-Backup) { exit 0 } else { exit 1 } }
+    'perf'     { if (Invoke-Perf -Update:$Update) { exit 0 } else { exit 1 } }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
 }
