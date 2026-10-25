@@ -1,0 +1,14 @@
+{
+  "$comment": "密钥扫描配置（迭代170）。allow 每条须写 reason，并在记录里说明；exclude_globs 用于夹具/二进制目录。",
+  "exclude_globs": [
+    "^tests/",
+    "^qc/out/"
+  ],
+  "allow": [
+    {
+      "id": "aws-access-key",
+      "file": "qc/lib/selftest_gates.py",
+      "reason": "自检夹具使用 AWS 公开示例 Access Key ID（非真实凭据），仅用于证明扫描器会红"
+    }
+  ]
+}

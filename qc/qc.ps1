@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean', 'verify-head', 'aicheck', 'docs-health')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean', 'verify-head', 'aicheck', 'docs-health', 'security', 'backup')]
     [string]$Command = 'all',
 
     [string]$Iteration = '',
@@ -770,13 +770,14 @@ function Invoke-Nightly {
         Write-Host ('=== qc nightly · ' + $date + ' · HEAD ' + $head + ' ===') -ForegroundColor Cyan
         $steps = @()
         $steps += Invoke-QcChild 'all'
-        if (-not $Quick) { $steps += Invoke-QcChild 'bookkeep' }
+        if (-not $Quick) { $steps += Invoke-QcChild 'bookkeep'; $steps += Invoke-QcChild 'security' }
         if ($Deep -and -not $Quick) {
             foreach ($n in @('coverage', 'mutation', 'flaky')) {
                 $steps += Invoke-QcChild $n
                 $src = Join-Path $Out ($n + '.json')
                 if (Test-Path $src) { Copy-Item $src (Join-Path $deepDir ($date + '-' + $n + '.json')) -Force }
             }
+            $steps += Invoke-QcChild 'backup'
         }
 
         function Write-Nightly {
@@ -866,6 +867,22 @@ function Invoke-DocsHealth {
     & $Py (Join-Path $QcRoot 'lib\docs_health.py') --docs-repo $docsRepo --config (Join-Path $QcRoot 'config\docs_health.json') --out $dOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
     return ($LASTEXITCODE -eq 0)
 }
+## 密钥扫描（迭代170 · G4 批次3）：确定性正则，不联网。
+function Invoke-Security {
+    Assert-Python
+    $sOut = Join-Path $Out 'security.json'
+    & $Py (Join-Path $QcRoot 'lib\security_scan.py') --repo $Repo --config (Join-Path $QcRoot 'config\security.json') --out $sOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
+
+## 文档仓备份（迭代170 · G4 批次3）：git bundle + verify + 保留 N 份。
+function Invoke-Backup {
+    Assert-Python
+    $docsRepo = (Resolve-Path (Join-Path $Repo '../../')).Path
+    $bOut = Join-Path $Out 'backup.json'
+    & $Py (Join-Path $QcRoot 'lib\backup.py') --docs-repo $docsRepo --config (Join-Path $QcRoot 'config\backup.json') --out $bOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
 ## 清理：只删 qc/out 下的中间文件（白名单之外）与陈旧的 .cov-backup；不碰 9 件产物与 baseline。
 function Invoke-Clean {
     param([switch]$DryRun)
@@ -916,6 +933,8 @@ switch ($Command) {
     'verify-head' { if (Invoke-VerifyHead) { exit 0 } else { exit 1 } }
     'aicheck'  { if (Invoke-AiCheck) { exit 0 } else { exit 1 } }
     'docs-health' { if (Invoke-DocsHealth) { exit 0 } else { exit 1 } }
+    'security' { if (Invoke-Security) { exit 0 } else { exit 1 } }
+    'backup'   { if (Invoke-Backup) { exit 0 } else { exit 1 } }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
 }

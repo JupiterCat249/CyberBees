@@ -981,6 +981,47 @@ def test_docs_health(tmp, python):
     record("文档健康：缺时间戳必须红", rc == 1 and "时间戳" in txt, "rc=%d" % rc)
 
 
+
+SECURITY = os.path.join(HERE, "security_scan.py")
+BACKUP = os.path.join(HERE, "backup.py")
+
+
+def test_security(tmp, python):
+    """密钥扫描（迭代170 · G4）：发现假密钥必须红；干净仓库必须绿。"""
+    repo = os.path.join(tmp, "sec")
+    os.makedirs(repo, exist_ok=True)
+    cfg = os.path.join(tmp, "security.json")
+    json.dump({"exclude_globs": [], "allow": []}, open(cfg, "w", encoding="utf-8"))
+    out = os.path.join(tmp, "sec.json")
+
+    def run_sec():
+        return run([python, SECURITY, "--repo", repo, "--config", cfg, "--out", out])
+
+    open(os.path.join(repo, "clean.gd"), "w", encoding="utf-8").write("var x = 1\n")
+    rc, _ = run_sec()
+    record("密钥扫描：干净必须绿", rc == 0, "rc=%d" % rc)
+
+    open(os.path.join(repo, "leak.gd"), "w", encoding="utf-8").write('var key = "AKIAIOSFODNN7EXAMPLE"\n')
+    rc, txt = run_sec()
+    record("密钥扫描：假密钥必须红", rc == 1 and "aws-access-key" in txt, "rc=%d" % rc)
+
+
+def test_backup(tmp, python):
+    """文档仓备份（迭代170 · G4）：bundle 可创建且 verify 通过。"""
+    repo = os.path.join(tmp, "bkp_repo")
+    _init_repo(repo)
+    open(os.path.join(repo, "a.md"), "w", encoding="utf-8").write("hello\n")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-q", "-m", "[docs] 迭代999: 备份夹具")
+    dest = os.path.join(tmp, "bkp_dest")
+    cfg = os.path.join(tmp, "backup.json")
+    json.dump({"dest": dest, "keep": 3}, open(cfg, "w", encoding="utf-8"))
+    out = os.path.join(tmp, "bkp.json")
+
+    rc, txt = run([python, BACKUP, "--docs-repo", repo, "--config", cfg, "--out", out])
+    files = os.listdir(dest) if os.path.isdir(dest) else []
+    record("备份：创建并校验 bundle 必须绿", rc == 0 and len(files) == 1 and files[0].endswith(".bundle"), "rc=%d files=%s" % (rc, files))
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -1033,6 +1074,10 @@ def main():
         test_aicheck(tmp, python)
         print("[qc] selftest 文档健康")
         test_docs_health(tmp, python)
+        print("[qc] selftest 密钥扫描")
+        test_security(tmp, python)
+        print("[qc] selftest 文档备份")
+        test_backup(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
