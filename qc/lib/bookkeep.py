@@ -73,10 +73,19 @@ def main():
 
     tags = set(x.strip() for x in run(["git", "-C", a.repo, "tag", "--list", "iter/*"]).splitlines() if x.strip())
     missing_tags = [d for d in dirs if int(d[2:]) >= TAG_MIN and ("iter/%03d" % int(d[2:])) not in tags]
+    # 迭代164+ 存在"纯文档迭代"（游戏仓无提交 → 无法打 tag）：只记 info，不算 warning
+    subjects_all = run(["git", "-C", a.repo, "log", "--all", "--format=%s"]).splitlines()
+    legacy_tagless = []
+    for d in list(missing_tags):
+        has_commit = any(("迭代%s" % d[2:]) in s for s in subjects_all)
+        if not has_commit:
+            legacy_tagless.append(d)
+            missing_tags.remove(d)
+    infos += ["无对应提交的迭代（不打 tag）：%s" % d for d in legacy_tagless]
     warnings += ["缺 tag：iter/%s" % d[2:] for d in missing_tags]
 
     subjects = [x for x in run(["git", "-C", a.repo, "log", "-60", "--pretty=format:%s"]).splitlines() if x.strip()]
-    pat = re.compile(r"^\[[a-z]+\] (迭代\d{3}|M\d|S\d|G4|WS\d|reorg)")
+    pat = re.compile(r"^(\[[a-z]+\])+ (迭代\d{3}|M\d|S\d|G4|WS\d|reorg)")  # 允许 [test][refactor] 这类多前缀
     bad = [s for s in subjects if not pat.match(s)]
     warnings += ["提交格式：%s" % s[:60] for s in bad[:5]]
 

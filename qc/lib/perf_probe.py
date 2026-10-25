@@ -47,6 +47,7 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--baseline", required=True)
     ap.add_argument("--update", action="store_true")
+    ap.add_argument("--mode", choices=["info", "strict"], default="", help="覆盖配置里的 mode（预演用）")
     ap.add_argument("--out", default="")
     a = ap.parse_args()
 
@@ -56,6 +57,8 @@ def main():
     cfg = {"tolerance": 0.35, "mode": "info"}
     if os.path.isfile(a.config):
         cfg.update(load(a.config, {}))
+    if a.mode:
+        cfg["mode"] = a.mode
     tests, total = parse_junit(a.junit)
     base = load(a.baseline, None)
     today = datetime.date.today().isoformat()
@@ -79,7 +82,8 @@ def main():
         regressions.append("总耗时 %.2fs > 基线 %.2fs ×%.2f" % (total, base_total, 1 + tol))
     for name, t in tests.items():
         bt = float(base.get("tests", {}).get(name, 0) or 0)
-        if bt > 0 and t > bt * (1 + 2 * tol):
+        # 低于 20ms 的用例耗时不具可比性（计时噪声 >> 差异），只看"绝对增量 > 10ms"的
+        if bt >= 0.02 and t > bt * (1 + 2 * tol) and (t - bt) > 0.01:
             warns.append("%s %.3fs > 基线 %.3fs" % (name, t, bt))
 
     strict = str(cfg.get("mode", "info")).lower() == "strict"

@@ -15,7 +15,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean', 'verify-head', 'aicheck', 'docs-health', 'security', 'backup', 'perf')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean', 'verify-head', 'aicheck', 'docs-health', 'security', 'backup', 'perf', 'changelog-fix')]
     [string]$Command = 'all',
 
     [string]$Iteration = '',
@@ -25,7 +25,8 @@ param(
     [switch]$Quick,
     [switch]$Check,
     [switch]$DryRun,
-    [switch]$Update
+    [switch]$Update,
+    [string]$Mode = ''
 )
 
 $ErrorActionPreference = 'Continue'
@@ -894,7 +895,18 @@ function Invoke-Perf {
                '--config', (Join-Path $QcRoot 'config\perf.json'),
                '--baseline', (Join-Path $QcRoot 'config\perf_baseline.json'), '--out', $pOut)
     if ($Update) { $pArgs += '--update' }
+    if ($Mode -ne '') { $pArgs += @('--mode', $Mode) }
     & $Py @pArgs | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
+## 变更记录补齐（迭代172）：把"最后更新"校正为 git 事实，并补缺失行。
+function Invoke-ChangelogFix {
+    param([switch]$DryRun)
+    Assert-Python
+    $docsRepo = (Resolve-Path (Join-Path $Repo '../../')).Path
+    $args2 = @((Join-Path $QcRoot 'lib\changelog_fix.py'), '--docs-repo', $docsRepo, '--list', (Join-Path $Out 'docs_health.json'))
+    if ($DryRun) { $args2 += '--dry-run' }
+    & $Py @args2 | ForEach-Object { Write-Host ('[qc] ' + $_) }
     return ($LASTEXITCODE -eq 0)
 }
 ## 清理：只删 qc/out 下的中间文件（白名单之外）与陈旧的 .cov-backup；不碰 9 件产物与 baseline。
@@ -949,7 +961,8 @@ switch ($Command) {
     'docs-health' { if (Invoke-DocsHealth) { exit 0 } else { exit 1 } }
     'security' { if (Invoke-Security) { exit 0 } else { exit 1 } }
     'backup'   { if (Invoke-Backup) { exit 0 } else { exit 1 } }
-    'perf'     { if (Invoke-Perf -Update:$Update) { exit 0 } else { exit 1 } }
+    'perf'     { if (Invoke-Perf -Update:$Update -Mode $Mode) { exit 0 } else { exit 1 } }
+    'changelog-fix' { if (Invoke-ChangelogFix -DryRun:$DryRun) { exit 0 } else { exit 1 } }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
 }

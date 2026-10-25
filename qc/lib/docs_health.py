@@ -88,8 +88,18 @@ def main():
         if "变更记录" in body and STAMP.search(body):
             head_dates = STAMP.findall("\n".join(body.splitlines()[:20]))
             stamp_date = head_dates[0] if head_dates else ""
-            tail = body[body.index("变更记录"):]
-            dates = DATE.findall(tail)
+            # 仅取标题形如 "## 变更记录" 之后、且是表格行（| 日期 |）里的日期
+            lines = body.splitlines()
+            heading = -1
+            for i, ln in enumerate(lines):
+                if re.match(r"^#{1,6}\s*.*变更记录", ln):
+                    heading = i
+            dates = []
+            if heading >= 0:
+                for ln in lines[heading + 1:]:
+                    m = re.match(r"^\|\s*(\d{4}-\d{2}-\d{2})\s*\|", ln)
+                    if m:
+                        dates.append(m.group(1))
             if stamp_date and dates and max(dates) < stamp_date:
                 stale_changelog.append("%s (最后更新 %s > 变更记录最新 %s)" % (rel, stamp_date, max(dates)))
 

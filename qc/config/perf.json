@@ -1,5 +1,5 @@
 {
-  "$comment": "性能读数（迭代171）。mode=info 只报告；转 strict 前先观察两轮，避免 noisy 判红。",
+  "$comment": "性能读数（迭代171 建立 · 迭代172 转 strict）。数值预演：14.73s vs 基线 14.24s（+3.4%），距 35% 阈值仍有 ~31pp 余量；GUT 总耗时观测区间 12.5-14.7s（约 ±8%）。若误红，把 mode 改回 info 即可（一行回滚）。",
   "tolerance": 0.35,
-  "mode": "info"
+  "mode": "strict"
 }

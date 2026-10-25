@@ -1065,6 +1065,49 @@ def test_mutation_rr(tmp, python):
                    "--out", os.path.join(tmp, "mut_rr_out.json"), "--dry-run"])
     record("变异扩面：轮转必须覆盖每个 target", rc == 0 and "a.gd:" in txt and "b.gd:" in txt, "rc=%d" % rc)
 
+
+BOOKKEEP = os.path.join(HERE, "bookkeep.py")
+
+
+def test_docs_health_changelog(tmp, python):
+    """变更记录检查（迭代172）：标题下表格行才认；过期必须 warn，补齐后不 warn。"""
+    docs = os.path.join(tmp, "cl_docs")
+    mdir = os.path.join(docs, "系统维护")
+    os.makedirs(mdir, exist_ok=True)
+    cfg = os.path.join(tmp, "cl_cfg.json")
+    json.dump({"stamp_dirs": ["系统维护"], "stamp_skip": [], "stamp_exempt": [], "dead_link_exempt": []},
+              open(cfg, "w", encoding="utf-8"))
+    out = os.path.join(tmp, "cl.json")
+    page = os.path.join(mdir, "a.md")
+
+    open(page, "w", encoding="utf-8").write(
+        "> 最后更新：2026-02-01\n\n## 变更记录\n\n| 日期 | 说明 |\n|---|---|\n| 2026-01-01 | 建档 |\n")
+    run([python, DOCS_HEALTH, "--docs-repo", docs, "--config", cfg, "--out", out])
+    data = json.load(open(out, encoding="utf-8"))
+    record("变更记录：过期必须告警", len(data.get("changelog_stale", [])) == 1, "stale=%d" % len(data.get("changelog_stale", [])))
+
+    open(page, "w", encoding="utf-8").write(
+        "> 最后更新：2026-02-01\n\n## 变更记录\n\n| 日期 | 说明 |\n|---|---|\n| 2026-02-01 | 补齐 |\n")
+    run([python, DOCS_HEALTH, "--docs-repo", docs, "--config", cfg, "--out", out])
+    data = json.load(open(out, encoding="utf-8"))
+    record("变更记录：补齐后不告警", len(data.get("changelog_stale", [])) == 0, "stale=%d" % len(data.get("changelog_stale", [])))
+
+
+def test_bookkeep_tagless(tmp, python):
+    """记账校验（迭代172）：无对应提交的迭代（纯文档）只记 info，不算缺 tag 警告。"""
+    root = os.path.join(tmp, "bk_tag")
+    docs = os.path.join(root, "docs")
+    game = os.path.join(root, "game")
+    it = os.path.join(docs, "实时开发记录", "迭代记录")
+    os.makedirs(os.path.join(it, "迭代199"), exist_ok=True)
+    open(os.path.join(it, "迭代199", "记录.md"), "w", encoding="utf-8").write("# 199\n")
+    open(os.path.join(it, "索引.md"), "w", encoding="utf-8").write("| 迭代199 | [记录](迭代199/记录.md) |\n")
+    _init_repo(game)
+    out = os.path.join(root, "bk_tag.json")
+    rc, _ = run([python, BOOKKEEP, "--repo", game, "--docs-repo", docs, "--out", out])
+    data = json.load(open(out, encoding="utf-8"))
+    record("记账校验：纯文档迭代不计缺 tag 警告", data["counts"]["bookkeep:missing_tags"] == 0, "missing=%d" % data["counts"]["bookkeep:missing_tags"])
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -1125,6 +1168,10 @@ def main():
         test_perf(tmp, python)
         print("[qc] selftest 变异扩面")
         test_mutation_rr(tmp, python)
+        print("[qc] selftest 变更记录")
+        test_docs_health_changelog(tmp, python)
+        print("[qc] selftest 记账 tag 分类")
+        test_bookkeep_tagless(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

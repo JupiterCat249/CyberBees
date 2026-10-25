@@ -1,6 +1,6 @@
 {
   "$comment": "AI 行为契约（迭代169 · G4 批次2）。每条都必须是**人已明文写过**的规则；新契约先在自检里造红例。",
-  "commit_regex": "^\\[[a-z]+\\] (迭代\\d{3}|G4|M\\d|S\\d|WS\\d|reorg)",
+  "commit_regex": "^(\\[[a-z]+\\])+ (迭代\\d{3}|G4|M\\d|S\\d|WS\\d|reorg)",
   "record_require_any": [
     "验证",
     "qc all",
