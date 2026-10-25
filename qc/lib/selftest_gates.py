@@ -807,6 +807,81 @@ def test_mutation_score(tmp, python):
     data = json.load(open(out, encoding="utf-8"))
     record("变异分数：全部存活（0%）必须红", rc2 == 1 and data.get("score") == 0, "rc=%d score=%s" % (rc2, data.get("score")))
 
+
+BOOKKEEP = os.path.join(HERE, "bookkeep.py")
+HANDOFF = os.path.join(HERE, "handoff.py")
+
+
+def test_bookkeep(tmp, python):
+    """记账校验（迭代168 · G4）：缺记录/索引缺行必须红，齐全必须绿。"""
+    root = os.path.join(tmp, "bk")
+    docs = os.path.join(root, "docs")
+    game = os.path.join(root, "game")
+    it = os.path.join(docs, "实时开发记录", "迭代记录")
+    os.makedirs(os.path.join(it, "迭代168"), exist_ok=True)
+    os.makedirs(game, exist_ok=True)
+    rec = os.path.join(it, "迭代168", "记录.md")
+    open(rec, "w", encoding="utf-8").write("# 迭代168 记录\n")
+    index = os.path.join(it, "索引.md")
+    open(index, "w", encoding="utf-8").write("| 迭代168 | 测试行 | [记录](迭代168/记录.md) |\n")
+    out = os.path.join(root, "bk.json")
+
+    def run_bk():
+        return run([python, BOOKKEEP, "--repo", game, "--docs-repo", docs, "--out", out])
+
+    rc, _ = run_bk()
+    record("记账校验：齐全必须绿", rc == 0, "rc=%d" % rc)
+
+    os.remove(rec)
+    rc, txt = run_bk()
+    record("记账校验：缺记录必须红", rc == 1 and "缺记录" in txt, "rc=%d" % rc)
+
+    open(rec, "w", encoding="utf-8").write("# 迭代168 记录\n")
+    open(index, "w", encoding="utf-8").write("| 迭代168 | 测试行 | [记录](迭代168/记录.md) |\n")
+    open(index, "w", encoding="utf-8").write("没有这一行\n")
+    rc, txt = run_bk()
+    record("记账校验：索引缺行必须红", rc == 1 and "索引缺行" in txt, "rc=%d" % rc)
+
+
+def test_handoff(tmp, python):
+    """交接事实块（迭代168 · G4）：生成→一致必须绿；被篡改必须红；重跑能纠正。"""
+    root = os.path.join(tmp, "ho")
+    docs = os.path.join(root, "docs")
+    game = os.path.join(root, "game")
+    os.makedirs(os.path.join(docs, "项目规划蓝图"), exist_ok=True)
+    os.makedirs(os.path.join(game, "qc", "out"), exist_ok=True)
+    page = os.path.join(docs, "项目规划蓝图", "当前状态.md")
+    open(page, "w", encoding="utf-8").write("# 当前状态\n\n> 说明行\n")
+    counts = os.path.join(game, "qc", "out", "counts.json")
+    json.dump({"counts": {"test:passing": 1, "test:asserts": 2, "lint:total": 0,
+                          "qc:selftest_total": 3, "qc:selftest_failures": 0,
+                          "size:arena_view": 10, "size:battle_engine": 9, "size:net_diag_dump": 8,
+                          "signals:declared": 1, "signals:problems": 0}},
+              open(counts, "w", encoding="utf-8"))
+    out = os.path.join(root, "ho.json")
+
+    def run_ho(check):
+        cmd = [python, HANDOFF, "--repo", game, "--docs-repo", docs, "--counts", counts, "--out", out]
+        if check:
+            cmd.append("--check")
+        return run(cmd)
+
+    rc, _ = run_ho(False)
+    txt = open(page, encoding="utf-8-sig").read()
+    record("交接事实块：生成必须绿", rc == 0 and "qc:handoff:begin" in txt, "rc=%d" % rc)
+
+    rc, _ = run_ho(True)
+    record("交接事实块：一致必须绿", rc == 0, "rc=%d" % rc)
+
+    open(page, "w", encoding="utf-8").write(txt.replace("HEAD", "HEAD-被改", 1))
+    rc, _ = run_ho(True)
+    record("交接事实块：被篡改必须红", rc == 1, "rc=%d" % rc)
+
+    rc, _ = run_ho(False)
+    rc2, _ = run_ho(True)
+    record("交接事实块：重跑能纠正", rc == 0 and rc2 == 0, "rc=%d rc2=%d" % (rc, rc2))
+
+
 def main():
     python = sys.executable
     tmp = tempfile.mkdtemp(prefix="qc_selftest_")
@@ -849,6 +924,10 @@ def main():
         test_mutation_score(tmp, python)
         print("[qc] selftest 信号登记")
         test_signals_accept(tmp, python)
+        print("[qc] selftest 记账校验")
+        test_bookkeep(tmp, python)
+        print("[qc] selftest 交接事实块")
+        test_handoff(tmp, python)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

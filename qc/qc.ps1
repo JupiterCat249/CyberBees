@@ -15,10 +15,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart')]
+    [ValidateSet('all', 'bugbind', 'flaky', 'syncdocs', 'receipt', 'coverage', 'mutation', 'layout', 'lint', 'size', 'arch', 'signals', 'docs', 'test', 'selftest', 'report', 'snapshot', 'import', 'setup', 'artifacts', 'coldstart', 'nightly', 'handoff', 'handoff-check', 'bookkeep', 'clean')]
     [string]$Command = 'all',
 
-    [string]$Iteration = ''
+    [string]$Iteration = '',
+
+    # G4 批次1（迭代168）：nightly 的深检开关 / handoff 只查不写 / clean 演练
+    [switch]$Deep,
+    [switch]$Quick,
+    [switch]$Check,
+    [switch]$DryRun
 )
 
 $ErrorActionPreference = 'Continue'
@@ -43,6 +49,7 @@ $GutVersion       = '9.6.1'
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
 $script:Counts = [ordered]@{}
 $script:GateFailed = $false
+$script:GateResults = [ordered]@{}   # 迭代168：每道闸的 bool 结果（nightly 归因用）
 
 function Add-Count([string]$Key, $Value) { $script:Counts[$Key] = [int]$Value }
 
@@ -610,14 +617,18 @@ function Invoke-Gates {
     Write-Host ''
     Write-Host '=== qc · 四道闸 ===' -ForegroundColor Cyan
     # 每一闸的返回值都要收集：门禁失败必须让退出码非零，不能只靠棘轮比较计数
-    if (-not (Invoke-Layout))   { $script:GateFailed = $true }
-    if (-not (Invoke-BugBind))  { $script:GateFailed = $true }
-    if (-not (Invoke-Lint))     { $script:GateFailed = $true }
-    if (-not (Invoke-Size))     { $script:GateFailed = $true }
-    if (-not (Invoke-Arch))     { $script:GateFailed = $true }
-    if (-not (Invoke-Signals))  { $script:GateFailed = $true }
-    if (-not (Invoke-Test))     { $script:GateFailed = $true }
-    if (-not $SkipDocs) { if (-not (Invoke-Docs)) { $script:GateFailed = $true } }
+    function Record-Gate([string]$Name, [bool]$Ok) {
+        $script:GateResults[$Name] = $Ok
+        if (-not $Ok) { $script:GateFailed = $true }
+    }
+    Record-Gate 'layout'  (Invoke-Layout)
+    Record-Gate 'bugbind' (Invoke-BugBind)
+    Record-Gate 'lint'    (Invoke-Lint)
+    Record-Gate 'size'    (Invoke-Size)
+    Record-Gate 'arch'    (Invoke-Arch)
+    Record-Gate 'signals' (Invoke-Signals)
+    Record-Gate 'test'    (Invoke-Test)
+    if (-not $SkipDocs) { Record-Gate 'docs' (Invoke-Docs) }
     Write-Host ''
     if ($script:GateFailed) { Write-Host '[qc] 有闸未通过（见上方红色/明细）—— 退出码将非零' -ForegroundColor Red }
 }
@@ -719,6 +730,132 @@ function Invoke-Setup {
     Write-Host '[qc] setup 完成。下一步： import -> snapshot'
 }
 
+## ===== G4 批次1（迭代168）：常驻自动化层 ===== ##
+## 夜检：用**子进程**跑既有命令（隔离状态、真实退出码、日志可查），结果归档到 qc/out/nightly/。
+##   默认 = all + bookkeep + handoff-check；-Deep 追加 coverage/mutation/flaky；-Quick 只跑 all。
+##   失败时写 qc/out/failures/<时间>.json（含每个失败步骤的日志尾巴）——'失败必须留痕'。
+function Invoke-QcChild([string]$Name) {
+    $logDir = Join-Path $Out 'logs'
+    New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+    $log = Join-Path $logDir ($Name + '.log')
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $QcRoot 'qc.ps1') $Name 2>&1 | Out-File -FilePath $log -Encoding utf8
+    $rc = $LASTEXITCODE
+    $sw.Stop()
+    Write-Host ('[nightly] ' + $Name + ' exit=' + $rc + ' (' + [math]::Round($sw.Elapsed.TotalSeconds, 1) + 's)')
+    return [pscustomobject]@{ name = $Name; exit = $rc; seconds = [math]::Round($sw.Elapsed.TotalSeconds, 1); log = $log }
+}
+
+function Invoke-Nightly {
+    param([switch]$Deep, [switch]$Quick)
+    $nightDir = Join-Path $Out 'nightly'
+    $failDir = Join-Path $Out 'failures'
+    $deepDir = Join-Path $Out 'deep'
+    New-Item -ItemType Directory -Force -Path $nightDir, $failDir, $deepDir | Out-Null
+    ## 单实例锁：夜检可能由 DSH 定时与人手动同时触发；并发会互相覆盖日志（实测把 all 压成 0.1s）
+    $lock = Join-Path $nightDir '.lock'
+    if (Test-Path $lock) {
+        $age = (Get-Date) - (Get-Item $lock).LastWriteTime
+        if ($age.TotalHours -lt 2) { Write-Host '[nightly] 已有夜检在跑（.lock < 2h）—— 本次跳过' -ForegroundColor Yellow; return $false }
+        Remove-Item $lock -Force -ErrorAction SilentlyContinue
+    }
+    [System.IO.File]::WriteAllText($lock, (Get-Date -Format o), [System.Text.Encoding]::UTF8)
+    try {
+        $date = Get-Date -Format 'yyyy-MM-dd'
+        $stamp = Get-Date -Format 'yyyy-MM-dd-HHmm'
+        $head = (& git -C $Repo rev-parse --short HEAD 2>$null)
+        Write-Host ('=== qc nightly · ' + $date + ' · HEAD ' + $head + ' ===') -ForegroundColor Cyan
+        $steps = @()
+        $steps += Invoke-QcChild 'all'
+        if (-not $Quick) { $steps += Invoke-QcChild 'bookkeep' }
+        if ($Deep -and -not $Quick) {
+            foreach ($n in @('coverage', 'mutation', 'flaky')) {
+                $steps += Invoke-QcChild $n
+                $src = Join-Path $Out ($n + '.json')
+                if (Test-Path $src) { Copy-Item $src (Join-Path $deepDir ($date + '-' + $n + '.json')) -Force }
+            }
+        }
+
+        function Write-Nightly {
+            param($Steps)
+            $failNow = @($Steps | Where-Object { $_.exit -ne 0 })
+            $counts = [ordered]@{}
+            if (Test-Path $CountsFile) { try { $counts = ([System.IO.File]::ReadAllText($CountsFile, [System.Text.Encoding]::UTF8) | ConvertFrom-Json).counts } catch { } }
+            $payload = [ordered]@{
+                date = $date; head = $head; deep = [bool]$Deep; quick = [bool]$Quick;
+                ok = ($failNow.Count -eq 0); exit = $(if ($failNow.Count -gt 0) { 1 } else { 0 });
+                steps = @($Steps | ForEach-Object { [ordered]@{ name = $_.name; exit = $_.exit; seconds = $_.seconds } });
+                counts = $counts
+            }
+            $json = $payload | ConvertTo-Json -Depth 6
+            [System.IO.File]::WriteAllText((Join-Path $nightDir ($date + '.json')), $json, [System.Text.Encoding]::UTF8)
+            [System.IO.File]::WriteAllText((Join-Path $nightDir 'latest.json'), $json, [System.Text.Encoding]::UTF8)
+            return $failNow
+        }
+
+        ## 先落一版结果，再让 handoff 读到"今天的夜检"（否则事实块与 latest 互相打架）
+        $fail = Write-Nightly -Steps $steps
+        if (-not $Quick) {
+            $steps += Invoke-QcChild 'handoff'
+            $fail = Write-Nightly -Steps $steps
+        }
+
+        if ($fail.Count -gt 0) {
+            $tails = [ordered]@{}
+            foreach ($s in $fail) { $tails[$s.name] = @(Get-Content $s.log -Encoding UTF8 -ErrorAction SilentlyContinue | Select-Object -Last 30) }
+            $fpayload = [ordered]@{ stamp = $stamp; head = $head; failed = @($fail | ForEach-Object { $_.name }); exit = 1; tails = $tails }
+            [System.IO.File]::WriteAllText((Join-Path $failDir ($stamp + '.json')), ($fpayload | ConvertTo-Json -Depth 6), [System.Text.Encoding]::UTF8)
+            Write-Host ('[nightly] 失败步骤：' + (($fail | ForEach-Object { $_.name }) -join ', ') + ' —— 已留痕 ' + $stamp + '.json') -ForegroundColor Red
+        } else {
+            Write-Host ('[nightly] 全绿 · 结果 ' + $date + '.json') -ForegroundColor Green
+        }
+        return ($fail.Count -eq 0)
+    } finally {
+        Remove-Item $lock -Force -ErrorAction SilentlyContinue
+    }
+}
+## 交接事实块：调 lib/handoff.py（程序只写可推导事实，判断性内容不动）。
+function Invoke-Handoff {
+    param([switch]$Check)
+    Assert-Python
+    $docsRepo = (Resolve-Path (Join-Path $Repo '../../')).Path
+    $hOut = Join-Path $Out 'handoff.json'
+    $args2 = @((Join-Path $QcRoot 'lib\handoff.py'), '--repo', $Repo, '--docs-repo', $docsRepo, '--counts', $CountsFile, '--out', $hOut)
+    if ($Check) { $args2 += '--check' }
+    & $Py @args2 | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
+
+## 记账校验：迭代记录/索引/链接/tag/提交格式/夜检新鲜度（只读）。
+function Invoke-Bookkeep {
+    Assert-Python
+    $docsRepo = (Resolve-Path (Join-Path $Repo '../../')).Path
+    $bOut = Join-Path $Out 'bookkeep.json'
+    & $Py (Join-Path $QcRoot 'lib\bookkeep.py') --repo $Repo --docs-repo $docsRepo --out $bOut | ForEach-Object { Write-Host ('[qc] ' + $_) }
+    return ($LASTEXITCODE -eq 0)
+}
+
+## 清理：只删 qc/out 下的中间文件（白名单之外）与陈旧的 .cov-backup；不碰 9 件产物与 baseline。
+function Invoke-Clean {
+    param([switch]$DryRun)
+    $keep = @('counts.json', 'lint.log', 'size.json', 'arch.json', 'graph.json', 'signals.json', 'docs.json', 'gutcheck.json', 'gut.log', 'receipt.json')
+    $removed = 0
+    $targets = @(Get-ChildItem $Out -File -ErrorAction SilentlyContinue | Where-Object { $keep -notcontains $_.Name })
+    foreach ($t in $targets) {
+        if ($DryRun) { Write-Host ('[clean] 将删除 ' + $t.Name) }
+        else { Remove-Item $t.FullName -Force; Write-Host ('[clean] 删除 ' + $t.Name) }
+        $removed++
+    }
+    $bk = Join-Path $Repo '.cov-backup'
+    if (Test-Path $bk) {
+        if ($DryRun) { Write-Host '[clean] 将删除 .cov-backup/' }
+        else { Remove-Item $bk -Recurse -Force; Write-Host '[clean] 删除 .cov-backup/' }
+        $removed++
+    }
+    Write-Host ('[clean] ' + $(if ($DryRun) { '将清理' } else { '已清理' }) + ' ' + $removed + ' 项')
+    return $true
+}
+
 switch ($Command) {
     # 单闸的退出码必须反映该闸结果 —— 曾一律 exit 0，导致"单闸永远绿"的假象（迭代082 修）
     'layout'   { if (Invoke-Layout)  { exit 0 } else { exit 1 } }
@@ -740,6 +877,11 @@ switch ($Command) {
     'coverage'  { if (Invoke-Coverage) { exit 0 } else { exit 1 } }
     'mutation'  { if (Invoke-Mutation) { exit 0 } else { exit 1 } }
     'coldstart' { exit (Invoke-Coldstart) }
+    'nightly'  { if (Invoke-Nightly -Deep:$Deep -Quick:$Quick) { exit 0 } else { exit 1 } }
+    'handoff'  { if (Invoke-Handoff -Check:$Check) { exit 0 } else { exit 1 } }
+    'handoff-check' { if (Invoke-Handoff -Check) { exit 0 } else { exit 1 } }
+    'bookkeep' { if (Invoke-Bookkeep) { exit 0 } else { exit 1 } }
+    'clean'    { Invoke-Clean -DryRun:$DryRun | Out-Null; exit 0 }
     'all'      { Invoke-Gates; $r = Invoke-Ratchet; if ($script:GateFailed) { exit 1 } else { exit $r } }
     'snapshot' { Invoke-Gates; $r = Invoke-Ratchet -Update; if (-not $script:GateFailed) { & $Py (Join-Path $QcRoot 'lib\size_check.py') --repo $Repo --policy (Join-Path $QcRoot 'config\size_policy.json') --baseline (Join-Path $QcRoot 'config\size_baseline.json') --out (Join-Path $Out 'size.json') --tighten | ForEach-Object { Write-Host ('[qc] ' + $_) } } if ($script:GateFailed) { exit 1 } else { exit $r } }
 }
